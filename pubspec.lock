@@ -14,14 +14,6 @@ packages:
     description: dart
     source: sdk
     version: "0.3.3"
-  advance_math:
-    dependency: "direct main"
-    description:
-      name: advance_math
-      sha256: "72dcec8196bc222815c29ed2bcb2c1adfe25cec008612ea2994063acfa68d055"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.3.8"
   analyzer:
     dependency: transitive
     description:
@@ -54,14 +46,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  buffer:
-    dependency: transitive
-    description:
-      name: buffer
-      sha256: "389da2ec2c16283c8787e0adaede82b1842102f8c8aae2f49003a766c5c6b3d1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.3"
   clock:
     dependency: transitive
     description:
@@ -126,6 +110,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  http:
+    dependency: transitive
+    description:
+      name: http
+      sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
   http_multi_server:
     dependency: transitive
     description:
@@ -143,13 +135,13 @@ packages:
     source: hosted
     version: "4.1.1"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
-      sha256: "3bc132a9dbce73a7e4a21a17d06e1878839ffbf975568bc875c60537824b0c4d"
+      sha256: "00f33b908655e606b86d2ade4710a231b802eec6f11e87e4ea3783fd72077a50"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.1"
+    version: "0.20.1"
   io:
     dependency: transitive
     description:
