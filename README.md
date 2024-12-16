@@ -1,3 +1,19 @@
+[![Pub package](https://img.shields.io/pub/v/advance_math.svg?logo=dart&logoColor=00b9fc)](https://pub.dartlang.org/packages/advance_math)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Likes](https://img.shields.io/pub/likes/advance_math)](https://pub.dartlang.org/packages/advance_math/score)
+[![Points](https://img.shields.io/pub/points/advance_math)](https://pub.dartlang.org/packages/advance_math/score)
+[![Popularity](https://img.shields.io/pub/popularity/advance_math)](https://pub.dartlang.org/packages/advance_math/score)
+[![SDK Version](https://badgen.net/pub/sdk-version/advance_math)](https://pub.dartlang.org/packages/advance_math)
+
+[![Last Commits](https://img.shields.io/github/last-commit/gameticharles/advance_math?ogo=github&logoColor=white)](https://github.com/gameticharles/advance_math/commits/master)
+[![Pull Requests](https://img.shields.io/github/issues-pr/gameticharles/advance_math?ogo=github&logoColor=white)](https://github.com/gameticharles/advance_math/pulls)
+[![Code size](https://img.shields.io/github/languages/code-size/gameticharles/advance_math?ogo=github&logoColor=white)](https://github.com/gameticharles/advance_math)
+[![License](https://img.shields.io/github/license/gameticharles/advance_math?ogo=github&logoColor=white)](https://github.com/gameticharles/advance_math/blob/main/LICENSE)
+
+[![Stars](https://img.shields.io/github/stars/gameticharles/advance_math)](https://github.com/gameticharles/advance_math/stargazers)
+[![Forks](https://img.shields.io/github/forks/gameticharles/advance_math)](https://github.com/gameticharles/advance_math/network/members)
+[![Github watchers](https://img.shields.io./github/watchers/gameticharles/advance_math)](https://github.com/gameticharles/advance_math/MyBadges)
+[![Issues](https://img.shields.io./github/issues-raw/gameticharles/advance_math)](https://github.com/gameticharles/advance_math/issues)
 
 # DartFrame
 
@@ -214,7 +230,7 @@ Reporting bugs and issues are contribution too, yes it is. Feel free to fork the
 
 Please file feature requests and bugs at the [issue tracker][tracker].
 
-[tracker]: https://github.com/gameticharles/advance_math/issues
+[tracker]: https://github.com/gameticharles/DartFrame/issues
 
 ## Author
 

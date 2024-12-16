@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 extension DataFrameFunctions on DataFrame {
   /// Selects columns from the DataFrame by their names.
@@ -167,6 +167,32 @@ extension DataFrameFunctions on DataFrame {
   }
 
   /// Summarizes the structure of the DataFrame.
+  // DataFrame structure() {
+  //   var summaryData = <List<dynamic>>[];
+
+  //   for (var column in _columns) {
+  //     var columnData = this[column];
+  //     var typeCounts = _analyzeColumnTypes(columnData);
+  //     var columnType = typeCounts.keys.length == 1
+  //         ? typeCounts.keys.first.toString() // Single type
+  //         : 'Mixed'; // Default to 'Mixed' if multiple types
+  //     var hasMixedTypes = _hasMixedTypes(typeCounts);
+
+  //     var row = [
+  //       column,
+  //       columnType,
+  //       _countNullValues(columnData),
+  //       hasMixedTypes
+  //     ];
+  //     summaryData.add(row);
+  //   }
+
+  //   var columnNames = ['Column Name', 'Data Type', 'Null Count', 'Mixed Types'];
+
+  //   return DataFrame(columns: columnNames, data: summaryData);
+  // }
+
+  /// Summarizes the structure of the DataFrame.
   DataFrame structure() {
     var summaryData = <List<dynamic>>[];
 
@@ -174,13 +200,16 @@ extension DataFrameFunctions on DataFrame {
       var columnData = this[column];
       var columnType = _analyzeColumnTypes(columnData);
 
-      var row = [column, columnType];
-      row.add(_countNullValues(columnData));
+      var row = [
+        column,
+        columnType,
+        columnType.length > 1,
+        _countNullValues(columnData),
+      ];
       summaryData.add(row);
     }
 
-    var columnNames = ['Column Name', 'Data Type'];
-    columnNames.add('Null Count');
+    var columnNames = ['Column Name', 'Data Type', 'Mixed Types', 'Null Count'];
 
     return DataFrame(columns: columnNames, data: summaryData);
   }
@@ -195,18 +224,6 @@ extension DataFrameFunctions on DataFrame {
       }
     }
     return typeCounts;
-  }
-
-  /// Checks if a column has significantly mixed data types.
-  bool _hasMixedTypes(Map<Type, int> typeCounts) {
-    if (typeCounts.length < 2) {
-      return false; // Single type is not mixed
-    }
-
-    // You can customize the logic for determining 'Mixed'
-    var sortedCounts = typeCounts.values.toList()
-      ..sort((b, a) => a.compareTo(b));
-    return (sortedCounts[0] - sortedCounts[1]) / sortedCounts[0] < 0.5;
   }
 
   /// Counts null values in a column.
@@ -404,7 +421,6 @@ extension DataFrameFunctions on DataFrame {
     }
     return count;
   }
-
 
   // @override
   // noSuchMethod(Invocation invocation) {

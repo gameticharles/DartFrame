@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///

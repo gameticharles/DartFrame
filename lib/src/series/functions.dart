@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 extension SeriesFunctions on Series {
   /// Count of non-null values in the series.

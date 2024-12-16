@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 /// A class representing a DataFrame, which is a 2-dimensional labeled data structure
 /// with columns of potentially different types.

@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 extension DataFrameOperations on DataFrame {
   // Operator [] overridden to access column by index or name

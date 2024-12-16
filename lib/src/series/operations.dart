@@ -1,4 +1,4 @@
-part of '../../dart_frame.dart';
+part of '../../dartframe.dart';
 
 extension SeriesOperations on Series {
   /// Access elements by position or label using boolean indexing.
