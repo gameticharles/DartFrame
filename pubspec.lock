@@ -118,22 +118,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
-  geoengine:
-    dependency: "direct main"
-    description:
-      name: geoengine
-      sha256: "39790e226f529e27b6c1f987f3acde5e4be2767250486941e91b6cb30769174b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
-  geoxml:
-    dependency: transitive
-    description:
-      name: geoxml
-      sha256: dfcbe7f9d83839958ce3c98af6eb673ac4d24b26ee5e47ffb14858f5dc560cf6
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.1"
   glob:
     dependency: transitive
     description:
@@ -142,14 +126,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  http:
-    dependency: transitive
-    description:
-      name: http
-      sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.2"
   http_multi_server:
     dependency: transitive
     description:
@@ -190,22 +166,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.1"
-  kdtree:
-    dependency: transitive
-    description:
-      name: kdtree
-      sha256: "3500ab3ad9669a726c7d9837ce7025583fef88f85fd66bcba23bb7fe280e6486"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
-  latlng:
-    dependency: transitive
-    description:
-      name: latlng
-      sha256: a324c80073ef959d67ead88b57a717b7b87f182da1b980ccae92b3555ac82712
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   lints:
     dependency: "direct dev"
     description:
@@ -214,14 +174,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.1.0"
-  lists:
-    dependency: transitive
-    description:
-      name: lists
-      sha256: "4ca5c19ae4350de036a7e996cdd1ee39c93ac0a2b840f4915459b7d0a7d4ab27"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.1"
   logging:
     dependency: transitive
     description:
@@ -254,14 +206,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.16.0"
-  mgrs_dart:
-    dependency: transitive
-    description:
-      name: mgrs_dart
-      sha256: fb89ae62f05fa0bb90f70c31fc870bcbcfd516c843fb554452ab3396f78586f7
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
   mime:
     dependency: transitive
     description:
@@ -294,14 +238,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
-  petitparser:
-    dependency: transitive
-    description:
-      name: petitparser
-      sha256: c15605cd28af66339f8eb6fbe0e541bfe2d1b72d5825efc6598f3e0a31b9ad27
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.0.2"
   pool:
     dependency: transitive
     description:
@@ -310,14 +246,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
-  proj4dart:
-    dependency: transitive
-    description:
-      name: proj4dart
-      sha256: c8a659ac9b6864aa47c171e78d41bbe6f5e1d7bd790a5814249e6b68bc44324e
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   pub_semver:
     dependency: transitive
     description:
@@ -326,22 +254,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.5"
-  quiver:
-    dependency: transitive
-    description:
-      name: quiver
-      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.2"
-  r_tree:
-    dependency: transitive
-    description:
-      name: r_tree
-      sha256: ebdef3322be74faaed6ce0d7b7e14cc7e287a7c7ee0a948ef10d43f5095ff41c
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
   shelf:
     dependency: transitive
     description:
@@ -462,14 +374,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-  unicode:
-    dependency: transitive
-    description:
-      name: unicode
-      sha256: "0f69e46593d65245774d4f17125c6084d2c20b4e473a983f6e21b7d7762218f1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.1"
   vm_service:
     dependency: transitive
     description:
@@ -518,30 +422,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
-  wkt_parser:
-    dependency: transitive
-    description:
-      name: wkt_parser
-      sha256: "8a555fc60de3116c00aad67891bcab20f81a958e4219cc106e3c037aa3937f13"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
-  xml:
-    dependency: transitive
-    description:
-      name: xml
-      sha256: b015a8ad1c488f66851d762d3090a21c600e479dc75e68328c52774040cf9226
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.5.0"
-  xml2json:
-    dependency: transitive
-    description:
-      name: xml2json
-      sha256: "9523203b99032ce419672804010cce72ea47fc277b3135f77bbb7ac8fa391664"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.2.5"
   yaml:
     dependency: transitive
     description:

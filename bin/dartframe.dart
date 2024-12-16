@@ -1,5 +1,12 @@
-import 'package:dartframe/dartframe.dart' as dartframe;
+import 'package:dartframe/dart_frame.dart';
 
 void main(List<String> arguments) {
-  print('Hello world: ${dartframe.calculate()}!');
+  DataFrame df = DataFrame(
+    columns: ['A', 'B'],
+    data: [
+      [1, 2],
+      [3, 4],
+    ],
+  );
+  print(df.toString());
 }
