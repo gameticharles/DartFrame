@@ -207,6 +207,8 @@ class DataFrame {
     return DataFrame._(
       columnNames,
       rows.sublist(1),
+      //rowHeader: hasRowIndex ? rows[0] : List.generate(rows[0].length, (i) => i),
+      rowHeader: [], //Not implemented yet
       replaceMissingValueWith: replaceMissingValueWith,
       allowFlexibleColumns: allowFlexibleColumns,
       formatData: formatData,
@@ -257,6 +259,7 @@ class DataFrame {
     return DataFrame._(
       columnNames,
       data,
+      rowHeader: [], // Not applicable for JSON
       replaceMissingValueWith: replaceMissingValueWith,
       allowFlexibleColumns: allowFlexibleColumns,
       formatData: formatData,
