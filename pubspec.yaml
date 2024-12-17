@@ -1,6 +1,6 @@
 name: dartframe
-description: DartFrame is a Dart library inspired by pandas, simplifying structured data handling (tables, CSVs, JSON) with intuitive tools for filtering, transforming, and analysis in Dart/Flutter projects.
-version: 0.1.1
+description: DartFrame is a Dart library inspired by pandas, simplifying structured data handling (tables, CSVs, JSON) with function tools for filtering, transforming, and analysis.
+version: 0.1.3
 repository: https://github.com/gameticharles/DartFrame
 
 environment:

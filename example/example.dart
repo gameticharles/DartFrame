@@ -1,8 +1,38 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() {
-  dataframe1();
-  dataframe2();
+  // dataframe1();
+  // dataframe2();
+
+  // Load the CSV data into a DataFrame and tries to convert string to the right type
+  // List input; each inner List is a row of data
+  // List input Using parameters to set column/row names
+  final df = DataFrame(data: [
+    [1, 2, 3.0],
+    [4, 5, 6],
+    [7, 'hi', 9]
+  ], rowHeader: [
+    'Dog',
+    'Dog',
+    'Cat'
+  ], columns: [
+    'a',
+    'b',
+    'c'
+  ]);
+
+  print(df);
+
+  // Create or update a column via name
+  df['a'] = [1, 2, 3, 4];
+  print(df);
+
+// Modify a specific element in the 'a' column
+  df['a'][2] = 30;
+  print(df);
+
+// Access and modify row data by index
+  // df[2] = [30, 'newDate', 5, 100.0];
 }
 
 void dataframe1() {

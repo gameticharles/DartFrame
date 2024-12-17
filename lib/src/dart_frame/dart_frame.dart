@@ -4,6 +4,7 @@ part of '../../dartframe.dart';
 /// with columns of potentially different types.
 class DataFrame {
   List<dynamic> _columns = List.empty(growable: true);
+  List<dynamic> rowHeader = List.empty(growable: true);
   List<dynamic> _data = List.empty(growable: true);
   final bool allowFlexibleColumns;
   dynamic replaceMissingValueWith;
@@ -16,6 +17,7 @@ class DataFrame {
   DataFrame._(
     this._columns,
     this._data, {
+    this.rowHeader = const [],
     this.allowFlexibleColumns = false,
     this.replaceMissingValueWith,
     bool formatData = false,
@@ -35,6 +37,17 @@ class DataFrame {
     if (formatData) {
       // Clean and convert data
       _data = _data.map((row) => row.map(_cleanData).toList()).toList();
+    }
+
+    // If index was entered, check that it's given for all rows or throw error (pd)
+    if (rowHeader.isNotEmpty) {
+      if (rowHeader.length != _data.length) {
+        throw Exception('Index must match number of rows entered');
+      }
+    }
+    // 3.b. If index was not entered, auto-generate
+    if (rowHeader.isEmpty) {
+      rowHeader = List.generate(_data.length, (i) => i);
     }
   }
 
@@ -59,6 +72,7 @@ class DataFrame {
   DataFrame(
       {List<dynamic> columns = const [],
       List<List<dynamic>> data = const [],
+      List<dynamic> rowHeader = const [],
       this.allowFlexibleColumns = false,
       this.replaceMissingValueWith,
       List<dynamic> missingDataIndicator = const [],
@@ -67,7 +81,12 @@ class DataFrame {
         _data = data,
         _columns = columns.isEmpty && data.isNotEmpty
             ? List.generate(data[0].length, (index) => 'Column${index + 1}')
-            : columns {
+            : columns,
+        rowHeader = (rowHeader.isNotEmpty && rowHeader.length != data.length)
+            ? throw Exception('Index must match number of rows entered')
+            : (rowHeader.isNotEmpty)
+                ? rowHeader
+                : List.generate(data.length, (i) => i) {
     // ... validation based on allowFlexibleColumns ...
     if (formatData) {
       // Clean and convert data
@@ -156,6 +175,7 @@ class DataFrame {
     String delimiter = ',',
     String? inputFilePath,
     bool hasHeader = true,
+    bool hasRowIndex = false,
     bool allowFlexibleColumns = false,
     dynamic replaceMissingValueWith,
     bool formatData = false,
@@ -179,6 +199,10 @@ class DataFrame {
     // Extract column names from the first line
     final columnNames =
         hasHeader ? rows[0] : List.generate(rows[0].length, (i) => 'Column $i');
+
+    if (hasRowIndex) {
+      columnNames.insert(0, 'Row Index');
+    }
 
     return DataFrame._(
       columnNames,
@@ -384,10 +408,24 @@ class DataFrame {
     super.noSuchMethod(invocation);
   }
 
+  (String, int) _getItemWithMaxLength(List<dynamic> items) {
+    String maxLengthItem = '';
+
+    for (var item in items) {
+      String itemStr = item.toString();
+      if (itemStr.length > maxLengthItem.length) {
+        maxLengthItem = itemStr;
+      }
+    }
+
+    return (maxLengthItem, maxLengthItem.length);
+  }
+
   @override
   String toString({int columnSpacing = 2}) {
     // Calculate column widths
     List<int> columnWidths = [];
+
     for (var i = 0; i < _columns.length; i++) {
       int maxColumnWidth = _columns[i].toString().length;
       for (var row in _data) {
@@ -403,14 +441,16 @@ class DataFrame {
     StringBuffer buffer = StringBuffer();
 
     // Add index header
-    buffer.write(' '.padRight(_data.length.toString().length +
-        columnSpacing)); // Space for the index column
+    buffer.write(' '.padRight(
+        _getItemWithMaxLength(rowHeader).$2.toString().length +
+            columnSpacing)); // Space for the index column
 
     // Add column headers (rest of the header is same as before)
     for (var i = 0; i < _columns.length; i++) {
       buffer.write(
           _columns[i].toString().padRight(columnWidths[i] + columnSpacing));
     }
+
     buffer.writeln();
 
     // Add data rows
@@ -419,7 +459,9 @@ class DataFrame {
       var row = _data[rowIndex];
 
       // Add row index
-      buffer.write(rowIndex.toString().padRight(indexWidth + columnSpacing));
+      buffer.write((rowHeader[rowIndex])
+          .toString()
+          .padRight(indexWidth + columnSpacing));
 
       // Add row data
       for (var i = 0; i < row.length; i++) {
