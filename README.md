@@ -277,6 +277,151 @@ final geoDataFrame = GeoDataFrame.fromDataFrame(
 );
 ```
 
+#### From GeoJSON String
+
+```dart
+// Example: Create from GeoJSON string
+final geoJsonString = '''
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "marker-color": "#7e7e7e",
+        "marker-size": "medium",
+        "marker-symbol": "college",
+        "title": "Hanoi University of Mining and Geology",
+        "department": "Geoinformation Technology",
+        "address": "No.18 Vien Street - Duc Thang Ward - Bac Tu Liem District - Ha Noi, Vietnam",
+        "url": "http://humg.edu.vn"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.7743099,
+          21.0717561
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#7e7e7e",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "title": "Vien St."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.7771289,
+            21.0715458
+          ],
+          [
+            105.7745218,
+            21.0715658
+          ],
+          [
+            105.7729125,
+            21.0715358
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#555555",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "fill": "#ab7942",
+        "fill-opacity": 0.5,
+        "title": "HUMG's Office"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              105.7739666,
+              21.0726795
+            ],
+            [
+              105.7739719,
+              21.0721991
+            ],
+            [
+              105.7743394,
+              21.0721966
+            ],
+            [
+              105.774331,
+              21.0725269
+            ],
+            [
+              105.7742564,
+              21.072612
+            ],
+            [
+              105.7741865,
+              21.0726095
+            ],
+            [
+              105.7741785,
+              21.0726746
+            ],
+            [
+              105.7739666,
+              21.0726795
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
+''';
+
+// Parse the GeoJSON string
+final geoJson = GeoJSON.fromJSON(geoJsonString);
+
+// Create a GeoDataFrame from the parsed GeoJSON
+GeoDataFrame fromJsonGeoDF;
+if (geoJson is GeoJSONFeatureCollection) {
+  // Extract all unique property keys to use as headers
+  final jsonHeaders = <String>{};
+  for (var feature in geoJson.features) {
+    if (feature?.properties != null) {
+      jsonHeaders.addAll(feature!.properties!.keys);
+    }
+  }
+  
+  fromJsonGeoDF = GeoDataFrame(
+    geoJson,
+    jsonHeaders.toList(),
+    geometryColumn: 'geometry',
+    crs: 'EPSG:4326',
+  );
+  
+  print('\nGeoDataFrame from GeoJSON string:');
+  print('Features: ${fromJsonGeoDF.featureCount}');
+  print('Properties: ${fromJsonGeoDF.attributes.columns.join(', ')}');
+  
+  // Demonstrate querying features
+  var officeFeature = fromJsonGeoDF.findFeatures(
+    (feature) => feature.properties!['title'] == "HUMG's Office"
+  );
+  
+  if (officeFeature.isNotEmpty) {
+    print('\nFound office feature:');
+    print('Title: ${officeFeature[0].properties!['title']}');
+    print('Geometry type: ${officeFeature[0].geometry.runtimeType}');
+  }
+}
+```
+
 ### Accessing Data
 
 ```dart

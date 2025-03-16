@@ -1,3 +1,7 @@
+# 0.2.2
+* **[Fix]** Fixed readme.
+* **[FEATURE]** Added topics to the package/library
+
 # 0.2.1
 * **[Fix]** Fixed readme.
 
