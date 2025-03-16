@@ -1,3 +1,6 @@
+# 0.2.1
+* **[Fix]** Fixed readme.
+
 # 0.2.0
 
 * **[FEATURE]** Added `isEmpty` and `isNotEmpty` properties to check if DataFrame has rows

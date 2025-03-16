@@ -17,7 +17,7 @@
 
 # DartFrame
 
-**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tools like Pandas, DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
+**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tools like Pandas and GeoPandas, DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
 
 ## Key Features
 
@@ -203,6 +203,205 @@ print(horizontal);
 var vertical = df1.concatenate(df2);
 print(vertical);
 ```
+
+## GeoDataFrame
+
+The `GeoDataFrame` class extends the functionality of DataFrame by adding support for geospatial data, similar to GeoPandas in Python. It maintains a geometry column alongside attribute data, making it easy to work with geographic information.
+
+### Features
+
+- Read and write various geospatial file formats (GeoJSON, CSV with coordinates, GPX, KML)
+- Store and manipulate vector geometries (Point, LineString, Polygon, etc.)
+- Calculate spatial properties (area, bounds, validity)
+- Perform spatial operations and queries
+- Seamless integration with the DataFrame API for attribute manipulation
+
+### Creating a GeoDataFrame
+
+There are several ways to create a GeoDataFrame:
+
+#### From a file
+
+```dart
+// Read from a CSV file with coordinate columns
+final geoDataFrame = await GeoDataFrame.readFile(
+  'path/to/data.csv',
+  coordinatesColumns: {
+    'longitude': 1,  // column index for longitude
+    'latitude': 2    // column index for latitude
+  },
+  coordinateType: 'lonlat'
+);
+
+// Read from a GeoJSON file
+final geoJson = await GeoDataFrame.readFile('path/to/data.geojson');
+
+// Read from a GPX file
+final gpxData = await GeoDataFrame.readFile('path/to/tracks.gpx');
+```
+
+#### From coordinates
+
+```dart
+// Create from a list of coordinate pairs
+final coordinates = [
+  [0.0, 0.0],
+  [1.0, 0.0],
+  [1.0, 1.0],
+  [0.0, 1.0]
+];
+
+final geoDataFrame = GeoDataFrame.fromCoordinates(
+  coordinates,
+  coordinateType: 'xy'  // or 'lonlat'
+);
+```
+
+#### From an existing DataFrame
+
+```dart
+// Convert a DataFrame with a geometry column to a GeoDataFrame
+final dataFrame = DataFrame(
+  columns: ['id', 'name', 'geometry'],
+  data: [
+    [1, 'Point A', [0.0, 0.0]],
+    [2, 'Point B', [1.0, 1.0]],
+  ]
+);
+
+final geoDataFrame = GeoDataFrame.fromDataFrame(
+  dataFrame,
+  geometryColumn: 'geometry',
+  geometryType: 'point',
+  coordinateType: 'xy'
+);
+```
+
+### Accessing Data
+
+```dart
+// Get the number of features
+print(geoDataFrame.featureCount);
+
+// Access the attribute table as DataFrame
+print(geoDataFrame.attributes);
+
+// Access a specific feature
+var feature = geoDataFrame.getFeature(1);
+
+// Get all geometries
+var geometries = geoDataFrame.geometries();
+```
+
+### Manipulating Data
+
+```dart
+// Add a new feature
+geoDataFrame.addFeature(
+  GeoJSONPoint([10.0, 20.0]),
+  properties: {'name': 'New Point', 'value': 42}
+);
+
+// Delete a feature
+geoDataFrame.deleteFeature(0);
+
+// Add a property to all features
+geoDataFrame.addProperty('category', defaultValue: 'default');
+
+// Update properties
+geoDataFrame.attributes['population'][3] = 1500;
+
+// Use DataFrame operations on attributes
+var filtered = geoDataFrame.attributes.filter((row) => row[2] > 1000);
+```
+
+### Spatial Properties
+
+GeoDataFrame automatically calculates and provides access to several spatial properties:
+
+```dart
+// Each feature has these properties in the attributes DataFrame:
+// - geometry: WKT representation of the geometry
+// - area: Area of polygon features (0 for points and lines)
+// - geom_type: Type of geometry (Point, LineString, Polygon, etc.)
+// - is_valid: Boolean indicating if the geometry is valid
+// - bounds: Bounding box of the geometry
+
+// Access these properties
+print(geoDataFrame.attributes['geometry'][0]);  // POINT (10.0 20.0)
+print(geoDataFrame.attributes['area'][0]);      // 0.0 for a point
+print(geoDataFrame.attributes['geom_type'][0]); // Point
+```
+
+### Exporting Data
+
+```dart
+// Export to GeoJSON
+await geoDataFrame.toFile('output.geojson');
+
+// Export to CSV
+await geoDataFrame.toFile('output.csv');
+
+// Export to GPX
+await geoDataFrame.toFile('output.gpx');
+
+// Export to KML
+await geoDataFrame.toFile('output.kml');
+```
+
+### Finding Features
+
+```dart
+// Find features based on a query
+var foundFeatures = geoDataFrame.findFeatures((feature) => 
+  feature.properties!['population'] > 1000 && 
+  feature.properties!['area'] < 500
+);
+```
+
+### Complete Example
+
+```dart
+Future<void> main() async {
+  // Read file
+  final geoDataFrame = await GeoDataFrame.readFile(
+    'data.csv',
+    delimiter: ',',
+    hasHeader: true,
+    coordinatesColumns: {
+      'latitude': 1,
+      'longitude': 2
+    },
+  );
+
+  // Print information
+  print('Number of features: ${geoDataFrame.featureCount}');
+  print('Properties: ${geoDataFrame.headers}');
+  
+  // Add a new property
+  geoDataFrame.addProperty('category', defaultValue: 'residential');
+  
+  // Calculate statistics on a numeric column
+  print('Population statistics:');
+  print(geoDataFrame.attributes['population'].describe());
+  
+  // Filter features
+  var urbanAreas = geoDataFrame.findFeatures((feature) => 
+    feature.properties!['population'] > 10000
+  );
+  
+  print('Urban areas: ${urbanAreas.length}');
+  
+  // Export the filtered data
+  final urbanGeoDataFrame = GeoDataFrame(
+    GeoJSONFeatureCollection(urbanAreas),
+    geoDataFrame.headers
+  );
+  
+  await urbanGeoDataFrame.toFile('urban_areas.geojson');
+}
+```
+
 
 ---
 
