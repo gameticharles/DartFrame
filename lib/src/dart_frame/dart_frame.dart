@@ -411,19 +411,6 @@ class DataFrame {
     super.noSuchMethod(invocation);
   }
 
-  (String, int) _getItemWithMaxLength(List<dynamic> items) {
-    String maxLengthItem = '';
-
-    for (var item in items) {
-      String itemStr = item.toString();
-      if (itemStr.length > maxLengthItem.length) {
-        maxLengthItem = itemStr;
-      }
-    }
-
-    return (maxLengthItem, maxLengthItem.length);
-  }
-
   @override
   String toString({int columnSpacing = 2}) {
     // Calculate column widths
@@ -440,15 +427,28 @@ class DataFrame {
       columnWidths.add(maxColumnWidth);
     }
 
+    // Calculate the maximum width needed for row headers
+    int rowHeaderWidth = 0;
+    for (var header in rowHeader) {
+      int headerWidth = header.toString().length;
+      if (headerWidth > rowHeaderWidth) {
+        rowHeaderWidth = headerWidth;
+      }
+    }
+    
+    // Ensure row header width is at least as wide as the row index
+    rowHeaderWidth = max(rowHeaderWidth, _data.length.toString().length);
+    
+    // Add spacing to row header width
+    rowHeaderWidth += columnSpacing;
+
     // Construct the table string
     StringBuffer buffer = StringBuffer();
 
-    // Add index header
-    buffer.write(' '.padRight(
-        _getItemWithMaxLength(rowHeader).$2.toString().length +
-            columnSpacing)); // Space for the index column
+    // Add index header (empty space for row header column)
+    buffer.write(' '.padRight(rowHeaderWidth));
 
-    // Add column headers (rest of the header is same as before)
+    // Add column headers
     for (var i = 0; i < _columns.length; i++) {
       buffer.write(
           _columns[i].toString().padRight(columnWidths[i] + columnSpacing));
@@ -457,14 +457,11 @@ class DataFrame {
     buffer.writeln();
 
     // Add data rows
-    var indexWidth = _data.length.toString().length;
     for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
       var row = _data[rowIndex];
 
-      // Add row index
-      buffer.write((rowHeader[rowIndex])
-          .toString()
-          .padRight(indexWidth + columnSpacing));
+      // Add row header with proper padding
+      buffer.write(rowHeader[rowIndex].toString().padRight(rowHeaderWidth));
 
       // Add row data
       for (var i = 0; i < row.length; i++) {

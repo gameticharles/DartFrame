@@ -32,6 +32,16 @@ class Series {
   /// identify the series.
   String name;
 
+    // Add these fields to the Series class
+   DataFrame? _parentDataFrame;
+   String? _columnName;
+
+  /// Sets the parent DataFrame reference
+  void _setParent(DataFrame parent, String columnName) {
+    _parentDataFrame = parent;
+    _columnName = columnName;
+  }
+  
   /// Constructs a `Series` object with the given [data] and [name].
   ///
   /// The [data] parameter is a list containing the data points of the series,

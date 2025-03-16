@@ -1,3 +1,5 @@
+import 'dart:async';
+
 export 'file_io_stub.dart'
     if (dart.library.html) 'file_io_web.dart'
     if (dart.library.io) 'file_io_other.dart';
@@ -5,7 +7,8 @@ export 'file_io_stub.dart'
 /// A class to provide file input/output operations.
 ///
 /// Implementations of this class should provide means
-/// to save data to a file and read data from a file.
+/// to save data to a file and read data from a file, including
+/// streaming support for large files.
 abstract class FileIOBase {
   /// Saves the given data to a file.
   ///
@@ -47,4 +50,31 @@ abstract class FileIOBase {
   /// print(content);
   /// ```
   Future<String> readFromFile(dynamic pathOrUploadInput);
+
+  /// Reads from a file as a stream of strings, with each string representing a line in the file.
+  ///
+  /// This method returns a `Stream<String>` where each item represents a line in the file.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// fileIO.readFileAsStream("/path/to/file.txt").listen((line) {
+  ///   print(line);
+  /// });
+  /// ```
+  Stream<String> readFileAsStream(String pathOrUploadInput);
+
+  /// Writes to a file using a stream.
+  ///
+  /// This method returns a `StreamSink<String>` that can be used to write data to the file.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// StreamSink<String> sink = fileIO.writeFileAsStream("/path/to/file.txt");
+  /// sink.add("Line 1");
+  /// sink.add("Line 2");
+  /// sink.close();
+  /// ```
+  dynamic writeFileAsStream(dynamic pathOrData);
 }

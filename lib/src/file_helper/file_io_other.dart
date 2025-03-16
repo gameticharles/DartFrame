@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'file_io.dart';
 
@@ -15,6 +17,35 @@ class FileIO implements FileIOBase {
     } else {
       throw Exception('File does not exist');
     }
+  }
+
+  Stream<String> _readFromFileDesktopAsStream(String path) async* {
+    var file = File(path);
+    if (await file.exists()) {
+      var lines =
+          file.openRead().transform(utf8.decoder).transform(LineSplitter());
+      await for (var line in lines) {
+        yield line;
+      }
+    } else {
+      throw Exception('File does not exist');
+    }
+  }
+
+  IOSink _writeToFileDesktopAsStream(String path) {
+    var file = File(path);
+    var sink = file.openWrite();
+    return sink;
+  }
+
+  @override
+  IOSink writeFileAsStream(dynamic path) {
+    return _writeToFileDesktopAsStream(path);
+  }
+
+  @override
+  Stream<String> readFileAsStream(String path) {
+    return _readFromFileDesktopAsStream(path);
   }
 
   @override

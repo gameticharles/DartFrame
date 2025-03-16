@@ -1,8 +1,8 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() {
-  // dataframe1();
-  // dataframe2();
+  dataframe1();
+  dataframe2();
 
   // Load the CSV data into a DataFrame and tries to convert string to the right type
   // List input; each inner List is a row of data
@@ -14,7 +14,7 @@ void main() {
   ], rowHeader: [
     'Dog',
     'Dog',
-    'Cat'
+    'Catty'
   ], columns: [
     'a',
     'b',
@@ -24,15 +24,16 @@ void main() {
   print(df);
 
   // Create or update a column via name
-  df['a'] = [1, 2, 3, 4];
+  df['a'] = [1, 2, 3];
   print(df);
 
-// Modify a specific element in the 'a' column
+    // Access and modify column data by index
+  df[2] = [30.0, 'newDate', 5.0];
+  print(df);
+
+  // Modify a specific element in the 'a' column
   df['a'][2] = 30;
   print(df);
-
-// Access and modify row data by index
-  // df[2] = [30, 'newDate', 5, 100.0];
 }
 
 void dataframe1() {
@@ -45,19 +46,19 @@ void dataframe1() {
   );
 
   // Data Exploration
-  print('\nShape: ${df.shape}');
+  print('Shape: ${df.shape}');
+  print('Dimension: ${df.dimension}\n');
   print('List Columns:\n${df.columns}');
   print(df.tail(5)); // View the last 5 rows
   print(df.head(5)); // View the first 5 rows
-  print(df.limit(10,
-      startIndex: 5)); // View some number of rows starting at an index
+  print(df.limit(10, startIndex: 5)); // View some number of rows starting at an index
   print('Describe Data:\n${df.describe()}\n'); // Summary statistics
-  print(
-      'Structure:\n${df.structure()}\n'); // Get the structure of the dataframe
+  print('Structure:\n${df.structure()}\n'); // Get the structure of the dataframe
 
   // Data Cleaning
-  df.fillna('Unknown'); // Fill missing values with 'Unknown'
-  df.replace('<NA>', null); // Replace the missing values with null
+  df = df.fillna('Unknown'); // Fill missing values with 'Unknown'
+  df.replaceInPlace('<NA>', null); // Replace the missing values with null
+  df = df.replace('<NA>', null);
 
   // Data Analysis
   print(df.groupBy('area'));

@@ -11,6 +11,8 @@ documentation: "https://github.com/gameticharles/DartFrame"
 # Add regular dependencies here.
 dependencies:
   intl: ^0.20.1
+  geojson_vi: ^2.2.5
+  geoxml: ^2.6.1
 
 dev_dependencies:
   lints: ^5.0.0
