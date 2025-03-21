@@ -1,4 +1,4 @@
-# 0.2.3
+# 0.3.0
 * **[Fix]** Fixed readme.
 * **[FEATURE]** Added more properties
 * **[FIX]** Fixed DataFrame constructor to create modifiable column lists, allowing column addition after initialization
