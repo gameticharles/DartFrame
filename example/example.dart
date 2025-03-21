@@ -138,12 +138,12 @@ void dataframe2() {
     [5, 6],
     [7, 8]
   ]);
-  var df3 = DataFrame(columns: [
-    'C',
-    'D'
-  ],  [
+  var df3 = DataFrame([
     [10, 11],
     [12, 13]
+  ], columns: [
+    'C',
+    'D'
   ]);
 
 // Vertical concatenation

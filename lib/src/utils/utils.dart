@@ -154,8 +154,6 @@ part of '../../dartframe.dart';
     return _extensionToDriver[".$extension"] ?? 'Unknown';
   }
 
-
-
  /// Calculate the area of a polygon using the Shoelace formula
   double _calculatePolygonArea(List<List<List<double>>> polygonCoords) {
     if (polygonCoords.isEmpty || polygonCoords[0].length < 3) {
@@ -174,95 +172,6 @@ part of '../../dartframe.dart';
     area += (ring.last[0] * ring.first[1]) - (ring.first[0] * ring.last[1]);
     
     return (area.abs() / 2.0);
-  }
-
-   /// Calculate bounds for a geometry
-  List<double> _calculateBounds(GeoJSONGeometry geometry) {
-    if (geometry is GeoJSONPoint) {
-      final coords = geometry.coordinates;
-      return [coords[0], coords[1], coords[0], coords[1]]; // minX, minY, maxX, maxY
-    } else if (geometry is GeoJSONLineString) {
-      return _calculateCoordinatesBounds(geometry.coordinates);
-    } else if (geometry is GeoJSONPolygon) {
-      return _calculatePolygonBounds(geometry.coordinates);
-    } else if (geometry is GeoJSONMultiPoint) {
-      return _calculateCoordinatesBounds(geometry.coordinates);
-    } else if (geometry is GeoJSONMultiLineString) {
-      List<double>? bounds;
-      for (var lineString in geometry.coordinates) {
-        final lineBounds = _calculateCoordinatesBounds(lineString);
-        bounds = _mergeBounds(bounds, lineBounds);
-      }
-      return bounds ?? [0.0, 0.0, 0.0, 0.0];
-    } else if (geometry is GeoJSONMultiPolygon) {
-      List<double>? bounds;
-      for (var polygon in geometry.coordinates) {
-        final polygonBounds = _calculatePolygonBounds(polygon);
-        bounds = _mergeBounds(bounds, polygonBounds);
-      }
-      return bounds ?? [0.0, 0.0, 0.0, 0.0];
-    }
-    return [0.0, 0.0, 0.0, 0.0];
-  }
-
-  /// Calculate bounds for a list of coordinates
-  List<double> _calculateCoordinatesBounds(List<List<double>> coordinates) {
-    if (coordinates.isEmpty) {
-      return [0.0, 0.0, 0.0, 0.0];
-    }
-    
-    double minX = coordinates[0][0];
-    double minY = coordinates[0][1];
-    double maxX = coordinates[0][0];
-    double maxY = coordinates[0][1];
-    
-    for (var point in coordinates) {
-      minX = min(minX, point[0]);
-      minY = min(minY, point[1]);
-      maxX = max(maxX, point[0]);
-      maxY = max(maxY, point[1]);
-    }
-    
-    return [minX, minY, maxX, maxY];
-  }
-
-  /// Calculate bounds for a polygon
-  List<double> _calculatePolygonBounds(List<List<List<double>>> polygonCoords) {
-    if (polygonCoords.isEmpty || polygonCoords[0].isEmpty) {
-      return [0.0, 0.0, 0.0, 0.0];
-    }
-    
-    // Start with the first point of the outer ring
-    double minX = polygonCoords[0][0][0];
-    double minY = polygonCoords[0][0][1];
-    double maxX = polygonCoords[0][0][0];
-    double maxY = polygonCoords[0][0][1];
-    
-    // Check all rings
-    for (var ring in polygonCoords) {
-      for (var point in ring) {
-        minX = min(minX, point[0]);
-        minY = min(minY, point[1]);
-        maxX = max(maxX, point[0]);
-        maxY = max(maxY, point[1]);
-      }
-    }
-    
-    return [minX, minY, maxX, maxY];
-  }
-
-  /// Merge two bounds
-  List<double>? _mergeBounds(List<double>? bounds1, List<double> bounds2) {
-    if (bounds1 == null) {
-      return bounds2;
-    }
-    
-    return [
-      min(bounds1[0], bounds2[0]), // minX
-      min(bounds1[1], bounds2[1]), // minY
-      max(bounds1[2], bounds2[2]), // maxX
-      max(bounds1[3], bounds2[3]), // maxY
-    ];
   }
 
   /// Helper method to check if two points are equal

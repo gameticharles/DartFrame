@@ -131,12 +131,12 @@ print(df.describe());
 
 ```dart
 var df = DataFrame(
-  columns: ['ID', 'Value'],
-  data: [
+  [
     [1, 'A'],
     [2, 'B'],
     [3, 'C'],
   ],
+  columns: ['ID', 'Value'],
 );
 print(df);
 ```
@@ -192,8 +192,8 @@ print(filtered);
 ### Concatenation
 
 ```dart
-var df1 = DataFrame(columns: ['A', 'B'], data: [[1, 2], [3, 4]]);
-var df2 = DataFrame(columns: ['C', 'D'], data: [[5, 6], [7, 8]]);
+var df1 = DataFrame([[1, 2], [3, 4]], columns: ['A', 'B']);
+var df2 = DataFrame([[5, 6], [7, 8]], columns: ['C', 'D']);
 
 // Horizontal concatenation
 var horizontal = df1.concatenate(df2, axis: 1);
@@ -262,11 +262,11 @@ final geoDataFrame = GeoDataFrame.fromCoordinates(
 ```dart
 // Convert a DataFrame with a geometry column to a GeoDataFrame
 final dataFrame = DataFrame(
-  columns: ['id', 'name', 'geometry'],
-  data: [
+  [
     [1, 'Point A', [0.0, 0.0]],
     [2, 'Point B', [1.0, 1.0]],
-  ]
+  ],
+  columns: ['id', 'name', 'geometry'],
 );
 
 final geoDataFrame = GeoDataFrame.fromDataFrame(

@@ -1,3 +1,6 @@
+# 0.3.1
+* **[Fix]** Fixed readme.
+
 # 0.3.0
 * **[Fix]** Fixed readme.
 * **[FEATURE]** Added more properties
