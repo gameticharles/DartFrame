@@ -4,7 +4,7 @@ part of '../../dartframe.dart';
 /// with columns of potentially different types.
 class DataFrame {
   List<dynamic> _columns = List.empty(growable: true);
-  List<dynamic> rowHeader = List.empty(growable: true);
+  List<dynamic> index = List.empty(growable: true);
   List<dynamic> _data = List.empty(growable: true);
   final bool allowFlexibleColumns;
   dynamic replaceMissingValueWith;
@@ -17,7 +17,7 @@ class DataFrame {
   DataFrame._(
     this._columns,
     this._data, {
-    this.rowHeader = const [],
+    this.index = const [],
     this.allowFlexibleColumns = false,
     this.replaceMissingValueWith,
     bool formatData = false,
@@ -40,16 +40,36 @@ class DataFrame {
     }
 
     // If index was entered, check that it's given for all rows or throw error (pd)
-    if (rowHeader.isNotEmpty) {
-      if (rowHeader.length != _data.length) {
+    if (index.isNotEmpty) {
+      if (index.length != _data.length) {
         throw Exception('Index must match number of rows entered');
       }
     }
     // 3.b. If index was not entered, auto-generate
-    if (rowHeader.isEmpty) {
-      rowHeader = List.generate(_data.length, (i) => i);
+    if (index.isEmpty) {
+      index = List.generate(_data.length, (i) => i);
     }
   }
+
+  /// Creates an empty DataFrame.
+  ///
+  /// This constructor is provided for convenience to create an empty DataFrame
+  /// without having to pass any arguments.
+  ///
+  /// Example:
+  /// ```dart
+  /// final df = DataFrame.empty();
+  /// ```
+  DataFrame.empty({
+    List<dynamic>? columns,
+    this.allowFlexibleColumns = false,
+    this.replaceMissingValueWith,
+    List<dynamic> missingDataIndicator = const [],
+  })  : _missingDataIndicator = missingDataIndicator,
+        _data = [],
+        _columns = columns ?? [],
+        index = [];
+        
 
   /// Constructs a DataFrame with the provided column names and data.
   ///
@@ -58,41 +78,61 @@ class DataFrame {
   /// - The [data] parameter specifies the actual data in the DataFrame, organized as a
   /// list of rows, where each row is represented as a list of values corresponding to
   /// the columns.
+  /// 
+  /// - The [index]: Optional list to use as index for the DataFrame
   ///
   /// Example:
   /// ```dart
-  /// var columnNames = ['Name', 'Age', 'City'];
-  /// var data = [
-  ///   ['Alice', 30, 'New York'],
-  ///   ['Bob', 25, 'Los Angeles'],
-  ///   ['Charlie', 35, 'Chicago'],
-  /// ];
-  /// var df = DataFrame(columns: columnNames, data: data);
+  /// // Initialize with positional data parameter and named parameters
+  /// final df = DataFrame(data:[
+  ///   [1, 2, 3.0],
+  ///   [4, 5, 6],
+  ///   [7, 'hi', 9]
+  /// ], rowHeader: [
+  ///   'Dog',
+  ///   'Dog',
+  ///   'Catty'
+  /// ], columns: [
+  ///   'a',
+  ///   'b',
+  ///   'c'
+  /// ]);
+  ///
+  /// // Initialize with only data
+  /// final df2 = DataFrame(data: [
+  ///   [1, 2, 3.0],
+  ///   [4, 5, 6],
+  ///   [7, 'hi', 9]
+  /// ]);
+  ///
+  /// // Initialize empty DataFrame
+  /// final df3 = DataFrame([]);
   /// ```
-  DataFrame(
+  DataFrame(List<List<dynamic>>? data,
       {List<dynamic> columns = const [],
-      List<List<dynamic>> data = const [],
-      List<dynamic> rowHeader = const [],
+      List<dynamic> index = const [],
       this.allowFlexibleColumns = false,
       this.replaceMissingValueWith,
       List<dynamic> missingDataIndicator = const [],
       bool formatData = false})
       : _missingDataIndicator = missingDataIndicator,
-        _data = data,
-        _columns = columns.isEmpty && data.isNotEmpty
+        _data = data ?? [],
+        _columns = columns.isEmpty && data != null && data.isNotEmpty
             ? List.generate(data[0].length, (index) => 'Column${index + 1}')
-            : columns,
-        rowHeader = (rowHeader.isNotEmpty && rowHeader.length != data.length)
+            : List<dynamic>.from(columns),
+        index = (index.isNotEmpty && data != null && index.length != data.length)
             ? throw Exception('Index must match number of rows entered')
-            : (rowHeader.isNotEmpty)
-                ? rowHeader
-                : List.generate(data.length, (i) => i) {
+            : (index.isNotEmpty)
+                ? index
+                : (data != null && data.isNotEmpty) ? List.generate(data.length, (i) => i) : [] {
     // ... validation based on allowFlexibleColumns ...
-    if (formatData) {
+    if (formatData && data != null) {
       // Clean and convert data
       _data = data.map((row) => row.map(_cleanData).toList()).toList();
     }
   }
+
+  
 
   dynamic _cleanData(dynamic value) {
     List<String> commonDateFormats = [
@@ -208,7 +248,7 @@ class DataFrame {
       columnNames,
       rows.sublist(1),
       //rowHeader: hasRowIndex ? rows[0] : List.generate(rows[0].length, (i) => i),
-      rowHeader: [], // todo: Not implemented yet
+      index: [], // todo: Not implemented yet
       replaceMissingValueWith: replaceMissingValueWith,
       allowFlexibleColumns: allowFlexibleColumns,
       formatData: formatData,
@@ -259,7 +299,7 @@ class DataFrame {
     return DataFrame._(
       columnNames,
       data,
-      rowHeader: [], // Not applicable for JSON
+      index: [], // Not applicable for JSON
       replaceMissingValueWith: replaceMissingValueWith,
       allowFlexibleColumns: allowFlexibleColumns,
       formatData: formatData,
@@ -318,8 +358,8 @@ class DataFrame {
     }
 
     return DataFrame(
+      data,
       columns: columns,
-      data: data,
       replaceMissingValueWith: replaceMissingValueWith,
       missingDataIndicator: missingDataIndicator,
     );
@@ -429,7 +469,7 @@ class DataFrame {
 
     // Calculate the maximum width needed for row headers
     int rowHeaderWidth = 0;
-    for (var header in rowHeader) {
+    for (var header in index) {
       int headerWidth = header.toString().length;
       if (headerWidth > rowHeaderWidth) {
         rowHeaderWidth = headerWidth;
@@ -461,7 +501,7 @@ class DataFrame {
       var row = _data[rowIndex];
 
       // Add row header with proper padding
-      buffer.write(rowHeader[rowIndex].toString().padRight(rowHeaderWidth));
+      buffer.write(index[rowIndex].toString().padRight(rowHeaderWidth));
 
       // Add row data
       for (var i = 0; i < row.length; i++) {

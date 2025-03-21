@@ -1,10 +1,16 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() async {
-  // Example 1: Create a GeoDataFrame from a GeoJSON FeatureCollection
+  
   final geoDataFrame = createGeoDataFrameFromSample();
+  print(geoDataFrame.geometry.getCoordinates());
+  print(geoDataFrame.geometry.getCoordinates(ignoreIndex: true));
+  print(geoDataFrame.geometry.getCoordinates(indexParts: true));
+  print(geoDataFrame.geometry.getCoordinates(indexParts: true, indexPartsAsList: true));
+
+  // Example 1: Create a GeoDataFrame from a GeoJSON FeatureCollection
   print('GeoDataFrame created with ${geoDataFrame.featureCount} features');
-  print('Properties: ${geoDataFrame.attributes.columns.join(', ')}');
+  print('Properties: ${geoDataFrame.columns.join(', ')}');
   
   // Print the first feature
   print('\nFirst feature:');
@@ -12,23 +18,28 @@ void main() async {
   
   // Example 2: Access and manipulate attributes
   print('\nAccessing attributes as DataFrame:');
-  print(geoDataFrame.attributes);
+  print(geoDataFrame);
   
   // Add a new column to all features
-  geoDataFrame.addProperty('category', defaultValue: 'education');
+  geoDataFrame.addColumn('category', defaultValue: 'education');
   print('\nAfter adding a new property:');
-  print(geoDataFrame.attributes.columns);
+  print(geoDataFrame.columns);
   
   // Update a specific property
-  geoDataFrame.updateProperty(0, 'category', 'university');
+  geoDataFrame.updateColumn(0, 'category', 'university');
   print('\nAfter updating a property:');
-  print(geoDataFrame.attributes['category']);
+  print(geoDataFrame['category']);
   
   // Example 3: Spatial operations
   // Find features based on a query
   var foundFeatures = geoDataFrame.findFeatures((feature) => 
       feature.properties!['title'].toString().contains('University'));
   print('\nFound ${foundFeatures.length} features containing "University" in title');
+
+  var gg = geoDataFrame.geometry.buffer(distance: 2, resolution: 2, mitreLimit: 0.1);
+  geoDataFrame['geometry'] = gg;
+
+
   
   // Example 4: Export to file
   // await geoDataFrame.toFile('output.geojson');
@@ -44,7 +55,7 @@ void main() async {
   
   final attributeDF = DataFrame(
     columns: ['name', 'description', 'value'],
-    data: [
+     [
     ['Point A', 'Description A', 100],
     ['Point B', 'Description B', 200],
     ['Point C', 'Description C', 300],
@@ -60,7 +71,7 @@ void main() async {
   
   print('\nGeoDataFrame from coordinates:');
   print('Features: ${coordGeoDF.featureCount}');
-  print('Properties: ${coordGeoDF.attributes.columns.join(', ')}');
+  print('Properties: ${coordGeoDF.columns.join(', ')}');
   
   // Example 6: Convert to different formats
   print('\nConverting to rows:');
@@ -70,7 +81,7 @@ void main() async {
   // Example 7: Create from DataFrame
   final df = DataFrame(
     columns: ['id', 'name', 'longitude', 'latitude'],
-    data: [
+    [
       [1, 'Location A', 105.7743099, 21.0717561],
       [2, 'Location B', 105.7771289, 21.0715458],
       [3, 'Location C', 105.7745218, 21.0715658],
@@ -79,14 +90,13 @@ void main() async {
   
   final fromDfGeoDF = GeoDataFrame.fromDataFrame(
     df,
-    geometryColumn: 'longitude',
     geometryType: 'point',
     coordinateType: 'lonlat',
   );
   
   print('\nGeoDataFrame from DataFrame:');
   print('Features: ${fromDfGeoDF.featureCount}');
-  print('Properties: ${fromDfGeoDF.attributes.columns}');
+  print('Properties: ${fromDfGeoDF.columns}');
   
   // Example 8: Create from GeoJSON string
   final geoJsonString = '''
@@ -206,16 +216,15 @@ void main() async {
       }
     }
     
-    fromJsonGeoDF = GeoDataFrame(
+    fromJsonGeoDF = GeoDataFrame.fromFeatureCollection(
       geoJson,
-      jsonHeaders.toList(),
       geometryColumn: 'geometry',
       crs: 'EPSG:4326',
     );
     
     print('\nGeoDataFrame from GeoJSON string:');
     print('Features: ${fromJsonGeoDF.featureCount}');
-    print('Properties: ${fromJsonGeoDF.attributes.columns.join(', ')}');
+    print('Properties: ${fromJsonGeoDF.columns.join(', ')}');
     
     // Demonstrate querying features
     var officeFeature = fromJsonGeoDF.findFeatures(
@@ -285,16 +294,9 @@ GeoDataFrame createGeoDataFrameFromSample() {
   );
   
   // Extract all unique property keys to use as headers
-  final headers = <String>{};
-  for (var feature in featureCollection.features) {
-    if (feature?.properties != null) {
-      headers.addAll(feature!.properties!.keys);
-    }
-  }
   
-  return GeoDataFrame(
+  return GeoDataFrame.fromFeatureCollection(
     featureCollection, 
-    headers.toList(),
     geometryColumn: 'geometry',
     crs: 'EPSG:4326',
   );

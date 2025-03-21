@@ -72,64 +72,70 @@ extension DataFrameOperations on DataFrame {
   /// Throws a `RangeError` if the index is out of range.
   /// Throws an `ArgumentError` if the length of the data does not match the number of columns or rows.
   /// Throws an `ArgumentError` if the key is not an integer or string.
-  void operator []=(dynamic key, dynamic newData) {
-    // if (newData is! List<dynamic> || newData is! Series) {
-    //   throw ArgumentError('Data must be a List or Series');
-    // }
-
+    void operator []=(dynamic key, dynamic newData) {
+    // Convert Series to List if needed
     List<dynamic> data = newData is Series ? newData.data : newData;
 
-    int columnIndex = -1;
-    // Check if the key is an index
+    // Check if the key is an index (row update)
     if (key is int) {
-      // Update the row at the specified index
-
-      // Check if the index is valid
-      if (key < 0 || key >= data.length) {
-        throw RangeError('Index out of range');
+      // Check if the row index is valid
+      if (key < 0 || key >= _data.length) {
+        throw RangeError('Row index out of range');
       }
 
       // Check if the length of the data matches the number of columns
-      if (data.length != columns.length) {
-        throw ArgumentError('Length of data must match the number of columns');
+      if (data.length != _columns.length) {
+        throw ArgumentError('Length of data must match the number of columns (${_columns.length})');
       }
 
-      columnIndex = key;
+      // Update the row at the specified index
+      _data[key] = List<dynamic>.from(data);
     }
-    // Check if the key is a column label
+    // Check if the key is a column label (column update)
     else if (key is String) {
-      // If the column already exists, update it
-      columnIndex = _columns.indexOf(key);
-    }
-    // Check if the key is list indices
-    else if (key is List) {
-    }
-    // Check if the key is Series
-    else if (key is Series) {
+      int columnIndex = _columns.indexOf(key);
+      
+      // If the column exists, update it
+      if (columnIndex != -1) {
+        // Check if the length of the data matches the number of rows
+        if (data.length != _data.length) {
+          throw ArgumentError('Length of data must match the number of rows (${_data.length})');
+        }
+        
+        // Update existing column
+        for (int i = 0; i < _data.length; i++) {
+          _data[i][columnIndex] = data[i];
+        }
+      } 
+      // If the column doesn't exist, add a new one
+      else {
+        // Handle empty DataFrame case
+        if (_data.isEmpty) {
+          // Initialize with empty rows for the first column
+          _data = List.generate(data.length, (_) => []);
+          _columns.add(key);
+          
+          // Add the new column data
+          for (int i = 0; i < data.length; i++) {
+            _data[i].add(data[i]);
+          }
+        } else {
+          // Check if the length of the data matches the number of rows
+          if (data.length != _data.length) {
+            throw ArgumentError('Length of data must match the number of rows (${_data.length})');
+          }
+          
+          // Add the new column
+          addColumn(key, defaultValue: data);
+        }
+      }
     }
     // Handle unsupported key types
-    else {
-      throw ArgumentError('Unsupported key type');
+    else if (key is List || key is Series) {
+      throw ArgumentError('List and Series keys are not yet supported');
     }
-
-    if (columnIndex != -1) {
-      if (_data.isEmpty) {
-        // Assume all new entries should be null
-        _data = List.generate(data.length,
-            (_) => List.filled(_columns.length, replaceMissingValueWith));
-      }
-      // Update existing column
-      for (int i = 0; i < _data.length; i++) {
-        _data[i][columnIndex] = data[i];
-      }
-    } else {
-      // Otherwise, add a new column
-
-      if (data.length != _data.length) {
-        throw ArgumentError('Length of data must match the number of rows');
-      }
-
-      addColumn(key, defaultValue: data);
+    else {
+      throw ArgumentError('Key must be an integer (for row) or string (for column)');
     }
   }
 }

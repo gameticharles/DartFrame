@@ -614,7 +614,7 @@ extension SeriesFunctions on Series {
   /// ```
   Series head([int n = 5]) {
     if (data.isEmpty) {
-      return Series([], name: name);
+      return Series([], name: name, index: index);
     }
     
     // Ensure n is not larger than the data length
@@ -642,7 +642,7 @@ extension SeriesFunctions on Series {
   /// ```
   Series tail([int n = 5]) {
     if (data.isEmpty) {
-      return Series([], name: name);
+      return Series([], name: name, index: index);
     }
     
     // Ensure n is not larger than the data length

@@ -35,6 +35,7 @@ class Series {
     // Add these fields to the Series class
    DataFrame? _parentDataFrame;
    String? _columnName;
+   List<dynamic>? index;
 
   /// Sets the parent DataFrame reference
   void _setParent(DataFrame parent, String columnName) {
@@ -50,18 +51,72 @@ class Series {
   /// Parameters:
   /// - `data`: The data points of the series.
   /// - `name`: The name of the series. This parameter is required.
-  Series(this.data, {required this.name});
+  /// - `index`: Optional list to use as index for the Series
+  Series(this.data, {required this.name, this.index});
 
   /// Returns a string representation of the series.
   ///
   /// This method overrides the `toString` method to provide a meaningful
-  /// string representation of the series, including its name and data points.
-  ///
-  /// Returns:
-  /// A string representing the series in the format: `name: data`
+  /// string representation of the series in a tabular format.
   @override
-  String toString() => '$name: $data';
-  // String toString() => toDataFrame().toString();
+  String toString({int columnSpacing = 2}) {
+    if (data.isEmpty) {
+      return 'Empty Series: $name';
+    }
+
+    // Calculate column width for values
+    int maxValueWidth = 0;
+    for (var value in data) {
+      int valueWidth = value.toString().length;
+      if (valueWidth > maxValueWidth) {
+        maxValueWidth = valueWidth;
+      }
+    }
+
+    // Calculate name width
+    int nameWidth = name.length;
+    
+    // Calculate the maximum width needed for row headers/index
+    int indexWidth = 0;
+    List<dynamic> indexList = index ?? List.generate(data.length, (i) => i);
+    
+    for (var idx in indexList) {
+      int headerWidth = idx.toString().length;
+      if (headerWidth > indexWidth) {
+        indexWidth = headerWidth;
+      }
+    }
+    
+    // Ensure index width is at least as wide as the word "index"
+    indexWidth = max(indexWidth, 5);
+    
+    // Use the maximum of value width and name width for column width
+    int columnWidth = max(maxValueWidth, nameWidth);
+    
+    // Add spacing
+    columnWidth += columnSpacing;
+    indexWidth += columnSpacing;
+
+    // Construct the table string
+    StringBuffer buffer = StringBuffer();
+
+    // Add header
+    buffer.write(' '.padRight(indexWidth));
+    buffer.writeln(name.padRight(columnWidth));
+
+    // Add data rows
+    for (int i = 0; i < data.length; i++) {
+      buffer.write(indexList[i].toString().padRight(indexWidth));
+      buffer.writeln(data[i].toString().padRight(columnWidth));
+    }
+
+    // Add series information
+    buffer.writeln();
+    buffer.writeln('Length: ${data.length}');
+    buffer.writeln('Type: ${data.isEmpty ? 'unknown' : data.first.runtimeType}');
+
+    return buffer.toString();
+  }
 
   /// Length of the data in the series
   int get length => data.length;

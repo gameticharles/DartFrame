@@ -4,18 +4,18 @@ import 'package:test/test.dart';
 void main() {
   group('DataFrame', () {
     test('can be instantiated', () {
-      final dataFrame = DataFrame();
+      final dataFrame = DataFrame([]);
       expect(dataFrame, isNotNull);
     });
 
     test('starts empty', () {
-      final dataFrame = DataFrame();
+      final dataFrame = DataFrame.empty();
       expect(dataFrame.rows, isEmpty);
       expect(dataFrame.columns, isEmpty);
     });
 
     test('can add columns', () {
-      final dataFrame = DataFrame();
+      final dataFrame = DataFrame([]);
       dataFrame.addColumn('A', defaultValue: [1, 2, 3]);
       dataFrame.addColumn('B', defaultValue: [4, 5, 6]);
 
@@ -24,7 +24,7 @@ void main() {
     });
 
     test('can add rows', () {
-      final dataFrame = DataFrame();
+      final dataFrame = DataFrame([]);
       dataFrame.addRow([1, 4]);
       dataFrame.addRow([2, 5]);
 
@@ -53,13 +53,13 @@ void main() {
     });
 
     test('getColumn throws if column does not exist', () {
-      final df = DataFrame();
+      final df = DataFrame([]);
 
       expect(() => df['bad'], throwsA(isA<ArgumentError>()));
     });
 
     test('addColumn adds column correctly', () {
-      final df = DataFrame();
+      final df = DataFrame([]);
       df['col1'] = [1, 2, 3];
 
       expect(df.columns, ['col1']);

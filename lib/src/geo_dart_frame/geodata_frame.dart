@@ -56,268 +56,190 @@ part of '../../dartframe.dart';
 ///   await geoDataFrame.toFile('example/output.geojson');
 /// }
 ///```
-class GeoDataFrame {
-  /// The GeoJSON FeatureCollection that stores all the geospatial data.
-  final GeoJSONFeatureCollection featureCollection;
-
-  /// The headers for the data columns (property names).
-  List headers = [];
-
-  /// The DataFrame that stores the attribute data.
-  late DataFrame _attributes;
-
+class GeoDataFrame extends DataFrame{
+  
   /// The name of the geometry column.
-  final String geometryColumn;
+  String geometryColumn;
 
   /// The coordinate reference system (CRS) of the geometry data.
   final String? crs;
 
-  // Private constructor for internal use.
-  GeoDataFrame(
-    this.featureCollection, 
-    List<dynamic> headers, 
-    {this.geometryColumn = 'geometry', 
-    this.crs,
-    }
-  ) {
+  /// Gets the geometry column as a GeoSeries.
+  GeoSeries get geometry => 
+      GeoSeries(this[geometryColumn].data, crs: crs, name: geometryColumn);
 
-    // Initialize attributes with spatial properties in a single pass
-    _initializeAttributesWithSpatial(headers);
+  /// Gets the attributes as a DataFrame (without the geometry column).
+  DataFrame get attributes {
+    final attributeColumns = columns.where((col) => col.toString() != geometryColumn).toList();
+    final attributeData = rows.map((row) {
+      final rowData = <dynamic>[];
+      for (int i = 0; i < columns.length; i++) {
+        if (columns[i].toString() != geometryColumn) {
+          rowData.add(i < row.length ? row[i] : null);
+        }
+      }
+      return rowData;
+    }).toList();
+    
+    return DataFrame(columns: attributeColumns,  attributeData);
   }
 
   /// Gets the number of features in the data.
-  int get featureCount => featureCollection.features.length;
+  int get featureCount => rows.length;
+
+  /// The headers for the data columns (property names).
+  List get headers => columns.map((col) => col.toString().trim()).toList();
 
   /// Gets the number of properties in the data.
   int get propertyCount => headers.length;
 
-    /// Gets the attribute DataFrame.
-  DataFrame get attributes => _attributes;
-
   /// Gets the total bounds of all geometries in the GeoDataFrame.
   /// Returns [minX, minY, maxX, maxY] for the entire collection.
-  List<double> get totalBounds {
-    if (featureCollection.features.isEmpty) {
-      return [0, 0, 0, 0];
-    }
-    
-    // Start with the first feature's bounds
-    List<double> totalBounds = featureCollection.features[0]!.bbox!;
-    
-    // Update with remaining features
-    for (int i = 1; i < featureCollection.features.length; i++) {
-      var feature = featureCollection.features[i];
-      if (feature != null) {
-        List<double> featureBounds = feature.bbox!;
-        
-        // Update min/max values
-        totalBounds[0] = min(totalBounds[0], featureBounds[0]); // minX
-        totalBounds[1] = min(totalBounds[1], featureBounds[1]); // minY
-        totalBounds[2] = max(totalBounds[2], featureBounds[2]); // maxX
-        totalBounds[3] = max(totalBounds[3], featureBounds[3]); // maxY
-      }
-    }
-    
-    return totalBounds;
-  }
+  List<double> get totalBounds  => geometry.totalBounds;
   
-    /// Returns a GeoDataFrame containing the centroids of all geometries.
-  GeoDataFrame get centroid {
-    final centroidCollection = GeoJSONFeatureCollection([]);
+  /// Returns a GeoDataFrame containing the centroids of all geometries.
+  GeoSeries get centroid =>  geometry.centroid;
+  
+
+  // Constructor that takes a DataFrame (primary constructor)
+  /// Creates a GeoDataFrame from a DataFrame with a column containing geometry data.
+  ///
+  /// [dataFrame]: The DataFrame containing attribute data.
+  /// [geometryColumn]: The name of the column containing geometry data (WKT strings or coordinates).
+  /// [crs]: The coordinate reference system of the geometries.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame(
+  ///   columns: ['id', 'name', 'geometry'],
+  ///   data: [
+  ///     [1, 'Point A', 'POINT(0 0)'],
+  ///     [2, 'Line B', 'LINESTRING(0 0, 1 1, 2 2)'],
+  ///     [3, 'Polygon C', 'POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))']
+  ///   ]
+  /// );
+  /// var gdf = GeoDataFrame(df, geometryColumn: 'geometry', crs: 'EPSG:4326');
+  /// ```
+  GeoDataFrame(
+    DataFrame dataFrame, {
+    this.geometryColumn  = 'geometry',
+    this.crs,
+  }) : super(
+         columns: dataFrame.columns,
+         dataFrame.rows as List<List<dynamic>>,
+         index: dataFrame.index
+       ) {
+    // Process geometry column
+    _processGeometryColumn();
+  }
+
+    /// Process the geometry column to ensure it contains valid GeoJSON geometries
+  void _processGeometryColumn() {
+    if (!columns.contains(geometryColumn)) {
+      throw ArgumentError('Geometry column $geometryColumn not found in DataFrame');
+    }
+    
+    // Convert geometry column values to GeoJSON geometries if needed
+    List<dynamic> geometryValues = this[geometryColumn].data;
+    List<GeoJSONGeometry> processedGeometries = [];
+    
+    for (var value in geometryValues) {
+      GeoJSONGeometry? geometry;
+      
+      if (value is GeoJSONGeometry) {
+        // Already a GeoJSON geometry
+        geometry = value;
+      } else if (value is String) {
+        // Try to parse as WKT
+        geometry = _parseWKT(value);
+      } else if (value is List) {
+        // Try to parse as coordinate list
+        if (value.length >= 2) {
+          List<double> coords = [];
+          for (var coord in value) {
+            coords.add(coord is num ? coord.toDouble() : 0.0);
+          }
+          geometry = GeoJSONPoint(coords);
+        }
+      }
+      
+      // Use default point geometry if extraction failed
+      geometry ??= GeoJSONPoint([0, 0]);
+      processedGeometries.add(geometry);
+    }
+    
+    // Update the geometry column with processed geometries
+    this[geometryColumn] = processedGeometries;
+  }
+
+  /// Creates a GeoDataFrame from a GeoJSON FeatureCollection.
+  ///
+  /// [featureCollection]: The GeoJSON FeatureCollection containing the features.
+  /// [geometryColumn]: The name of the geometry column.
+  /// [crs]: The coordinate reference system of the geometries.
+  factory GeoDataFrame.fromFeatureCollection(
+    GeoJSONFeatureCollection featureCollection, {
+    String geometryColumn = 'geometry',
+    String? crs,
+  }) {
+    // Extract properties and geometries
+    List<Map<String, dynamic>> rows = [];
+    Set<String> columnNames = {};
     
     for (var feature in featureCollection.features) {
       if (feature != null) {
-        // Calculate centroid
-        final centroidCoords = [0.0,0.0];//feature.geometry?.centroid ?? [0,0];
-        final centroidGeom = GeoJSONPoint(centroidCoords);
-        
-        // Create a new feature with the centroid geometry and original properties
-        final centroidFeature = GeoJSONFeature(
-          centroidGeom,
-          properties: Map<String, dynamic>.from(feature.properties ?? {}),
-        );
-        
-        centroidCollection.features.add(centroidFeature);
-      }
-    }
-    
-    // Create a new GeoDataFrame with the centroids
-    return GeoDataFrame(
-      centroidCollection,
-      headers.toList(),
-      geometryColumn: geometryColumn,
-      crs: crs,
-    );
-  }
-
-  /// Checks if a polygon is valid according to Simple Feature Access rules.
-  bool _isValidPolygon(List<List<List<double>>> polygonCoords) {
-    // Check if we have at least one ring
-    if (polygonCoords.isEmpty) {
-      return false;
-    }
-    
-    // For each ring
-    for (var ring in polygonCoords) {
-      // A ring must have at least 4 points (to be closed)
-      if (ring.length < 4) {
-        return false;
-      }
-      
-      // First and last points must be the same (closed ring)
-      if (ring.first[0] != ring.last[0] || ring.first[1] != ring.last[1]) {
-        return false;
-      }
-      
-      // Check for self-intersection (simplified check)
-      // A complete check would require more complex algorithms
-      // This is a basic check for duplicate points
-      Set<String> pointSet = {};
-      for (int i = 0; i < ring.length - 1; i++) { // Skip last point (duplicate of first)
-        String pointKey = '${ring[i][0]},${ring[i][1]}';
-        if (pointSet.contains(pointKey)) {
-          return false; // Duplicate point found
-        }
-        pointSet.add(pointKey);
-      }
-    }
-    
-    return true;
-  }
-
-/// Initializes the attributes DataFrame including spatial properties in a single pass.
-  void _initializeAttributesWithSpatial(List<dynamic> headers) {
-    // Store the current headers to ensure we don't lose any
-    this.headers = headers.toList();
-    
-    // Add spatial property headers if not already present
-    if (!this.headers.contains('geometry')) this.headers.add('geometry');
-    if (!this.headers.contains('area')) this.headers.add('area');
-    if (!this.headers.contains('geom_type')) this.headers.add('geom_type');
-    if (!this.headers.contains('is_valid')) this.headers.add('is_valid');
-    if (!this.headers.contains('bounds')) this.headers.add('bounds');
-    
-    
-    // Extract attribute data from features
-    List<List<dynamic>> data = [];
-    List<String> rowHeaders = [];
-    
-    for (int i = 0; i < featureCollection.features.length; i++) {
-      var feature = featureCollection.features[i];
-      if (feature != null) {
         // Create a row for each feature
-        List<dynamic> row = [];
+        Map<String, dynamic> row = {};
         
-        // Add regular properties
-        for (var header in headers) {
-          row.add(feature.properties?[header]);
+        // Add properties
+        if (feature.properties != null) {
+          row.addAll(feature.properties!);
+          columnNames.addAll(feature.properties!.keys);
         }
         
-        // Calculate and add spatial properties
-
-        // 0. Geometry as WKT string
-        row.add(feature.geometry!.toWkt());
+        // Add geometry
+        row[geometryColumn] = feature.geometry;
         
-        // 1. Area
-        double featureArea = 0.0;
-        if (feature.geometry is GeoJSONPolygon) {
-          featureArea = (feature.geometry as GeoJSONPolygon).area;
-        } else if (feature.geometry is GeoJSONMultiPolygon) {
-          featureArea = (feature.geometry as GeoJSONMultiPolygon).area;
-        }
-        row.add(featureArea);
-        
-        // 2. Geometry type
-        String geomType = 'Unknown';
-        if (feature.geometry is GeoJSONPoint) {
-          geomType = 'Point';
-        } else if (feature.geometry is GeoJSONMultiPoint) {
-          geomType = 'MultiPoint';
-        } else if (feature.geometry is GeoJSONLineString) {
-          geomType = 'LineString';
-        } else if (feature.geometry is GeoJSONMultiLineString) {
-          geomType = 'MultiLineString';
-        } else if (feature.geometry is GeoJSONPolygon) {
-          geomType = 'Polygon';
-        } else if (feature.geometry is GeoJSONMultiPolygon) {
-          geomType = 'MultiPolygon';
-        }
-        row.add(geomType);
-        
-        // 3. Validity
-        bool isValid = true;
-        if (feature.geometry is GeoJSONPolygon) {
-          isValid = _isValidPolygon((feature.geometry as GeoJSONPolygon).coordinates);
-        } else if (feature.geometry is GeoJSONMultiPolygon) {
-          isValid = (feature.geometry as GeoJSONMultiPolygon).coordinates
-              .every((polygon) => _isValidPolygon(polygon));
-        }
-        row.add(isValid);
-        
-        // 4. Bounds
-        List<double> bounds = feature.bbox ?? [0, 0, 0, 0];
-        row.add(bounds);
-
-
-        
-        data.add(row);
-        rowHeaders.add(i.toString()); // Use feature index as row header
+        rows.add(row);
       }
     }
     
-    // Create the DataFrame
-    _attributes = DataFrame(
-      columns: this.headers,
-      data: data,
-      rowHeader: rowHeaders,
-    );
+    // Create column list with geometry column at the end
+    List<String> columns = columnNames.toList();
+    if (!columns.contains(geometryColumn)) {
+      columns.add(geometryColumn);
+    }
+    
+    // Create data rows
+    List<List<dynamic>> data = [];
+    for (var row in rows) {
+      List<dynamic> rowData = [];
+      for (var column in columns) {
+        rowData.add(row[column]);
+      }
+      data.add(rowData);
+    }
+    
+    // Create DataFrame
+    final df = DataFrame(columns: columns, data);
+    
+    // Create GeoDataFrame
+    return GeoDataFrame(df, geometryColumn: geometryColumn, crs: crs);
   }
 
-  /// A constant map linking file extensions to their respective drivers.
-  static const Map<String, String> _extensionToDriver = {
-    ".csv": "CSV",
-    ".txt": "TXT",
-    ".json": "GeoJSON",
-    ".geojson": "GeoJSON",
-    ".geojsonl": "GeoJSONSeq",
-    ".geojsons": "GeoJSONSeq",
-    ".bna": "BNA",
-    ".dxf": "DXF",
-    ".shp": "ESRI Shapefile",
-    ".dbf": "ESRI Shapefile",
-    ".gpkg": "GPKG",
-    ".gml": "GML",
-    ".xml": "GML",
-    ".kml": "KML",
-    ".gpx": "GPX",
-    ".gtm": "GPSTrackMaker",
-    ".gtz": "GPSTrackMaker",
-    ".tab": "MapInfo File",
-    ".mif": "MapInfo File",
-    ".mid": "MapInfo File",
-    ".dgn": "DGN",
-    ".fgb": "FlatGeobuf",
-  };
-
-  /// Determines the appropriate driver for a given file extension.
-  ///
-  /// Returns the driver as a string. If no matching driver is found, returns 'Unknown'.
-  static String _getDriverForExtension(String filePath) {
-    String extension = filePath.split('.').last.toLowerCase();
-    return _extensionToDriver[".$extension"] ?? 'Unknown';
-  }
 
   /// Creates a GeoDataFrame from a DataFrame and a geometry column.
   ///
   /// [dataFrame]: The DataFrame containing attribute data.
-  /// [geometryColumn]: The name of the column containing geometry data.
+  /// [geometryColumn]: The name of the column containing geometry data. If not provided,
+  ///   the method will look for standard coordinate columns based on coordinateType.
   /// [geometryType]: The type of geometry ('point', 'linestring', 'polygon').
   /// [coordinateType]: The type of coordinates ('xy', 'lonlat').
   ///
   /// Returns a new GeoDataFrame.
   static GeoDataFrame fromDataFrame(
     DataFrame dataFrame, {
-    required String geometryColumn,
+    String? geometryColumn,
     String geometryType = 'point',
     String coordinateType = 'lonlat',
     String? crs,
@@ -325,113 +247,211 @@ class GeoDataFrame {
     // Create a feature collection
     final featureCollection = GeoJSONFeatureCollection([]);
     
-    // Get column indices
-    int geometryColumnIndex = dataFrame.columns.indexOf(geometryColumn);
-    if (geometryColumnIndex == -1) {
-      throw ArgumentError('Geometry column $geometryColumn not found in DataFrame');
-    }
+    // Check if we have a specific geometry column or need to use coordinate columns
+    int? geometryColumnIndex;
+    Map<String, int> coordinateIndices = {};
     
-    // Create headers excluding the geometry column
-    List<String> headers = dataFrame.columns
-        .where((c) => c.toString() != geometryColumn)
-        .map((c) => c.toString())
-        .toList();
+    if (geometryColumn != null) {
+      // Use the specified geometry column
+      geometryColumnIndex = dataFrame.columns.indexOf(geometryColumn);
+      if (geometryColumnIndex == -1) {
+        throw ArgumentError('Geometry column $geometryColumn not found in DataFrame');
+      }
+    } else {
+      // Look for coordinate columns based on coordinateType
+      if (coordinateType == 'lonlat') {
+        // Find longitude and latitude columns
+        for (int i = 0; i < dataFrame.columns.length; i++) {
+          String colName = dataFrame.columns[i].toString().toLowerCase();
+          if (colName == 'longitude' || colName == 'lon') {
+            coordinateIndices['longitude'] = i;
+          } else if (colName == 'latitude' || colName == 'lat') {
+            coordinateIndices['latitude'] = i;
+          } else if (colName == 'altitude' || colName == 'alt' || colName == 'elevation') {
+            coordinateIndices['altitude'] = i;
+          }
+        }
+        
+        if (!coordinateIndices.containsKey('longitude') || !coordinateIndices.containsKey('latitude')) {
+          throw ArgumentError('Could not find longitude and latitude columns in DataFrame');
+        }
+      } else if (coordinateType == 'xy') {
+        // Find x and y columns
+        for (int i = 0; i < dataFrame.columns.length; i++) {
+          String colName = dataFrame.columns[i].toString().toLowerCase();
+          if (colName == 'x') {
+            coordinateIndices['x'] = i;
+          } else if (colName == 'y') {
+            coordinateIndices['y'] = i;
+          } else if (colName == 'z') {
+            coordinateIndices['z'] = i;
+          }
+        }
+        
+        if (!coordinateIndices.containsKey('x') || !coordinateIndices.containsKey('y')) {
+          throw ArgumentError('Could not find x and y columns in DataFrame');
+        }
+      }
+    }
     
     // Create a feature for each row in the DataFrame
     for (int i = 0; i < dataFrame.rows.length; i++) {
       final row = dataFrame.rows[i];
-      
-      // Extract geometry
-      final geometryData = row[geometryColumnIndex];
       GeoJSONGeometry? geometry;
       
-      if (geometryType == 'point') {
-        if (geometryData is List && geometryData.length >= 2) {
-          // Direct coordinate list
-          List<double> coords = [];
-          for (var coord in geometryData) {
-            coords.add(coord is num ? coord.toDouble() : 0.0);
-          }
-          geometry = GeoJSONPoint(coords);
-        } else if (geometryData is Map) {
-          // Map with x/y or lon/lat keys
-          double? x, y;
-          
-          if (coordinateType == 'lonlat') {
-            x = geometryData['longitude'] is num ? 
-                geometryData['longitude'].toDouble() : 
-                (geometryData['lon'] is num ? geometryData['lon'].toDouble() : null);
+      if (geometryColumnIndex != null) {
+        // Extract geometry from the specified column
+        final geometryData = row[geometryColumnIndex];
+        
+        // Process geometry based on type
+        // ... existing geometry extraction code ...
+        if (geometryType == 'point') {
+          if (geometryData is List && geometryData.length >= 2) {
+            // Direct coordinate list
+            List<double> coords = [];
+            for (var coord in geometryData) {
+              coords.add(coord is num ? coord.toDouble() : 0.0);
+            }
+            geometry = GeoJSONPoint(coords);
+          } else if (geometryData is Map) {
+            // Map with x/y or lon/lat keys
+            double? x, y;
             
-            y = geometryData['latitude'] is num ? 
-                geometryData['latitude'].toDouble() : 
-                (geometryData['lat'] is num ? geometryData['lat'].toDouble() : null);
-          } else { // xy
-            x = geometryData['x'] is num ? geometryData['x'].toDouble() : null;
-            y = geometryData['y'] is num ? geometryData['y'].toDouble() : null;
-          }
-          
-          if (x != null && y != null) {
-            geometry = GeoJSONPoint([x, y]);
-          }
-        } else if (geometryData is String) {
-          // Try to parse WKT or GeoJSON string
-          try {
-            // Simple WKT point parsing (POINT(x y))
-            final match = RegExp(r'POINT\s*\(\s*([0-9.-]+)\s+([0-9.-]+)\s*\)')
-                .firstMatch(geometryData);
-            if (match != null) {
-              double x = double.parse(match.group(1)!);
-              double y = double.parse(match.group(2)!);
+            if (coordinateType == 'lonlat') {
+              x = geometryData['longitude'] is num ? 
+                  geometryData['longitude'].toDouble() : 
+                  (geometryData['lon'] is num ? geometryData['lon'].toDouble() : null);
+              
+              y = geometryData['latitude'] is num ? 
+                  geometryData['latitude'].toDouble() : 
+                  (geometryData['lat'] is num ? geometryData['lat'].toDouble() : null);
+            } else { // xy
+              x = geometryData['x'] is num ? geometryData['x'].toDouble() : null;
+              y = geometryData['y'] is num ? geometryData['y'].toDouble() : null;
+            }
+            
+            if (x != null && y != null) {
               geometry = GeoJSONPoint([x, y]);
-            } else {
-              // Try as GeoJSON
-              final geoJson = GeoJSON.fromJSON(geometryData);
-              if (geoJson is GeoJSONGeometry) {
-                geometry = geoJson;
+            }
+          } else if (geometryData is String) {
+            // Try to parse WKT or GeoJSON string
+            try {
+              // Simple WKT point parsing (POINT(x y))
+              final match = RegExp(r'POINT\s*\(\s*([0-9.-]+)\s+([0-9.-]+)\s*\)')
+                  .firstMatch(geometryData);
+              if (match != null) {
+                double x = double.parse(match.group(1)!);
+                double y = double.parse(match.group(2)!);
+                geometry = GeoJSONPoint([x, y]);
+              } else {
+                // Try as GeoJSON
+                final geoJson = GeoJSON.fromJSON(geometryData);
+                if (geoJson is GeoJSONGeometry) {
+                  geometry = geoJson;
+                }
+              }
+            } catch (e) {
+              // Parsing failed, will use default geometry
+            }
+          }
+        } else if (geometryType == 'linestring') {
+          // Handle linestring geometry
+          if (geometryData is List && geometryData.isNotEmpty && geometryData[0] is List) {
+            List<List<double>> coords = [];
+            for (var point in geometryData) {
+              if (point is List && point.length >= 2) {
+                coords.add([
+                  point[0] is num ? point[0].toDouble() : 0.0,
+                  point[1] is num ? point[1].toDouble() : 0.0
+                ]);
               }
             }
-          } catch (e) {
-            // Parsing failed, will use default geometry
+            if (coords.isNotEmpty) {
+              geometry = GeoJSONLineString(coords);
+            }
+          }
+        } else if (geometryType == 'polygon') {
+          // Handle polygon geometry
+          if (geometryData is List && geometryData.isNotEmpty && geometryData[0] is List) {
+            List<List<List<double>>> coords = [];
+            List<List<double>> ring = [];
+            
+            for (var point in geometryData) {
+              if (point is List && point.length >= 2) {
+                ring.add([
+                  point[0] is num ? point[0].toDouble() : 0.0,
+                  point[1] is num ? point[1].toDouble() : 0.0
+                ]);
+              }
+            }
+            
+            if (ring.isNotEmpty) {
+              // Ensure the ring is closed
+              if (ring.first[0] != ring.last[0] || ring.first[1] != ring.last[1]) {
+                ring.add([ring.first[0], ring.first[1]]);
+              }
+              coords.add(ring);
+              geometry = GeoJSONPolygon(coords);
+            }
           }
         }
-      } else if (geometryType == 'linestring') {
-        // Handle linestring geometry
-        if (geometryData is List && geometryData.isNotEmpty && geometryData[0] is List) {
-          List<List<double>> coords = [];
-          for (var point in geometryData) {
-            if (point is List && point.length >= 2) {
-              coords.add([
-                point[0] is num ? point[0].toDouble() : 0.0,
-                point[1] is num ? point[1].toDouble() : 0.0
-              ]);
-            }
-          }
-          if (coords.isNotEmpty) {
-            geometry = GeoJSONLineString(coords);
-          }
-        }
-      } else if (geometryType == 'polygon') {
-        // Handle polygon geometry
-        if (geometryData is List && geometryData.isNotEmpty && geometryData[0] is List) {
-          List<List<List<double>>> coords = [];
-          List<List<double>> ring = [];
+      } else {
+        // Create geometry from coordinate columns
+        if (geometryType == 'point') {
+          List<double> coords = [];
           
-          for (var point in geometryData) {
-            if (point is List && point.length >= 2) {
-              ring.add([
-                point[0] is num ? point[0].toDouble() : 0.0,
-                point[1] is num ? point[1].toDouble() : 0.0
-              ]);
+          if (coordinateType == 'lonlat') {
+            // Get longitude and latitude
+            var lonIndex = coordinateIndices['longitude']!;
+            var latIndex = coordinateIndices['latitude']!;
+            
+            var lon = row[lonIndex];
+            var lat = row[latIndex];
+            
+            double lonValue = lon is num ? lon.toDouble() : 
+                (lon is String ? double.tryParse(lon) ?? 0.0 : 0.0);
+            double latValue = lat is num ? lat.toDouble() : 
+                (lat is String ? double.tryParse(lat) ?? 0.0 : 0.0);
+            
+            coords.add(lonValue);
+            coords.add(latValue);
+            
+            // Add altitude if available
+            if (coordinateIndices.containsKey('altitude')) {
+              var altIndex = coordinateIndices['altitude']!;
+              var alt = row[altIndex];
+              double altValue = alt is num ? alt.toDouble() : 
+                  (alt is String ? double.tryParse(alt) ?? 0.0 : 0.0);
+              coords.add(altValue);
+            }
+          } else if (coordinateType == 'xy') {
+            // Get x and y
+            var xIndex = coordinateIndices['x']!;
+            var yIndex = coordinateIndices['y']!;
+            
+            var x = row[xIndex];
+            var y = row[yIndex];
+            
+            double xValue = x is num ? x.toDouble() : 
+                (x is String ? double.tryParse(x) ?? 0.0 : 0.0);
+            double yValue = y is num ? y.toDouble() : 
+                (y is String ? double.tryParse(y) ?? 0.0 : 0.0);
+            
+            coords.add(xValue);
+            coords.add(yValue);
+            
+            // Add z if available
+            if (coordinateIndices.containsKey('z')) {
+              var zIndex = coordinateIndices['z']!;
+              var z = row[zIndex];
+              double zValue = z is num ? z.toDouble() : 
+                  (z is String ? double.tryParse(z) ?? 0.0 : 0.0);
+              coords.add(zValue);
             }
           }
           
-          if (ring.isNotEmpty) {
-            // Ensure the ring is closed
-            if (ring.first[0] != ring.last[0] || ring.first[1] != ring.last[1]) {
-              ring.add([ring.first[0], ring.first[1]]);
-            }
-            coords.add(ring);
-            geometry = GeoJSONPolygon(coords);
+          if (coords.length >= 2) {
+            geometry = GeoJSONPoint(coords);
           }
         }
       }
@@ -442,9 +462,18 @@ class GeoDataFrame {
       // Create properties from other columns
       final properties = <String, dynamic>{};
       for (int j = 0; j < dataFrame.columns.length; j++) {
-        if (j != geometryColumnIndex) {
-          properties[dataFrame.columns[j].toString()] = row[j];
+        // Skip the geometry column if specified
+        if (geometryColumnIndex != null && j == geometryColumnIndex) {
+          continue;
         }
+        
+        // Skip coordinate columns if using separate coordinates
+        if (geometryColumnIndex == null && 
+            (coordinateIndices.containsValue(j) && geometryType == 'point')) {
+          continue;
+        }
+        
+        properties[dataFrame.columns[j].toString()] = row[j];
       }
       
       // Create feature
@@ -452,9 +481,9 @@ class GeoDataFrame {
       featureCollection.features.add(feature);
     }
     
-    return GeoDataFrame(featureCollection, headers);
+    return GeoDataFrame.fromFeatureCollection(featureCollection, crs: crs);
   }
-
+  
   /// Creates a GeoDataFrame from a list of coordinates.
   ///
   /// [coordinates]: A list of coordinate pairs (can be [x,y], [lon,lat], etc.)
@@ -469,76 +498,78 @@ class GeoDataFrame {
     String coordinateType = 'xy',
     String? crs,
   }) {
-    // Create a feature collection
-    final featureCollection = GeoJSONFeatureCollection([]);
+    // Create a DataFrame with geometry column
+    List<List<dynamic>> data = [];
     
-    // Create a feature for each coordinate pair
     for (int i = 0; i < coordinates.length; i++) {
-      final coord = coordinates[i];
-      if (coord.length < 2) {
-        throw ArgumentError('Each coordinate must have at least 2 values (x,y or lon,lat)');
-      }
+      List<dynamic> row = [];
       
-      // Create point geometry
-      final point = GeoJSONPoint(coord);
-      
-      // Create properties from attributes if provided
-      Map<String, dynamic>? properties;
+      // Add attributes if provided
       if (attributes != null && i < attributes.rows.length) {
-        properties = {};
-        for (int j = 0; j < attributes.columns.length; j++) {
-          properties[attributes.columns[j].toString()] = attributes.rows[i][j];
-        }
+        row.addAll(attributes.rows[i]);
       }
       
-      // Create feature
-      final feature = GeoJSONFeature(point, properties: properties);
-      featureCollection.features.add(feature);
+      // Add geometry
+      row.add(coordinates[i]);
+      
+      data.add(row);
     }
     
-    // Determine headers from attributes or create default
-    List<String> headers = [];
+    // Create columns
+    List<String> columns = [];
     if (attributes != null) {
-      headers = attributes.columns.map((c) => c.toString()).toList();
+      columns.addAll(attributes.columns.map((c) => c.toString()));
     }
+    columns.add('geometry');
     
-    return GeoDataFrame(
-      featureCollection, 
-      headers,
-      geometryColumn: 'geometry',
-      crs: crs,
-    );
+    // Create DataFrame
+    final df = DataFrame(columns: columns, data);
+    
+    // Create GeoDataFrame
+    return GeoDataFrame(df, geometryColumn: 'geometry', crs: crs);
   }
 
   /// Extracts the geometries as a list.
   ///
   /// [asGeoJSON]: If true, returns geometries as GeoJSON objects.
   /// If false, returns geometries as coordinate lists.
-  List<dynamic> geometries({bool asGeoJSON = false}) {
-    List<dynamic> result = [];
+  List<dynamic> geometries ({bool asGeoJSON = false}) => geometry.geometries(asGeoJSON: asGeoJSON);
+
+  /// Get the GeoJSON FeatureCollection
+  GeoJSONFeatureCollection get featureCollection => toFeatureCollection();
+
+  /// Converts the GeoDataFrame to a GeoJSON FeatureCollection.
+  GeoJSONFeatureCollection toFeatureCollection() {
+    final features = <GeoJSONFeature>[];
     
-    for (var feature in featureCollection.features) {
-      if (feature != null) {
-        if (asGeoJSON) {
-          result.add(feature.geometry);
-        } else {
-          // Extract coordinates based on geometry type
-          if (feature.geometry is GeoJSONPoint) {
-            result.add((feature.geometry as GeoJSONPoint).coordinates);
-          } else if (feature.geometry is GeoJSONLineString) {
-            result.add((feature.geometry as GeoJSONLineString).coordinates);
-          } else if (feature.geometry is GeoJSONPolygon) {
-            result.add((feature.geometry as GeoJSONPolygon).coordinates);
-          } else {
-            // Default empty coordinates for unsupported geometry types
-            result.add([]);
-          }
+    for (int i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      
+      // Get geometry
+      final geomIndex = columns.indexOf(geometryColumn);
+      final geom = geomIndex >= 0 && geomIndex < row.length ? 
+          row[geomIndex] : GeoJSONPoint([0, 0]);
+      
+      // Create properties
+      final properties = <String, dynamic>{};
+      for (int j = 0; j < columns.length; j++) {
+        if (j != geomIndex && j < row.length) {
+          properties[columns[j].toString()] = row[j];
         }
       }
+      
+      // Create feature
+      final feature = GeoJSONFeature(
+        geom is GeoJSONGeometry ? geom : GeoJSONPoint([0, 0]),
+        properties: properties
+      );
+      
+      features.add(feature);
     }
     
-    return result;
+    return GeoJSONFeatureCollection(features);
   }
+
 
   /// Reads spatial data from a file, automatically determining the driver.
   ///
@@ -556,6 +587,7 @@ class GeoDataFrame {
     String textDelimiter = '"',
     bool delimitAllFields = false,
     Map<String, int>? coordinatesColumns,
+    String? geometryColumn,
     String coordinateType = 'lonlat',
     String? crs,
   }) async {
@@ -575,39 +607,49 @@ class GeoDataFrame {
 
     // Create a new FeatureCollection to store the data
     final featureCollection = GeoJSONFeatureCollection([]);
-    List<String> headers = [];
 
     switch (driver) {
       case 'TXT':
       case 'CSV':
+        // First, collect all lines to build a DataFrame
+        List<String> allLines = [];
         await for (String line in lines) {
-          if (headers.isEmpty && hasHeader) {
-            headers = line.split(delimiter).map((e) => e.trim()).toList();
-            continue;
+          allLines.add(line);
+        }
+        
+        // Create a DataFrame from the CSV data
+        DataFrame df = DataFrame.fromCSV(
+          csv: allLines.join('\n'),
+          delimiter: delimiter,
+          hasHeader: hasHeader,
+        );
+        
+        // If a geometry column is specified, try to parse WKT geometries
+        if (geometryColumn != null) {
+          int geometryColumnIndex = df.columns.indexOf(geometryColumn);
+          if (geometryColumnIndex != -1) {
+            // Create a GeoDataFrame directly from the DataFrame with WKT geometries
+            return GeoDataFrame(df, geometryColumn: geometryColumn, crs: crs);
           }
-
-          final values = line.split(delimiter).map((e) => e.trim()).toList();
+        }
+        
+        // If no geometry column is specified or found, fall back to coordinate columns
+        if (coordinatesColumns != null) {
+          // Create a feature collection
+          final featureCollection = GeoJSONFeatureCollection([]);
           
-          // Generate headers if not provided
-          if (headers.isEmpty) {
-            headers = List.generate(values.length, (i) => i.toString());
-          }
-
-          // Create properties map
-          final properties = <String, dynamic>{};
-          for (var i = 0; i < values.length; i++) {
-            if (i < headers.length) {
-              // Try to parse numeric values
-              var value = values[i];
-              var numValue = double.tryParse(value);
-              properties[headers[i]] = numValue ?? value;
+          // Process rows to extract coordinates
+          for (int i = 0; i < df.rows.length; i++) {
+            final row = df.rows[i];
+            
+            // Create properties map from all columns
+            final properties = <String, dynamic>{};
+            for (int j = 0; j < df.columns.length; j++) {
+              properties[df.columns[j].toString()] = row[j];
             }
-          }
-
-          // Extract coordinates if specified
-          List<double>? coordinates;
-          if (coordinatesColumns != null) {
-            coordinates = [];
+            
+            // Extract coordinates
+            List<double>? coordinates;
             
             // Support for different coordinate types
             if (coordinateType == 'lonlat' || coordinateType == 'xy') {
@@ -616,23 +658,31 @@ class GeoDataFrame {
               
               if (coordinateType == 'lonlat') {
                 if (coordinatesColumns.containsKey('longitude') && 
-                    coordinatesColumns['longitude']! < values.length) {
-                  x = double.tryParse(values[coordinatesColumns['longitude']!]);
+                    coordinatesColumns['longitude']! < df.columns.length) {
+                  var lonValue = row[coordinatesColumns['longitude']!];
+                  x = lonValue is num ? lonValue.toDouble() : 
+                      (lonValue is String ? double.tryParse(lonValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('latitude') && 
-                    coordinatesColumns['latitude']! < values.length) {
-                  y = double.tryParse(values[coordinatesColumns['latitude']!]);
+                    coordinatesColumns['latitude']! < df.columns.length) {
+                  var latValue = row[coordinatesColumns['latitude']!];
+                  y = latValue is num ? latValue.toDouble() : 
+                      (latValue is String ? double.tryParse(latValue) : null);
                 }
               } else { // xy
                 if (coordinatesColumns.containsKey('x') && 
-                    coordinatesColumns['x']! < values.length) {
-                  x = double.tryParse(values[coordinatesColumns['x']!]);
+                    coordinatesColumns['x']! < df.columns.length) {
+                  var xValue = row[coordinatesColumns['x']!];
+                  x = xValue is num ? xValue.toDouble() : 
+                      (xValue is String ? double.tryParse(xValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('y') && 
-                    coordinatesColumns['y']! < values.length) {
-                  y = double.tryParse(values[coordinatesColumns['y']!]);
+                    coordinatesColumns['y']! < df.columns.length) {
+                  var yValue = row[coordinatesColumns['y']!];
+                  y = yValue is num ? yValue.toDouble() : 
+                      (yValue is String ? double.tryParse(yValue) : null);
                 }
               }
               
@@ -645,33 +695,45 @@ class GeoDataFrame {
               
               if (coordinateType == 'lonlatz') {
                 if (coordinatesColumns.containsKey('longitude') && 
-                    coordinatesColumns['longitude']! < values.length) {
-                  x = double.tryParse(values[coordinatesColumns['longitude']!]);
+                    coordinatesColumns['longitude']! < df.columns.length) {
+                  var lonValue = row[coordinatesColumns['longitude']!];
+                  x = lonValue is num ? lonValue.toDouble() : 
+                      (lonValue is String ? double.tryParse(lonValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('latitude') && 
-                    coordinatesColumns['latitude']! < values.length) {
-                  y = double.tryParse(values[coordinatesColumns['latitude']!]);
+                    coordinatesColumns['latitude']! < df.columns.length) {
+                  var latValue = row[coordinatesColumns['latitude']!];
+                  y = latValue is num ? latValue.toDouble() : 
+                      (latValue is String ? double.tryParse(latValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('altitude') && 
-                    coordinatesColumns['altitude']! < values.length) {
-                  z = double.tryParse(values[coordinatesColumns['altitude']!]);
+                    coordinatesColumns['altitude']! < df.columns.length) {
+                  var altValue = row[coordinatesColumns['altitude']!];
+                  z = altValue is num ? altValue.toDouble() : 
+                      (altValue is String ? double.tryParse(altValue) : null);
                 }
               } else { // xyz
                 if (coordinatesColumns.containsKey('x') && 
-                    coordinatesColumns['x']! < values.length) {
-                  x = double.tryParse(values[coordinatesColumns['x']!]);
+                    coordinatesColumns['x']! < df.columns.length) {
+                  var xValue = row[coordinatesColumns['x']!];
+                  x = xValue is num ? xValue.toDouble() : 
+                      (xValue is String ? double.tryParse(xValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('y') && 
-                    coordinatesColumns['y']! < values.length) {
-                  y = double.tryParse(values[coordinatesColumns['y']!]);
+                    coordinatesColumns['y']! < df.columns.length) {
+                  var yValue = row[coordinatesColumns['y']!];
+                  y = yValue is num ? yValue.toDouble() : 
+                      (yValue is String ? double.tryParse(yValue) : null);
                 }
                 
                 if (coordinatesColumns.containsKey('z') && 
-                    coordinatesColumns['z']! < values.length) {
-                  z = double.tryParse(values[coordinatesColumns['z']!]);
+                    coordinatesColumns['z']! < df.columns.length) {
+                  var zValue = row[coordinatesColumns['z']!];
+                  z = zValue is num ? zValue.toDouble() : 
+                      (zValue is String ? double.tryParse(zValue) : null);
                 }
               }
               
@@ -682,28 +744,39 @@ class GeoDataFrame {
                 }
               }
             }
+            
+            // Create a Point geometry if coordinates are available
+            if (coordinates != null && coordinates.length >= 2) {
+              final point = GeoJSONPoint(coordinates);
+              final feature = GeoJSONFeature(point, properties: properties);
+              featureCollection.features.add(feature);
+            } else {
+              // Create a feature without geometry if coordinates are not available
+              final feature = GeoJSONFeature(
+                GeoJSONPoint([0, 0]), // Default point
+                properties: properties
+              );
+              featureCollection.features.add(feature);
+            }
           }
-
-          // Create a Point geometry if coordinates are available
-          if (coordinates != null && coordinates.length >= 2) {
-            final point = GeoJSONPoint(coordinates);
-            final feature = GeoJSONFeature(point, properties: properties);
-            featureCollection.features.add(feature);
-          } else {
-            // Create a feature without geometry if coordinates are not available
-            final feature = GeoJSONFeature(
-              GeoJSONPoint([0, 0]), // Default point
-              properties: properties
-            );
-            featureCollection.features.add(feature);
-          }
+          
+          return GeoDataFrame.fromFeatureCollection(
+            featureCollection, 
+            crs: crs
+          );
         }
-        return GeoDataFrame(featureCollection, headers, crs: crs);
-
+        
+        // If neither geometry column nor coordinate columns are specified,
+        // return a DataFrame with no geometries
+        return GeoDataFrame.fromFeatureCollection(
+          GeoJSONFeatureCollection([]),
+          crs: crs
+        );
+        
       case 'ESRI Shapefile':
         // Read Shapefile - to be implemented
         // For now, return empty GeoDataFrame
-        return GeoDataFrame(featureCollection, []);
+        return GeoDataFrame.fromFeatureCollection(featureCollection);
 
       case 'GeoJSON':
         // Read GeoJSON file
@@ -716,27 +789,19 @@ class GeoDataFrame {
         final geoJson = GeoJSON.fromJSON(jsonString);
         
         if (geoJson is GeoJSONFeatureCollection) {
-          // Extract headers from the first feature's properties
-          if (geoJson.features.isNotEmpty && geoJson.features[0]?.properties != null) {
-            headers = geoJson.features[0]!.properties!.keys.toList();
-          }
-          return GeoDataFrame(geoJson, headers);
+          return GeoDataFrame.fromFeatureCollection(geoJson);
         } else if (geoJson is GeoJSONFeature) {
           // Create a feature collection with a single feature
           final collection = GeoJSONFeatureCollection([]);
           collection.features.add(geoJson);
           
-          // Extract headers from the feature's properties
-          if (geoJson.properties != null) {
-            headers = geoJson.properties!.keys.toList();
-          }
-          return GeoDataFrame(collection, headers);
+          return GeoDataFrame.fromFeatureCollection(collection);
         } else if (geoJson is GeoJSONGeometry) {
           // Create a feature with the geometry
           final feature = GeoJSONFeature(geoJson);
           final collection = GeoJSONFeatureCollection([]);
           collection.features.add(feature);
-          return GeoDataFrame(collection, []);
+          return GeoDataFrame.fromFeatureCollection(collection);
         }
         break;
 
@@ -808,12 +873,7 @@ class GeoDataFrame {
           }
         }
         
-        // Extract headers from the first feature's properties if available
-        if (collection.features.isNotEmpty && collection.features[0]?.properties != null) {
-          headers = collection.features[0]!.properties!.keys.toList();
-        }
-        
-        return GeoDataFrame(collection, headers);
+        return GeoDataFrame.fromFeatureCollection(collection);
 
       case 'GML':
       case 'KML':
@@ -838,18 +898,13 @@ class GeoDataFrame {
           collection.features.add(feature);
         }
         
-        // Extract headers from the first feature's properties if available
-        if (collection.features.isNotEmpty && collection.features[0]?.properties != null) {
-          headers = collection.features[0]!.properties!.keys.toList();
-        }
-        
-        return GeoDataFrame(collection, headers);
+        return GeoDataFrame.fromFeatureCollection(collection);
 
       default:
-        return GeoDataFrame(featureCollection, []); // Return empty GeoDataFrame
+        return GeoDataFrame.fromFeatureCollection(featureCollection); // Return empty GeoDataFrame
     }
 
-    return GeoDataFrame(featureCollection, []); // Default return
+    return GeoDataFrame.fromFeatureCollection(featureCollection); // Default return
   }
 
   /// Exports the data to different file formats, automatically determining the driver.
@@ -997,11 +1052,9 @@ class GeoDataFrame {
   }
 
 
-  /// Creates a GeoDataFrame instance from a list of maps (rows) for backward compatibility.
-  static GeoDataFrame fromRows(List<Map<String, dynamic>> rows, {List<String>? headers}) {
+    /// Creates a GeoDataFrame instance from a list of maps (rows).
+  static GeoDataFrame fromRows(List<Map<String, dynamic>> rows) {
     final featureCollection = GeoJSONFeatureCollection([]);
-    final allHeaders = headers ?? 
-        (rows.isNotEmpty ? rows.first.keys.toList() : []);
     
     for (var row in rows) {
       // Extract coordinates if available
@@ -1040,6 +1093,6 @@ class GeoDataFrame {
       featureCollection.features.add(feature);
     }
     
-    return GeoDataFrame(featureCollection, allHeaders);
+    return GeoDataFrame.fromFeatureCollection(featureCollection);
   }
 }

@@ -1,3 +1,34 @@
+# 0.2.3
+* **[Fix]** Fixed readme.
+* **[FEATURE]** Added more properties
+* **[FIX]** Fixed DataFrame constructor to create modifiable column lists, allowing column addition after initialization
+* **[FIX]** Updated Series toString() method to properly display custom indices
+* **[FEATURE]** Added GeoSeries class for spatial data analysis
+* **[FEATURE]** Added GeoSeries.fromXY() factory constructor to create point geometries from x, y coordinates
+* **[FEATURE]** Added GeoSeries.fromWKT() factory constructor to create geometries from WKT strings
+* **[FEATURE]** Added GeoSeries.fromFeatureCollection() factory constructor to create geometries from GeoJSON
+* **[FEATURE]** Added spatial analysis methods to GeoSeries:
+  * getCoordinates() - extracts coordinates as a DataFrame
+  * countCoordinates - counts coordinate pairs in each geometry
+  * countGeometries - counts geometries in multi-part geometries
+  * countInteriorRings - counts interior rings in polygonal geometries
+  * isClosed - checks if LineStrings are closed
+  * isEmpty - checks if geometries are empty
+  * isRing - checks if features are rings
+  * isValid - validates geometry structures
+  * hasZ - checks for 3D coordinates
+  * bounds - gets bounding boxes for geometries
+  * totalBounds - gets overall bounds of all geometries
+  * centroid - calculates centroids of geometries
+  * type - gets geometry types
+  * area - calculates areas of polygonal geometries
+  * lengths - calculates lengths of linear geometries
+  * isCCW - checks if rings are counterclockwise
+  * contains - checks spatial containment relationships
+* **[IMPROVEMENT]** Enhanced Series class to support custom indices similar to DataFrame
+* **[IMPROVEMENT]** Renamed DataFrame's rowHeader to index for consistency with pandas API
+* **[IMPROVEMENT]** Updated DataFrame constructor to accept index parameter
+
 # 0.2.2
 * **[Fix]** Fixed readme.
 * **[FEATURE]** Added topics to the package/library

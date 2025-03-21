@@ -4,7 +4,7 @@ extension SeriesOperations on Series {
   /// Access elements by position or label using boolean indexing.
   ///
   /// Returns a new series containing only the elements for which the boolean condition is true.
-  Series operator [](dynamic indices) {
+  dynamic operator [](dynamic indices) {
     List<dynamic> selectedData = [];
     if (indices is List<bool>) {
       for (int i = 0; i < indices.length; i++) {
@@ -14,9 +14,9 @@ extension SeriesOperations on Series {
       }
     } else {
       // Handle single index
-      selectedData.add(data[indices]);
+      return data[indices];
     }
-    return Series(selectedData, name: "$name (Selected)");
+    return Series(selectedData, name: name);
   }
 
   /// Sets the value for provided index or indices

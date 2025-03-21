@@ -691,7 +691,7 @@ extension DataFrameFunctions on DataFrame {
 
     var columnNames = ['Column Name', 'Data Type', 'Mixed Types', 'Null Count'];
 
-    return DataFrame(columns: columnNames, data: summaryData);
+    return DataFrame(columns: columnNames, summaryData);
   }
 
   /// Analyzes the data types within a column.
@@ -776,30 +776,72 @@ extension DataFrameFunctions on DataFrame {
     _data = _data.isEmpty ? newRow : [_data, newRow];
   }
 
-  /// Add a column to the DataFrame
+    /// Add a column to the DataFrame
   void addColumn(dynamic name, {dynamic defaultValue}) {
     if (_columns.contains(name)) {
       throw ArgumentError("Column '$name' already exists");
     }
     _columns = _columns.isEmpty ? [name] : [..._columns, name];
 
-    for (var row in _data) {
-      if (defaultValue.length == _data.length) {
-        row.add(defaultValue[_data.indexOf(row)]);
-      } else if (defaultValue.length != _data.length) {
-        // the add the all the elements of the default value to the row
-        // and the remaining becomes null
-        row.add(defaultValue[_data.indexOf(row) < _data.length
-            ? _data.indexOf(row)
-            : defaultValue]);
-      } else {
-        if (defaultValue == null) {
-          row.add(null);
+    // Check if defaultValue is a list
+    bool isDefaultValueList = defaultValue is List;
+    
+    for (int i = 0; i < _data.length; i++) {
+      var row = _data[i];
+      
+      if (isDefaultValueList) {
+        // If defaultValue is a list, use the corresponding value if available
+        if (i < defaultValue.length) {
+          row.add(defaultValue[i]);
         } else {
-          row.add(defaultValue);
+          // If index exceeds defaultValue list length, use null
+          row.add(null);
         }
+      } else {
+        // If defaultValue is not a list, use the same value for all rows
+        row.add(defaultValue);
       }
     }
+  }
+
+  /// Updates a specific value in a column at the given index.
+  ///
+  /// Parameters:
+  ///   - `index`: The row index to update
+  ///   - `column`: The column to update (can be either a column name as String or a column index as int)
+  ///   - `value`: The new value to set
+  void updateColumn(int index, dynamic column, dynamic value) {
+    if (index < 0 || index >= _data.length) {
+      throw ArgumentError('Index out of range: $index');
+    }
+    
+    int columnIndex;
+    
+    // Handle column parameter as either index or name
+    if (column is int) {
+      // Column is provided as an index
+      if (column < 0 || column >= _columns.length) {
+        throw ArgumentError('Column index out of range: $column');
+      }
+      columnIndex = column;
+    } else {
+      // Column is provided as a name (String or other type)
+      columnIndex = _columns.indexWhere((col) => col.toString() == column.toString());
+      if (columnIndex == -1) {
+        throw ArgumentError('Column $column does not exist');
+      }
+    }
+    
+    // Ensure the row exists and has enough elements
+    if (_data[index].length <= columnIndex) {
+      // Extend the row if needed
+      while (_data[index].length <= columnIndex) {
+        _data[index].add(null);
+      }
+    }
+    
+    // Update the value
+    _data[index][columnIndex] = value;
   }
 
   /// Concatenates two DataFrames along the axis specified by 'axis'.

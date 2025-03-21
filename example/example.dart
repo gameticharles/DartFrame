@@ -7,11 +7,11 @@ void main() {
   // Load the CSV data into a DataFrame and tries to convert string to the right type
   // List input; each inner List is a row of data
   // List input Using parameters to set column/row names
-  final df = DataFrame(data: [
+  final df = DataFrame( [
     [1, 2, 3.0],
     [4, 5, 6],
     [7, 'hi', 9]
-  ], rowHeader: [
+  ], index: [
     'Dog',
     'Dog',
     'Catty'
@@ -34,6 +34,8 @@ void main() {
   // Modify a specific element in the 'a' column
   df['a'][2] = 30;
   print(df);
+
+  print(df['a'][2] * 2);
 }
 
 void dataframe1() {
@@ -125,21 +127,21 @@ void dataframe2() {
   var df1 = DataFrame(columns: [
     'A',
     'B'
-  ], data: [
+  ],  [
     [1, 2],
     [3, 4]
   ]);
   var df2 = DataFrame(columns: [
     'A',
     'B'
-  ], data: [
+  ],  [
     [5, 6],
     [7, 8]
   ]);
   var df3 = DataFrame(columns: [
     'C',
     'D'
-  ], data: [
+  ],  [
     [10, 11],
     [12, 13]
   ]);
@@ -156,7 +158,7 @@ void dataframe2() {
 
   var df = DataFrame(
     columns: ['A', 'B', 'C', 'D'],
-    data: [
+     [
       [1, 2.5, 3, 4],
       [2, 3.5, 4, 5],
       [3, 4.5, 5, 6],
@@ -169,7 +171,7 @@ void dataframe2() {
 
   df = DataFrame(
     allowFlexibleColumns: true,
-    data: [
+     [
       [1, 'A'],
       [2, 'B'],
       [3, 'C'],
