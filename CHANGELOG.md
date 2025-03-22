@@ -1,3 +1,6 @@
+# 0.3.2
+* **[IMPROVEMENT]** Migrated to WASM.
+
 # 0.3.1
 * **[Fix]** Fixed readme.
 
