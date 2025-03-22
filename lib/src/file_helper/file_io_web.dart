@@ -1,38 +1,54 @@
 import 'dart:async';
-import 'dart:html';
+// import 'dart:html';
+import 'dart:js_interop';
+import 'package:web/web.dart';
 
 import 'file_io.dart';
 
 class FileIO implements FileIOBase {
+  
   void _saveToFileWeb(String path, String data) {
-    var blob = Blob([data]);
-    var url = Url.createObjectUrlFromBlob(blob);
-    var anchor = document.createElement('a') as AnchorElement
-      ..href = url
-      ..style.display = 'none'
-      ..download = path;
-    document.body!.children.add(anchor);
+    // Create a JSArray for Blob constructor
+    final jsArray = <JSAny>[data.toJS].toJS;
+    var blob = Blob(jsArray);
+    var url = URL.createObjectURL(blob);
+    var anchor = document.createElement('a') as HTMLAnchorElement;
+    anchor.href = url;
+    anchor.style.display = 'none';
+    anchor.download = path;
+    
+    document.body!.appendChild(anchor);
 
     // download the file
     anchor.click();
 
     // cleanup the DOM
-    document.body!.children.remove(anchor);
-    Url.revokeObjectUrl(url);
+    document.body!.removeChild(anchor);
+    URL.revokeObjectURL(url);
   }
 
-  Future<String> _readFromFileWeb(InputElement uploadInput) async {
-    var file = uploadInput.files!.first;
+  Future<String> _readFromFileWeb(HTMLInputElement uploadInput) async {
+    var file = uploadInput.files!.item(0);
+    if (file == null) {
+      throw Exception("No file selected.");
+    }
     var reader = FileReader();
 
     var completer = Completer<String>();
-    reader.onLoadEnd.listen((e) {
-      completer.complete(reader.result as String);
-    });
-    reader.onError.listen((fileError) {
-      completer.completeError(fileError);
-    });
-    reader.readAsText(file);
+    // reader.onLoadEnd.listen((e) {
+    //   completer.complete(reader.result.toString());
+    // });
+    // Convert Dart functions to JS-compatible event listeners using toJS
+    void onLoadEnd(Event event) {
+      completer.complete(reader.result.toString());
+    }
+    void onError(Event event) {
+      completer.completeError(reader.error ?? Exception('Unknown error'));
+    }
+    // Use the JS interop conversion
+    reader.addEventListener('loadend', onLoadEnd.toJS);
+    reader.addEventListener('error', onError.toJS);
+    reader.readAsArrayBuffer(file as Blob);
 
     return completer.future;
   }

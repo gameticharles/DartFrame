@@ -1,7 +1,7 @@
 import 'dart:async';
 
 export 'file_io_stub.dart'
-    if (dart.library.html) 'file_io_web.dart'
+    if (dart.library.js_interop) 'file_io_web.dart'
     if (dart.library.io) 'file_io_other.dart';
 
 /// A class to provide file input/output operations.
