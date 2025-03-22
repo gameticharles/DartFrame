@@ -1,3 +1,6 @@
+# 0.3.3
+* **[Fixed]** Doc Strings.
+
 # 0.3.2
 * **[IMPROVEMENT]** Migrated to WASM.
 

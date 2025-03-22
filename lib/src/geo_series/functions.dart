@@ -16,7 +16,7 @@ extension GeoSeriesFunctions on GeoSeries {
   ///   - `indexParts`: If true, the resulting index will include both the original index
   ///     and a part index for each coordinate in a geometry (default: false)
   ///
-  /// Returns a DataFrame with columns ['x', 'y'] or ['x', 'y', 'z']
+  /// Returns a DataFrame with columns `['x', 'y']` or `['x', 'y', 'z']`
     ///
   /// Examples:
   /// ```dart
@@ -444,9 +444,9 @@ extension GeoSeriesFunctions on GeoSeries {
   ///
   /// Returns a Series containing the bounds of each geometry in the GeoSeries.
   /// Each element in the returned Series is a list of four values representing
-  /// the bounding box in the format [minX, minY, maxX, maxY].
+  /// the bounding box in the format `[minX, minY, maxX, maxY]`.
   ///
-  /// For null or empty geometries, returns [0, 0, 0, 0].
+  /// For null or empty geometries, returns `[0, 0, 0, 0]`.
   ///
   /// Examples:
   /// ```dart
@@ -472,7 +472,7 @@ extension GeoSeriesFunctions on GeoSeries {
   }
 
   /// Gets the total bounds of all geometries in the GeoSeries.
-  /// Returns [minX, minY, maxX, maxY] for the entire collection.
+  /// Returns `[minX, minY, maxX, maxY]` for the entire collection.
   List<double> get totalBounds {
     List<double>? bounds;
     
@@ -507,7 +507,7 @@ extension GeoSeriesFunctions on GeoSeries {
   /// - For MultiPolygon geometries: calculates the weighted average of the centroids of all polygons,
   ///   where the weight is the area of each polygon
   ///
-  /// For null or unrecognized geometries, returns a point at [0, 0].
+  /// For null or unrecognized geometries, returns a point at `[0, 0]`.
   ///
   /// Note: This is a simplified centroid calculation that may not match the true
   /// mathematical centroid for complex geometries.

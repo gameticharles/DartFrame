@@ -94,7 +94,7 @@ class GeoDataFrame extends DataFrame{
   int get propertyCount => headers.length;
 
   /// Gets the total bounds of all geometries in the GeoDataFrame.
-  /// Returns [minX, minY, maxX, maxY] for the entire collection.
+  /// Returns `[minX, minY, maxX, maxY]` for the entire collection.
   List<double> get totalBounds  => geometry.totalBounds;
   
   /// Returns a GeoDataFrame containing the centroids of all geometries.
@@ -486,7 +486,7 @@ class GeoDataFrame extends DataFrame{
   
   /// Creates a GeoDataFrame from a list of coordinates.
   ///
-  /// [coordinates]: A list of coordinate pairs (can be [x,y], [lon,lat], etc.)
+  /// [coordinates]: A list of coordinate pairs (can be `[x,y]`, `[lon,lat]`, etc.)
   /// [attributes]: Optional DataFrame containing attribute data.
   /// [coordinateType]: The type of coordinates ('xy', 'lonlat', etc.)
   /// [crs]: The coordinate reference system.
