@@ -6,7 +6,6 @@ import 'package:web/web.dart';
 import 'file_io.dart';
 
 class FileIO implements FileIOBase {
-  
   void _saveToFileWeb(String path, String data) {
     // Create a JSArray for Blob constructor
     final jsArray = <JSAny>[data.toJS].toJS;
@@ -16,7 +15,7 @@ class FileIO implements FileIOBase {
     anchor.href = url;
     anchor.style.display = 'none';
     anchor.download = path;
-    
+
     document.body!.appendChild(anchor);
 
     // download the file
@@ -42,9 +41,11 @@ class FileIO implements FileIOBase {
     void onLoadEnd(Event event) {
       completer.complete(reader.result.toString());
     }
+
     void onError(Event event) {
       completer.completeError(reader.error ?? Exception('Unknown error'));
     }
+
     // Use the JS interop conversion
     reader.addEventListener('loadend', onLoadEnd.toJS);
     reader.addEventListener('error', onError.toJS);

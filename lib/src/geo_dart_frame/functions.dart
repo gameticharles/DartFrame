@@ -1,21 +1,21 @@
 part of '../../dartframe.dart';
 
 extension GeoDataFrameFunctions on GeoDataFrame {
-
-    /// Adds a new feature to the GeoDataFrame.
+  /// Adds a new feature to the GeoDataFrame.
   ///
   /// [geometry]: The GeoJSONGeometry for the feature.
   /// [properties]: The properties map for the feature.
-  void addFeature(GeoJSONGeometry geometry, {Map<String, dynamic>? properties}) {
+  void addFeature(GeoJSONGeometry geometry,
+      {Map<String, dynamic>? properties}) {
     // Create a new row for the DataFrame
     final List<dynamic> newRow = List.filled(columns.length, null);
-    
+
     // Set the geometry in the appropriate column
     final geomIndex = columns.indexOf(geometryColumn);
     if (geomIndex >= 0) {
       newRow[geomIndex] = geometry;
     }
-    
+
     // Add properties to the row
     if (properties != null) {
       for (var key in properties.keys) {
@@ -25,17 +25,17 @@ extension GeoDataFrameFunctions on GeoDataFrame {
         }
       }
     }
-    
+
     // Add the row to the internal data structure
     _data.add(newRow);
-    
+
     // Add any new properties as columns if they don't exist
     if (properties != null) {
       for (var key in properties.keys) {
         if (!columns.contains(key) && key != geometryColumn) {
           // Add the new column with default values
           addColumn(key, defaultValue: null);
-          
+
           // Update the value in the new row for this column
           final colIndex = columns.indexOf(key);
           if (colIndex >= 0 && colIndex < _data.last.length) {
@@ -45,7 +45,7 @@ extension GeoDataFrameFunctions on GeoDataFrame {
       }
     }
   }
-  
+
   /// Deletes a feature at the specified index.
   void deleteFeature(int index) {
     if (index >= 0 && index < rows.length) {
@@ -54,19 +54,20 @@ extension GeoDataFrameFunctions on GeoDataFrame {
   }
 
   /// Deletes a feature by index.
-  void deleteRow(int index) => deleteFeature( index);
-  
-    /// Gets a specific feature as a GeoJSONFeature.
+  void deleteRow(int index) => deleteFeature(index);
+
+  /// Gets a specific feature as a GeoJSONFeature.
   GeoJSONFeature? getFeature(int index) {
     if (index < 0 || index >= _data.length) {
       return null;
     }
-    
+
     final row = _data[index];
     final geomIndex = columns.indexOf(geometryColumn);
-    final geom = geomIndex >= 0 && geomIndex < row.length ? 
-        row[geomIndex] : GeoJSONPoint([0, 0]);
-    
+    final geom = geomIndex >= 0 && geomIndex < row.length
+        ? row[geomIndex]
+        : GeoJSONPoint([0, 0]);
+
     // Create properties
     final properties = <String, dynamic>{};
     for (int j = 0; j < columns.length; j++) {
@@ -74,24 +75,22 @@ extension GeoDataFrameFunctions on GeoDataFrame {
         properties[columns[j].toString()] = row[j];
       }
     }
-    
-    return GeoJSONFeature(
-      geom is GeoJSONGeometry ? geom : GeoJSONPoint([0, 0]),
-      properties: properties
-    );
+
+    return GeoJSONFeature(geom is GeoJSONGeometry ? geom : GeoJSONPoint([0, 0]),
+        properties: properties);
   }
 
   /// Finds features based on a query function.
   List<GeoJSONFeature> findFeatures(bool Function(GeoJSONFeature) query) {
     final features = <GeoJSONFeature>[];
-    
+
     for (int i = 0; i < _data.length; i++) {
       final feature = getFeature(i);
       if (feature != null && query(feature)) {
         features.add(feature);
       }
     }
-    
+
     return features;
   }
 
@@ -101,11 +100,11 @@ extension GeoDataFrameFunctions on GeoDataFrame {
   /// Converts the GeoDataFrame to a list of maps (rows).
   List<Map<String, dynamic>> toRows() {
     final result = <Map<String, dynamic>>[];
-    
+
     for (int i = 0; i < _data.length; i++) {
       final row = _data[i];
       final Map<String, dynamic> rowMap = {};
-      
+
       // Add all properties
       for (int j = 0; j < columns.length; j++) {
         if (j < row.length) {
@@ -130,12 +129,13 @@ extension GeoDataFrameFunctions on GeoDataFrame {
           }
         }
       }
-      
+
       result.add(rowMap);
     }
-    
+
     return result;
   }
+
   /// Renames the geometry column.
   ///
   /// [newName]: The new name for the geometry column.
@@ -145,16 +145,17 @@ extension GeoDataFrameFunctions on GeoDataFrame {
     if (newName == geometryColumn) {
       return this; // No change needed
     }
-    
+
     // Create a copy of the DataFrame
     final newDf = copy();
-    
+
     // Rename the column
     newDf.rename({geometryColumn: newName});
-    
+
     // Create a new GeoDataFrame with the updated geometry column name
     return GeoDataFrame(newDf, geometryColumn: newName, crs: crs);
   }
+
   /// Sets a different column as the geometry column.
   ///
   /// [columnName]: The name of the column to set as the geometry column.
@@ -164,13 +165,12 @@ extension GeoDataFrameFunctions on GeoDataFrame {
     if (columnName == geometryColumn) {
       return this; // No change needed
     }
-    
+
     if (!columns.contains(columnName)) {
       throw ArgumentError('Column $columnName not found in DataFrame');
     }
-    
+
     // Create a new GeoDataFrame with the updated geometry column
     return GeoDataFrame(this, geometryColumn: columnName, crs: crs);
   }
-  
 }

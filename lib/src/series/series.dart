@@ -32,17 +32,17 @@ class Series {
   /// identify the series.
   String name;
 
-    // Add these fields to the Series class
-   DataFrame? _parentDataFrame;
-   String? _columnName;
-   List<dynamic>? index;
+  // Add these fields to the Series class
+  DataFrame? _parentDataFrame;
+  String? _columnName;
+  List<dynamic>? index;
 
   /// Sets the parent DataFrame reference
   void _setParent(DataFrame parent, String columnName) {
     _parentDataFrame = parent;
     _columnName = columnName;
   }
-  
+
   /// Constructs a `Series` object with the given [data] and [name].
   ///
   /// The [data] parameter is a list containing the data points of the series,
@@ -75,24 +75,24 @@ class Series {
 
     // Calculate name width
     int nameWidth = name.length;
-    
+
     // Calculate the maximum width needed for row headers/index
     int indexWidth = 0;
     List<dynamic> indexList = index ?? List.generate(data.length, (i) => i);
-    
+
     for (var idx in indexList) {
       int headerWidth = idx.toString().length;
       if (headerWidth > indexWidth) {
         indexWidth = headerWidth;
       }
     }
-    
+
     // Ensure index width is at least as wide as the word "index"
     indexWidth = max(indexWidth, 5);
-    
+
     // Use the maximum of value width and name width for column width
     int columnWidth = max(maxValueWidth, nameWidth);
-    
+
     // Add spacing
     columnWidth += columnSpacing;
     indexWidth += columnSpacing;
@@ -113,7 +113,8 @@ class Series {
     // Add series information
     buffer.writeln();
     buffer.writeln('Length: ${data.length}');
-    buffer.writeln('Type: ${data.isEmpty ? 'unknown' : data.first.runtimeType}');
+    buffer
+        .writeln('Type: ${data.isEmpty ? 'unknown' : data.first.runtimeType}');
 
     return buffer.toString();
   }

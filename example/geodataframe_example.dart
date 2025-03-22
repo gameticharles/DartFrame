@@ -1,83 +1,83 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() async {
-  
   final geoDataFrame = createGeoDataFrameFromSample();
   print(geoDataFrame.geometry.getCoordinates());
   print(geoDataFrame.geometry.getCoordinates(ignoreIndex: true));
   print(geoDataFrame.geometry.getCoordinates(indexParts: true));
-  print(geoDataFrame.geometry.getCoordinates(indexParts: true, indexPartsAsList: true));
+  print(geoDataFrame.geometry
+      .getCoordinates(indexParts: true, indexPartsAsList: true));
 
   // Example 1: Create a GeoDataFrame from a GeoJSON FeatureCollection
   print('GeoDataFrame created with ${geoDataFrame.featureCount} features');
   print('Properties: ${geoDataFrame.columns.join(', ')}');
-  
+
   // Print the first feature
   print('\nFirst feature:');
   print(geoDataFrame.getFeature(0));
-  
+
   // Example 2: Access and manipulate attributes
   print('\nAccessing attributes as DataFrame:');
   print(geoDataFrame);
-  
+
   // Add a new column to all features
   geoDataFrame.addColumn('category', defaultValue: 'education');
   print('\nAfter adding a new property:');
   print(geoDataFrame.columns);
-  
+
   // Update a specific property
   geoDataFrame.updateColumn(0, 'category', 'university');
   print('\nAfter updating a property:');
   print(geoDataFrame['category']);
-  
+
   // Example 3: Spatial operations
   // Find features based on a query
-  var foundFeatures = geoDataFrame.findFeatures((feature) => 
+  var foundFeatures = geoDataFrame.findFeatures((feature) =>
       feature.properties!['title'].toString().contains('University'));
-  print('\nFound ${foundFeatures.length} features containing "University" in title');
+  print(
+      '\nFound ${foundFeatures.length} features containing "University" in title');
 
-  var gg = geoDataFrame.geometry.buffer(distance: 2, resolution: 2, mitreLimit: 0.1);
+  var gg =
+      geoDataFrame.geometry.buffer(distance: 2, resolution: 2, mitreLimit: 0.1);
   geoDataFrame['geometry'] = gg;
 
-
-  
   // Example 4: Export to file
   // await geoDataFrame.toFile('output.geojson');
-  await geoDataFrame.toFile('/Users/mac/Library/CloudStorage/GoogleDrive-gameticharles@gmail.com/My Drive/MEGAsync/CONTRACTS/2024/dartframe/example/output.geojson');
+  await geoDataFrame.toFile('./output.geojson');
   print('\nExported to GeoJSON file');
-  
+
   // Example 5: Create a GeoDataFrame from coordinates
   final coordinates = [
     [105.7743099, 21.0717561],
     [105.7771289, 21.0715458],
     [105.7745218, 21.0715658],
   ];
-  
+
   final attributeDF = DataFrame(
     columns: ['name', 'description', 'value'],
-     [
-    ['Point A', 'Description A', 100],
-    ['Point B', 'Description B', 200],
-    ['Point C', 'Description C', 300],
-  ],
+    [
+      ['Point A', 'Description A', 100],
+      ['Point B', 'Description B', 200],
+      ['Point C', 'Description C', 300],
+    ],
   );
-  
+
   final coordGeoDF = GeoDataFrame.fromCoordinates(
     coordinates,
     attributes: attributeDF,
     coordinateType: 'lonlat',
     crs: 'EPSG:4326',
   );
-  
+
   print('\nGeoDataFrame from coordinates:');
   print('Features: ${coordGeoDF.featureCount}');
   print('Properties: ${coordGeoDF.columns.join(', ')}');
-  
+
   // Example 6: Convert to different formats
   print('\nConverting to rows:');
   final rows = geoDataFrame.toRows();
   print('Number of rows: ${rows.length}');
-  
+
   // Example 7: Create from DataFrame
   final df = DataFrame(
     columns: ['id', 'name', 'longitude', 'latitude'],
@@ -87,17 +87,17 @@ void main() async {
       [3, 'Location C', 105.7745218, 21.0715658],
     ],
   );
-  
+
   final fromDfGeoDF = GeoDataFrame.fromDataFrame(
     df,
     geometryType: 'point',
     coordinateType: 'lonlat',
   );
-  
+
   print('\nGeoDataFrame from DataFrame:');
   print('Features: ${fromDfGeoDF.featureCount}');
   print('Properties: ${fromDfGeoDF.columns}');
-  
+
   // Example 8: Create from GeoJSON string
   final geoJsonString = '''
   {
@@ -201,10 +201,10 @@ void main() async {
     ]
   }
   ''';
-  
+
   // Parse the GeoJSON string
   final geoJson = GeoJSON.fromJSON(geoJsonString);
-  
+
   // Create a GeoDataFrame from the parsed GeoJSON
   GeoDataFrame fromJsonGeoDF;
   if (geoJson is GeoJSONFeatureCollection) {
@@ -215,22 +215,21 @@ void main() async {
         jsonHeaders.addAll(feature!.properties!.keys);
       }
     }
-    
+
     fromJsonGeoDF = GeoDataFrame.fromFeatureCollection(
       geoJson,
       geometryColumn: 'geometry',
       crs: 'EPSG:4326',
     );
-    
+
     print('\nGeoDataFrame from GeoJSON string:');
     print('Features: ${fromJsonGeoDF.featureCount}');
     print('Properties: ${fromJsonGeoDF.columns.join(', ')}');
-    
+
     // Demonstrate querying features
     var officeFeature = fromJsonGeoDF.findFeatures(
-      (feature) => feature.properties!['title'] == "HUMG's Office"
-    );
-    
+        (feature) => feature.properties!['title'] == "HUMG's Office");
+
     if (officeFeature.isNotEmpty) {
       print('\nFound office feature:');
       print('Title: ${officeFeature[0].properties!['title']}');
@@ -242,7 +241,7 @@ void main() async {
 /// Creates a sample GeoDataFrame with point, line, and polygon features
 GeoDataFrame createGeoDataFrameFromSample() {
   final featureCollection = GeoJSONFeatureCollection([]);
-  
+
   // Add a point feature
   final point = GeoJSONPoint([105.7743099, 21.0717561]);
   final pointFeature = GeoJSONFeature(point, properties: {
@@ -256,7 +255,7 @@ GeoDataFrame createGeoDataFrameFromSample() {
     'url': 'http://humg.edu.vn'
   });
   featureCollection.features.add(pointFeature);
-  
+
   // Add a line feature
   final pos1 = [105.7771289, 21.0715458];
   final pos2 = [105.7745218, 21.0715658];
@@ -268,7 +267,7 @@ GeoDataFrame createGeoDataFrameFromSample() {
     'stroke-opacity': 1,
     'title': 'Vien St.'
   }));
-  
+
   // Add a polygon feature
   final p01 = [105.7739666, 21.0726795]; // The first position
   final p02 = [105.7739719, 21.0721991];
@@ -292,11 +291,11 @@ GeoDataFrame createGeoDataFrameFromSample() {
       },
     ),
   );
-  
+
   // Extract all unique property keys to use as headers
-  
+
   return GeoDataFrame.fromFeatureCollection(
-    featureCollection, 
+    featureCollection,
     geometryColumn: 'geometry',
     crs: 'EPSG:4326',
   );

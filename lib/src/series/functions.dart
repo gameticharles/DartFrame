@@ -85,7 +85,7 @@ extension SeriesFunctions on Series {
     }
   }
 
-    /// Returns a new Series with the absolute value of each element.
+  /// Returns a new Series with the absolute value of each element.
   ///
   /// This method applies the absolute value function to each numeric element
   /// in the series. Non-numeric elements will cause an exception.
@@ -100,16 +100,17 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Absolute)");
     }
-    
+
     List<dynamic> absValues = [];
     for (var value in data) {
       if (value is num) {
         absValues.add(value.abs());
       } else {
-        throw Exception("Cannot calculate absolute value of non-numeric data: $value");
+        throw Exception(
+            "Cannot calculate absolute value of non-numeric data: $value");
       }
     }
-    
+
     return Series(absValues, name: "$name (Absolute)");
   }
 
@@ -144,34 +145,35 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Cumulative Max)");
     }
-    
+
     List<dynamic> cumulativeMax = [];
     dynamic runningMax;
-    
+
     // Find first non-null value if skipna is true
     int startIdx = 0;
     if (skipna) {
       while (startIdx < data.length && data[startIdx] == null) {
         startIdx++;
       }
-      
+
       if (startIdx >= data.length) {
         // All values are null
-        return Series(List.filled(data.length, null), name: "$name (Cumulative Max)");
+        return Series(List.filled(data.length, null),
+            name: "$name (Cumulative Max)");
       }
     }
-    
+
     runningMax = data[startIdx];
-    
+
     for (int i = 0; i < data.length; i++) {
       if (i < startIdx) {
         // Add null for skipped values at the beginning
         cumulativeMax.add(null);
         continue;
       }
-      
+
       var currentValue = data[i];
-      
+
       if (currentValue == null) {
         if (skipna) {
           // Keep previous max if skipping nulls
@@ -188,7 +190,7 @@ extension SeriesFunctions on Series {
         cumulativeMax.add(runningMax);
       }
     }
-    
+
     return Series(cumulativeMax, name: "$name (Cumulative Max)");
   }
 
@@ -210,34 +212,35 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Cumulative Min)");
     }
-    
+
     List<dynamic> cumulativeMin = [];
     dynamic runningMin;
-    
+
     // Find first non-null value if skipna is true
     int startIdx = 0;
     if (skipna) {
       while (startIdx < data.length && data[startIdx] == null) {
         startIdx++;
       }
-      
+
       if (startIdx >= data.length) {
         // All values are null
-        return Series(List.filled(data.length, null), name: "$name (Cumulative Min)");
+        return Series(List.filled(data.length, null),
+            name: "$name (Cumulative Min)");
       }
     }
-    
+
     runningMin = data[startIdx];
-    
+
     for (int i = 0; i < data.length; i++) {
       if (i < startIdx) {
         // Add null for skipped values at the beginning
         cumulativeMin.add(null);
         continue;
       }
-      
+
       var currentValue = data[i];
-      
+
       if (currentValue == null) {
         if (skipna) {
           // Keep previous min if skipping nulls
@@ -254,7 +257,7 @@ extension SeriesFunctions on Series {
         cumulativeMin.add(runningMin);
       }
     }
-    
+
     return Series(cumulativeMin, name: "$name (Cumulative Min)");
   }
 
@@ -276,34 +279,35 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Cumulative Product)");
     }
-    
+
     List<dynamic> cumulativeProduct = [];
     dynamic runningProduct;
-    
+
     // Find first non-null value if skipna is true
     int startIdx = 0;
     if (skipna) {
       while (startIdx < data.length && data[startIdx] == null) {
         startIdx++;
       }
-      
+
       if (startIdx >= data.length) {
         // All values are null
-        return Series(List.filled(data.length, null), name: "$name (Cumulative Product)");
+        return Series(List.filled(data.length, null),
+            name: "$name (Cumulative Product)");
       }
     }
-    
+
     runningProduct = data[startIdx];
-    
+
     for (int i = 0; i < data.length; i++) {
       if (i < startIdx) {
         // Add null for skipped values at the beginning
         cumulativeProduct.add(null);
         continue;
       }
-      
+
       var currentValue = data[i];
-      
+
       if (currentValue == null) {
         if (skipna) {
           // Keep previous product if skipping nulls
@@ -322,7 +326,7 @@ extension SeriesFunctions on Series {
         cumulativeProduct.add(runningProduct);
       }
     }
-    
+
     return Series(cumulativeProduct, name: "$name (Cumulative Product)");
   }
 
@@ -356,7 +360,7 @@ extension SeriesFunctions on Series {
     }
   }
 
-    /// Calculate the cumulative sum of values in the series.
+  /// Calculate the cumulative sum of values in the series.
   ///
   /// Parameters:
   /// - `skipna`: Whether to exclude NA/null values. If an entire row/column is NA, the result will be NA.
@@ -374,34 +378,35 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Cumulative Sum)");
     }
-    
+
     List<dynamic> cumulativeSum = [];
     dynamic runningSum;
-    
+
     // Find first non-null value if skipna is true
     int startIdx = 0;
     if (skipna) {
       while (startIdx < data.length && data[startIdx] == null) {
         startIdx++;
       }
-      
+
       if (startIdx >= data.length) {
         // All values are null
-        return Series(List.filled(data.length, null), name: "$name (Cumulative Sum)");
+        return Series(List.filled(data.length, null),
+            name: "$name (Cumulative Sum)");
       }
     }
-    
+
     runningSum = data[startIdx];
-    
+
     for (int i = 0; i < data.length; i++) {
       if (i < startIdx) {
         // Add null for skipped values at the beginning
         cumulativeSum.add(null);
         continue;
       }
-      
+
       var currentValue = data[i];
-      
+
       if (currentValue == null) {
         if (skipna) {
           // Keep previous sum if skipping nulls
@@ -420,7 +425,7 @@ extension SeriesFunctions on Series {
         cumulativeSum.add(runningSum);
       }
     }
-    
+
     return Series(cumulativeSum, name: "$name (Cumulative Sum)");
   }
 
@@ -548,14 +553,14 @@ extension SeriesFunctions on Series {
   Series unique() {
     final uniqueValues = <dynamic>[];
     final seen = <dynamic>{};
-    
+
     for (var value in data) {
       if (!seen.contains(value)) {
         seen.add(value);
         uniqueValues.add(value);
       }
     }
-    
+
     return Series(uniqueValues, name: "$name (Unique)");
   }
 
@@ -577,27 +582,27 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: "$name (Rounded)");
     }
-    
+
     List<dynamic> roundedValues = [];
-    
+
     for (var value in data) {
       if (value is num) {
         // Calculate the factor based on decimal places
         final factor = pow(10, decimals);
-        
+
         // Round the value
         final rounded = (value * factor).round() / factor;
-        
+
         roundedValues.add(rounded);
       } else {
         // Keep non-numeric values as is
         roundedValues.add(value);
       }
     }
-    
+
     return Series(roundedValues, name: "$name (Rounded)");
   }
-  
+
   /// Return the first n rows of the Series.
   ///
   /// Parameters:
@@ -616,16 +621,16 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: name, index: index);
     }
-    
+
     // Ensure n is not larger than the data length
     n = n > data.length ? data.length : n;
-    
+
     // Get the first n elements
     List<dynamic> headData = data.sublist(0, n);
-    
+
     return Series(headData, name: name);
   }
-  
+
   /// Return the last n rows of the Series.
   ///
   /// Parameters:
@@ -644,14 +649,14 @@ extension SeriesFunctions on Series {
     if (data.isEmpty) {
       return Series([], name: name, index: index);
     }
-    
+
     // Ensure n is not larger than the data length
     n = n > data.length ? data.length : n;
-    
+
     // Get the last n elements
     int startIndex = data.length - n;
     List<dynamic> tailData = data.sublist(startIndex);
-    
+
     return Series(tailData, name: name);
   }
 }

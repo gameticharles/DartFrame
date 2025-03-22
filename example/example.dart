@@ -7,7 +7,7 @@ void main() {
   // Load the CSV data into a DataFrame and tries to convert string to the right type
   // List input; each inner List is a row of data
   // List input Using parameters to set column/row names
-  final df = DataFrame( [
+  final df = DataFrame([
     [1, 2, 3.0],
     [4, 5, 6],
     [7, 'hi', 9]
@@ -27,7 +27,7 @@ void main() {
   df['a'] = [1, 2, 3];
   print(df);
 
-    // Access and modify column data by index
+  // Access and modify column data by index
   df[2] = [30.0, 'newDate', 5.0];
   print(df);
 
@@ -53,9 +53,11 @@ void dataframe1() {
   print('List Columns:\n${df.columns}');
   print(df.tail(5)); // View the last 5 rows
   print(df.head(5)); // View the first 5 rows
-  print(df.limit(10, startIndex: 5)); // View some number of rows starting at an index
+  print(df.limit(10,
+      startIndex: 5)); // View some number of rows starting at an index
   print('Describe Data:\n${df.describe()}\n'); // Summary statistics
-  print('Structure:\n${df.structure()}\n'); // Get the structure of the dataframe
+  print(
+      'Structure:\n${df.structure()}\n'); // Get the structure of the dataframe
 
   // Data Cleaning
   df = df.fillna('Unknown'); // Fill missing values with 'Unknown'
@@ -127,14 +129,14 @@ void dataframe2() {
   var df1 = DataFrame(columns: [
     'A',
     'B'
-  ],  [
+  ], [
     [1, 2],
     [3, 4]
   ]);
   var df2 = DataFrame(columns: [
     'A',
     'B'
-  ],  [
+  ], [
     [5, 6],
     [7, 8]
   ]);
@@ -158,7 +160,7 @@ void dataframe2() {
 
   var df = DataFrame(
     columns: ['A', 'B', 'C', 'D'],
-     [
+    [
       [1, 2.5, 3, 4],
       [2, 3.5, 4, 5],
       [3, 4.5, 5, 6],
@@ -171,7 +173,7 @@ void dataframe2() {
 
   df = DataFrame(
     allowFlexibleColumns: true,
-     [
+    [
       [1, 'A'],
       [2, 'B'],
       [3, 'C'],

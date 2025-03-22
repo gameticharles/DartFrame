@@ -29,7 +29,7 @@ extension SeriesOperations on Series {
   ///   or potentially a list of indices for multiple assignments.
   /// - value: The value to assign. If multiple indices are provided, 'value'
   ///   should be an iterable such as a list or another Series.
-   void operator []=(dynamic indices, dynamic value) {
+  void operator []=(dynamic indices, dynamic value) {
     if (indices is int) {
       // Single Index Assignment
       if (indices < 0 || indices >= data.length) {
@@ -42,7 +42,7 @@ extension SeriesOperations on Series {
         );
       }
       data[indices] = value;
-      
+
       // Update parent DataFrame if this Series is linked to one
       if (_parentDataFrame != null && _columnName != null) {
         _parentDataFrame!.updateCell(_columnName!, indices, value);
@@ -55,7 +55,7 @@ extension SeriesOperations on Series {
       }
       for (int i = 0; i < indices.length; i++) {
         data[indices[i]] = value[i];
-        
+
         // Update parent DataFrame if this Series is linked to one
         if (_parentDataFrame != null && _columnName != null) {
           _parentDataFrame!.updateCell(_columnName!, indices[i], value[i]);
@@ -72,7 +72,7 @@ extension SeriesOperations on Series {
         for (int i = 0; i < indices.length; i++) {
           if (dd[i]) {
             data[i] = value[i];
-            
+
             // Update parent DataFrame if this Series is linked to one
             if (_parentDataFrame != null && _columnName != null) {
               _parentDataFrame!.updateCell(_columnName!, i, value[i]);
@@ -83,7 +83,7 @@ extension SeriesOperations on Series {
         for (int i = 0; i < indices.length; i++) {
           if (dd[i]) {
             data[i] = value;
-            
+
             // Update parent DataFrame if this Series is linked to one
             if (_parentDataFrame != null && _columnName != null) {
               _parentDataFrame!.updateCell(_columnName!, i, value);

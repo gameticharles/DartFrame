@@ -1,3 +1,7 @@
+# 0.3.4
+* **[Fixed]** Doc Strings.
+* **[IMPROVEMENT]** Improved dart format.
+
 # 0.3.3
 * **[Fixed]** Doc Strings.
 

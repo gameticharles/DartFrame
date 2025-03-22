@@ -69,7 +69,6 @@ class DataFrame {
         _data = [],
         _columns = columns ?? [],
         index = [];
-        
 
   /// Constructs a DataFrame with the provided column names and data.
   ///
@@ -78,7 +77,7 @@ class DataFrame {
   /// - The [data] parameter specifies the actual data in the DataFrame, organized as a
   /// list of rows, where each row is represented as a list of values corresponding to
   /// the columns.
-  /// 
+  ///
   /// - The [index]: Optional list to use as index for the DataFrame
   ///
   /// Example:
@@ -120,19 +119,20 @@ class DataFrame {
         _columns = columns.isEmpty && data != null && data.isNotEmpty
             ? List.generate(data[0].length, (index) => 'Column${index + 1}')
             : List<dynamic>.from(columns),
-        index = (index.isNotEmpty && data != null && index.length != data.length)
-            ? throw Exception('Index must match number of rows entered')
-            : (index.isNotEmpty)
-                ? index
-                : (data != null && data.isNotEmpty) ? List.generate(data.length, (i) => i) : [] {
+        index =
+            (index.isNotEmpty && data != null && index.length != data.length)
+                ? throw Exception('Index must match number of rows entered')
+                : (index.isNotEmpty)
+                    ? index
+                    : (data != null && data.isNotEmpty)
+                        ? List.generate(data.length, (i) => i)
+                        : [] {
     // ... validation based on allowFlexibleColumns ...
     if (formatData && data != null) {
       // Clean and convert data
       _data = data.map((row) => row.map(_cleanData).toList()).toList();
     }
   }
-
-  
 
   dynamic _cleanData(dynamic value) {
     List<String> commonDateFormats = [
@@ -475,10 +475,10 @@ class DataFrame {
         rowHeaderWidth = headerWidth;
       }
     }
-    
+
     // Ensure row header width is at least as wide as the row index
     rowHeaderWidth = max(rowHeaderWidth, _data.length.toString().length);
-    
+
     // Add spacing to row header width
     rowHeaderWidth += columnSpacing;
 
