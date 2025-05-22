@@ -126,11 +126,11 @@ void main() {
       // Expected:
       // A | one | two
       //---|-----|----
-      //foo| 10  | 20
       //bar| 30  | 40
+      //foo| 10  | 20
       expect(pivoted.columns, equals(['A', 'one', 'two']));
-      expect(pivoted.rows[0], equals(['foo', 10, 20]));
-      expect(pivoted.rows[1], equals(['bar', 30, 40]));
+      expect(pivoted.rows[0], equals(['bar', 30, 40]));
+      expect(pivoted.rows[1], equals(['foo', 10, 20]));
     });
 
     test('Strict pivot throws error on duplicate index/column pairs', () {

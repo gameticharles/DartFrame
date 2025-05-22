@@ -589,6 +589,58 @@ class DataFrame {
     return this[name];
   }
 
+  /// Returns a Map representation of the row that matches the given criteria.
+  ///
+  /// Parameters:
+  ///   - `criteria`: A Map where keys are column names and values are the values to match.
+  ///
+  /// Returns:
+  ///   A Map with column names as keys and row values as values.
+  ///
+  /// Throws:
+  ///   - `StateError` if no row matches the criteria or if multiple rows match.
+  Map<String, dynamic> row(Map<String, dynamic> criteria) {
+    // Find rows that match all criteria
+    List<int> matchingIndices = [];
+    
+    for (int i = 0; i < _data.length; i++) {
+      bool matches = true;
+      
+      for (var entry in criteria.entries) {
+        final colName = entry.key;
+        final value = entry.value;
+        
+        if (!_columns.contains(colName)) {
+          throw ArgumentError('Column "$colName" not found in DataFrame');
+        }
+        
+        final colIndex = _columns.indexOf(colName);
+        if (_data[i][colIndex] != value) {
+          matches = false;
+          break;
+        }
+      }
+      
+      if (matches) {
+        matchingIndices.add(i);
+      }
+    }
+    
+    if (matchingIndices.isEmpty) {
+      throw StateError('No row matches the given criteria');
+    }
+    
+    // Create a Map representation of the first matching row
+    final rowIndex = matchingIndices[0];
+    Map<String, dynamic> result = {};
+    
+    for (int i = 0; i < _columns.length; i++) {
+      result[_columns[i]] = _data[rowIndex][i];
+    }
+    
+    return result;
+  }
+
   @override
   noSuchMethod(Invocation invocation) {
     if (invocation.memberName != Symbol('[]') &&

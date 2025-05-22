@@ -7,6 +7,20 @@ class DataFrameILocAccessor {
 
   DataFrameILocAccessor(this._df);
 
+  // Modified operator [] to handle both single value and list with row,col
+  dynamic operator [](dynamic selector) {
+    if (selector is List) {
+      // Handle case where selector is a list [row, column]
+      if (selector.length == 2) {
+        return call(selector[0], selector[1]);
+      }
+      // If it's just a list of row indices, pass it through
+      return call(selector);
+    }
+    return call(selector);
+  }
+
+  // Keep existing call method for df.iloc(...) syntax
   dynamic call(dynamic rowSelector, [dynamic colSelector]) {
     if (rowSelector is int) {
       // Single row selection
@@ -118,6 +132,20 @@ class DataFrameLocAccessor {
 
   DataFrameLocAccessor(this._df);
 
+  // Modified operator [] to handle both single value and list with row,col
+  dynamic operator [](dynamic selector) {
+    if (selector is List) {
+      // Handle case where selector is a list [row, column]
+      if (selector.length == 2) {
+        return call(selector[0], selector[1]);
+      }
+      // If it's just a list of row labels, pass it through
+      return call(selector);
+    }
+    return call(selector);
+  }
+
+  // Keep existing call method for df.loc(...) syntax
   dynamic call(dynamic rowSelector, [dynamic colSelector]) {
     // Helper to convert single label or list of labels to integer indices
     List<int> getIntRowIndices(dynamic selector) {

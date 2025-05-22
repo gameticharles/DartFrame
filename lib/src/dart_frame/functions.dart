@@ -1806,169 +1806,171 @@ extension DataFrameFunctions on DataFrame {
     return covariance / (sqrt(xVariance) * sqrt(yVariance));
   }
 
-  /// Creates bins from a continuous column.
+  /// Bins a numeric column into discrete intervals.
   ///
   /// Parameters:
-  ///   - `column`: The column to bin.
-  ///   - `bins`: Number of bins (int) or a list of bin edges (`List<num>`).
-  ///   - `labels`: Optional labels for the bins. If not provided, they will be generated.
-  ///   - `newColumn`: Name for the new column with bin labels. Defaults to `column_bins`.
-  ///   - `right`: Indicates whether the bins include the rightmost edge or not. Default is `true`.
-  ///              If `true`, bins are `(edge_i, edge_i+1]`.
-  ///              If `false`, bins are `[edge_i, edge_i+1)`.
-  ///   - `include_lowest`: Whether the first interval should be left-inclusive. Default is `false`.
-  ///                       If `true` and `right` is `true`, the first bin becomes `[bins[0], bins[1]]`.
-  ///   - `duplicates`: How to handle duplicate bin edges if `bins` is a list.
-  ///                   'raise' (default): Throws an ArgumentError.
-  ///                   'drop': Drops duplicate edges.
-  DataFrame bin(String column, dynamic bins,
-      {List<dynamic>? labels, 
-      String? newColumn,
+  ///   - `column`: The name of the column to bin
+  ///   - `bins`: Either an integer specifying the number of bins, or a list of bin edges
+  ///   - `newColumn`: Name for the new column containing bin labels
+  ///   - `labels`: Optional custom labels for the bins
+  ///   - `right`: Whether the intervals include the right boundary (default: true)
+  ///   - `includeLowest`: Whether the first interval should include the lowest value (default: false)
+  ///   - `duplicates`: How to handle duplicate bin edges ('raise' or 'drop')
+  ///   - `decimalPlaces`: Number of decimal places to use in bin labels (default: 2)
+  DataFrame bin(dynamic column, dynamic bins,
+      {String? newColumn,
+      List<String>? labels,
       bool right = true,
       bool includeLowest = false,
-      String duplicates = 'raise'}) {
-    final columnIndex = _columns.indexOf(column);
-    if (columnIndex == -1) {
-      throw ArgumentError('Column $column does not exist');
+      String duplicates = 'raise',
+      int decimalPlaces = 2}) {
+    final colName = column.toString();
+    final targetColName = newColumn ?? '${colName}_bin';
+    
+    // Validate column exists
+    final colIdx = _columns.indexOf(colName);
+    if (colIdx == -1) {
+      throw ArgumentError('Column $colName does not exist');
     }
-
-    final columnData = _data.map((row) => row[columnIndex]).toList();
-    final numericData = columnData.whereType<num>().toList();
-
-    if (numericData.length != columnData.length) {
-      throw ArgumentError(
-          'Column must contain only numeric values for binning');
+    
+    // Extract numeric data from the column
+    final numericData = <num>[];
+    final rowIndices = <int>[];
+    
+    for (var i = 0; i < _data.length; i++) {
+    final value = _data[i][colIdx];
+    if (value is num) {
+        // Skip NaN values
+        if (value is double && value.isNaN) {
+          continue;
+        }
+        numericData.add(value);
+        rowIndices.add(i);
+      }
     }
-
+    
+    if (numericData.isEmpty) {
+      throw ArgumentError('Column $colName contains no valid numeric data for binning');
+    }
+    
     // Determine bin edges
     List<num> binEdges;
+    
     if (bins is int) {
-      if (bins <= 0) {
-        throw ArgumentError('Number of bins must be positive.');
-      }
-      // Create equally spaced bins
-      if (numericData.isEmpty) {
-        throw ArgumentError('Cannot determine bin edges for empty or all-null column data.');
-      }
-      num dataMin = numericData.reduce((a, b) => a < b ? a : b);
-      num dataMax = numericData.reduce((a, b) => a > b ? a : b);
+      // Create evenly spaced bins
+      final min = numericData.reduce((a, b) => a < b ? a : b);
+      final max = numericData.reduce((a, b) => a > b ? a : b);
       
-      if (dataMin == dataMax) { // Handle case where all data points are the same
-        dataMin = dataMin - 0.001 * dataMin.abs(); // Avoid issues with single point data
-        dataMax = dataMax + 0.001 * dataMax.abs();
-        if (dataMin == dataMax) { // If still same (e.g. dataMin/Max was 0)
-            dataMin = -0.001;
-            dataMax = 0.001;
-        }
-      }
-
-      final step = (dataMax - dataMin) / bins;
-      binEdges = List.generate(bins + 1, (i) => dataMin + i * step);
-      // Ensure the last edge covers the max value precisely for floating point issues
-      binEdges[binEdges.length-1] = dataMax; 
-      
-      // If include_lowest is true, the first bin's left edge effectively becomes the dataMin.
-      // This is naturally handled by the equal spacing if dataMin is the start.
-      // If right=true, include_lowest makes the first interval [min, edge1]
-      // The current logic for creating equally spaced bins starting from dataMin already does this.
-
-    } else if (bins is List<num>) {
-      if (bins.length < 2) {
-        throw ArgumentError('Bin edges must contain at least two values.');
-      }
-      List<num> sortedBins = List.from(bins)..sort();
-      
-      if (duplicates == 'raise') {
-        for (int i = 0; i < sortedBins.length - 1; i++) {
-          if (sortedBins[i] == sortedBins[i+1]) {
-            throw ArgumentError('Bin edges must be unique when duplicates="raise". Found duplicate: ${sortedBins[i]}');
-          }
-        }
-        binEdges = sortedBins;
-      } else if (duplicates == 'drop') {
-        binEdges = sortedBins.toSet().toList()..sort(); // Unique and sorted
-        if (binEdges.length < 2) {
-           throw ArgumentError('After dropping duplicates, bin edges must contain at least two unique values.');
-        }
+      // Handle case where all values are the same
+      if (min == max) {
+        // Create small range around the single value
+        final delta = min.abs() * 0.001;
+        binEdges = List.generate(
+            bins + 1, (i) => min - delta + i * (2 * delta / bins));
       } else {
-        throw ArgumentError('duplicates parameter must be "raise" or "drop"');
+        binEdges = List.generate(
+            bins + 1, (i) => min + i * (max - min) / bins);
+      }
+    } else if (bins is List<num>) {
+      binEdges = List<num>.from(bins);
+      
+      // Check for duplicates
+      final uniqueEdges = binEdges.toSet().toList()..sort();
+      if (uniqueEdges.length < binEdges.length) {
+        if (duplicates == 'raise') {
+          throw ArgumentError('Bin edges must be unique');
+        } else if (duplicates == 'drop') {
+          binEdges = uniqueEdges;
+        }
       }
     } else {
-      throw ArgumentError(
-          'Bins must be an integer or a list of numeric values');
+      throw ArgumentError('bins must be an integer or a list of numbers');
     }
-
-    // Validate labels if provided
-    if (labels != null && labels.length != binEdges.length - 1) {
-      throw ArgumentError('Number of labels must match number of bins');
+    
+    // Sort bin edges
+    binEdges.sort();
+    
+    // Generate bin labels
+    List<String> binLabels;
+    
+    if (labels != null) {
+      if (labels.length != binEdges.length - 1) {
+        throw ArgumentError(
+            'labels must have length equal to bins.length - 1');
+      }
+      binLabels = labels;
+    } else {
+      binLabels = [];
+      for (var i = 0; i < binEdges.length - 1; i++) {
+        // For right=false, all left brackets are '[' regardless of includeLowest
+        final leftBracket = right ? 
+            ((i == 0 && includeLowest) ? '[' : '(') : 
+            '[';
+        
+        // For right=false, all right brackets are ')' except the last one which is ']'
+        final rightBracket = (i == binEdges.length - 2) ? ']' : (right ? ']' : ')');
+        
+        // Format with specified decimal places
+        final formattedLeft = binEdges[i].toStringAsFixed(decimalPlaces);
+        final formattedRight = binEdges[i + 1].toStringAsFixed(decimalPlaces);
+        
+        binLabels.add('$leftBracket$formattedLeft, $formattedRight$rightBracket');
+      }
     }
-
+    
     // Assign data to bins
-    final binIndices = <int>[];
-    for (var value in numericData) {
-      int binIndex = -1;
-      for (int i = 0; i < binEdges.length - 1; i++) {
-        bool isFirstBin = (i == 0);
-        bool valueInBin;
-
-        if (right) { // Interval: (left, right]
-          bool leftComparison = value > binEdges[i];
-          if (isFirstBin && includeLowest) {
-            leftComparison = value >= binEdges[i];
-          }
-          bool rightComparison = value <= binEdges[i+1];
-          valueInBin = leftComparison && rightComparison;
-        } else { // Interval: [left, right)
-          bool leftComparison = value >= binEdges[i];
-          // For right=false, the last bin's right edge is inclusive
-          bool rightComparison = (i == binEdges.length - 2) ? value <= binEdges[i+1] : value < binEdges[i+1];
-          valueInBin = leftComparison && rightComparison;
+    final binIndices = List<int?>.filled(numericData.length, null);
+    
+    for (var i = 0; i < numericData.length; i++) {
+      final value = numericData[i];
+      
+      for (var j = 0; j < binEdges.length - 1; j++) {
+        final leftEdge = binEdges[j];
+        final rightEdge = binEdges[j + 1];
+        
+        bool inLeftBoundary;
+        bool inRightBoundary;
+        
+        if (right) {
+          // For right=true: (left, right] or [left, right] if includeLowest and first bin
+          inLeftBoundary = (j == 0 && includeLowest) ? 
+              value >= leftEdge : 
+              value > leftEdge;
+          inRightBoundary = value <= rightEdge;
+        } else {
+          // For right=false: [left, right) or [left, right] for the last bin
+          inLeftBoundary = value >= leftEdge;
+          inRightBoundary = (j == binEdges.length - 2) ? 
+              value <= rightEdge : 
+              value < rightEdge;
         }
         
-        if (valueInBin) {
-          binIndex = i;
+        if (inLeftBoundary && inRightBoundary) {
+          binIndices[i] = j;
           break;
         }
       }
-      binIndices.add(binIndex);
     }
-
-    // Create new column with bin labels
-    final List<dynamic> actualLabels;
-    if (labels != null) {
-      if (labels.length != binEdges.length - 1) {
-        throw ArgumentError('Number of labels must match number of bins (edges-1).');
+    
+    // Create new DataFrame with bin column
+    final newData = _data.map((row) => List<dynamic>.from(row)).toList();
+    final newColumns = List<dynamic>.from(_columns);
+    
+    if (!newColumns.contains(targetColName)) {
+      newColumns.add(targetColName);
+      for (var row in newData) {
+        row.add(null);
       }
-      actualLabels = labels;
-    } else {
-      actualLabels = List.generate(binEdges.length - 1, (i) {
-        String leftEdge = binEdges[i].toString();
-        String rightEdge = binEdges[i+1].toString();
-        if (right) {
-          String leftBracket = (i == 0 && includeLowest) ? '[' : '(';
-          return '$leftBracket$leftEdge, $rightEdge]';
-        } else {
-          // For right=false, last bin is [left, right], others are [left, right)
-          String rightBracket = (i == binEdges.length - 2) ? ']' : ')';
-          return '[$leftEdge, $rightEdge$rightBracket';
-        }
-      });
     }
-
-    final newColumnName = newColumn ?? '${column}_bins';
-    final newData = _data
-        .asMap()
-        .map((i, row) {
-          final newRow = List<dynamic>.from(row);
-          final binIndex = binIndices[i];
-          newRow.add(binIndex >= 0 ? actualLabels[binIndex] : null);
-          return MapEntry(i, newRow);
-        })
-        .values
-        .toList();
-
-    final newColumns = List<dynamic>.from(_columns)..add(newColumnName);
-
+    
+    final targetColIdx = newColumns.indexOf(targetColName);
+    
+    for (var i = 0; i < rowIndices.length; i++) {
+      final rowIdx = rowIndices[i];
+      final binIdx = binIndices[i];
+      newData[rowIdx][targetColIdx] = binIdx != null ? binLabels[binIdx] : null;
+    }
+    
     return DataFrame._(newColumns, newData);
   }
 
@@ -2530,8 +2532,19 @@ extension DataFrameFunctions on DataFrame {
   ///   - `column`: Column name to use for the columns
   ///   - `values`: Optional column name to aggregate
   ///   - `aggfunc`: Aggregation function to use ('count', 'sum', 'mean', 'min', 'max')
-  DataFrame crosstab({ required String index, required String column,
-      String? values, String aggfunc = 'count'}) {
+  ///   - `normalize`: If true or 'all', normalize all values. If 'index', normalize across rows.
+  ///                  If 'columns', normalize across columns.
+  ///   - `margins`: Add row/column margins (subtotals)
+  ///   - `margins_name`: Name of the row/column that will contain the totals
+  DataFrame crosstab({ 
+      required String index, 
+      required String column,
+      String? values, 
+      String aggfunc = 'count',
+      dynamic normalize = false,
+      bool margins = false,
+      String margins_name = 'All'
+  }) {
     if (!hasColumn(index)) {
       throw ArgumentError('Row column $index does not exist');
     }
@@ -2577,65 +2590,208 @@ extension DataFrameFunctions on DataFrame {
 
     // Create cross-tabulation data
     final crossTabData = <List<dynamic>>[];
+    final rowSums = <dynamic, dynamic>{};
+    final colSums = <dynamic, dynamic>{};
+    var grandTotal = 0.0;
 
+    // First pass: calculate the raw values and totals
     for (var rowValue in rowValues) {
       final rowData = <dynamic>[rowValue];
+      var rowSum = 0.0;
 
       for (var colValue in columnValues) {
         final cellValues = grouped[rowValue]?[colValue] ?? [];
+        dynamic cellValue;
 
         if (cellValues.isEmpty) {
-          rowData.add(0); // Default value for empty cells
-          continue;
+          cellValue = 0; // Default value for empty cells
+        } else {
+          // Apply aggregation function
+          switch (aggfunc.toLowerCase()) {
+            case 'count':
+              cellValue = cellValues.length;
+              break;
+
+            case 'sum':
+              if (cellValues.every((v) => v is num)) {
+                cellValue = cellValues.fold<num>(0, (prev, val) => prev + (val as num));
+              } else {
+                cellValue = null;
+              }
+              break;
+
+            case 'mean':
+              if (cellValues.every((v) => v is num)) {
+                final sum = cellValues.fold<num>(0, (prev, val) => prev + (val as num));
+                cellValue = sum / cellValues.length;
+              } else {
+                cellValue = null;
+              }
+              break;
+
+            case 'min':
+              if (cellValues.every((v) => v is num)) {
+                cellValue = cellValues.cast<num>().reduce((a, b) => a < b ? a : b);
+              } else if (cellValues.isNotEmpty) {
+                cellValue = cellValues.reduce((a, b) => a.toString().compareTo(b.toString()) < 0 ? a : b);
+              } else {
+                cellValue = null;
+              }
+              break;
+
+            case 'max':
+              if (cellValues.every((v) => v is num)) {
+                cellValue = cellValues.cast<num>().reduce((a, b) => a > b ? a : b);
+              } else if (cellValues.isNotEmpty) {
+                cellValue = cellValues.reduce((a, b) => a.toString().compareTo(b.toString()) > 0 ? a : b);
+              } else {
+                cellValue = null;
+              }
+              break;
+
+            default:
+              throw ArgumentError('Unsupported aggregation function: $aggfunc');
+          }
         }
 
-        // Apply aggregation function
-        switch (aggfunc.toLowerCase()) {
-          case 'count':
-            rowData.add(cellValues.length);
-            break;
-
-          case 'sum':
-            if (cellValues.every((v) => v is num)) {
-              rowData.add(
-                  cellValues.fold<num>(0, (prev, val) => prev + (val as num)));
-            } else {
-              rowData.add(null);
-            }
-            break;
-
-          case 'mean':
-            if (cellValues.every((v) => v is num)) {
-              final sum =
-                  cellValues.fold<num>(0, (prev, val) => prev + (val as num));
-              rowData.add(sum / cellValues.length);
-            } else {
-              rowData.add(null);
-            }
-            break;
-
-          case 'min':
-            if (cellValues.every((v) => v is num)) {
-              rowData.add(cellValues.cast<num>().reduce(min));
-            } else {
-              rowData.add(null);
-            }
-            break;
-
-          case 'max':
-            if (cellValues.every((v) => v is num)) {
-              rowData.add(cellValues.cast<num>().reduce(max));
-            } else {
-              rowData.add(null);
-            }
-            break;
-
-          default:
-            throw ArgumentError('Unsupported aggregation function: $aggfunc');
+        rowData.add(cellValue);
+        
+        // Update row and column sums
+        if (cellValue is num) {
+          rowSum += cellValue;
+          colSums[colValue] = (colSums[colValue] ?? 0.0) + cellValue;
+          grandTotal += cellValue;
         }
       }
-
+      
+      rowSums[rowValue] = rowSum;
       crossTabData.add(rowData);
+    }
+
+    // Store the raw data before normalization for margin calculations
+    final rawData = crossTabData.map((row) => List<dynamic>.from(row)).toList();
+    final rawRowSums = Map<dynamic, dynamic>.from(rowSums);
+    final rawColSums = Map<dynamic, dynamic>.from(colSums);
+    final rawGrandTotal = grandTotal;
+
+    // Apply normalization if requested
+    if (normalize != false) {
+      String normType = normalize is bool ? 'all' : normalize.toString();
+      
+      for (var i = 0; i < crossTabData.length; i++) {
+        final rowValue = crossTabData[i][0];
+        
+        for (var j = 1; j < crossTabData[i].length; j++) {
+          if (crossTabData[i][j] is num) {
+            double divisor = 1.0;
+            
+            switch (normType) {
+              case 'all':
+                divisor = rawGrandTotal;
+                break;
+              case 'index':
+                divisor = rawRowSums[rowValue] ?? 1.0;
+                break;
+              case 'columns':
+                final colValue = newColumns[j];
+                divisor = rawColSums[colValue] ?? 1.0;
+                break;
+            }
+            
+            if (divisor != 0) {
+              crossTabData[i][j] = (crossTabData[i][j] as num) / divisor;
+            } else {
+              crossTabData[i][j] = 0.0;
+            }
+          }
+        }
+      }
+    }
+
+    // Add margins if requested
+    if (margins) {
+      // Add row totals column
+      newColumns.add(margins_name);
+      
+      for (var i = 0; i < crossTabData.length; i++) {
+        if (normalize == 'index') {
+          // For index normalization, row sum should be 1.0
+          crossTabData[i].add(1.0);
+        } else if (normalize == 'columns') {
+          // For column normalization, calculate the sum of normalized values
+          double sum = 0.0;
+          for (var j = 1; j < crossTabData[i].length; j++) {
+            if (crossTabData[i][j] is num) {
+              sum += crossTabData[i][j];
+            }
+          }
+          crossTabData[i].add(sum);
+        } else if (normalize == true || normalize == 'all') {
+          // For all normalization, calculate the sum of normalized values
+          double sum = 0.0;
+          for (var j = 1; j < crossTabData[i].length; j++) {
+            if (crossTabData[i][j] is num) {
+              sum += crossTabData[i][j];
+            }
+          }
+          crossTabData[i].add(sum);
+        } else {
+          // For no normalization, use the raw row sum
+          crossTabData[i].add(rawRowSums[crossTabData[i][0]] ?? 0.0);
+        }
+      }
+      
+      // Add column totals row
+      final totalRow = <dynamic>[margins_name];
+      
+      for (var j = 1; j < newColumns.length; j++) {
+        if (j == newColumns.length - 1) {
+          // Last column is the grand total
+          if (normalize == 'index') {
+            // For index normalization, sum of row sums (each 1.0)
+            totalRow.add(crossTabData.length.toDouble());
+          } else if (normalize == 'columns') {
+            // For column normalization, sum of column sums (each 1.0)
+            totalRow.add(columnValues.length.toDouble());
+          } else if (normalize == true || normalize == 'all') {
+            // For all normalization, sum should be 1.0
+            totalRow.add(1.0);
+          } else {
+            // For no normalization, use the raw grand total
+            totalRow.add(rawGrandTotal);
+          }
+        } else {
+          final colValue = newColumns[j];
+          
+          if (normalize == 'index') {
+            // For index normalization, calculate the sum of normalized values
+            double sum = 0.0;
+            for (var i = 0; i < crossTabData.length; i++) {
+              if (crossTabData[i][j] is num) {
+                sum += crossTabData[i][j];
+              }
+            }
+            totalRow.add(sum);
+          } else if (normalize == 'columns') {
+            // For column normalization, column sum should be 1.0
+            totalRow.add(1.0);
+          } else if (normalize == true || normalize == 'all') {
+            // For all normalization, calculate the sum of normalized values
+            double sum = 0.0;
+            for (var i = 0; i < crossTabData.length; i++) {
+              if (crossTabData[i][j] is num) {
+                sum += crossTabData[i][j];
+              }
+            }
+            totalRow.add(sum);
+          } else {
+            // For no normalization, use the raw column sum
+            totalRow.add(rawColSums[colValue] ?? 0.0);
+          }
+        }
+      }
+      
+      crossTabData.add(totalRow);
     }
 
     return DataFrame._(newColumns, crossTabData);
