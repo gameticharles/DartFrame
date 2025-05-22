@@ -1,7 +1,4 @@
-import 'dart:math';
-
 part of '../../dartframe.dart';
-part 'accessors.dart';
 
 /// A class representing a DataFrame, which is a 2-dimensional labeled data structure
 /// with columns of potentially different types.
@@ -39,7 +36,7 @@ class DataFrame {
 
     if (formatData) {
       // Clean and convert data
-      _data = _data.map((row) => row.map(_cleanData).toList()).toList();
+      _data = _data.map((row) => row.map(cleanData).toList()).toList();
     }
 
     // If index was entered, check that it's given for all rows or throw error (pd)
@@ -133,11 +130,11 @@ class DataFrame {
     // ... validation based on allowFlexibleColumns ...
     if (formatData && data != null) {
       // Clean and convert data
-      _data = data.map((row) => row.map(_cleanData).toList()).toList();
+      _data = data.map((row) => row.map(cleanData).toList()).toList();
     }
   }
 
-  dynamic _cleanData(dynamic value) {
+  dynamic cleanData(dynamic value) {
     List<String> commonDateFormats = [
       'yyyy-MM-dd',
       'MM/dd/yyyy',
@@ -238,7 +235,7 @@ class DataFrame {
       throw ArgumentError('Either csv or inputFilePath must be provided.');
     }
 
-    List<List> rows = csvContent!
+    List<List> rows = csvContent
         .trim()
         .split('\n')
         .map((row) => row.split(delimiter).map((value) => value).toList())
@@ -254,7 +251,7 @@ class DataFrame {
 
     return DataFrame._(
       columnNames,
-      rows.sublist(1),
+      hasHeader ? rows.sublist(1) : rows,  // Only skip first row if hasHeader is true
       //rowHeader: hasRowIndex ? rows[0] : List.generate(rows[0].length, (i) => i),
       index: [], // todo: Not implemented yet
       replaceMissingValueWith: replaceMissingValueWith,
@@ -293,7 +290,7 @@ class DataFrame {
           'Either jsonString or inputFilePath must be provided.');
     }
 
-    final jsonData = jsonDecode(jsonContent!) as List;
+    final jsonData = jsonDecode(jsonContent) as List;
 
     // Extract column names from the first object
     final columnNames = jsonData[0].keys.toList();

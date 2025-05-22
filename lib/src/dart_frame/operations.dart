@@ -32,7 +32,7 @@ extension DataFrameOperations on DataFrame {
       }
       var series =
           Series(rows.map((row) => row[key]).toList(), name: _columns[key]);
-      series._setParent(this, _columns[key].toString());
+      series.setParent(this, _columns[key].toString());
       return series;
     } else if (key is String) {
       int columnIndex = _columns.indexOf(key);
@@ -41,7 +41,7 @@ extension DataFrameOperations on DataFrame {
       }
       var series =
           Series(rows.map((row) => row[columnIndex]).toList(), name: key);
-      series._setParent(this, key);
+      series.setParent(this, key);
       return series;
     } else {
       throw ArgumentError('Key must be an int or String');

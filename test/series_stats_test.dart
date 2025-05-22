@@ -22,7 +22,7 @@ void main() {
       test('with specific missing value placeholder', () {
         var df = DataFrame.empty(replaceMissingValueWith: -1);
         var s = Series([1, 2, -1, 3, 2, -1], name: 'specific_missing');
-        s._setParent(df, 'specific_missing');
+        s.setParent(df, 'specific_missing');
         expect(s.nunique(), equals(3)); // -1 is ignored
       });
 
@@ -37,7 +37,7 @@ void main() {
 
         var df = DataFrame.empty(replaceMissingValueWith: 'NA');
         var sNa = Series(['NA', 'NA'], name: 'all_na');
-        sNa._setParent(df, 'all_na');
+        sNa.setParent(df, 'all_na');
         expect(sNa.nunique(), equals(0));
       });
     });
@@ -48,7 +48,7 @@ void main() {
 
       var dfSpecific = DataFrame.empty(replaceMissingValueWith: 'MISSING');
       var sSpecificMissing = Series(['x', 'y', 'x', 'MISSING', 'z', 'MISSING'], name: 'specific_counts');
-      sSpecificMissing._setParent(dfSpecific, 'specific_counts');
+      sSpecificMissing.setParent(dfSpecific, 'specific_counts');
       final specificMissingRep = 'MISSING';
 
       test('basic counts (sorted descending, dropna=true)', () {
@@ -93,7 +93,7 @@ void main() {
       test('ascending=true', () {
         var result = s.value_counts(ascending: true, dropna: true);
         expect(result.data.first <= result.data.last, isTrue); // Check if sorted ascending by count
-        expect(result.index.last, equals('a')); // 'a' has highest count
+        expect(result.index!.first, equals('a')); // 'a' has highest count
       });
 
       test('dropna=false (default missing)', () {

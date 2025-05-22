@@ -183,7 +183,7 @@ extension SeriesOperations on Series {
           // For now, let's assume if _areIndexesEffectivelyIdentical is false, we MUST use union logic.
           // If unionIndex is still empty here, it implies both series might be empty or had null/empty incompatible indexes.
           // Let's default to using integer indices if union is empty but data isn't.
-          int maxLen = math.max(self.length, other.length);
+          int maxLen = max(self.length, other.length);
           if (maxLen > 0 && (self.index == null || self.index!.isEmpty) && (other.index == null || other.index!.isEmpty)) {
              unionIndex = List.generate(maxLen, (i) => i);
           }

@@ -642,7 +642,7 @@ class GeoDataFrame extends DataFrame {
         }
 
         // Create a DataFrame from the CSV data
-        DataFrame df = DataFrame.fromCSV(
+        DataFrame df = await DataFrame.fromCSV(
           csv: allLines.join('\n'),
           delimiter: delimiter,
           hasHeader: hasHeader,

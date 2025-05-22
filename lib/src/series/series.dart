@@ -1,7 +1,5 @@
-import 'dart:math';
-
 part of '../../dartframe.dart';
-part 'string_accessor.dart';
+
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///
@@ -41,7 +39,7 @@ class Series {
   List<dynamic>? index;
 
   /// Sets the parent DataFrame reference
-  void _setParent(DataFrame parent, String columnName) {
+  void setParent(DataFrame parent, String columnName) {
     _parentDataFrame = parent;
     _columnName = columnName;
   }

@@ -15,7 +15,10 @@ class StringSeriesAccessor {
     List<dynamic> resultData = [];
 
     for (var value in _series.data) {
-      if (value is String) {
+      // Check if the value is the missing value placeholder
+      if (value == missingRep) {
+        resultData.add(missingRep);
+      } else if (value is String) {
         try {
           resultData.add(operation(value));
         } catch (e) {
@@ -34,7 +37,10 @@ class StringSeriesAccessor {
     List<dynamic> resultData = []; // Will store bools or missingRep
 
     for (var value in _series.data) {
-      if (value is String) {
+      // Check if the value is the missing value placeholder
+      if (value == missingRep) {
+        resultData.add(missingRep);
+      } else if (value is String) {
         try {
           resultData.add(operation(value));
         } catch (e) {

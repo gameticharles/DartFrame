@@ -26,10 +26,12 @@ part 'src/geo_dart_frame/extension.dart';
 part 'src/dart_frame/dart_frame.dart';
 part 'src/dart_frame/operations.dart';
 part 'src/dart_frame/functions.dart';
+part 'src/dart_frame/accessors.dart';
 
 part 'src/series/series.dart';
 part 'src/series/operations.dart';
 part 'src/series/functions.dart';
+part 'src/series/string_accessor.dart';
 
 // This function should return an instance of FileIODesktop or FileIOWeb depending on the platform.
 FileIO fileIO = FileIO();

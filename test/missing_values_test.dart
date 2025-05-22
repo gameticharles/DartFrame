@@ -125,24 +125,24 @@ void main() {
      test('_cleanData behavior direct check', () {
       // Scenario 1: Default (replaceMissingValueWith = null)
       var df1 = DataFrame.empty(missingDataIndicator: ['NA']);
-      expect(df1._cleanData('NA'), isNull);
-      expect(df1._cleanData(null), isNull);
-      expect(df1._cleanData(''), isNull);
-      expect(df1._cleanData('valid'), equals('valid'));
+      expect(df1.cleanData('NA'), isNull);
+      expect(df1.cleanData(null), isNull);
+      expect(df1.cleanData(''), isNull);
+      expect(df1.cleanData('valid'), equals('valid'));
 
       // Scenario 2: Specific replaceMissingValueWith
       var df2 = DataFrame.empty(missingDataIndicator: ['NA'], replaceMissingValueWith: 'MISSING');
-      expect(df2._cleanData('NA'), equals('MISSING'));
-      expect(df2._cleanData(null), equals('MISSING'));
-      expect(df2._cleanData(''), equals('MISSING'));
-      expect(df2._cleanData('valid'), equals('valid'));
+      expect(df2.cleanData('NA'), equals('MISSING'));
+      expect(df2.cleanData(null), equals('MISSING'));
+      expect(df2.cleanData(''), equals('MISSING'));
+      expect(df2.cleanData('valid'), equals('valid'));
       
       // Scenario 3: Specific numeric replaceMissingValueWith
       var df3 = DataFrame.empty(missingDataIndicator: ['NA'], replaceMissingValueWith: -1.0);
-      expect(df3._cleanData('NA'), equals(-1.0));
-      expect(df3._cleanData(null), equals(-1.0));
-      expect(df3._cleanData(''), equals(-1.0));
-      expect(df3._cleanData(123), equals(123)); // Should not replace valid data
+      expect(df3.cleanData('NA'), equals(-1.0));
+      expect(df3.cleanData(null), equals(-1.0));
+      expect(df3.cleanData(''), equals(-1.0));
+      expect(df3.cleanData(123), equals(123)); // Should not replace valid data
     });
   });
 
@@ -254,7 +254,7 @@ void main() {
     test('Series methods ignore specific replaceMissingValueWith', () {
       var df = DataFrame.empty(replaceMissingValueWith: -1); // Parent DataFrame sets context
       var s = Series([-1, 1, 2, -1, 3], name: 'test_specific');
-      s._setParent(df, 'test_specific'); // Link series to DataFrame
+      s.setParent(df, 'test_specific'); // Link series to DataFrame
 
       expect(s.count(), equals(3)); // Should count 1, 2, 3
       expect(s.sum(), equals(6));   // 1+2+3

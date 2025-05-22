@@ -1,7 +1,7 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() async {
-  await dataframe1(); // Wait for dataframe1 to complete
+  dataframe1(); // Execute dataframe1 function
   dataframe2();
 
   // Load the CSV data into a DataFrame and tries to convert string to the right type
