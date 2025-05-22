@@ -1,6 +1,5 @@
 part of '../../dartframe.dart';
 
-
 /// A `Series` class represents a one-dimensional array with a label.
 ///
 /// The `Series` class is designed to hold a sequence of data of any type `T`,
@@ -123,6 +122,49 @@ class Series {
   /// Length of the data in the series
   int get length => data.length;
 
+  /// Returns the predominant data type of the Series.
+  ///
+  /// This getter determines the most common type among non-missing values in the Series.
+  /// If the Series is empty or contains only missing values, it returns `dynamic`.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([1, 2, 3], name: 'numbers');
+  /// print(s.dtype); // Outputs: int
+  ///
+  /// var mixed = Series([1, 'a', true], name: 'mixed');
+  /// print(mixed.dtype); // Outputs the most common type or dynamic
+  /// ```
+  Type get dtype {
+    if (data.isEmpty) return dynamic;
+    
+    // Count occurrences of each type
+    Map<Type, int> typeCounts = {};
+    dynamic missingValue = _parentDataFrame?.replaceMissingValueWith;
+    
+    for (var value in data) {
+      if (value != null && value != missingValue) {
+        Type valueType = value.runtimeType;
+        typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
+      }
+    }
+    
+    if (typeCounts.isEmpty) return dynamic;
+    
+    // Find the most common type
+    Type mostCommonType = dynamic;
+    int maxCount = 0;
+    
+    typeCounts.forEach((type, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonType = type;
+      }
+    });
+    
+    return mostCommonType;
+  }
+
 // Return the Series as a data frame
   DataFrame toDataFrame() => DataFrame.fromMap({name: data});
 
@@ -133,7 +175,7 @@ class Series {
 
   /// Returns the number of unique non-missing values in the Series.
   int nunique() {
-    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
     final Set<dynamic> uniqueValues = {};
     for (var value in data) {
       if (value != missingRep) {
@@ -160,9 +202,8 @@ class Series {
     bool ascending = false,
     bool dropna = true,
   }) {
-    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
     final Map<dynamic, int> counts = {};
-    int totalCount = 0;
 
     for (var value in data) {
       if (value == missingRep) {
@@ -172,9 +213,6 @@ class Series {
       } else {
         counts[value] = (counts[value] ?? 0) + 1;
       }
-      // totalCount for normalization should only include non-missing if dropna is true,
-      // or all if dropna is false and we are counting the missingRep itself.
-      // For simplicity in normalization, we'll sum actual counts later.
     }
     
     List<MapEntry<dynamic, int>> sortedCounts = counts.entries.toList();
@@ -199,7 +237,6 @@ class Series {
       if (sumOfCounts != 0) {
         resultData = resultData.map((count) => count is num ? count / sumOfCounts : missingRep).toList();
       } else {
-        // Avoid division by zero if all counts are zero (e.g. empty series after dropna)
          resultData = resultData.map((_) => 0.0).toList();
       }
     }
@@ -210,4 +247,233 @@ class Series {
       index: resultIndex,
     );
   }
+
+  /// Returns a boolean Series indicating if each value is missing.
+  ///
+  /// A value is considered missing if it is equal to the parent DataFrame's
+  /// `replaceMissingValueWith` property (or `null` if no parent DataFrame).
+  Series isna() {
+    final missingValue = _parentDataFrame?.replaceMissingValueWith;
+    final boolList = data.map((e) => e == missingValue).toList();
+    return Series(boolList, name: '${name}_isna', index: index);
+  }
+
+  /// Returns a boolean Series indicating if each value is not missing.
+  ///
+  /// This is the inverse of `isna()`. A value is considered not missing if it is
+  /// not equal to the parent DataFrame's `replaceMissingValueWith` property
+  /// (or `null` if no parent DataFrame).
+  Series notna() {
+    final missingValue = _parentDataFrame?.replaceMissingValueWith;
+    final boolList = data.map((e) => e != missingValue).toList();
+    return Series(boolList, name: '${name}_notna', index: index);
+  }
+
+  /// Convert Series to numeric.
+  ///
+  /// Attempts to convert elements of the Series to numeric types (`int` or `double`).
+  ///
+  /// Parameters:
+  ///   - `errors` (String, default `'raise'`):
+  ///     - If `'raise'`, then invalid parsing will raise an exception.
+  ///     - If `'coerce'`, then invalid parsing will be set as the Series' missing value representation.
+  ///     - If `'ignore'`, then invalid parsing will return the input.
+  ///   - `downcast` (String?, default `null`):
+  ///     - If `null`, data is kept as `int` or `double` as parsed.
+  ///     - If `'integer'`, attempt to downcast to `int` if possible (i.e., number has no fractional part).
+  ///     - If `'float'`, data is cast to `double`.
+  ///
+  /// Returns:
+  /// A new `Series` with numeric data. The name of the series is preserved.
+  ///
+  /// Throws:
+  ///   - `FormatException` if `errors == 'raise'` and a value cannot be parsed.
+  ///   - `ArgumentError` if `errors` or `downcast` has an invalid value.
+  Series toNumeric({String errors = 'raise', String? downcast}) {
+    if (!['raise', 'coerce', 'ignore'].contains(errors)) {
+      throw ArgumentError("errors must be one of 'raise', 'coerce', 'ignore'");
+    }
+    if (downcast != null && !['integer', 'float'].contains(downcast)) {
+      throw ArgumentError("downcast must be one of 'integer', 'float', or null");
+    }
+
+    final missingValue = _parentDataFrame?.replaceMissingValueWith;
+    List<dynamic> newData = [];
+
+    for (int i = 0; i < data.length; i++) {
+      dynamic originalVal = data[i];
+      num? numVal;
+      bool conversionError = false;
+
+      if (originalVal is num) {
+        numVal = originalVal;
+      } else if (originalVal is String) {
+        numVal = num.tryParse(originalVal);
+        if (numVal == null) {
+          conversionError = true;
+        }
+      } else if (originalVal == missingValue) { // Handle existing missing values
+        newData.add(missingValue);
+        continue;
+      }
+      else {
+        conversionError = true; // Not a num or String, cannot parse
+      }
+
+      if (conversionError) {
+        if (errors == 'raise') {
+          throw FormatException(
+              "Unable to parse value '$originalVal' to numeric at index $i");
+        } else if (errors == 'coerce') {
+          newData.add(missingValue);
+        } else { // errors == 'ignore'
+          newData.add(originalVal);
+        }
+      } else if (numVal != null) {
+        // Successfully parsed or already numeric
+        if (downcast == 'integer') {
+          if (numVal.truncate() == numVal) {
+            newData.add(numVal.toInt());
+          } else {
+            // Cannot be downcast to integer without loss
+            if (errors == 'raise') {
+              throw FormatException(
+                  "Cannot downcast value '$originalVal' (parsed as $numVal) to integer without loss at index $i");
+            } else if (errors == 'coerce') {
+              newData.add(missingValue);
+            } else { // errors == 'ignore'
+              newData.add(numVal); // Keep as float if cannot downcast
+            }
+          }
+        } else if (downcast == 'float') {
+          newData.add(numVal.toDouble());
+        } else { // downcast == null
+          newData.add(numVal); // Keep as parsed (int or double)
+        }
+      } else { 
+        if (errors == 'raise' && originalVal != missingValue) { 
+           throw FormatException("Unknown error parsing value '$originalVal' to numeric at index $i");
+        } else if (errors == 'coerce' || originalVal == missingValue) {
+          newData.add(missingValue);
+        } else { // errors == 'ignore'
+          newData.add(originalVal);
+        }
+      }
+    }
+    return Series(newData, name: name, index: List.from(index ?? []));
+  }
+
+  /// Convert Series to datetime.
+  ///
+  /// Attempts to convert elements of the Series to `DateTime` objects.
+  ///
+  /// Parameters:
+  ///   - `errors` (String, default `'raise'`):
+  ///     - If `'raise'`, then invalid parsing will raise an exception.
+  ///     - If `'coerce'`, then invalid parsing will be set as `null`.
+  ///     - If `'ignore'`, then invalid parsing will return the input.
+  ///   - `format` (String?, default `null`):
+  ///     The specific format string to use for parsing dates (e.g., 'yyyy-MM-dd HH:mm:ss').
+  ///     If `null`, parsing behavior is determined by `inferDatetimeFormat`.
+  ///   - `inferDatetimeFormat` (bool, default `false`):
+  ///     If `true` and `format` is `null`, attempt to infer the format of common date strings.
+  ///     Starts with `DateTime.tryParse()` (for ISO 8601) and then tries a list of common formats.
+  ///     If `false` and `format` is `null`, only `DateTime.tryParse()` is used.
+  ///
+  /// Returns:
+  /// A new `Series` with `DateTime?` data. The name of the series is preserved.
+  ///
+  /// Throws:
+  ///   - `FormatException` if `errors == 'raise'` and a value cannot be parsed.
+  ///   - `ArgumentError` if `errors` has an invalid value.
+  Series toDatetime({String errors = 'raise', String? format, bool inferDatetimeFormat = false}) {
+    if (!['raise', 'coerce', 'ignore'].contains(errors)) {
+      throw ArgumentError("errors must be one of 'raise', 'coerce', 'ignore'");
+    }
+
+    final missingValueRep = _parentDataFrame?.replaceMissingValueWith;
+    List<dynamic> newData = [];
+
+    // Common date formats for inference
+    final List<DateFormat> commonDateFormats = inferDatetimeFormat ? [
+      DateFormat('yyyy-MM-dd HH:mm:ss'),
+      DateFormat('yyyy-MM-ddTHH:mm:ss'),
+      DateFormat('yyyy-MM-dd'),
+      DateFormat('MM/dd/yyyy HH:mm:ss'),
+      DateFormat('MM/dd/yyyy'),
+      DateFormat('dd/MM/yyyy HH:mm:ss'),
+      DateFormat('dd/MM/yyyy'),
+      DateFormat('yyyy.MM.dd HH:mm:ss'),
+      DateFormat('yyyy.MM.dd'),
+      DateFormat('MM-dd-yyyy HH:mm:ss'),
+      DateFormat('MM-dd-yyyy'),
+    ] : [];
+
+    for (int i = 0; i < data.length; i++) {
+      dynamic originalVal = data[i];
+      DateTime? dtVal;
+      bool conversionError = false;
+
+      if (originalVal is DateTime) {
+        dtVal = originalVal;
+      } else if (originalVal == missingValueRep || originalVal == null) {
+        // Keep missing values as they are
+        newData.add(originalVal);
+        continue;
+      } else if (originalVal is num) {
+        // Handle numeric timestamps (milliseconds since epoch)
+        try {
+          dtVal = DateTime.fromMillisecondsSinceEpoch(originalVal.toInt());
+        } catch (e) {
+          conversionError = true;
+        }
+      } else if (originalVal is String) {
+        if (format != null) {
+          try {
+            dtVal = DateFormat(format).parseStrict(originalVal);
+          } catch (e) {
+            conversionError = true;
+          }
+        } else {
+          // Try DateTime.tryParse first
+          try {
+            dtVal = DateTime.tryParse(originalVal);
+          } catch (e) {
+            dtVal = null;
+          }
+          
+          // If tryParse failed and we're inferring formats, try common formats
+          if (dtVal == null && inferDatetimeFormat) {
+            for (var dfmt in commonDateFormats) {
+              try {
+                dtVal = dfmt.parseStrict(originalVal);
+                break; // Found a format that works
+              } catch (e) {
+                // Try next format
+              }
+            }
+            if (dtVal == null) conversionError = true; // None of the inferred formats worked
+          } else if (dtVal == null && !inferDatetimeFormat) {
+            conversionError = true; // DateTime.tryParse failed and not inferring
+          }
+        }
+      } else { // Not DateTime, String, or the defined missing value
+        conversionError = true; 
+      }
+
+      if (conversionError) {
+        if (errors == 'raise') {
+          throw FormatException("Unable to parse value '$originalVal' to DateTime at index $i");
+        } else if (errors == 'coerce') {
+          newData.add(missingValueRep); // Use the DataFrame's missing value representation or null
+        } else { // errors == 'ignore'
+          newData.add(originalVal);
+        }
+      } else {
+        newData.add(dtVal);
+      }
+    }
+    return Series(newData, name: name, index: index);
+  }
 }
+

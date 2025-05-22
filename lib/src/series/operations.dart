@@ -150,7 +150,12 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: self.index?.toList());
+       // Create a default index if both series have null indexes
+      List<dynamic>? resultIndex = self.index?.toList() ?? 
+                                  (self.index == null && other.index == null ? 
+                                   List.generate(self.length, (i) => i) : null);
+      
+      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: resultIndex);
     } else {
       // Case 2: Indexes are different or lengths differ (implying index use)
       List<dynamic> unionIndex = [];

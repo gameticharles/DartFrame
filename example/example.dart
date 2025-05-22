@@ -149,10 +149,10 @@ void dataframe2() {
   ]);
 
 // Vertical concatenation
-  var dfVertical = df1.concatenate(df2);
+  var dfVertical = df1.concatenate([df2]);
 
 // Horizontal concatenation
-  var dfHorizontal = df1.concatenate(df3, axis: 1);
+  var dfHorizontal = df1.concatenate([df3], axis: 1);
   print(dfHorizontal);
   print(dfVertical);
 

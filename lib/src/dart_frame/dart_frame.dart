@@ -133,7 +133,43 @@ class DataFrame {
       _data = data.map((row) => row.map(cleanData).toList()).toList();
     }
   }
-
+  
+  /// Cleans and converts data values based on their content.
+  ///
+  /// This method performs several operations:
+  /// 1. Handles missing data by checking if the value:
+  ///    - Is in the list of missing data indicators
+  ///    - Is null
+  ///    - Is an empty string
+  ///    If any of these conditions are met, returns [replaceMissingValueWith].
+  ///
+  /// 2. Attempts type conversion in the following order:
+  ///    - Numeric conversion: Tries to parse strings as numbers
+  ///    - Boolean conversion: Converts "true"/"false" strings to boolean values
+  ///    - Date/time parsing: Attempts to parse strings as dates using common formats
+  ///    - List conversion: Tries to parse strings that look like lists
+  ///
+  /// 3. Returns the original value if no conversion is applicable.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Numeric conversion
+  /// cleanData("123") // Returns 123 (as num)
+  ///
+  /// // Boolean conversion
+  /// cleanData("true") // Returns true (as bool)
+  ///
+  /// // Missing value handling
+  /// cleanData(null) // Returns replaceMissingValueWith
+  /// cleanData("") // Returns replaceMissingValueWith
+  /// cleanData("NA") // Returns replaceMissingValueWith if "NA" is in missingDataIndicator
+  ///
+  /// // No conversion applicable
+  /// cleanData("hello") // Returns "hello" (unchanged)
+  /// ```
+  ///
+  /// @param value The value to clean and potentially convert
+  /// @return The cleaned/converted value, or [replaceMissingValueWith] if the value is missing
   dynamic cleanData(dynamic value) {
     List<String> commonDateFormats = [
       'yyyy-MM-dd',
@@ -311,6 +347,31 @@ class DataFrame {
     );
   }
 
+  /// Creates an empty DataFrame with the specified column names.
+  ///
+  /// This factory constructor creates a DataFrame with no rows but with the specified columns.
+  /// Useful for creating template DataFrames that will be populated later.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromNames(['Name', 'Age', 'City']);
+  /// // Creates an empty DataFrame with columns 'Name', 'Age', and 'City'
+  /// ```
+  factory DataFrame.fromNames(
+    List<dynamic> columns, {
+    bool allowFlexibleColumns = false,
+    dynamic replaceMissingValueWith,
+    List missingDataIndicator = const [],
+  }) {
+    return DataFrame(
+      [], // Empty data
+      columns: columns,
+      allowFlexibleColumns: allowFlexibleColumns,
+      replaceMissingValueWith: replaceMissingValueWith,
+      missingDataIndicator: missingDataIndicator,
+    );
+  }
+
   /// Constructs a DataFrame from a map where keys are column names and values
   /// are lists representing column data.
   ///
@@ -365,6 +426,66 @@ class DataFrame {
     return DataFrame(
       data,
       columns: columns,
+      replaceMissingValueWith: replaceMissingValueWith,
+      missingDataIndicator: missingDataIndicator,
+      formatData: formatData,
+    );
+  }
+
+  /// Constructs a DataFrame from a list of maps, where each map represents a row.
+  ///
+  /// The keys of the maps are used as column names, and the values are used as cell values.
+  /// All maps should have the same keys, or at least contain all the keys that will be used as columns.
+  ///
+  /// Example:
+  /// ```dart
+  /// final df = DataFrame.fromRows([
+  ///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
+  ///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
+  ///   {'Name': 'Charlie', 'Age': 35, 'City': 'Chicago'},
+  /// ]);
+  /// ```
+  factory DataFrame.fromRows(
+    List<Map<dynamic, dynamic>> rows, {
+    List<dynamic>? columns,
+    List<dynamic> index = const [],
+    bool allowFlexibleColumns = false,
+    dynamic replaceMissingValueWith,
+    List missingDataIndicator = const [],
+    bool formatData = false,
+  }) {
+    if (rows.isEmpty) {
+      return DataFrame.empty(
+        columns: columns,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+      );
+    }
+
+    // Extract all unique keys from all maps to use as columns
+    Set<dynamic> allKeys = {};
+    for (var row in rows) {
+      allKeys.addAll(row.keys);
+    }
+
+    // Use provided columns or all keys from the maps
+    List<dynamic> finalColumns = columns ?? allKeys.toList();
+
+    // Create data rows
+    List<List<dynamic>> data = [];
+    for (var row in rows) {
+      List<dynamic> rowData = [];
+      for (var col in finalColumns) {
+        rowData.add(row.containsKey(col) ? row[col] : replaceMissingValueWith);
+      }
+      data.add(rowData);
+    }
+
+    return DataFrame(
+      data,
+      columns: finalColumns,
+      index: index,
+      allowFlexibleColumns: allowFlexibleColumns,
       replaceMissingValueWith: replaceMissingValueWith,
       missingDataIndicator: missingDataIndicator,
       formatData: formatData,
@@ -447,6 +568,26 @@ class DataFrame {
   /// Returns the shape of the DataFrame as a tuple (number of rows, number of columns).
   ({int rows, int columns}) get shape =>
       (rows: _data.length, columns: _columns.length);
+
+  /// Returns a Series object for the specified column name.
+  ///
+  /// This method provides a convenient way to access a column as a Series.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': 'x'},
+  ///   {'A': 2, 'B': 'y'},
+  /// ]);
+  /// var colA = df.column('A');
+  /// print(colA.data); // [1, 2]
+  /// ```
+  Series column(String name) {
+    if (!_columns.contains(name)) {
+      throw ArgumentError('Column "$name" not found in DataFrame');
+    }
+    return this[name];
+  }
 
   @override
   noSuchMethod(Invocation invocation) {
