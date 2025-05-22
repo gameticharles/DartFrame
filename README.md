@@ -92,7 +92,7 @@ To install DartFrame, add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartframe: ^0.0.1
+  dartframe: any
 ```
 
 Then, run:
