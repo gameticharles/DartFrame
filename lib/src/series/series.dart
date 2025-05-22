@@ -154,7 +154,7 @@ class Series {
   ///   - `ascending`: If `true` (and `sort` is `true`), sort in ascending order of frequency. Default is `false` (descending).
   ///   - `dropna`: If `true` (default), do not include counts of missing values in the result.
   ///             If `false`, include the count of missing values.
-  Series value_counts({
+  Series valueCounts({
     bool normalize = false,
     bool sort = true,
     bool ascending = false,

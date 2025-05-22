@@ -52,7 +52,7 @@ void main() {
       final specificMissingRep = 'MISSING';
 
       test('basic counts (sorted descending, dropna=true)', () {
-        var counts = s.value_counts();
+        var counts = s.valueCounts();
         expect(counts.index, equals(['a', 'b', null, 'd', 'c'])); // Order might vary if counts are same
         expect(counts.data, equals([3, 2, 2, 1, 1])); // Default sort is by count desc
         // To make test robust to tie-breaking in sort, check as map
@@ -63,7 +63,7 @@ void main() {
         expect(countsMap, equals({'a':3, 'b':2, null:2, 'd':1, 'c':1}));
 
 
-        var result = s.value_counts(); // dropna = true by default
+        var result = s.valueCounts(); // dropna = true by default
         expect(result.index, containsAllInOrder(['a', 'b'])); // a:3, b:2
         expect(result.data, containsAllInOrder([3, 2]));
         expect(result.index, isNot(contains(defaultMissingRep)));
@@ -71,33 +71,33 @@ void main() {
       });
       
        test('basic counts explicit dropna=true', () {
-        var result = s.value_counts(dropna: true);
+        var result = s.valueCounts(dropna: true);
         expect(result.data.reduce((a,b) => a+b), equals(7)); // 3a, 2b, 1c, 1d
         expect(result.index, isNot(contains(defaultMissingRep)));
       });
 
 
       test('normalize=true', () {
-        var result = s.value_counts(normalize: true, dropna: true);
+        var result = s.valueCounts(normalize: true, dropna: true);
         expect(result.data[0], closeTo(3/7, 0.001)); // 'a': 3/7
         expect(result.data[1], closeTo(2/7, 0.001)); // 'b': 2/7
       });
 
       test('sort=false', () {
-        var result = s.value_counts(sort: false, dropna: true);
+        var result = s.valueCounts(sort: false, dropna: true);
         // Order might not be guaranteed, but check if all elements are present
         expect(result.length, equals(4)); // a,b,c,d
         expect(result.index, containsAll(['a', 'b', 'c', 'd']));
       });
 
       test('ascending=true', () {
-        var result = s.value_counts(ascending: true, dropna: true);
+        var result = s.valueCounts(ascending: true, dropna: true);
         expect(result.data.first <= result.data.last, isTrue); // Check if sorted ascending by count
         expect(result.index!.first, equals('a')); // 'a' has highest count
       });
 
       test('dropna=false (default missing)', () {
-        var result = s.value_counts(dropna: false, sort:true, ascending:false); // Sort to make it predictable
+        var result = s.valueCounts(dropna: false, sort:true, ascending:false); // Sort to make it predictable
         expect(result.index, contains(defaultMissingRep));
         // Expected order by count: a (3), b (2), null (2), c (1), d (1)
         // Find index of null
@@ -108,7 +108,7 @@ void main() {
       });
 
       test('dropna=false (specific missing)', () {
-        var result = sSpecificMissing.value_counts(dropna: false, sort:true, ascending:false);
+        var result = sSpecificMissing.valueCounts(dropna: false, sort:true, ascending:false);
         expect(result.index, contains(specificMissingRep));
         int missingIdx = result.index!.indexOf(specificMissingRep);
         expect(missingIdx, isNot(-1));
@@ -118,17 +118,17 @@ void main() {
 
       test('value_counts on empty series', () {
         var sEmpty = Series([], name: 'empty_s');
-        var result = sEmpty.value_counts();
+        var result = sEmpty.valueCounts();
         expect(result.length, equals(0));
         expect(result.name, equals('empty_s_value_counts'));
       });
       
       test('value_counts on series with only missing values', () {
         var sAllMissing = Series([null, null], name: 'all_miss_s');
-        var resultDrop = sAllMissing.value_counts(dropna: true);
+        var resultDrop = sAllMissing.valueCounts(dropna: true);
         expect(resultDrop.length, equals(0));
         
-        var resultNoDrop = sAllMissing.value_counts(dropna: false);
+        var resultNoDrop = sAllMissing.valueCounts(dropna: false);
         expect(resultNoDrop.length, equals(1));
         expect(resultNoDrop.index![0], isNull);
         expect(resultNoDrop.data[0], equals(2));

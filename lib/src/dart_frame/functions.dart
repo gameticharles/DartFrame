@@ -167,7 +167,7 @@ extension DataFrameFunctions on DataFrame {
       // Apply the fill value
       for (var i = 0; i < newData.length; i++) {
         // Replace values that match the DataFrame's current missing value representation
-        if (newData[i][colIdx] == this.replaceMissingValueWith) {
+        if (newData[i][colIdx] == replaceMissingValueWith) {
           newData[i][colIdx] = fillValue;
         }
       }
@@ -200,7 +200,7 @@ extension DataFrameFunctions on DataFrame {
       for (var row in _data) {
         final subsetValues = subsetIndices.map((i) => row[i]).toList();
         // Check against the DataFrame's current missing value representation
-        final nullCount = subsetValues.where((v) => v == this.replaceMissingValueWith).length;
+        final nullCount = subsetValues.where((v) => v == replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -221,7 +221,7 @@ extension DataFrameFunctions on DataFrame {
       for (var colIdx = 0; colIdx < _columns.length; colIdx++) {
         final columnData = _data.map((row) => row[colIdx]).toList();
         // Check against the DataFrame's current missing value representation
-        final nullCount = columnData.where((v) => v == this.replaceMissingValueWith).length;
+        final nullCount = columnData.where((v) => v == replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -694,7 +694,7 @@ extension DataFrameFunctions on DataFrame {
       throw ArgumentError('Column $column does not exist.');
     }
     // Delegate to the Series' value_counts method
-    return this[column].value_counts(
+    return this[column].valueCounts(
       normalize: normalize,
       sort: sort,
       ascending: ascending,
@@ -713,7 +713,7 @@ extension DataFrameFunctions on DataFrame {
       // Count missing values based on this.replaceMissingValueWith
       int missingCount = 0;
       for (var val in columnData.data) {
-        if (val == this.replaceMissingValueWith) {
+        if (val == replaceMissingValueWith) {
           missingCount++;
         }
       }
@@ -737,7 +737,7 @@ extension DataFrameFunctions on DataFrame {
     var typeCounts = <Type, int>{};
     for (var value in columnData.data) {
       // Consider value as non-missing if it's not the placeholder
-      if (value != this.replaceMissingValueWith) {
+      if (value != replaceMissingValueWith) {
         var valueType = value.runtimeType;
         typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
       }
@@ -974,7 +974,7 @@ extension DataFrameFunctions on DataFrame {
     int count = 0;
     for (var row in _data) {
       // Check against the DataFrame's current missing value representation
-      if (row[columnIndex] == this.replaceMissingValueWith) {
+      if (row[columnIndex] == replaceMissingValueWith) {
         count++;
       }
     }
