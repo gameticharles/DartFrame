@@ -166,7 +166,8 @@ extension DataFrameFunctions on DataFrame {
 
       // Apply the fill value
       for (var i = 0; i < newData.length; i++) {
-        if (newData[i][colIdx] == null) {
+        // Replace values that match the DataFrame's current missing value representation
+        if (newData[i][colIdx] == this.replaceMissingValueWith) {
           newData[i][colIdx] = fillValue;
         }
       }
@@ -198,7 +199,8 @@ extension DataFrameFunctions on DataFrame {
 
       for (var row in _data) {
         final subsetValues = subsetIndices.map((i) => row[i]).toList();
-        final nullCount = subsetValues.where((v) => v == null).length;
+        // Check against the DataFrame's current missing value representation
+        final nullCount = subsetValues.where((v) => v == this.replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -218,7 +220,8 @@ extension DataFrameFunctions on DataFrame {
 
       for (var colIdx = 0; colIdx < _columns.length; colIdx++) {
         final columnData = _data.map((row) => row[colIdx]).toList();
-        final nullCount = columnData.where((v) => v == null).length;
+        // Check against the DataFrame's current missing value representation
+        final nullCount = columnData.where((v) => v == this.replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -670,19 +673,33 @@ extension DataFrameFunctions on DataFrame {
   }
 
   /// Returns the frequency of each unique value in a specified column.
-  Map<dynamic, int> valueCounts(String column) {
-    int columnIndex = _columns.indexOf(column);
-    if (columnIndex == -1) {
+  ///
+  /// Parameters:
+  ///   - `column`: The name of the column to count unique values from.
+  ///   - `normalize`: If `true`, return relative frequencies (proportions) instead of counts.
+  ///   - `sort`: If `true` (default), sort the resulting Series by frequency.
+  ///   - `ascending`: If `true` (and `sort` is `true`), sort in ascending order of frequency. Default is `false` (descending).
+  ///   - `dropna`: If `true` (default), do not include counts of missing values in the result.
+  ///             If `false`, include the count of missing values.
+  ///
+  /// Returns a Series containing counts (or proportions) of unique values.
+  Series valueCounts(
+    String column, {
+    bool normalize = false,
+    bool sort = true,
+    bool ascending = false,
+    bool dropna = true,
+  }) {
+    if (!hasColumn(column)) {
       throw ArgumentError('Column $column does not exist.');
     }
-
-    Map<dynamic, int> counts = {};
-    for (var row in _data) {
-      var key = row[columnIndex];
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-
-    return counts;
+    // Delegate to the Series' value_counts method
+    return this[column].value_counts(
+      normalize: normalize,
+      sort: sort,
+      ascending: ascending,
+      dropna: dropna,
+    );
   }
 
   /// Summarizes the structure of the DataFrame.
@@ -691,27 +708,36 @@ extension DataFrameFunctions on DataFrame {
 
     for (var column in _columns) {
       var columnData = this[column];
-      var columnType = _analyzeColumnTypes(columnData);
+      var columnType = _analyzeColumnTypes(columnData); // Uses Series.data directly
+      
+      // Count missing values based on this.replaceMissingValueWith
+      int missingCount = 0;
+      for (var val in columnData.data) {
+        if (val == this.replaceMissingValueWith) {
+          missingCount++;
+        }
+      }
 
       var row = [
         column,
-        columnType,
-        columnType.length > 1,
-        _countNullValues(columnData),
+        columnType, // This is a Map<Type, int>
+        columnType.keys.length > 1, // Check if more than one type was found (excluding nulls)
+        missingCount, // Use the new missing count
       ];
       summaryData.add(row);
     }
 
-    var columnNames = ['Column Name', 'Data Type', 'Mixed Types', 'Null Count'];
+    var columnNames = ['Column Name', 'Data Type', 'Mixed Types', 'Missing Count'];
 
     return DataFrame(columns: columnNames, summaryData);
   }
 
-  /// Analyzes the data types within a column.
+  /// Analyzes the data types within a column, ignoring missing values.
   Map<Type, int> _analyzeColumnTypes(Series columnData) {
     var typeCounts = <Type, int>{};
     for (var value in columnData.data) {
-      if (value != null) {
+      // Consider value as non-missing if it's not the placeholder
+      if (value != this.replaceMissingValueWith) {
         var valueType = value.runtimeType;
         typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
       }
@@ -719,11 +745,7 @@ extension DataFrameFunctions on DataFrame {
     return typeCounts;
   }
 
-  /// Counts null values in a column.
-  int _countNullValues(Series columnData) {
-    // ignore: prefer_void_to_null
-    return columnData.data.whereType<Null>().length;
-  }
+  // _countNullValues is removed as its logic is integrated into structure()
 
   /// Provides a summary of numerical columns in the DataFrame.
   ///
@@ -951,7 +973,8 @@ extension DataFrameFunctions on DataFrame {
 
     int count = 0;
     for (var row in _data) {
-      if (row[columnIndex] == null) {
+      // Check against the DataFrame's current missing value representation
+      if (row[columnIndex] == this.replaceMissingValueWith) {
         count++;
       }
     }

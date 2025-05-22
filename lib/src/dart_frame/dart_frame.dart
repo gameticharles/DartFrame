@@ -1,4 +1,7 @@
+import 'dart:math';
+
 part of '../../dartframe.dart';
+part 'accessors.dart';
 
 /// A class representing a DataFrame, which is a 2-dimensional labeled data structure
 /// with columns of potentially different types.
@@ -141,10 +144,16 @@ class DataFrame {
       'dd-MMM-yyyy'
     ]; // Customize as needed
 
-    if (value == null || value == '' || _missingDataIndicator.contains(value)) {
-      return replaceMissingValueWith; // Handle null values explicitly
+    // Check for missing data
+    // 1. If value is in _missingDataIndicator
+    // 2. If value is null
+    // 3. If value is an empty string
+    if (_missingDataIndicator.contains(value) || value == null || value == '') {
+      // If replaceMissingValueWith is set, use it. Otherwise, use null.
+      return replaceMissingValueWith;
     }
 
+    // If not missing, proceed with type conversion
     // 1. Attempt Numeric Conversion
     if (value is String) {
       var numResult = num.tryParse(value);
@@ -208,9 +217,9 @@ class DataFrame {
   /// Example:
   /// ```dart
   /// var csvData = 'Name,Age,City\nAlice,30,New York\nBob,25,Los Angeles\nCharlie,35,Chicago';
-  /// var df = DataFrame.fromCSV(csv: csvData, delimiter: ',', hasHeader: true);
+  /// var df = await DataFrame.fromCSV(csv: csvData, delimiter: ',', hasHeader: true);
   /// ```
-  factory DataFrame.fromCSV({
+  static Future<DataFrame> fromCSV({
     String? csv,
     String delimiter = ',',
     String? inputFilePath,
@@ -220,17 +229,16 @@ class DataFrame {
     dynamic replaceMissingValueWith,
     bool formatData = false,
     List missingDataIndicator = const [],
-  }) {
-    if (csv == null && inputFilePath != null) {
+  }) async {
+    String? csvContent = csv;
+    if (csvContent == null && inputFilePath != null) {
       // Read file
-      fileIO.readFromFile(inputFilePath).then((data) {
-        csv = data;
-      });
-    } else if (csv == null) {
+      csvContent = await fileIO.readFromFile(inputFilePath);
+    } else if (csvContent == null) {
       throw ArgumentError('Either csv or inputFilePath must be provided.');
     }
 
-    List<List> rows = csv!
+    List<List> rows = csvContent!
         .trim()
         .split('\n')
         .map((row) => row.split(delimiter).map((value) => value).toList())
@@ -266,27 +274,26 @@ class DataFrame {
   /// var jsonData = '[{"Name": "Alice", "Age": 30, "City": "New York"}, '
   ///                '{"Name": "Bob", "Age": 25, "City": "Los Angeles"}, '
   ///                '{"Name": "Charlie", "Age": 35, "City": "Chicago"}]';
-  /// var df = DataFrame.fromJson(jsonString: jsonData);
+  /// var df = await DataFrame.fromJson(jsonString: jsonData);
   /// ```
-  factory DataFrame.fromJson({
+  static Future<DataFrame> fromJson({
     String? jsonString,
     String? inputFilePath,
     bool allowFlexibleColumns = false,
     dynamic replaceMissingValueWith,
     bool formatData = false,
     List missingDataIndicator = const [],
-  }) {
-    if (jsonString == null && inputFilePath != null) {
+  }) async {
+    String? jsonContent = jsonString;
+    if (jsonContent == null && inputFilePath != null) {
       // Read file
-      fileIO.readFromFile(inputFilePath).then((data) {
-        jsonString = data;
-      });
-    } else if (jsonString == null) {
+      jsonContent = await fileIO.readFromFile(inputFilePath);
+    } else if (jsonContent == null) {
       throw ArgumentError(
           'Either jsonString or inputFilePath must be provided.');
     }
 
-    final jsonData = jsonDecode(jsonString!) as List;
+    final jsonData = jsonDecode(jsonContent!) as List;
 
     // Extract column names from the first object
     final columnNames = jsonData[0].keys.toList();
@@ -333,6 +340,7 @@ class DataFrame {
     bool allowFlexibleColumns = false,
     dynamic replaceMissingValueWith,
     List missingDataIndicator = const [],
+    bool formatData = false,
   }) {
     // Extract column names and data from the map
     List<String> columns = map.keys.toList();
@@ -362,6 +370,7 @@ class DataFrame {
       columns: columns,
       replaceMissingValueWith: replaceMissingValueWith,
       missingDataIndicator: missingDataIndicator,
+      formatData: formatData,
     );
   }
 
@@ -513,4 +522,10 @@ class DataFrame {
 
     return buffer.toString();
   }
+
+  /// Access parts of the DataFrame by integer position.
+  DataFrameILocAccessor get iloc => DataFrameILocAccessor(this);
+
+  /// Access parts of the DataFrame by label.
+  DataFrameLocAccessor get loc => DataFrameLocAccessor(this);
 }

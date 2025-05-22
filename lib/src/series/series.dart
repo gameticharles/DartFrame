@@ -1,4 +1,7 @@
+import 'dart:math';
+
 part of '../../dartframe.dart';
+part 'string_accessor.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///
@@ -124,4 +127,89 @@ class Series {
 
 // Return the Series as a data frame
   DataFrame toDataFrame() => DataFrame.fromMap({name: data});
+
+  /// Accessor for string-specific operations on Series data.
+  StringSeriesAccessor get str {
+    return StringSeriesAccessor(this);
+  }
+
+  /// Returns the number of unique non-missing values in the Series.
+  int nunique() {
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final Set<dynamic> uniqueValues = {};
+    for (var value in data) {
+      if (value != missingRep) {
+        uniqueValues.add(value);
+      }
+    }
+    return uniqueValues.length;
+  }
+
+  /// Returns a Series containing counts of unique values.
+  ///
+  /// The resulting Series will have unique values from this Series as its index,
+  /// and the counts of these values as its data.
+  ///
+  /// Parameters:
+  ///   - `normalize`: If `true`, return relative frequencies (proportions) instead of counts.
+  ///   - `sort`: If `true` (default), sort the resulting Series by frequency.
+  ///   - `ascending`: If `true` (and `sort` is `true`), sort in ascending order of frequency. Default is `false` (descending).
+  ///   - `dropna`: If `true` (default), do not include counts of missing values in the result.
+  ///             If `false`, include the count of missing values.
+  Series value_counts({
+    bool normalize = false,
+    bool sort = true,
+    bool ascending = false,
+    bool dropna = true,
+  }) {
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final Map<dynamic, int> counts = {};
+    int totalCount = 0;
+
+    for (var value in data) {
+      if (value == missingRep) {
+        if (!dropna) {
+          counts[missingRep] = (counts[missingRep] ?? 0) + 1;
+        }
+      } else {
+        counts[value] = (counts[value] ?? 0) + 1;
+      }
+      // totalCount for normalization should only include non-missing if dropna is true,
+      // or all if dropna is false and we are counting the missingRep itself.
+      // For simplicity in normalization, we'll sum actual counts later.
+    }
+    
+    List<MapEntry<dynamic, int>> sortedCounts = counts.entries.toList();
+
+    if (sort) {
+      sortedCounts.sort((a, b) {
+        int comparison = a.value.compareTo(b.value);
+        return ascending ? comparison : -comparison;
+      });
+    }
+
+    List<dynamic> resultIndex = [];
+    List<dynamic> resultData = [];
+
+    for (var entry in sortedCounts) {
+      resultIndex.add(entry.key);
+      resultData.add(entry.value);
+    }
+
+    if (normalize) {
+      num sumOfCounts = resultData.whereType<num>().fold(0, (sum, val) => sum + val);
+      if (sumOfCounts != 0) {
+        resultData = resultData.map((count) => count is num ? count / sumOfCounts : missingRep).toList();
+      } else {
+        // Avoid division by zero if all counts are zero (e.g. empty series after dropna)
+         resultData = resultData.map((_) => 0.0).toList();
+      }
+    }
+    
+    return Series(
+      resultData,
+      name: '${name}_value_counts',
+      index: resultIndex,
+    );
+  }
 }

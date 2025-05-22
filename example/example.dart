@@ -1,7 +1,7 @@
 import 'package:dartframe/dartframe.dart';
 
-void main() {
-  dataframe1();
+void main() async {
+  await dataframe1(); // Wait for dataframe1 to complete
   dataframe2();
 
   // Load the CSV data into a DataFrame and tries to convert string to the right type
@@ -38,9 +38,9 @@ void main() {
   print(df['a'][2] * 2);
 }
 
-void dataframe1() {
+void dataframe1() async {
   // Load the CSV data into a DataFrame and tries to convert string to the right type
-  var df = DataFrame.fromCSV(
+  var df = await DataFrame.fromCSV( // Added await
     csv: csvData,
     formatData: true,
     missingDataIndicator: ['<NA>', 'NA'],

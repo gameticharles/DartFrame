@@ -96,119 +96,220 @@ extension SeriesOperations on Series {
     }
   }
 
+  dynamic _getMissingRepresentation(Series series) {
+    return series._parentDataFrame?.replaceMissingValueWith ?? null;
+  }
+
+  bool _areIndexesEffectivelyIdentical(Series s1, Series s2) {
+    final idx1 = s1.index;
+    final idx2 = s2.index;
+    final len1 = s1.length;
+    final len2 = s2.length;
+
+    bool s1IndexIsNullOrEmpty = idx1 == null || idx1.isEmpty;
+    bool s2IndexIsNullOrEmpty = idx2 == null || idx2.isEmpty;
+
+    if (s1IndexIsNullOrEmpty && s2IndexIsNullOrEmpty) {
+      return len1 == len2; // If both are null/empty, rely on data length
+    }
+
+    if (s1IndexIsNullOrEmpty != s2IndexIsNullOrEmpty) {
+      return false; // One has index, other doesn't
+    }
+
+    // Both have non-null, non-empty indexes
+    if (idx1!.length != idx2!.length) {
+      return false;
+    }
+    for (int i = 0; i < idx1.length; i++) {
+      if (idx1[i] != idx2[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Series _performArithmeticOperation(
+      Series other, dynamic Function(dynamic a, dynamic b) operation, String operationSymbol) {
+    final self = this;
+    final missingRep = _getMissingRepresentation(self);
+
+    if (_areIndexesEffectivelyIdentical(self, other) && self.length == other.length) {
+      // Case 1: Indexes are null/empty/identical, and lengths match
+      List<dynamic> resultData = [];
+      for (int i = 0; i < self.length; i++) {
+        dynamic val1 = self.data[i];
+        dynamic val2 = other.data[i];
+        if (val1 == missingRep || val2 == missingRep) {
+          resultData.add(missingRep);
+        } else {
+          try {
+            resultData.add(operation(val1, val2));
+          } catch (e) {
+            resultData.add(missingRep);
+          }
+        }
+      }
+      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: self.index?.toList());
+    } else {
+      // Case 2: Indexes are different or lengths differ (implying index use)
+      List<dynamic> unionIndex = [];
+      Set<dynamic> seenInUnion = {};
+
+      void addToUnion(List<dynamic>? idxList) {
+        if (idxList != null) {
+          for (var label in idxList) {
+            if (seenInUnion.add(label)) {
+              unionIndex.add(label);
+            }
+          }
+        }
+      }
+      
+      // If one series has no index but the other does, treat un-indexed one as having default 0..N-1 index
+      // However, the problem implies if indexes are different, we use union.
+      // If one is null/empty, its effective index for union purposes is its default 0..N-1 range.
+
+      List<dynamic> selfEffectiveIndex = self.index ?? List.generate(self.length, (i) => i);
+      List<dynamic> otherEffectiveIndex = other.index ?? List.generate(other.length, (i) => i);
+
+      addToUnion(selfEffectiveIndex);
+      addToUnion(otherEffectiveIndex);
+      
+      if (unionIndex.isEmpty && (self.length > 0 || other.length > 0) && (self.index == null && other.index == null) ) {
+          // This case might arise if both have null indexes but different lengths.
+          // The problem statement implies element-wise for identical indexes OR null/empty indexes IF lengths also match.
+          // If lengths don't match and indexes are null, it's ambiguous.
+          // For now, let's assume if _areIndexesEffectivelyIdentical is false, we MUST use union logic.
+          // If unionIndex is still empty here, it implies both series might be empty or had null/empty incompatible indexes.
+          // Let's default to using integer indices if union is empty but data isn't.
+          int maxLen = math.max(self.length, other.length);
+          if (maxLen > 0 && (self.index == null || self.index!.isEmpty) && (other.index == null || other.index!.isEmpty)) {
+             unionIndex = List.generate(maxLen, (i) => i);
+          }
+      }
+
+
+      Map<dynamic, int> selfIndexMap = {};
+      for(int i=0; i < selfEffectiveIndex.length; ++i) {
+          selfIndexMap[selfEffectiveIndex[i]] = i;
+      }
+      Map<dynamic, int> otherIndexMap = {};
+      for(int i=0; i < otherEffectiveIndex.length; ++i) {
+          otherIndexMap[otherEffectiveIndex[i]] = i;
+      }
+      
+      List<dynamic> resultData = [];
+
+      for (var label in unionIndex) {
+        bool selfHasLabel = selfIndexMap.containsKey(label);
+        bool otherHasLabel = otherIndexMap.containsKey(label);
+
+        dynamic val1 = missingRep;
+        dynamic val2 = missingRep;
+
+        if (selfHasLabel) {
+          int selfPos = selfIndexMap[label]!;
+          if (selfPos < self.data.length) { // Check bounds
+            val1 = self.data[selfPos];
+          } else { // Label in index, but data out of bounds (should not happen with effectiveIndex)
+             selfHasLabel = false; 
+          }
+        }
+        
+        if (otherHasLabel) {
+          int otherPos = otherIndexMap[label]!;
+          if (otherPos < other.data.length) { // Check bounds
+            val2 = other.data[otherPos];
+          } else {
+             otherHasLabel = false;
+          }
+        }
+
+        if (!selfHasLabel || !otherHasLabel || val1 == missingRep || val2 == missingRep) {
+          resultData.add(missingRep);
+        } else {
+          try {
+            resultData.add(operation(val1, val2));
+          } catch (e) {
+            resultData.add(missingRep);
+          }
+        }
+      }
+      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: unionIndex);
+    }
+  }
+
   /// **Addition (+) operator:**
   ///
-  /// Adds the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Adds the corresponding elements of this Series and another Series,
+  /// handling index alignment.
   Series operator +(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for addition.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] + other.data[i]);
-    }
-    return Series(resultData, name: "($name + ${other.name})");
+    return _performArithmeticOperation(other, (a, b) => a + b, '+');
   }
 
   /// **Subtraction (-) operator:**
   ///
-  /// Subtract the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Subtract the corresponding elements of this Series and another Series,
+  /// handling index alignment.
   Series operator -(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for subtraction.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] - other.data[i]);
-    }
-    return Series(resultData, name: "($name - ${other.name})");
+    return _performArithmeticOperation(other, (a, b) => a - b, '-');
   }
 
   /// **Multiplication (*) operator:**
   ///
-  /// Multiplies the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Multiplies the corresponding elements of this Series and another Series,
+  /// handling index alignment.
   Series operator *(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for multiplication.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] * other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) => a * b, '*');
   }
 
-  /// **Division (+) operator:**
+  /// **Division (/) operator:**
   ///
-  /// Divides the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Divides the corresponding elements of this Series and another Series,
+  /// handling index alignment and division by zero.
   Series operator /(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for division.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      if (other.data[i] == 0) {
-        throw Exception("Cannot divide by zero.");
+    return _performArithmeticOperation(other, (a, b) {
+      if (b == 0) {
+        // According to requirements, return missingRep for errors like division by zero
+        return _getMissingRepresentation(this); 
       }
-      resultData.add(data[i] / other.data[i]);
-    }
-    return Series(resultData, name: name);
+      return a / b;
+    }, '/');
   }
 
   /// **Floor Division (~/) operator:**
   ///
-  /// Floor divides the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Floor divides the corresponding elements of this Series and another Series,
+  /// handling index alignment and division by zero.
   Series operator ~/(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for floor division.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] ~/ other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) {
+      if (b == 0) {
+        return _getMissingRepresentation(this);
+      }
+      return a ~/ b;
+    }, '~/');
   }
 
   /// **Modulo (%) operator:**
   ///
-  /// Mod the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Computes the modulo of corresponding elements of this Series and another Series,
+  /// handling index alignment and division by zero.
   Series operator %(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for modulo operation.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] % other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) {
+      if (b == 0) {
+        return _getMissingRepresentation(this);
+      }
+      return a % b;
+    }, '%');
   }
 
-  /// **Exponential (^) operator:**
+  /// **Bitwise XOR (^) operator:**
   ///
-  /// Take exponents of the corresponding elements of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// Performs bitwise XOR on corresponding elements of this Series and another Series,
+  /// handling index alignment.
   Series operator ^(Series other) {
-    if (length != other.length) {
-      throw Exception("Series must have the same length for exponentiation.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] ^ other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) => a ^ b, '^');
   }
 
   /// Less than (<) operator:
@@ -373,37 +474,17 @@ extension SeriesOperations on Series {
   /// Bitwise AND (&) operator.
   ///
   /// Performs a bitwise AND operation between the corresponding elements
-  /// of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// of this Series and another Series, handling index alignment.
   Series operator &(Series other) {
-    if (length != other.length) {
-      throw Exception(
-          "Series must have the same length for bitwise AND operation.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] & other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) => a & b, '&');
   }
 
   /// Bitwise OR (|) operator.
   ///
   /// Performs a bitwise OR operation between the corresponding elements
-  /// of this Series and another Series.
-  ///
-  /// Throws an exception if the Series have different lengths.
+  /// of this Series and another Series, handling index alignment.
   Series operator |(Series other) {
-    if (length != other.length) {
-      throw Exception(
-          "Series must have the same length for bitwise OR operation.");
-    }
-    List<dynamic> resultData = [];
-    for (int i = 0; i < length; i++) {
-      resultData.add(data[i] | other.data[i]);
-    }
-    return Series(resultData, name: name);
+    return _performArithmeticOperation(other, (a, b) => a | b, '|');
   }
 
   /// Not equal to (!=) operator:
