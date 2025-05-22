@@ -3,44 +3,51 @@ part of '../../dartframe.dart';
 extension SeriesFunctions on Series {
   /// Count of non-null values in the series.
   int count() {
-    return data.where((element) => element != null).length;
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    return data.where((element) => element != missingRep).length;
   }
 
   /// Mean (average) of the values in the series.
   double mean() {
-    if (data.isEmpty) {
-      throw Exception("Cannot calculate mean of an empty series.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      throw Exception("Cannot calculate mean of an empty series or series with all missing values.");
     }
-    var sum = data.whereType<num>().reduce((value, element) => value + element);
-    return sum / data.length;
+    var sum = numericData.reduce((value, element) => value + element);
+    return sum / numericData.length;
   }
 
   /// Standard deviation of the values in the series.
   double std() {
-    if (data.isEmpty) {
-      throw Exception(
-          "Cannot calculate standard deviation of an empty series.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.length < 2) { // Standard deviation of 0 or 1 elements is typically undefined or 0
+      throw Exception("Cannot calculate standard deviation of a series with less than 2 non-missing numeric values.");
     }
-    var m = mean();
-    var variance =
-        data.map((x) => pow(x - m, 2)).reduce((a, b) => a + b) / data.length;
+    var m = mean(); // mean() is already updated to handle missingRep
+    var variance = numericData.map((x) => pow(x - m, 2)).reduce((a, b) => a + b) / numericData.length;
     return sqrt(variance);
   }
 
   /// Minimum value in the series.
   num min() {
-    if (data.isEmpty) {
-      throw Exception("Cannot find minimum value of an empty series.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      throw Exception("Cannot find minimum value of an empty series or series with all missing values.");
     }
-    return data.reduce((a, b) => a < b ? a : b);
+    return numericData.reduce((a, b) => a < b ? a : b);
   }
 
   /// Maximum value in the series.
   num max() {
-    if (data.isEmpty) {
-      throw Exception("Cannot find maximum value of an empty series.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      throw Exception("Cannot find maximum value of an empty series or series with all missing values.");
     }
-    return data.reduce((a, b) => a > b ? a : b);
+    return numericData.reduce((a, b) => a > b ? a : b);
   }
 
   /// Summary statistics of the series.
@@ -65,24 +72,24 @@ extension SeriesFunctions on Series {
   ///
   /// Returns the sum of all values in the series.
   num sum() {
-    if (data.every((element) => element == num)) {
-      // If T is numeric, perform addition
-      return data.reduce((value, element) => value + element);
-    } else {
-      throw Exception("Sum operation is supported only for numeric types.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      return 0; // Sum of empty set is 0
     }
+    return numericData.reduce((value, element) => value + element);
   }
 
   /// Calculate the product of values in the series.
   ///
   /// Returns the product of all values in the series.
   num prod() {
-    if (data.every((element) => element == num)) {
-      // If T is numeric, perform multiplication
-      return data.reduce((value, element) => value * element);
-    } else {
-      throw Exception("Product operation is supported only for numeric types.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      return 1; // Product of empty set is 1
     }
+    return numericData.reduce((value, element) => value * element);
   }
 
   /// Returns a new Series with the absolute value of each element.
@@ -142,56 +149,49 @@ extension SeriesFunctions on Series {
   /// print(cummax_s); // Output: numbers (Cumulative Max): [1, 3, 3, 5, 5]
   /// ```
   Series cummax({bool skipna = true}) {
-    if (data.isEmpty) {
-      return Series([], name: "$name (Cumulative Max)");
-    }
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    if (data.isEmpty) return Series([], name: "$name (Cumulative Max)");
 
-    List<dynamic> cumulativeMax = [];
-    dynamic runningMax;
+    List<dynamic> result = List<dynamic>.filled(data.length, missingRep);
+    num? currentMax;
 
-    // Find first non-null value if skipna is true
-    int startIdx = 0;
     if (skipna) {
-      while (startIdx < data.length && data[startIdx] == null) {
-        startIdx++;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (val != missingRep && val is num) {
+          if (currentMax == null || val > currentMax!) {
+            currentMax = val;
+          }
+          result[i] = currentMax;
+        } else if (val == missingRep) {
+          result[i] = missingRep; 
+        } else { 
+          result[i] = missingRep; 
+        }
       }
-
-      if (startIdx >= data.length) {
-        // All values are null
-        return Series(List.filled(data.length, null),
-            name: "$name (Cumulative Max)");
+    } else { 
+      bool encounteredMissing = false;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (encounteredMissing) {
+          result[i] = missingRep;
+          continue;
+        }
+        if (val == missingRep) {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        } else if (val is num) {
+          if (currentMax == null || val > currentMax!) {
+            currentMax = val;
+          }
+          result[i] = currentMax;
+        } else { 
+          result[i] = missingRep; 
+          encounteredMissing = true;
+        }
       }
     }
-
-    runningMax = data[startIdx];
-
-    for (int i = 0; i < data.length; i++) {
-      if (i < startIdx) {
-        // Add null for skipped values at the beginning
-        cumulativeMax.add(null);
-        continue;
-      }
-
-      var currentValue = data[i];
-
-      if (currentValue == null) {
-        if (skipna) {
-          // Keep previous max if skipping nulls
-          cumulativeMax.add(runningMax);
-        } else {
-          // Result is null if not skipping nulls
-          cumulativeMax.add(null);
-          runningMax = null;
-        }
-      } else {
-        if (runningMax == null || currentValue > runningMax) {
-          runningMax = currentValue;
-        }
-        cumulativeMax.add(runningMax);
-      }
-    }
-
-    return Series(cumulativeMax, name: "$name (Cumulative Max)");
+    return Series(result, name: "$name (Cumulative Max)");
   }
 
   /// Return cumulative minimum over the Series.
@@ -209,56 +209,49 @@ extension SeriesFunctions on Series {
   /// print(cummin_s); // Output: numbers (Cumulative Min): [5, 3, 2, 2, 2]
   /// ```
   Series cummin({bool skipna = true}) {
-    if (data.isEmpty) {
-      return Series([], name: "$name (Cumulative Min)");
-    }
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    if (data.isEmpty) return Series([], name: "$name (Cumulative Min)");
 
-    List<dynamic> cumulativeMin = [];
-    dynamic runningMin;
+    List<dynamic> result = List<dynamic>.filled(data.length, missingRep);
+    num? currentMin;
 
-    // Find first non-null value if skipna is true
-    int startIdx = 0;
     if (skipna) {
-      while (startIdx < data.length && data[startIdx] == null) {
-        startIdx++;
-      }
-
-      if (startIdx >= data.length) {
-        // All values are null
-        return Series(List.filled(data.length, null),
-            name: "$name (Cumulative Min)");
-      }
-    }
-
-    runningMin = data[startIdx];
-
-    for (int i = 0; i < data.length; i++) {
-      if (i < startIdx) {
-        // Add null for skipped values at the beginning
-        cumulativeMin.add(null);
-        continue;
-      }
-
-      var currentValue = data[i];
-
-      if (currentValue == null) {
-        if (skipna) {
-          // Keep previous min if skipping nulls
-          cumulativeMin.add(runningMin);
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (val != missingRep && val is num) {
+          if (currentMin == null || val < currentMin!) {
+            currentMin = val;
+          }
+          result[i] = currentMin;
+        } else if (val == missingRep) {
+          result[i] = missingRep;
         } else {
-          // Result is null if not skipping nulls
-          cumulativeMin.add(null);
-          runningMin = null;
+          result[i] = missingRep;
         }
-      } else {
-        if (runningMin == null || currentValue < runningMin) {
-          runningMin = currentValue;
+      }
+    } else {
+      bool encounteredMissing = false;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (encounteredMissing) {
+          result[i] = missingRep;
+          continue;
         }
-        cumulativeMin.add(runningMin);
+        if (val == missingRep) {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        } else if (val is num) {
+          if (currentMin == null || val < currentMin!) {
+            currentMin = val;
+          }
+          result[i] = currentMin;
+        } else {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        }
       }
     }
-
-    return Series(cumulativeMin, name: "$name (Cumulative Min)");
+    return Series(result, name: "$name (Cumulative Min)");
   }
 
   /// Return cumulative product over the Series.
@@ -276,58 +269,53 @@ extension SeriesFunctions on Series {
   /// print(cumprod_s); // Output: numbers (Cumulative Product): [1, 2, 6, 24]
   /// ```
   Series cumprod({bool skipna = true}) {
-    if (data.isEmpty) {
-      return Series([], name: "$name (Cumulative Product)");
-    }
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    if (data.isEmpty) return Series([], name: "$name (Cumulative Product)");
 
-    List<dynamic> cumulativeProduct = [];
-    dynamic runningProduct;
+    List<dynamic> result = List<dynamic>.filled(data.length, missingRep);
+    num? currentProd;
 
-    // Find first non-null value if skipna is true
-    int startIdx = 0;
     if (skipna) {
-      while (startIdx < data.length && data[startIdx] == null) {
-        startIdx++;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (val != missingRep && val is num) {
+          if (currentProd == null) {
+            currentProd = val;
+          } else {
+            currentProd = currentProd! * val;
+          }
+          result[i] = currentProd;
+        } else if (val == missingRep) {
+          result[i] = missingRep;
+        } else {
+          result[i] = missingRep; 
+        }
       }
-
-      if (startIdx >= data.length) {
-        // All values are null
-        return Series(List.filled(data.length, null),
-            name: "$name (Cumulative Product)");
+    } else {
+      bool encounteredMissing = false;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (encounteredMissing) {
+          result[i] = missingRep;
+          continue;
+        }
+        if (val == missingRep) {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        } else if (val is num) {
+          if (currentProd == null) {
+            currentProd = val;
+          } else {
+            currentProd = currentProd! * val;
+          }
+          result[i] = currentProd;
+        } else {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        }
       }
     }
-
-    runningProduct = data[startIdx];
-
-    for (int i = 0; i < data.length; i++) {
-      if (i < startIdx) {
-        // Add null for skipped values at the beginning
-        cumulativeProduct.add(null);
-        continue;
-      }
-
-      var currentValue = data[i];
-
-      if (currentValue == null) {
-        if (skipna) {
-          // Keep previous product if skipping nulls
-          cumulativeProduct.add(runningProduct);
-        } else {
-          // Result is null if not skipping nulls
-          cumulativeProduct.add(null);
-          runningProduct = null;
-        }
-      } else {
-        if (runningProduct == null) {
-          runningProduct = currentValue;
-        } else {
-          runningProduct *= currentValue;
-        }
-        cumulativeProduct.add(runningProduct);
-      }
-    }
-
-    return Series(cumulativeProduct, name: "$name (Cumulative Product)");
+    return Series(result, name: "$name (Cumulative Product)");
   }
 
   /// Concatenates two Series along the axis specified by 'axis'.
@@ -375,81 +363,104 @@ extension SeriesFunctions on Series {
   /// print(cumsum_s); // Output: numbers (Cumulative Sum): [1, 3, 6, 10]
   /// ```
   Series cumsum({bool skipna = true}) {
-    if (data.isEmpty) {
-      return Series([], name: "$name (Cumulative Sum)");
-    }
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    if (data.isEmpty) return Series([], name: "$name (Cumulative Sum)");
 
-    List<dynamic> cumulativeSum = [];
-    dynamic runningSum;
+    List<dynamic> result = List<dynamic>.filled(data.length, missingRep);
+    num? currentSum;
 
-    // Find first non-null value if skipna is true
-    int startIdx = 0;
     if (skipna) {
-      while (startIdx < data.length && data[startIdx] == null) {
-        startIdx++;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (val != missingRep && val is num) {
+          if (currentSum == null) {
+            currentSum = val;
+          } else {
+            currentSum = currentSum! + val;
+          }
+          result[i] = currentSum;
+        } else if (val == missingRep) {
+          result[i] = missingRep; 
+        } else { // Non-numeric, non-missing
+          result[i] = missingRep; // Treat as missing for cumulative calculation
+        }
       }
-
-      if (startIdx >= data.length) {
-        // All values are null
-        return Series(List.filled(data.length, null),
-            name: "$name (Cumulative Sum)");
+    } else { 
+      bool encounteredMissing = false;
+      for (int i = 0; i < data.length; i++) {
+        final val = data[i];
+        if (encounteredMissing) {
+          result[i] = missingRep;
+          continue;
+        }
+        if (val == missingRep) {
+          result[i] = missingRep;
+          encounteredMissing = true;
+        } else if (val is num) {
+          if (currentSum == null) {
+            currentSum = val;
+          } else {
+            currentSum = currentSum! + val;
+          }
+          result[i] = currentSum;
+        } else { // Non-numeric, non-missing
+          result[i] = missingRep; 
+          encounteredMissing = true;
+        }
       }
     }
-
-    runningSum = data[startIdx];
-
-    for (int i = 0; i < data.length; i++) {
-      if (i < startIdx) {
-        // Add null for skipped values at the beginning
-        cumulativeSum.add(null);
-        continue;
-      }
-
-      var currentValue = data[i];
-
-      if (currentValue == null) {
-        if (skipna) {
-          // Keep previous sum if skipping nulls
-          cumulativeSum.add(runningSum);
-        } else {
-          // Result is null if not skipping nulls
-          cumulativeSum.add(null);
-          runningSum = null;
-        }
-      } else {
-        if (runningSum == null) {
-          runningSum = currentValue;
-        } else {
-          runningSum += currentValue;
-        }
-        cumulativeSum.add(runningSum);
-      }
-    }
-
-    return Series(cumulativeSum, name: "$name (Cumulative Sum)");
+    return Series(result, name: "$name (Cumulative Sum)");
   }
 
   /// Find the index location of the maximum value in the series.
   ///
   /// Returns the index of the maximum value in the series.
+  /// Throws if the series is empty or contains only missing values.
   int idxmax() {
-    num maxValue =
-        data.reduce((value, element) => value > element ? value : element);
-    return data.indexOf(maxValue);
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    num? maxValue;
+    int maxIndex = -1;
+
+    for (int i = 0; i < data.length; i++) {
+      final val = data[i];
+      if (val != missingRep && val is num) {
+        if (maxValue == null || val > maxValue) {
+          maxValue = val;
+          maxIndex = i;
+        }
+      }
+    }
+
+    if (maxIndex == -1) {
+      throw Exception("Cannot find idxmax of an empty series or series with all missing/non-numeric values.");
+    }
+    return maxIndex;
   }
 
   /// Quantile (percentile) of the series.
   num quantile(double percentile) {
-    if (data.isEmpty) {
-      throw Exception("Cannot calculate quantile of an empty series.");
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith ?? null;
+    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    if (numericData.isEmpty) {
+      throw Exception("Cannot calculate quantile of an empty series or series with all missing values.");
     }
     if (percentile < 0 || percentile > 1) {
       throw Exception("Percentile must be between 0 and 1.");
     }
-    var sortedData = List<num>.from(data)..sort();
+    var sortedData = List<num>.from(numericData)..sort();
+    if (sortedData.isEmpty) { // Should be caught by numericData.isEmpty, but as a safeguard.
+        throw Exception("Cannot calculate quantile as no valid numeric data exists after filtering missing values.");
+    }
     var index = (sortedData.length - 1) * percentile;
-    var lower = sortedData[index.floor()];
-    var upper = sortedData[index.ceil()];
+    // Ensure index is within bounds for sortedData
+    var lowerIdx = index.floor();
+    var upperIdx = index.ceil();
+
+    if (lowerIdx < 0) lowerIdx = 0;
+    if (upperIdx >= sortedData.length) upperIdx = sortedData.length - 1;
+    
+    var lower = sortedData[lowerIdx];
+    var upper = sortedData[upperIdx];
     return lower + (upper - lower) * (index - index.floor());
   }
 
@@ -502,43 +513,7 @@ extension SeriesFunctions on Series {
     return Series(sortedData, name: "$name (Sorted)");
   }
 
-  /// Convert strings in the series to uppercase.
-  ///
-  /// Returns a new StringSeries with strings converted to uppercase.
-  Series upper() {
-    List<dynamic> stringData =
-        data.whereType<String>().map((str) => str.toUpperCase()).toList();
-    return Series(stringData, name: "$name (Upper)");
-  }
-
-  /// Convert strings in the series to lowercase.
-  ///
-  /// Returns a new StringSeries with strings converted to lowercase.
-  Series lower() {
-    List<dynamic> stringData =
-        data.whereType<String>().map((str) => str.toLowerCase()).toList();
-    return Series(stringData, name: "$name (Lower)");
-  }
-
-  /// Check if strings in the series contain a pattern.
-  ///
-  /// Returns a new Series with boolean values indicating whether each string contains the pattern.
-  Series containsPattern(String pattern) {
-    List<bool> containsPatternList =
-        data.whereType<String>().map((str) => str.contains(pattern)).toList();
-    return Series(containsPatternList, name: "$name Contains '$pattern'");
-  }
-
-  /// Replace parts of strings in the series with a new substring.
-  ///
-  /// Returns a new StringSeries with replaced substrings.
-  Series replace(String oldSubstring, String newSubstring) {
-    List<dynamic> replacedStrings = data
-        .whereType<String>()
-        .map((str) => str.replaceAll(oldSubstring, newSubstring))
-        .toList();
-    return Series(replacedStrings, name: "$name (Replaced)");
-  }
+  // upper(), lower(), containsPattern(), replace() are moved to StringSeriesAccessor
 
   /// Returns a new Series containing only the unique values from this Series.
   ///
