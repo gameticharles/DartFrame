@@ -3,7 +3,7 @@ part of '../../dartframe.dart';
 extension SeriesOperations on Series {
 
   dynamic _getMissingRepresentation(Series series) {
-    return series._parentDataFrame?.replaceMissingValueWith ?? null;
+    return series._parentDataFrame?.replaceMissingValueWith;
   }
 
   bool _areIndexesEffectivelyIdentical(Series s1, Series s2) {

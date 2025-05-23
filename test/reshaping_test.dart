@@ -228,7 +228,7 @@ void main() {
     });
 
     test('Crosstab with margins=true', () {
-      final ct = df.crosstab(index: 'A', column: 'B', margins: true, margins_name: 'Total');
+      final ct = df.crosstab(index: 'A', column: 'B', margins: true, marginsName: 'Total');
       //      B  one  two  Total
       // A
       // foo      2    1      3
@@ -282,7 +282,7 @@ void main() {
     });
 
     test('Crosstab with normalize=\'all\' and margins=true', () {
-      final ct = df.crosstab(index: 'A', column: 'B', normalize: 'all', margins: true, margins_name: 'Overall');
+      final ct = df.crosstab(index: 'A', column: 'B', normalize: 'all', margins: true, marginsName: 'Overall');
       final totalObservations = 7.0;
       // Check a few values
       expect(ct.row({'A': 'foo'})['one'], closeTo(2 / totalObservations, 0.001));

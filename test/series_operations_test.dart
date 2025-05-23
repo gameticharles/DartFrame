@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
 
@@ -5,7 +7,7 @@ void main() {
   // Helper to get the missing value representation for standalone series for testing
   // For these tests, we'll assume 'null' is the missing rep if not tied to a DF
   // or if the DF's replaceMissingValueWith is null.
-  dynamic getMissingRep(Series s) => s.hashCode; // Placeholder, will be replaced by actual logic
+  //dynamic getMissingRep(Series s) => s.hashCode; // Placeholder, will be replaced by actual logic
 
   group('Series Arithmetic & Bitwise Operations with Index Alignment', () {
     // Series for testing

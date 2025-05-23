@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_type_check
+
 part of '../../dartframe.dart';
 
 // ignore_for_file: public_member_api_docs, sort_constructors_first
@@ -93,7 +95,7 @@ class DataFrameILocAccessor {
         }
       }
 
-      List<List<dynamic>> selectedRowsData = rowSelector.map((rIdx) => List<dynamic>.from(_df._data[rIdx])).toList();
+      rowSelector.map((rIdx) => List<dynamic>.from(_df._data[rIdx])).toList();
       List<dynamic> selectedRowIndex = rowSelector.map((rIdx) => _df.index.isNotEmpty && rIdx < _df.index.length ? _df.index[rIdx] : rIdx).toList();
 
       if (colSelector is int) {

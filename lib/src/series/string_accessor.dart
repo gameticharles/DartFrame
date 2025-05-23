@@ -6,7 +6,7 @@ class StringSeriesAccessor {
   StringSeriesAccessor(this._series);
 
   dynamic _getMissingRep() {
-    return _series._parentDataFrame?.replaceMissingValueWith ?? null;
+    return _series._parentDataFrame?.replaceMissingValueWith;
   }
 
   Series _applyStringOperation(

@@ -2526,7 +2526,7 @@ extension DataFrameFunctions on DataFrame {
   ///   - `normalize`: If true or 'all', normalize all values. If 'index', normalize across rows.
   ///                  If 'columns', normalize across columns.
   ///   - `margins`: Add row/column margins (subtotals)
-  ///   - `margins_name`: Name of the row/column that will contain the totals
+  ///   - `marginsName`: Name of the row/column that will contain the totals
   DataFrame crosstab({ 
       required String index, 
       required String column,
@@ -2534,7 +2534,7 @@ extension DataFrameFunctions on DataFrame {
       String aggfunc = 'count',
       dynamic normalize = false,
       bool margins = false,
-      String margins_name = 'All'
+      String marginsName = 'All'
   }) {
     if (!hasColumn(index)) {
       throw ArgumentError('Row column $index does not exist');
@@ -2660,7 +2660,7 @@ extension DataFrameFunctions on DataFrame {
     }
 
     // Store the raw data before normalization for margin calculations
-    final rawData = crossTabData.map((row) => List<dynamic>.from(row)).toList();
+    crossTabData.map((row) => List<dynamic>.from(row)).toList();
     final rawRowSums = Map<dynamic, dynamic>.from(rowSums);
     final rawColSums = Map<dynamic, dynamic>.from(colSums);
     final rawGrandTotal = grandTotal;
@@ -2702,7 +2702,7 @@ extension DataFrameFunctions on DataFrame {
     // Add margins if requested
     if (margins) {
       // Add row totals column
-      newColumns.add(margins_name);
+      newColumns.add(marginsName);
       
       for (var i = 0; i < crossTabData.length; i++) {
         if (normalize == 'index') {
@@ -2733,7 +2733,7 @@ extension DataFrameFunctions on DataFrame {
       }
       
       // Add column totals row
-      final totalRow = <dynamic>[margins_name];
+      final totalRow = <dynamic>[marginsName];
       
       for (var j = 1; j < newColumns.length; j++) {
         if (j == newColumns.length - 1) {
