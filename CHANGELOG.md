@@ -1,3 +1,14 @@
+# 0.4.0
+
+* [FEATURE] Added main library file lib/dartframe.dart exporting library parts and initializing fileIO.
+* [FEATURE] Implemented DataFrameILocAccessor and DataFrameLocAccessor in lib/src/dart_frame/accessors.dart for integer and label-based data selection in DataFrames.
+* [FEATURE] Implemented core DataFrame class in lib/src/dart_frame/dart_frame.dart with constructors, data cleaning, accessors, and string representation.
+* [FEATURE] Added extensive DataFrame manipulation functions in lib/src/dart_frame/functions.dart (selection, filtering, sorting, stats, transformations, I/O, grouping).
+* [FEATURE] Implemented DataFrame operator overloads ([], []=) in lib/src/dart_frame/operations.dart.
+* [DOCS] Added markdown documentation for DataFrame, GeoDataFrame, GeoSeries, and Series classes in docs/.
+* [DOCS] Added README.md with library overview, features, installation, usage examples, and contribution guidelines.
+* [TEST] Added a suite of unit tests in test/ covering DataFrame and Series functionalities.
+
 # 0.3.4
 * **[Fixed]** Doc Strings.
 * **[IMPROVEMENT]** Improved dart format.

@@ -475,5 +475,110 @@ class Series {
     }
     return Series(newData, name: name, index: index);
   }
+
+    /// Access elements by position or label using boolean indexing.
+  ///
+  /// Returns a new series containing only the elements for which the boolean condition is true.
+  dynamic operator [](dynamic indices) {
+    List<dynamic> selectedData = [];
+    if (indices is List<bool>) {
+      for (int i = 0; i < indices.length; i++) {
+        if (indices[i]) {
+          selectedData.add(data[i]);
+        }
+      }
+    } else {
+      // Handle single index
+      return data[indices];
+    }
+    return Series(selectedData, name: name);
+  }
+
+  /// Sets the value for provided index or indices
+  ///
+  /// This method assigns the value or values to the Series as specified
+  /// by the indices.
+  ///
+  /// Parameters:
+  /// - indices: Represents which elements to modify. Can be a single index,
+  ///   or potentially a list of indices for multiple assignments.
+  /// - value: The value to assign. If multiple indices are provided, 'value'
+  ///   should be an iterable such as a list or another Series.
+  void operator []=(dynamic indices, dynamic value) {
+    if (indices is int) {
+      // Single Index Assignment
+      if (indices < 0 || indices >= data.length) {
+        throw IndexError.withLength(
+          indices,
+          data.length,
+          indexable: this,
+          name: 'Index out of range',
+          message: null,
+        );
+      }
+      data[indices] = value;
+
+      // Update parent DataFrame if this Series is linked to one
+      if (_parentDataFrame != null && _columnName != null) {
+        _parentDataFrame!.updateCell(_columnName!, indices, value);
+      }
+    } else if (indices is List<int>) {
+      // Multiple Index Assignment
+      if (value is! List || value.length != indices.length) {
+        throw ArgumentError(
+            "Value must be a list of the same length as the indices.");
+      }
+      for (int i = 0; i < indices.length; i++) {
+        data[indices[i]] = value[i];
+
+        // Update parent DataFrame if this Series is linked to one
+        if (_parentDataFrame != null && _columnName != null) {
+          _parentDataFrame!.updateCell(_columnName!, indices[i], value[i]);
+        }
+      }
+    } else if (indices is List<bool> ||
+        (indices is Series && indices.data is List<bool>)) {
+      var dd = indices is Series ? indices.data : indices;
+      if (value is List) {
+        if (value.length != indices.length) {
+          throw ArgumentError(
+              "Value must be a list of the same length as the indices.");
+        }
+        for (int i = 0; i < indices.length; i++) {
+          if (dd[i]) {
+            data[i] = value[i];
+
+            // Update parent DataFrame if this Series is linked to one
+            if (_parentDataFrame != null && _columnName != null) {
+              _parentDataFrame!.updateCell(_columnName!, i, value[i]);
+            }
+          }
+        }
+      } else if (value is num) {
+        for (int i = 0; i < indices.length; i++) {
+          if (dd[i]) {
+            data[i] = value;
+
+            // Update parent DataFrame if this Series is linked to one
+            if (_parentDataFrame != null && _columnName != null) {
+              _parentDataFrame!.updateCell(_columnName!, i, value);
+            }
+          }
+        }
+      }
+    } else {
+      throw ArgumentError("Unsupported indices type.");
+    }
+  }
+
+  /// Access a value by label
+  dynamic at(dynamic label) {
+    final idx = index?.indexOf(label) ?? -1;
+    if (idx == -1) {
+      throw ArgumentError('Label not found: $label');
+    }
+    return data[idx];
+  }
+
 }
 
