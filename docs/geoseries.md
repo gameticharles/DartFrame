@@ -1,5 +1,35 @@
 # GeoSeries Class Documentation
 
+## Table of Contents
+- [GeoSeries Class Documentation](#geoseries-class-documentation)
+  - [Table of Contents](#table-of-contents)
+  - [Relationship with Series](#relationship-with-series)
+  - [Creating a GeoSeries](#creating-a-geoseries)
+    - [1. Default Constructor](#1-default-constructor)
+    - [2. `GeoSeries.fromWKT()`](#2-geoseriesfromwkt)
+    - [3. `GeoSeries.fromFeatureCollection()`](#3-geoseriesfromfeaturecollection)
+    - [4. `GeoSeries.fromXY()`](#4-geoseriesfromxy)
+  - [Accessing Data and Properties](#accessing-data-and-properties)
+    - [1. `crs` (String?)](#1-crs-string)
+    - [2. `geometries({bool asGeoJSON = false})`](#2-geometriesbool-asgeojson--false)
+  - [Conversions](#conversions)
+    - [1. `toWkt()` / `asWkt()`](#1-towkt--aswkt)
+  - [Operations](#operations)
+    - [1. `makeValid()`](#1-makevalid)
+  - [Geospatial Properties and Methods (from examples)](#geospatial-properties-and-methods-from-examples)
+    - [1. `area` (Series)](#1-area-series)
+    - [2. `bounds` (Series)](#2-bounds-series)
+    - [3. `length` (Series) - *Note: This is different from `GeoSeries.length` property*](#3-length-series---note-this-is-different-from-geoserieslength-property)
+    - [4. `centroid` (GeoSeries)](#4-centroid-geoseries)
+    - [5. `countCoordinates` (Series<int>)](#5-countcoordinates-seriesint)
+    - [6. `countGeometries` (Series<int>)](#6-countgeometries-seriesint)
+    - [7. `countInteriorRings` (Series<int>)](#7-countinteriorrings-seriesint)
+    - [8. `isEmpty` (Series<bool>)](#8-isempty-seriesbool)
+    - [9. `isClosed` (Series<bool>)](#9-isclosed-seriesbool)
+    - [10. `isRing` (Series<bool>)](#10-isring-seriesbool)
+    - [11. `hasZ` (Series<bool>)](#11-hasz-seriesbool)
+    - [12. `contains(dynamic other, {bool align = true})` (Series<bool>)](#12-containsdynamic-other-bool-align--true-seriesbool)
+
 The `GeoSeries` class in DartFrame represents a one-dimensional array (a column) specifically for holding geometry data. It extends the base `Series` class, endowing it with spatial awareness and functionalities.
 
 ## Relationship with Series

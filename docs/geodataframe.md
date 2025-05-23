@@ -1,5 +1,30 @@
 # GeoDataFrame Class Documentation
 
+## Table of Contents
+- [GeoDataFrame Class Documentation](#geodataframe-class-documentation)
+  - [Table of Contents](#table-of-contents)
+  - [Relationship with DataFrame](#relationship-with-dataframe)
+  - [Creating a GeoDataFrame](#creating-a-geodataframe)
+    - [1. Default Constructor (from a `DataFrame`)](#1-default-constructor-from-a-dataframe)
+    - [2. `GeoDataFrame.fromFeatureCollection()`](#2-geodataframefromfeaturecollection)
+    - [3. `GeoDataFrame.fromDataFrame()`](#3-geodataframefromdataframe)
+    - [4. `GeoDataFrame.fromCoordinates()`](#4-geodataframefromcoordinates)
+    - [5. `GeoDataFrame.readFile()`](#5-geodataframereadfile)
+  - [Accessing Data and Properties](#accessing-data-and-properties)
+    - [1. `geometry` (GeoSeries)](#1-geometry-geoseries)
+    - [2. `attributes` (DataFrame)](#2-attributes-dataframe)
+    - [3. `featureCount` (int)](#3-featurecount-int)
+    - [4. `headers` (List)](#4-headers-list)
+    - [5. `propertyCount` (int)](#5-propertycount-int)
+    - [6. `totalBounds` (List<double>)](#6-totalbounds-listdouble)
+    - [7. `centroid` (GeoSeries)](#7-centroid-geoseries)
+    - [8. `geometries({bool asGeoJSON = false})` (List<dynamic>)](#8-geometriesbool-asgeojson--false-listdynamic)
+    - [9. `featureCollection` (GeoJSONFeatureCollection)](#9-featurecollection-geojsonfeaturecollection)
+  - [Modifying Data](#modifying-data)
+  - [Geospatial Operations](#geospatial-operations)
+    - [1. `toFile()`](#1-tofile)
+    - [2. `toFeatureCollection()`](#2-tofeaturecollection)
+
 The `GeoDataFrame` class extends `DataFrame` to provide support for geospatial data. It manages a special "geometry" column alongside other attribute data, similar to libraries like GeoPandas in Python. This allows for the storage and manipulation of geographic features (points, lines, polygons) and their associated properties.
 
 ## Relationship with DataFrame
