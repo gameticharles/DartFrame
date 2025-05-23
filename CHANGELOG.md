@@ -1,4 +1,5 @@
 # 0.4.0
+
 * **[DOCS]** Updated CHANGELOG.md to add release notes for version 0.4.0. This includes a record of a patch application and details of a refactor concerning DataFrame accessors and binning functionality (iloc/loc accessors, row method, bin function enhancements, and updated test cases).
 * **[MISC]** Added .DS_Store file, typically created by macOS Finder.
 * **[CHORE]** Added .gitignore file to specify intentionally untracked files, including .dart_tool/.

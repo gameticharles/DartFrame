@@ -27,14 +27,14 @@ void main() {
     });
 
     test('df.iloc[rowIndex, colIndex]', () {
-      var value = df.iloc[0][1];
+      var value = df.iloc(0, 1);
       expect(value, equals(2.0));
-      var value2 = df.iloc[2][ 2];
+      var value2 = df.iloc(2, 2);
       expect(value2, equals('c'));
     });
 
     test('df.iloc[rowIndex, List<int> colIndices]', () {
-      var series = df.iloc[1][ [0, 2]];
+      var series = df.iloc(1, [0, 2]);
       expect(series, isA<Series>());
       expect(series.data, equals([4, 'b']));
       expect(series.name, equals('r2'));
@@ -52,7 +52,7 @@ void main() {
     });
 
     test('df.iloc[List<int> rowIndices, colIndex]', () {
-      var series = df.iloc[[0, 2, 3]][ 1];
+      var series = df.iloc([0, 2, 3], 1);
       expect(series, isA<Series>());
       expect(series.data, equals([2.0, 8.0, 11.0]));
       expect(series.name, equals('col2')); // Column name used as name
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('df.iloc[List<int> rowIndices, List<int> colIndices]', () {
-      var newDf = df.iloc[[1, 3]][ [0, 2]];
+      var newDf = df.iloc([1, 3], [0, 2]);
       expect(newDf, isA<DataFrame>());
       expect(newDf.rowCount, equals(2));
       expect(newDf.columnCount, equals(2));
@@ -71,9 +71,9 @@ void main() {
 
     test('iloc out-of-bounds errors', () {
       expect(() => df.iloc[10], throwsA(isA<RangeError>()));
-      expect(() => df.iloc[0][ 10], throwsA(isA<RangeError>()));
-      expect(() => df.iloc[[0][ 10]], throwsA(isA<RangeError>()));
-      expect(() => df.iloc[[0]][ [0,10]], throwsA(isA<RangeError>()));
+      expect(() => df.iloc(0, 10), throwsA(isA<RangeError>()));
+      expect(() => df.iloc[[0, 10]], throwsA(isA<RangeError>()));
+      expect(() => df.iloc([0], [0, 10]), throwsA(isA<RangeError>()));
     });
   });
 
@@ -112,21 +112,21 @@ void main() {
     });
 
     test('df.loc[rowLabel, colLabel]', () {
-      var value = dfStrIdx.loc['rowA'][ 'floatCol'];
+      var value = dfStrIdx.loc('rowA', 'floatCol');
       expect(value, equals(2.0));
       
-      var valueInt = dfIntIdx.loc[20][ 100];
+      var valueInt = dfIntIdx.loc(20, 100);
       expect(valueInt, equals(30));
     });
 
     test('df.loc[rowLabel, List<String> colLabels]', () {
-      var series = dfStrIdx.loc['rowC'][ ['intCol', 'strCol']];
+      var series = dfStrIdx.loc('rowC', ['intCol', 'strCol']);
       expect(series, isA<Series>());
       expect(series.data, equals([7, 'cherry']));
       expect(series.name, equals('rowC'));
       expect(series.index, equals(['intCol', 'strCol']));
 
-      var seriesInt = dfIntIdx.loc[10][ [200, 100]]; // Order matters for selection
+      var seriesInt = dfIntIdx.loc(10, [200, 100]); // Order matters for selection
       expect(seriesInt.data, equals([20,10]));
       expect(seriesInt.index, equals([200,100]));
     });
@@ -145,20 +145,20 @@ void main() {
     });
 
     test('df.loc[List<dynamic> rowLabels, colLabel]', () {
-      var series = dfStrIdx.loc[['rowA', 'rowB']][ 'strCol'];
+      var series = dfStrIdx.loc(['rowA', 'rowB'], 'strCol');
       expect(series, isA<Series>());
       expect(series.data, equals(['apple', 'banana']));
       expect(series.name, equals('strCol'));
       expect(series.index, equals(['rowA', 'rowB']));
 
-      var seriesInt = dfIntIdx.loc[[10,20]][ 200];
+      var seriesInt = dfIntIdx.loc([10,20], 200);
       expect(seriesInt.data, equals([20,40]));
       expect(seriesInt.name, equals('200'));
       expect(seriesInt.index, equals([10,20]));
     });
 
     test('df.loc[List<dynamic> rowLabels, List<String> colLabels]', () {
-      var newDf = dfStrIdx.loc[['rowC', 'rowA']][ ['strCol', 'intCol']];
+      var newDf = dfStrIdx.loc(['rowC', 'rowA'], ['strCol', 'intCol']);
       expect(newDf, isA<DataFrame>());
       expect(newDf.rowCount, equals(2));
       expect(newDf.rows, equals([['cherry', 7], ['apple', 1]]));
@@ -168,12 +168,12 @@ void main() {
 
     test('loc label-not-found errors', () {
       expect(() => dfStrIdx.loc['nonExistentRow'], throwsA(isA<ArgumentError>()));
-      expect(() => dfStrIdx.loc['rowA'][ 'nonExistentCol'], throwsA(isA<ArgumentError>()));
+      expect(() => dfStrIdx.loc('rowA', 'nonExistentCol'), throwsA(isA<ArgumentError>()));
       expect(() => dfStrIdx.loc[['rowA', 'nonExistentRow']], throwsA(isA<ArgumentError>()));
-      expect(() => dfStrIdx.loc[['rowA']][ ['intCol', 'nonExistentCol']], throwsA(isA<ArgumentError>()));
+      expect(() => dfStrIdx.loc(['rowA'], ['intCol', 'nonExistentCol']), throwsA(isA<ArgumentError>()));
       
       expect(() => dfIntIdx.loc[99], throwsA(isA<ArgumentError>()));
-      expect(() => dfIntIdx.loc[10][ 999], throwsA(isA<ArgumentError>()));
+      expect(() => dfIntIdx.loc(10, 999), throwsA(isA<ArgumentError>()));
     });
   });
 }

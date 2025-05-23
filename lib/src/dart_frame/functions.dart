@@ -1233,15 +1233,6 @@ extension DataFrameFunctions on DataFrame {
     return DataFrame._(List<dynamic>.from(_columns), dataCopy);
   }
 
-  /// Returns the number of rows in the DataFrame.
-  int get rowCount => _data.length;
-
-  /// Returns the number of columns in the DataFrame.
-  int get columnCount => _columns.length;
-
-  /// Returns the shape/dimension of the DataFrame as a list `[rows, columns]`.
-  List<int> get dimension => [rowCount, columnCount];
-
   /// Returns a list of column data types.
   ///
   /// For each column, determines the predominant data type.
