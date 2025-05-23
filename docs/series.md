@@ -33,15 +33,35 @@ The `Series` class in DartFrame represents a one-dimensional labeled array, simi
       - [`str.startswith(pattern)`, `str.endswith(pattern)`](#strstartswithpattern-strendswithpattern)
       - [`str.contains(pattern)`](#strcontainspattern)
       - [`str.replace(pattern, replacement)`](#strreplacepattern-replacement)
+      - [`str.split(pattern, n)`](#strsplitpattern-n)
+      - [`str.match(regex)`](#strmatchregex)
+    - [DateTime Accessor (`series.dt.*`)](#datetime-accessor-seriesdt)
+      - [`dt.year`, `dt.month`, `dt.day`](#dtyear-dtmonth-dtday)
+      - [`dt.hour`, `dt.minute`, `dt.second`](#dthour-dtminute-dtsecond)
+      - [`dt.millisecond`, `dt.microsecond`](#dtmillisecond-dtmicrosecond)
+      - [`dt.weekday`](#dtweekday)
+      - [`dt.dayofyear`](#dtdayofyear)
+      - [`dt.date`](#dtdate)
     - [DateTime Conversions](#datetime-conversions)
       - [`series.toDatetime()`](#seriestodatetime)
   - [Statistical Methods](#statistical-methods)
     - [1. `nunique()`](#1-nunique)
     - [2. `valueCounts()`](#2-valuecounts)
+    - [3. `unique()`](#3-unique)
     - [3. Basic Statistics (`count()`, `sum()`, `mean()`, etc.)](#3-basic-statistics-count-sum-mean-etc)
   - [Missing Data Handling](#missing-data-handling)
     - [1. `isna()`](#1-isna)
     - [2. `notna()`](#2-notna)
+    - [3. `fillna()`](#3-fillna)
+  - [Sorting and Ordering](#sorting-and-ordering)
+    - [1. `sort_values()`](#1-sort_values)
+    - [2. `sort_index()`](#2-sort_index)
+  - [Function Application](#function-application)
+    - [1. `apply()`](#1-apply)
+  - [Membership Checking](#membership-checking)
+    - [1. `isin()`](#1-isin)
+  - [Reshaping and Indexing](#reshaping-and-indexing)
+    - [1. `reset_index()`](#1-reset_index)
   - [Other Operations](#other-operations)
     - [1. `concatenate()`](#1-concatenate)
   - [Conversion to DataFrame](#conversion-to-dataframe)
@@ -264,6 +284,87 @@ var replacedRegex = s.str.replace(RegExp(r'\\s+'), '-'); // Replace blocks of wh
 // replacedRegex.data: ['-Hello', 'World-', null, '-DartFrame-', null]
 ```
 
+##### `str.split(pattern, n)`
+Splits each string by the given `pattern` (String).
+- `n` (optional `int`): Maximum number of splits. If provided, the last element in the list will contain the rest of the string.
+- Returns a Series of `List<String>`. Non-strings/missing values result in the Series' missing value representation.
+```dart
+var s = Series(['a-b-c', 'x-y-z', null], name: 'to_split');
+var split1 = s.str.split('-'); 
+// split1.data: [['a','b','c'], ['x','y','z'], null]
+var split2 = s.str.split('-', n: 1); 
+// split2.data: [['a','b-c-d'], ['x','y-z'], null]
+```
+
+##### `str.match(regex)`
+For each string, finds the first match of the `RegExp` pattern.
+- If the regex has a capture group, returns the first captured group. Otherwise, returns the full match.
+- If no match, results in the Series' missing value representation. Non-strings/missing values also result in the missing value representation.
+```dart
+var s = Series(['item_123', 'product_45', 'no_match', null], name: 'matches');
+var matchedDigits = s.str.match(RegExp(r'\d+')); // Match digits
+// matchedDigits.data: ['123', '45', null, null]
+var capturedGroup = s.str.match(RegExp(r'item_(\d+)')); // Capture digits after 'item_'
+// capturedGroup.data: ['123', null, null, null]
+```
+
+### DateTime Accessor (`series.dt.*`)
+The `dt` accessor provides access to datetime-like properties of Series data, assuming the Series contains `DateTime` objects. If an element is not a `DateTime` object or is a missing value, accessing these properties will result in the Series' missing value representation for that element.
+
+**Setup for DateTime Examples:**
+```dart
+var dtSeries = Series([
+  DateTime(2023, 10, 26, 14, 30, 15), 
+  DateTime(2024, 3, 1, 8, 5, 0), 
+  null, // Missing value
+  'not-a-date' // Invalid type
+], name: 'myDateTimes');
+// Assume 'null' is the missing representation for dtSeries
+```
+
+#### `dt.year`, `dt.month`, `dt.day`
+Extract the year, month (1-12), or day of the month (1-31).
+```dart
+var years = dtSeries.dt.year;     // years.data: [2023, 2024, null, null]
+var months = dtSeries.dt.month;   // months.data: [10, 3, null, null]
+var days = dtSeries.dt.day;       // days.data: [26, 1, null, null]
+```
+
+#### `dt.hour`, `dt.minute`, `dt.second`
+Extract the hour (0-23), minute (0-59), or second (0-59).
+```dart
+var hours = dtSeries.dt.hour;     // hours.data: [14, 8, null, null]
+var minutes = dtSeries.dt.minute; // minutes.data: [30, 5, null, null]
+var seconds = dtSeries.dt.second; // seconds.data: [15, 0, null, null]
+```
+
+#### `dt.millisecond`, `dt.microsecond`
+Extract the millisecond (0-999) or microsecond (0-999) component.
+```dart
+// Assuming dtSeries had millisecond/microsecond precision
+var millis = dtSeries.dt.millisecond; // e.g., [ms1, ms2, null, null]
+var micros = dtSeries.dt.microsecond; // e.g., [us1, us2, null, null]
+```
+
+#### `dt.weekday`
+Returns the day of the week (Monday=1, ..., Sunday=7).
+```dart
+var weekdays = dtSeries.dt.weekday; // e.g., [4 (Thursday), 5 (Friday), null, null]
+```
+
+#### `dt.dayofyear`
+Returns the ordinal day of the year (1-366).
+```dart
+var doy = dtSeries.dt.dayofyear; // e.g., [299, 61, null, null] (for non-leap year)
+```
+
+#### `dt.date`
+Returns a Series of `DateTime` objects with the time component set to midnight (00:00:00.000000).
+```dart
+var datesOnly = dtSeries.dt.date;
+// datesOnly.data: [DateTime(2023,10,26), DateTime(2024,3,1), null, null]
+```
+
 ### DateTime Conversions
 
 #### `series.toDatetime()`
@@ -327,16 +428,57 @@ Returns a Series containing counts (or proportions) of unique values.
 - `normalize`: If `true`, returns proportions.
 - `sort`: If `true` (default), sorts by frequency.
 - `ascending`: If `true`, sorts in ascending frequency.
-- `dropna`: If `true` (default), excludes missing values. If `false`, includes count of missing values.
+- `dropna`: If `true` (default), excludes missing values. If `false`, includes count of missing values. Missing values are represented by `_missingRepresentation` (or `null`) in the resulting index.
+
+**Example:**
 ```dart
-var s = Series(['a', 'b', 'a', null, 'a'], name: 'letters');
-var counts = s.valueCounts(); // counts.data: [3, 1], index: ['a', 'b']
-var countsWithNa = s.valueCounts(dropna: false); // Includes count for null
-// countsWithNa might be: data: [3,1,1], index: ['a','b',null] (order depends on sort)
-var proportions = s.valueCounts(normalize: true); // data: [0.75, 0.25] for 'a', 'b'
+var s = Series(['a', 'b', 'a', 'c', 'a', 'b', null], name: 'letters');
+print(s.valueCounts());
+// Output (order may vary for counts if not explicitly sorted by value):
+// letters_value_counts:
+// a       3
+// b       2
+// c       1
+// Length: 3
+// Type: int
+
+print(s.valueCounts(normalize: true, ascending: true));
+// Output (sorted by frequency ascending):
+// letters_value_counts:
+// c       0.1666...
+// b       0.3333...
+// a       0.5
+// Length: 3
+// Type: double
+
+print(s.valueCounts(dropna: false));
+// Output (includes null count):
+// letters_value_counts:
+// a       3
+// b       2
+// null    1  (or your DataFrame's missing value marker)
+// c       1
+// Length: 4
+// Type: int
 ```
 
-### 3. Basic Statistics (`count()`, `sum()`, `mean()`, etc.)
+### 3. `unique()`
+Returns a list of unique values in the Series, preserving the order of their first appearance. Missing values (including `null` and the specific DataFrame's `replaceMissingValueWith` marker) are treated as distinct values and will be included if present.
+
+**Syntax:** `List<dynamic> unique()`
+
+**Returns:** A `List<dynamic>` containing the unique values.
+
+**Example:**
+```dart
+var s = Series([2, 1, 3, 2, null, 1, null, 'a'], name: 'items');
+print(s.unique()); // Output: [2, 1, 3, null, 'a']
+
+var sEmpty = Series<int>([], name: 'empty');
+print(sEmpty.unique()); // Output: []
+```
+
+### 4. Basic Statistics (`count()`, `sum()`, `mean()`, etc.)
 These methods perform calculations ignoring missing values (either default `null` or custom from DataFrame context).
 ```dart
 var s = Series([1, 2, null, 4, 5, null], name: 'statsTest');
@@ -357,26 +499,191 @@ sCustom.setParent(df, 'customStats');
 
 ### 1. `isna()`
 Returns a boolean Series indicating `true` for elements that are missing values.
+A value is considered missing if it is `null` or matches the parent DataFrame's `replaceMissingValueWith` marker (if any), as determined by the internal `_isMissing` helper.
+**Example:**
 ```dart
-final s = Series([1, null, 3, null], name: 's_nulls');
-final result = s.isna(); // result.data is [false, true, false, true]
-
-// With custom missing value from DataFrame
-final df = DataFrame.empty(replaceMissingValueWith: -999);
-final sCustom = Series([1, -999, 3], name: 's_custom');
-sCustom.setParent(df, 's_custom');
-final resultCustom = sCustom.isna(); // resultCustom.data is [false, true, false]
+var s = Series([1, null, 3], name: 'data_with_null');
+print(s.isna());
+// Output:
+// data_with_null_isna:
+// 0       false
+// 1       true
+// 2       false
+// Length: 3
+// Type: bool
 ```
-- Works for default `null` and custom missing values defined in a parent DataFrame.
 - Handles various data types and empty Series correctly.
 
 ### 2. `notna()`
 Returns a boolean Series indicating `true` for elements that are NOT missing values (inverse of `isna()`).
+**Example:**
 ```dart
-final s = Series([1, null, 3, null], name: 's_nulls');
-final result = s.notna(); // result.data is [true, false, true, false]
+var s = Series([1, null, 3], name: 'data_with_null');
+print(s.notna());
+// Output:
+// data_with_null_notna:
+// 0       true
+// 1       false
+// 2       true
+// Length: 3
+// Type: bool
 ```
-- Also respects custom missing values from DataFrame context.
+
+### 3. `fillna()`
+Fills missing values in the Series using a specified value or method.
+- Missing values are identified if they are `null` or equal to `_parentDataFrame?.replaceMissingValueWith`.
+- The original Series is not modified.
+
+**Syntax:** `Series fillna({dynamic value, String? method})`
+- `value` (optional `dynamic`): The value to use for filling missing entries.
+- `method` (optional `String?`): The method to use for filling.
+    - `'ffill'`: Propagate last valid observation forward.
+    - `'bfill'`: Use next valid observation to fill gap.
+- If both `value` and `method` are provided, `method` takes precedence.
+
+**Returns:** A new `Series` with missing values filled.
+
+**Example:**
+```dart
+var s = Series([1.0, null, 3.0, null, 5.0], name: 'data');
+print(s.fillna(value: 0.0));
+// Output: data: [1.0, 0.0, 3.0, 0.0, 5.0]
+
+print(s.fillna(method: 'ffill'));
+// Output: data: [1.0, 1.0, 3.0, 3.0, 5.0]
+
+print(s.fillna(method: 'bfill'));
+// Output: data: [1.0, 3.0, 3.0, 5.0, 5.0]
+```
+
+## Sorting and Ordering
+
+### 1. `sort_values()`
+Returns a new `Series` with its data sorted. The original `Series` remains unchanged. The index of the new `Series` is adjusted to correspond to the sorted data.
+
+**Syntax:** `Series sort_values({bool ascending = true, String naPosition = 'last'})`
+- `ascending` (default `true`): If `true`, sorts in ascending order. Otherwise, sorts in descending order.
+- `naPosition` (default `'last'`): Determines the placement of missing values.
+    - `'first'`: Missing values are placed at the beginning.
+    - `'last'`: Missing values are placed at the end.
+
+**Returns:** A new `Series` with sorted values and a correspondingly sorted index.
+
+**Example:**
+```dart
+var s = Series([30, 10, null, 20], name: 'values', index: ['a', 'b', 'c', 'd']);
+print(s.sort_values());
+// Output:
+// values:
+// b       10
+// d       20
+// a       30
+// c       null
+// Length: 4
+// Type: int
+
+print(s.sort_values(ascending: false, naPosition: 'first'));
+// Output:
+// values:
+// c       null
+// a       30
+// d       20
+// b       10
+// Length: 4
+// Type: int
+```
+
+### 2. `sort_index()`
+Returns a new `Series` sorted by its index labels. The original `Series` remains unchanged.
+
+**Syntax:** `Series sort_index({bool ascending = true})`
+- `ascending` (default `true`): If `true`, sorts the index in ascending order. Otherwise, sorts in descending order.
+
+**Returns:** A new `Series` with data and index reordered based on the sorted index labels.
+
+**Example:**
+```dart
+var s = Series([10, 20, 5], name: 'data', index: ['c', 'a', 'b']);
+print(s.sort_index());
+// Output:
+// data:
+// a       20
+// b       5
+// c       10
+// Length: 3
+// Type: int
+```
+
+## Function Application
+
+### 1. `apply()`
+Applies a user-defined function to each element in the Series. The provided function is responsible for handling any missing values.
+
+**Syntax:** `Series apply(Function(dynamic) func)`
+- `func`: A function that takes a single `dynamic` argument (an element from the Series) and returns a `dynamic` transformed value.
+
+**Returns:** A new `Series` with the transformed data, preserving the original `name` and `index` (copied). The original `Series` is not modified.
+
+**Example:**
+```dart
+var s = Series([1, 2, 3, 4], name: 'numbers');
+var sSquared = s.apply((x) => x * x);
+// sSquared.data: [1, 4, 9, 16]
+
+var sStringify = s.apply((x) => x == null ? 'missing' : 'Item $x');
+// For s = Series([1, null], name:'items'), sStringify.data: ['Item 1', 'missing']
+```
+
+## Membership Checking
+
+### 1. `isin()`
+Checks whether each element in the Series is contained in a given iterable of `values`.
+
+**Syntax:** `Series isin(Iterable<dynamic> values)`
+- `values`: An `Iterable<dynamic>` of values to check for. For performance, if `values` is large, it is recommended to pass a `Set`.
+
+**Returns:** A boolean `Series` showing whether each element in the Series matches an element in `values`. Missing values in the Series result in `false` unless the missing value representation itself is in `values`. The new Series name is suffixed with `_isin`.
+
+**Example:**
+```dart
+var s = Series([1, 2, 3, null, 4, 1], name: 'data');
+var checkValues = [1, 4, null];
+var result = s.isin(checkValues);
+// result.data: [true, false, false, true, true, true]
+// result.name: 'data_isin'
+```
+
+## Reshaping and Indexing
+
+### 1. `reset_index()`
+Returns a new `Series` or `DataFrame` with a reset index.
+
+**Syntax:** `dynamic reset_index({dynamic level, bool drop = false, String? name, bool inplace = false})`
+- `level` (Currently ignored): For `MultiIndex`.
+- `drop` (default `false`):
+    - If `true`, the current index is discarded, and a new `Series` is returned with a default integer index.
+    - If `false`, the current index is converted into a column in a new `DataFrame`. The original Series data becomes another column.
+- `name` (optional `String?`): If `drop` is `false`, this is the name for the new column containing the original index values. Defaults to `'index'`.
+- `inplace` (Currently ignored): Always returns a new object.
+
+**Returns:** A `Series` if `drop` is `true`, or a `DataFrame` if `drop` is `false`.
+
+**Example:**
+```dart
+var s = Series([10, 20, 30], name: 'myValues', index: ['x', 'y', 'z']);
+
+// Case 1: drop = true
+var sReset = s.reset_index(drop: true);
+// sReset is a Series with data [10, 20, 30] and default index [0, 1, 2]
+
+// Case 2: drop = false
+var dfFromSeries = s.reset_index(drop: false, name: 'original_index');
+// dfFromSeries is a DataFrame:
+//   original_index  myValues
+// 0              x        10
+// 1              y        20
+// 2              z        30
+```
 
 ## Other Operations
 
