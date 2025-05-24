@@ -1,3 +1,7 @@
+# 0.4.2
+
+* **[Fix]** Formatted files.
+
 # 0.4.1
 
 * **[Fix]** Fixed readme.
