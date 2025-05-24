@@ -330,7 +330,7 @@ print(counts); // Expected: Series [4, 1] (actual output might vary based on how
 ```
 
 ### 6. `countGeometries` (Series<int>)
-Counts the number of simple geometries within each potentially multi-part geometry. For simple geometries (Point, LineString, Polygon), this is 1. For MultiPoint, MultiLineString, MultiPolygon, it's the number of constituent parts.
+Counts the number of simple geometries within each potentially multi-part "../docs"geometry. For simple geometries (Point, LineString, Polygon), this is 1. For MultiPoint, MultiLineString, MultiPolygon, it's the number of constituent parts.
 ```dart
 var series = GeoSeries([
   GeoJSONMultiPoint([[0,0], [1,1]]), // 2 points
