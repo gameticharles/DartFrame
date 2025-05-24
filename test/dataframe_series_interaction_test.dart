@@ -80,6 +80,8 @@ void main() {
       var df = DataFrame.fromMap({'A': [1, 2, 3]}, index: ['a', 'b', 'c']);
       final s = Series([10, 20, 30], name: 'B', index: ['b', 'c', 'd']); // 'd' not in df, 'a' in df not in s
       df['B'] = s;
+
+      print(df);
       
       expect(df.columns, equals(['A', 'B']));
       // 'a': null (or df missing rep)
@@ -208,7 +210,7 @@ void main() {
       'B': [10, 20, 30, 40],
     }, index: ['w', 'x', 'y', 'z']);
 
-    final seriesAdd = Series([5, 50, 500, 5000], name: 'add', index: ['x', 'y', 'z', 'a']);
+    //final seriesAdd = Series([5, 50, 500, 5000], name: 'add', index: ['x', 'y', 'z', 'a']);
     // df1['A'] index: w,x,y,z. seriesAdd index: x,y,z,a
 
     test('Series.add(Series) with index alignment', () {

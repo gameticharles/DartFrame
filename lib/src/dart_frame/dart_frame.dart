@@ -724,6 +724,32 @@ class DataFrame {
   /// Throws an `ArgumentError` if the length of the data does not match the number of columns or rows.
   /// Throws an `ArgumentError` if the key is not an integer or string.
   void operator []=(dynamic key, dynamic newData) {
+    // Handle Series with index alignment
+    if (newData is Series) {
+      // If the Series has a custom index, we need to align it with the DataFrame's index
+      if (newData.index.isNotEmpty && !_isDefaultNumericIndex(newData.index)) {
+        // For existing column, align by index
+        if (key is String && _columns.contains(key)) {
+          int columnIndex = _columns.indexOf(key);
+          
+          // Create a map from Series index to values for quick lookup
+          Map<dynamic, dynamic> indexToValue = {};
+          for (int i = 0; i < newData.index.length; i++) {
+            indexToValue[newData.index[i]] = newData.data[i];
+          }
+          
+          // Update values based on matching indices
+          for (int i = 0; i < index.length; i++) {
+            if (indexToValue.containsKey(index[i])) {
+              _data[i][columnIndex] = indexToValue[index[i]];
+            }
+          }
+          
+          return; // Early return as we've handled the assignment
+        }
+      }
+    }
+    
     // Convert Series to List if needed
     List<dynamic> data = newData is Series ? newData.data : newData;
 
@@ -740,7 +766,7 @@ class DataFrame {
             'Length of data must match the number of columns (${_columns.length})');
       }
 
-      // Update the row at the specified index
+      // Update the row at the specified index - create a new growable list
       _data[key] = List<dynamic>.from(data);
     }
     // Check if the key is a column label (column update)
@@ -749,15 +775,34 @@ class DataFrame {
 
       // If the column exists, update it
       if (columnIndex != -1) {
-        // Check if the length of the data matches the number of rows
-        if (data.length != _data.length) {
-          throw ArgumentError(
-              'Length of data must match the number of rows (${_data.length})');
+        // If data is longer than the DataFrame, expand the DataFrame
+        if (data.length > _data.length) {
+          // Calculate how many new rows we need to add
+          int additionalRows = data.length - _data.length;
+          
+          // Add new rows with null values for all existing columns
+          for (int i = 0; i < additionalRows; i++) {
+            // Create a new growable list with nulls for each column
+            List<dynamic> newRow = List<dynamic>.filled(_columns.length, null, growable: true);
+            _data.add(newRow);
+            
+            // Also extend the index
+            if (index.isNotEmpty) {
+              // If the last index is numeric, continue the sequence
+              if (index.last is int) {
+                index.add(index.last + 1);
+              } else {
+                // Otherwise just use the row number
+                index.add(_data.length - 1);
+              }
+            }
+          }
         }
-
-        // Update existing column
+        
+        // Update the column with the data
         for (int i = 0; i < _data.length; i++) {
-          _data[i][columnIndex] = data[i];
+          // If we have data for this row, use it; otherwise use null
+          _data[i][columnIndex] = i < data.length ? data[i] : null;
         }
       }
       // If the column doesn't exist, add a new one
@@ -765,22 +810,50 @@ class DataFrame {
         // Handle empty DataFrame case
         if (_data.isEmpty) {
           // Initialize with empty rows for the first column
-          _data = List.generate(data.length, (_) => []);
+          _data = List.generate(data.length, (_) => <dynamic>[]);
           _columns.add(key);
 
           // Add the new column data
           for (int i = 0; i < data.length; i++) {
             _data[i].add(data[i]);
           }
+          
+          // Initialize index if empty
+          if (index.isEmpty) {
+            index = List.generate(data.length, (i) => i);
+          }
         } else {
-          // Check if the length of the data matches the number of rows
-          if (data.length != _data.length) {
-            throw ArgumentError(
-                'Length of data must match the number of rows (${_data.length})');
+          // If data is longer than the DataFrame, expand the DataFrame
+          if (data.length > _data.length) {
+            // Calculate how many new rows we need to add
+            int additionalRows = data.length - _data.length;
+            
+            // Add new rows with null values for all existing columns
+            for (int i = 0; i < additionalRows; i++) {
+              // Create a new growable list with nulls for each column
+              List<dynamic> newRow = List<dynamic>.filled(_columns.length, null, growable: true);
+              _data.add(newRow);
+              
+              // Also extend the index
+              if (index.isNotEmpty) {
+                // If the last index is numeric, continue the sequence
+                if (index.last is int) {
+                  index.add(index.last + 1);
+                } else {
+                  // Otherwise just use the row number
+                  index.add(_data.length - 1);
+                }
+              }
+            }
           }
 
           // Add the new column
-          addColumn(key, defaultValue: data);
+          _columns.add(key);
+          
+          // Add the new column data to each row
+          for (int i = 0; i < _data.length; i++) {
+            _data[i].add(i < data.length ? data[i] : null);
+          }
         }
       }
     }
@@ -791,6 +864,16 @@ class DataFrame {
       throw ArgumentError(
           'Key must be an integer (for row) or string (for column)');
     }
+  }
+  
+  // Helper method to check if an index is the default numeric index
+  bool _isDefaultNumericIndex(List<dynamic> idx) {
+    if (idx.isEmpty) return true;
+    
+    for (int i = 0; i < idx.length; i++) {
+      if (idx[i] != i) return false;
+    }
+    return true;
   }
 
 

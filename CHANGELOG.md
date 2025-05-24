@@ -1,31 +1,17 @@
 # 0.4.0
 
-* **[DOCS]** Updated CHANGELOG.md to add release notes for version 0.4.0. This includes a record of a patch application and details of a refactor concerning DataFrame accessors and binning functionality (iloc/loc accessors, row method, bin function enhancements, and updated test cases).
-* **[MISC]** Added .DS_Store file, typically created by macOS Finder.
-* **[CHORE]** Added .gitignore file to specify intentionally untracked files, including .dart_tool/.
-* **[CHORE]** Added .pubignore file to specify files excluded from publishing, including .dart_tool/ and todo.txt.
-* **[CHORE]** Added VS Code editor settings (.vscode/settings.json) with "dartframe" in cSpell words.
-* **[DOCS]** Added LICENSE file with Apache License, Version 2.0.
-* **[CHORE]** Added analysis_options.yaml for Dart static analysis configuration.
-* **[CHORE]** Added pubspec.yaml defining package metadata, dependencies (intl, geojson_vi, geoxml, web), and dev dependencies (lints, test).
 * **[FEATURE]** Added main library file lib/dartframe.dart exporting library parts and initializing fileIO.
 * **[FEATURE]** Implemented DataFrameILocAccessor and DataFrameLocAccessor in lib/src/dart_frame/accessors.dart for integer and label-based data selection in DataFrames.
 * **[FEATURE]** Implemented core DataFrame class in lib/src/dart_frame/dart_frame.dart with constructors, data cleaning, accessors, and string representation.
 * **[FEATURE]** Added extensive DataFrame manipulation functions in lib/src/dart_frame/functions.dart (selection, filtering, sorting, stats, transformations, I/O, grouping).
 * **[FEATURE]** Implemented DataFrame operator overloads ([], []=) in lib/src/dart_frame/operations.dart.
 * **[FEATURE]** Added file I/O abstraction (FileIOBase) with platform-specific implementations in lib/src/file_helper/.
-* **[FEATURE]** Implemented GeoDataFrame class in lib/src/geo_dart_frame/ for geospatial data, including various constructors, geometry/attribute access, spatial properties, and I/O.
-* **[FEATURE]** Implemented GeoSeries class in lib/src/geo_series/ for 1D geometry arrays, with constructors, WKT conversion, validation, buffer, and geospatial properties.
 * **[FEATURE]** Implemented core Series class in lib/src/series/ for 1D arrays, with constructors, operators, statistical functions, string accessor, and date/time conversions.
-* **[MISC]** Added .DS_Store files in lib/ and lib/src/.
-* **[CHORE]** Added docs/.keep to ensure the docs directory is tracked.
 * **[DOCS]** Added markdown documentation for DataFrame, GeoDataFrame, GeoSeries, and Series classes in docs/.
-* **[DOCS]** Added README.md with library overview, features, installation, usage examples, and contribution guidelines.
 * **[DOCS]** Added example/example.dart demonstrating DataFrame and Series usage.
 * **[DOCS]** Added example/geodataframe_example.dart demonstrating GeoDataFrame usage.
 * **[DOCS]** Added example/geoseries.dart demonstrating GeoSeries usage.
 * **[MISC]** Added output.geojson example output file.
-* **[CHORE]** Added pubspec.lock file for locking dependency versions.
 * **[TEST]** Added a suite of unit tests in test/ covering DataFrame and Series functionalities.
 * **[DOCS]** Added bin/dartframe.dart as a simple executable example.
 
