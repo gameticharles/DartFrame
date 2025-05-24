@@ -48,7 +48,8 @@ class Series<T> {
   /// - `data`: The data points of the series.
   /// - `name`: The name of the series. This parameter is required.
   /// - `index`: Optional list to use as index for the Series
-  Series(this.data, {required this.name, List<dynamic>? index}): index = index ??  List.generate(data.length, (i) => i);
+  Series(this.data, {required this.name, List<dynamic>? index})
+      : index = index ?? List.generate(data.length, (i) => i);
 
   /// Sets the parent DataFrame reference
   void setParent(DataFrame parent, String columnName) {
@@ -58,7 +59,8 @@ class Series<T> {
 
   // Helper to get the representation of missing values for this Series.
   // If part of a DataFrame with a custom marker, uses that. Otherwise, defaults to null.
-  dynamic get _missingRepresentation => _parentDataFrame?.replaceMissingValueWith;
+  dynamic get _missingRepresentation =>
+      _parentDataFrame?.replaceMissingValueWith;
 
   // Helper to check if a value is considered missing for this Series.
   // A value is missing if it's null OR if it matches the DataFrame's specific missing value marker (if any).
@@ -155,32 +157,33 @@ class Series<T> {
   /// ```
   Type get dtype {
     if (data.isEmpty) return dynamic;
-    
+
     // Count occurrences of each type
     Map<Type, int> typeCounts = {};
     // dynamic missingValue = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
-    
+
     for (var value in data) {
       // if (value != null && value != missingValue) { // Old logic
-      if (!_isMissing(value)) { // New logic
+      if (!_isMissing(value)) {
+        // New logic
         Type valueType = value.runtimeType;
         typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
       }
     }
-    
+
     if (typeCounts.isEmpty) return dynamic;
-    
+
     // Find the most common type
     Type mostCommonType = dynamic;
     int maxCount = 0;
-    
+
     typeCounts.forEach((type, count) {
       if (count > maxCount) {
         maxCount = count;
         mostCommonType = type;
       }
     });
-    
+
     return mostCommonType;
   }
 
@@ -225,7 +228,8 @@ class Series<T> {
     final Set<dynamic> uniqueValues = {};
     for (var value in data) {
       // if (value != missingRep) { // Old logic
-      if (!_isMissing(value)) { // New logic
+      if (!_isMissing(value)) {
+        // New logic
         uniqueValues.add(value);
       }
     }
@@ -290,14 +294,15 @@ class Series<T> {
       if (_isMissing(value)) {
         if (!dropna) {
           // Use the canonical missing representation for the key if it's missing
-          final key = currentMissingRep ?? value; // If currentMissingRep is null, use the actual null value as key
+          final key = currentMissingRep ??
+              value; // If currentMissingRep is null, use the actual null value as key
           counts[key] = (counts[key] ?? 0) + 1;
         }
       } else {
         counts[value] = (counts[value] ?? 0) + 1;
       }
     }
-    
+
     List<MapEntry<dynamic, int>> sortedCounts = counts.entries.toList();
 
     if (sort) {
@@ -316,7 +321,8 @@ class Series<T> {
     }
 
     if (normalize) {
-      num sumOfCounts = resultData.whereType<num>().fold(0, (sum, val) => sum + val);
+      num sumOfCounts =
+          resultData.whereType<num>().fold(0, (sum, val) => sum + val);
       if (sumOfCounts != 0) {
         // Ensure that when mapping, if a count corresponds to a missingRep, it's handled.
         // This part might need care if missingRep itself is a key in resultData and is not a num.
@@ -326,10 +332,12 @@ class Series<T> {
           return _missingRepresentation; // if count was for a missing value and it's not num
         }).toList();
       } else {
-         resultData = resultData.map((_) => 0.0).toList(); // All counts are zero or non-numeric
+        resultData = resultData
+            .map((_) => 0.0)
+            .toList(); // All counts are zero or non-numeric
       }
     }
-    
+
     return Series(
       resultData,
       name: '${name}_value_counts',
@@ -411,7 +419,8 @@ class Series<T> {
       throw ArgumentError("errors must be one of 'raise', 'coerce', 'ignore'");
     }
     if (downcast != null && !['integer', 'float'].contains(downcast)) {
-      throw ArgumentError("downcast must be one of 'integer', 'float', or null");
+      throw ArgumentError(
+          "downcast must be one of 'integer', 'float', or null");
     }
 
     final currentMissingRep = _missingRepresentation;
@@ -422,7 +431,9 @@ class Series<T> {
       num? numVal;
       bool conversionError = false;
 
-      if (_isMissing(originalVal) && originalVal != null && originalVal == currentMissingRep) { 
+      if (_isMissing(originalVal) &&
+          originalVal != null &&
+          originalVal == currentMissingRep) {
         // If it's the specific missing marker (and not null itself being the marker)
         // and we want to coerce, it becomes currentMissingRep.
         // If errors='ignore', it remains originalVal.
@@ -438,7 +449,6 @@ class Series<T> {
         // If 'raise', existing missing values don't cause format exception unless they are strings.
       }
 
-
       if (originalVal is num) {
         numVal = originalVal;
       } else if (originalVal is String) {
@@ -446,24 +456,30 @@ class Series<T> {
         if (numVal == null) {
           conversionError = true;
         }
-      } else if (originalVal == null) { // Already handled by _isMissing if null is the marker
+      } else if (originalVal == null) {
+        // Already handled by _isMissing if null is the marker
         conversionError = true; // Or treat as missing based on 'errors'
-      }
-      else { // Other non-string, non-num types
+      } else {
+        // Other non-string, non-num types
         conversionError = true;
       }
 
       if (conversionError) {
         if (errors == 'raise') {
           // Only raise if it's not already a recognized missing value that we're trying to coerce/ignore
-          if (!_isMissing(originalVal) || (originalVal is String && num.tryParse(originalVal) == null)) {
-             throw FormatException("Unable to parse value '$originalVal' to numeric at index $i");
-          } else { // It's a missing value we couldn't parse (e.g. a non-string missing marker)
-             newData.add(currentMissingRep); // Coerce implicitly if it was a non-string missing marker
+          if (!_isMissing(originalVal) ||
+              (originalVal is String && num.tryParse(originalVal) == null)) {
+            throw FormatException(
+                "Unable to parse value '$originalVal' to numeric at index $i");
+          } else {
+            // It's a missing value we couldn't parse (e.g. a non-string missing marker)
+            newData.add(
+                currentMissingRep); // Coerce implicitly if it was a non-string missing marker
           }
         } else if (errors == 'coerce') {
           newData.add(currentMissingRep);
-        } else { // errors == 'ignore'
+        } else {
+          // errors == 'ignore'
           newData.add(originalVal);
         }
       } else if (numVal != null) {
@@ -472,24 +488,29 @@ class Series<T> {
             newData.add(numVal.toInt());
           } else {
             if (errors == 'raise') {
-              throw FormatException("Cannot downcast value '$originalVal' (parsed as $numVal) to integer without loss at index $i");
+              throw FormatException(
+                  "Cannot downcast value '$originalVal' (parsed as $numVal) to integer without loss at index $i");
             } else if (errors == 'coerce') {
               newData.add(currentMissingRep);
-            } else { // errors == 'ignore'
-              newData.add(numVal); 
+            } else {
+              // errors == 'ignore'
+              newData.add(numVal);
             }
           }
         } else if (downcast == 'float') {
           newData.add(numVal.toDouble());
-        } else { 
-          newData.add(numVal); 
+        } else {
+          newData.add(numVal);
         }
-      } else { // Should not be reached if logic is correct, but as a fallback:
+      } else {
+        // Should not be reached if logic is correct, but as a fallback:
         if (errors == 'raise' && !_isMissing(originalVal)) {
-           throw FormatException("Unknown error parsing value '$originalVal' to numeric at index $i");
+          throw FormatException(
+              "Unknown error parsing value '$originalVal' to numeric at index $i");
         } else if (errors == 'coerce' || _isMissing(originalVal)) {
           newData.add(currentMissingRep);
-        } else { // errors == 'ignore'
+        } else {
+          // errors == 'ignore'
           newData.add(originalVal);
         }
       }
@@ -520,7 +541,10 @@ class Series<T> {
   /// Throws:
   ///   - `FormatException` if `errors == 'raise'` and a value cannot be parsed.
   ///   - `ArgumentError` if `errors` has an invalid value.
-  Series toDatetime({String errors = 'raise', String? format, bool inferDatetimeFormat = false}) {
+  Series toDatetime(
+      {String errors = 'raise',
+      String? format,
+      bool inferDatetimeFormat = false}) {
     if (!['raise', 'coerce', 'ignore'].contains(errors)) {
       throw ArgumentError("errors must be one of 'raise', 'coerce', 'ignore'");
     }
@@ -529,19 +553,21 @@ class Series<T> {
     List<dynamic> newData = [];
 
     // Common date formats for inference
-    final List<DateFormat> commonDateFormats = inferDatetimeFormat ? [
-      DateFormat('yyyy-MM-dd HH:mm:ss'),
-      DateFormat('yyyy-MM-ddTHH:mm:ss'),
-      DateFormat('yyyy-MM-dd'),
-      DateFormat('MM/dd/yyyy HH:mm:ss'),
-      DateFormat('MM/dd/yyyy'),
-      DateFormat('dd/MM/yyyy HH:mm:ss'),
-      DateFormat('dd/MM/yyyy'),
-      DateFormat('yyyy.MM.dd HH:mm:ss'),
-      DateFormat('yyyy.MM.dd'),
-      DateFormat('MM-dd-yyyy HH:mm:ss'),
-      DateFormat('MM-dd-yyyy'),
-    ] : [];
+    final List<DateFormat> commonDateFormats = inferDatetimeFormat
+        ? [
+            DateFormat('yyyy-MM-dd HH:mm:ss'),
+            DateFormat('yyyy-MM-ddTHH:mm:ss'),
+            DateFormat('yyyy-MM-dd'),
+            DateFormat('MM/dd/yyyy HH:mm:ss'),
+            DateFormat('MM/dd/yyyy'),
+            DateFormat('dd/MM/yyyy HH:mm:ss'),
+            DateFormat('dd/MM/yyyy'),
+            DateFormat('yyyy.MM.dd HH:mm:ss'),
+            DateFormat('yyyy.MM.dd'),
+            DateFormat('MM-dd-yyyy HH:mm:ss'),
+            DateFormat('MM-dd-yyyy'),
+          ]
+        : [];
 
     for (int i = 0; i < data.length; i++) {
       dynamic originalVal = data[i];
@@ -553,15 +579,19 @@ class Series<T> {
           newData.add(currentMissingRep);
         } else if (errors == 'ignore') {
           newData.add(originalVal);
-        } else { // errors == 'raise', existing missing values are not an error unless unparseable string
-          if (originalVal is String) { // If missing rep is a string that's not a date
-             throw FormatException("Unable to parse value '$originalVal' to DateTime at index $i");
+        } else {
+          // errors == 'raise', existing missing values are not an error unless unparseable string
+          if (originalVal is String) {
+            // If missing rep is a string that's not a date
+            throw FormatException(
+                "Unable to parse value '$originalVal' to DateTime at index $i");
           }
-          newData.add(currentMissingRep); // Default for non-string missing markers
+          newData
+              .add(currentMissingRep); // Default for non-string missing markers
         }
         continue;
       }
-      
+
       if (originalVal is DateTime) {
         dtVal = originalVal;
       } else if (originalVal is num) {
@@ -585,7 +615,7 @@ class Series<T> {
           } catch (e) {
             dtVal = null;
           }
-          
+
           // If tryParse failed and we're inferring formats, try common formats
           if (dtVal == null && inferDatetimeFormat) {
             for (var dfmt in commonDateFormats) {
@@ -596,21 +626,26 @@ class Series<T> {
                 // Try next format
               }
             }
-            if (dtVal == null) conversionError = true; // None of the inferred formats worked
+            if (dtVal == null)
+              conversionError = true; // None of the inferred formats worked
           } else if (dtVal == null && !inferDatetimeFormat) {
-            conversionError = true; // DateTime.tryParse failed and not inferring
+            conversionError =
+                true; // DateTime.tryParse failed and not inferring
           }
         }
-      } else { // Not DateTime, String, or the defined missing value
-        conversionError = true; 
+      } else {
+        // Not DateTime, String, or the defined missing value
+        conversionError = true;
       }
 
       if (conversionError) {
         if (errors == 'raise') {
-          throw FormatException("Unable to parse value '$originalVal' to DateTime at index $i");
+          throw FormatException(
+              "Unable to parse value '$originalVal' to DateTime at index $i");
         } else if (errors == 'coerce') {
           newData.add(currentMissingRep);
-        } else { // errors == 'ignore'
+        } else {
+          // errors == 'ignore'
           newData.add(originalVal);
         }
       } else {
@@ -631,14 +666,13 @@ class Series<T> {
           selectedData.add(data[i]);
         }
       }
-    }else if (indices is Series<bool>) {
+    } else if (indices is Series<bool>) {
       for (int i = 0; i < indices.data.length; i++) {
         if ((indices as Series).data[i]) {
           selectedData.add(data[i]);
         }
       }
-
-    }else {
+    } else {
       // Handle single index
       return data[indices];
     }
@@ -809,24 +843,25 @@ class Series<T> {
       // First, separate by type category
       bool aIsNum = a[0] is num;
       bool bIsNum = b[0] is num;
-      
+
       // If types are in different categories (num vs non-num)
       if (aIsNum && !bIsNum) {
         return ascending ? -1 : 1; // Numbers come before non-numbers
       } else if (!aIsNum && bIsNum) {
         return ascending ? 1 : -1; // Non-numbers come after numbers
       }
-      
+
       // If both are the same type category, try to compare them
       if (a[0] is Comparable && b[0] is Comparable) {
         try {
-          int comparisonResult = (a[0] as Comparable).compareTo(b[0] as Comparable);
+          int comparisonResult =
+              (a[0] as Comparable).compareTo(b[0] as Comparable);
           return ascending ? comparisonResult : -comparisonResult;
         } catch (e) {
           // If comparison fails but they're the same type, use string representation
-          return ascending ? 
-              a[0].toString().compareTo(b[0].toString()) : 
-              b[0].toString().compareTo(a[0].toString());
+          return ascending
+              ? a[0].toString().compareTo(b[0].toString())
+              : b[0].toString().compareTo(a[0].toString());
         }
       } else if (a[0] == null && b[0] == null) {
         return 0; // Both are null or missing
@@ -835,18 +870,19 @@ class Series<T> {
       } else if (b[0] == null) {
         return naPosition == 'first' ? 1 : -1;
       }
-      
+
       // If types are not comparable, compare string representations
-      return ascending ? 
-          a[0].toString().compareTo(b[0].toString()) : 
-          b[0].toString().compareTo(a[0].toString());
+      return ascending
+          ? a[0].toString().compareTo(b[0].toString())
+          : b[0].toString().compareTo(a[0].toString());
     });
 
     // Combine sorted valid values and NaNs based on naPosition
     List<List<dynamic>> sortedPairedList;
     if (naPosition == 'first') {
       sortedPairedList = [...nanValues, ...validValues];
-    } else { // naPosition == 'last'
+    } else {
+      // naPosition == 'last'
       sortedPairedList = [...validValues, ...nanValues];
     }
 
@@ -856,11 +892,12 @@ class Series<T> {
 
     // If original series had an index, use the sorted original index values
     if (index.isNotEmpty) {
-      sortedIndex = sortedPairedList.map((pair) => currentIndex[pair[1] as int]).toList();
+      sortedIndex =
+          sortedPairedList.map((pair) => currentIndex[pair[1] as int]).toList();
     } else {
       sortedIndex = List.generate(sortedData.length, (i) => i);
     }
-    
+
     return Series(
       sortedData,
       name: name, // Preserve the original name
@@ -913,7 +950,10 @@ class Series<T> {
     // Create a list of pairs: [index_label, original_data_position]
     List<List<dynamic>> pairedList = [];
     for (int i = 0; i < currentIndexLabels.length; i++) {
-      pairedList.add([currentIndexLabels[i], i]); // Store original position (which is also data index)
+      pairedList.add([
+        currentIndexLabels[i],
+        i
+      ]); // Store original position (which is also data index)
     }
 
     // Sort the paired list based on index labels
@@ -939,7 +979,7 @@ class Series<T> {
       } else if (labelA == null) {
         return -1; // Nulls first by default, or handle as per a naPosition-like param if added
       } else if (labelB == null) {
-        return 1;  // Nulls first by default
+        return 1; // Nulls first by default
       }
       // If types are not comparable and not null, maintain original order
       return 0;
@@ -947,7 +987,8 @@ class Series<T> {
 
     // Extract the new sorted index labels and the corresponding sorted data
     List<dynamic> sortedIndex = pairedList.map((pair) => pair[0]).toList();
-    List<dynamic> sortedData = pairedList.map((pair) => data[pair[1] as int]).toList();
+    List<dynamic> sortedData =
+        pairedList.map((pair) => data[pair[1] as int]).toList();
 
     return Series(
       sortedData,
@@ -1038,7 +1079,7 @@ class Series<T> {
       List<dynamic> indexColumnData = List.from(index);
 
       String indexColumnName = name ?? 'index';
-      
+
       // Determine the name for the original Series' data column
       // Pandas uses '0' for an unnamed Series when it becomes a column.
       // If this.name is null or empty, use '0'. Otherwise, use this.name.
@@ -1046,19 +1087,19 @@ class Series<T> {
 
       // Ensure unique column names if indexColumnName happens to be the same as seriesDataColumnName
       if (indexColumnName == seriesDataColumnName) {
-          // This case is less likely if seriesDataColumnName defaults to '0' and index to 'index'
-          // but good to handle. Pandas appends suffixes like '_level_0', '_values'
-          // For simplicity, let's adjust one if they are identical and default.
-          if (indexColumnName == 'index' && seriesDataColumnName == 'index') {
-              seriesDataColumnName = '${this.name}_values'; // Or some other distinguishing name
-          } else {
-            // Or throw an error, or apply a more general renaming strategy.
-            // For now, simple adjustment if default names clash.
-            // If user explicitly sets `name` to be same as `this.name`, it's a bit trickier.
-            // Let's assume for now they won't be identical, or one will be adjusted by default logic.
-          }
+        // This case is less likely if seriesDataColumnName defaults to '0' and index to 'index'
+        // but good to handle. Pandas appends suffixes like '_level_0', '_values'
+        // For simplicity, let's adjust one if they are identical and default.
+        if (indexColumnName == 'index' && seriesDataColumnName == 'index') {
+          seriesDataColumnName =
+              '${this.name}_values'; // Or some other distinguishing name
+        } else {
+          // Or throw an error, or apply a more general renaming strategy.
+          // For now, simple adjustment if default names clash.
+          // If user explicitly sets `name` to be same as `this.name`, it's a bit trickier.
+          // Let's assume for now they won't be identical, or one will be adjusted by default logic.
+        }
       }
-
 
       Map<String, List<dynamic>> dfData = {
         indexColumnName: indexColumnData,
@@ -1127,7 +1168,7 @@ class Series<T> {
     String? method,
   }) {
     List<dynamic> newData = List.from(data);
-    
+
     // final dynamic missingIndicator = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
 
     // bool isMissing(dynamic val) { // Replaced by _isMissing helper
@@ -1142,7 +1183,7 @@ class Series<T> {
     }
 
     if (method == 'ffill') {
-      dynamic lastValidObservation = const Object(); 
+      dynamic lastValidObservation = const Object();
       for (int i = 0; i < newData.length; i++) {
         if (!_isMissing(newData[i])) {
           lastValidObservation = newData[i];
@@ -1153,7 +1194,7 @@ class Series<T> {
         }
       }
     } else if (method == 'bfill') {
-      dynamic nextValidObservation = const Object(); 
+      dynamic nextValidObservation = const Object();
       for (int i = newData.length - 1; i >= 0; i--) {
         if (!_isMissing(newData[i])) {
           nextValidObservation = newData[i];
@@ -1163,7 +1204,8 @@ class Series<T> {
           }
         }
       }
-    } else if (value != null) { // `value` is the fill value, not the element from series
+    } else if (value != null) {
+      // `value` is the fill value, not the element from series
       for (int i = 0; i < newData.length; i++) {
         if (_isMissing(newData[i])) {
           newData[i] = value;
@@ -1268,8 +1310,9 @@ class Series<T> {
   Series isin(Iterable<dynamic> values) {
     // Convert `values` to a Set for efficient lookup, if it's not already.
     // This is a common optimization.
-    final Set<dynamic> valueSet = values is Set<dynamic> ? values : values.toSet();
-    
+    final Set<dynamic> valueSet =
+        values is Set<dynamic> ? values : values.toSet();
+
     List<bool> boolData = [];
     for (int i = 0; i < data.length; i++) {
       boolData.add(valueSet.contains(data[i]));
@@ -1303,7 +1346,8 @@ class Series<T> {
   /// ```
   List<dynamic> unique() {
     List<dynamic> uniqueValues = [];
-    Set<dynamic> seenValues = {}; // Using a Set for efficient lookup of seen values
+    Set<dynamic> seenValues =
+        {}; // Using a Set for efficient lookup of seen values
 
     for (var value in data) {
       if (!seenValues.contains(value)) {
@@ -1314,4 +1358,3 @@ class Series<T> {
     return uniqueValues;
   }
 }
-

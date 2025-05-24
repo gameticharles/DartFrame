@@ -133,7 +133,7 @@ class DataFrame {
       _data = data.map((row) => row.map(cleanData).toList()).toList();
     }
   }
-  
+
   /// Cleans and converts data values based on their content.
   ///
   /// This method performs several operations:
@@ -287,7 +287,9 @@ class DataFrame {
 
     return DataFrame._(
       columnNames,
-      hasHeader ? rows.sublist(1) : rows,  // Only skip first row if hasHeader is true
+      hasHeader
+          ? rows.sublist(1)
+          : rows, // Only skip first row if hasHeader is true
       //rowHeader: hasRowIndex ? rows[0] : List.generate(rows[0].length, (i) => i),
       index: [], // todo: Not implemented yet
       replaceMissingValueWith: replaceMissingValueWith,
@@ -533,7 +535,7 @@ class DataFrame {
   ///```
   //Matrix toMatrix() => Matrix(rows);
 
-    /// Returns the number of rows in the DataFrame.
+  /// Returns the number of rows in the DataFrame.
   int get rowCount => _data.length;
 
   /// Returns the number of columns in the DataFrame.
@@ -613,46 +615,46 @@ class DataFrame {
   Map<String, dynamic> row(Map<String, dynamic> criteria) {
     // Find rows that match all criteria
     List<int> matchingIndices = [];
-    
+
     for (int i = 0; i < _data.length; i++) {
       bool matches = true;
-      
+
       for (var entry in criteria.entries) {
         final colName = entry.key;
         final value = entry.value;
-        
+
         if (!_columns.contains(colName)) {
           throw ArgumentError('Column "$colName" not found in DataFrame');
         }
-        
+
         final colIndex = _columns.indexOf(colName);
         if (_data[i][colIndex] != value) {
           matches = false;
           break;
         }
       }
-      
+
       if (matches) {
         matchingIndices.add(i);
       }
     }
-    
+
     if (matchingIndices.isEmpty) {
       throw StateError('No row matches the given criteria');
     }
-    
+
     // Create a Map representation of the first matching row
     final rowIndex = matchingIndices[0];
     Map<String, dynamic> result = {};
-    
+
     for (int i = 0; i < _columns.length; i++) {
       result[_columns[i]] = _data[rowIndex][i];
     }
-    
+
     return result;
   }
 
-    // Operator [] overridden to access column by index or name
+  // Operator [] overridden to access column by index or name
   // Modified operator[] to return a Series
   /// Returns a [Series] for the specified column,
   /// accessed by index or name.
@@ -681,8 +683,8 @@ class DataFrame {
           message: null,
         );
       }
-      var series =
-          Series(rows.map((row) => row[key]).toList(), name: _columns[key], index: index);
+      var series = Series(rows.map((row) => row[key]).toList(),
+          name: _columns[key], index: index);
       series.setParent(this, _columns[key].toString());
       return series;
     } else if (key is String) {
@@ -690,15 +692,14 @@ class DataFrame {
       if (columnIndex == -1) {
         throw ArgumentError.value(key, 'columnName', 'Column does not exist');
       }
-      var series =
-          Series(rows.map((row) => row[columnIndex]).toList(), name: key, index: index);
+      var series = Series(rows.map((row) => row[columnIndex]).toList(),
+          name: key, index: index);
       series.setParent(this, key);
       return series;
     } else {
       throw ArgumentError('Key must be an int or String');
     }
   }
-
 
   /// Updates a single cell in the DataFrame
   void updateCell(String columnName, int rowIndex, dynamic value) {
@@ -731,25 +732,25 @@ class DataFrame {
         // For existing column, align by index
         if (key is String && _columns.contains(key)) {
           int columnIndex = _columns.indexOf(key);
-          
+
           // Create a map from Series index to values for quick lookup
           Map<dynamic, dynamic> indexToValue = {};
           for (int i = 0; i < newData.index.length; i++) {
             indexToValue[newData.index[i]] = newData.data[i];
           }
-          
+
           // Update values based on matching indices
           for (int i = 0; i < index.length; i++) {
             if (indexToValue.containsKey(index[i])) {
               _data[i][columnIndex] = indexToValue[index[i]];
             }
           }
-          
+
           return; // Early return as we've handled the assignment
         }
       }
     }
-    
+
     // Convert Series to List if needed
     List<dynamic> data = newData is Series ? newData.data : newData;
 
@@ -779,13 +780,14 @@ class DataFrame {
         if (data.length > _data.length) {
           // Calculate how many new rows we need to add
           int additionalRows = data.length - _data.length;
-          
+
           // Add new rows with null values for all existing columns
           for (int i = 0; i < additionalRows; i++) {
             // Create a new growable list with nulls for each column
-            List<dynamic> newRow = List<dynamic>.filled(_columns.length, null, growable: true);
+            List<dynamic> newRow =
+                List<dynamic>.filled(_columns.length, null, growable: true);
             _data.add(newRow);
-            
+
             // Also extend the index
             if (index.isNotEmpty) {
               // If the last index is numeric, continue the sequence
@@ -798,7 +800,7 @@ class DataFrame {
             }
           }
         }
-        
+
         // Update the column with the data
         for (int i = 0; i < _data.length; i++) {
           // If we have data for this row, use it; otherwise use null
@@ -817,7 +819,7 @@ class DataFrame {
           for (int i = 0; i < data.length; i++) {
             _data[i].add(data[i]);
           }
-          
+
           // Initialize index if empty
           if (index.isEmpty) {
             index = List.generate(data.length, (i) => i);
@@ -827,13 +829,14 @@ class DataFrame {
           if (data.length > _data.length) {
             // Calculate how many new rows we need to add
             int additionalRows = data.length - _data.length;
-            
+
             // Add new rows with null values for all existing columns
             for (int i = 0; i < additionalRows; i++) {
               // Create a new growable list with nulls for each column
-              List<dynamic> newRow = List<dynamic>.filled(_columns.length, null, growable: true);
+              List<dynamic> newRow =
+                  List<dynamic>.filled(_columns.length, null, growable: true);
               _data.add(newRow);
-              
+
               // Also extend the index
               if (index.isNotEmpty) {
                 // If the last index is numeric, continue the sequence
@@ -849,7 +852,7 @@ class DataFrame {
 
           // Add the new column
           _columns.add(key);
-          
+
           // Add the new column data to each row
           for (int i = 0; i < _data.length; i++) {
             _data[i].add(i < data.length ? data[i] : null);
@@ -865,17 +868,16 @@ class DataFrame {
           'Key must be an integer (for row) or string (for column)');
     }
   }
-  
+
   // Helper method to check if an index is the default numeric index
   bool _isDefaultNumericIndex(List<dynamic> idx) {
     if (idx.isEmpty) return true;
-    
+
     for (int i = 0; i < idx.length; i++) {
       if (idx[i] != i) return false;
     }
     return true;
   }
-
 
   @override
   noSuchMethod(Invocation invocation) {

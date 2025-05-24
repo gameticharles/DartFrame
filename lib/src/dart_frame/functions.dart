@@ -91,17 +91,18 @@ extension DataFrameFunctions on DataFrame {
   /// ```
   DataFrame isna() {
     List<List<dynamic>> newData = [];
-    
+
     for (int i = 0; i < _data.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < _columns.length; j++) {
         // Check if the value is null or matches the replaceMissingValueWith
-        bool isMissing = _data[i][j] == null || _data[i][j] == replaceMissingValueWith;
+        bool isMissing =
+            _data[i][j] == null || _data[i][j] == replaceMissingValueWith;
         row.add(isMissing);
       }
       newData.add(row);
     }
-    
+
     return DataFrame(
       newData,
       columns: _columns,
@@ -129,17 +130,18 @@ extension DataFrameFunctions on DataFrame {
   /// ```
   DataFrame notna() {
     List<List<dynamic>> newData = [];
-    
+
     for (int i = 0; i < _data.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < _columns.length; j++) {
         // Check if the value is not null and doesn't match the replaceMissingValueWith
-        bool isNotMissing = _data[i][j] != null && _data[i][j] != replaceMissingValueWith;
+        bool isNotMissing =
+            _data[i][j] != null && _data[i][j] != replaceMissingValueWith;
         row.add(isNotMissing);
       }
       newData.add(row);
     }
-    
+
     return DataFrame(
       newData,
       columns: _columns,
@@ -276,7 +278,8 @@ extension DataFrameFunctions on DataFrame {
       for (var row in _data) {
         final subsetValues = subsetIndices.map((i) => row[i]).toList();
         // Check against the DataFrame's current missing value representation
-        final nullCount = subsetValues.where((v) => v == replaceMissingValueWith).length;
+        final nullCount =
+            subsetValues.where((v) => v == replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -297,7 +300,8 @@ extension DataFrameFunctions on DataFrame {
       for (var colIdx = 0; colIdx < _columns.length; colIdx++) {
         final columnData = _data.map((row) => row[colIdx]).toList();
         // Check against the DataFrame's current missing value representation
-        final nullCount = columnData.where((v) => v == replaceMissingValueWith).length;
+        final nullCount =
+            columnData.where((v) => v == replaceMissingValueWith).length;
 
         bool shouldKeep = how == 'any'
             ? nullCount == 0 // Keep if no nulls for 'any'
@@ -784,8 +788,9 @@ extension DataFrameFunctions on DataFrame {
 
     for (var column in _columns) {
       var columnData = this[column];
-      var columnType = _analyzeColumnTypes(columnData); // Uses Series.data directly
-      
+      var columnType =
+          _analyzeColumnTypes(columnData); // Uses Series.data directly
+
       // Count missing values based on replaceMissingValueWith
       int missingCount = 0;
       for (var val in columnData.data) {
@@ -797,13 +802,19 @@ extension DataFrameFunctions on DataFrame {
       var row = [
         column,
         columnType, // This is a Map<Type, int>
-        columnType.keys.length > 1, // Check if more than one type was found (excluding nulls)
+        columnType.keys.length >
+            1, // Check if more than one type was found (excluding nulls)
         missingCount, // Use the new missing count
       ];
       summaryData.add(row);
     }
 
-    var columnNames = ['Column Name', 'Data Type', 'Mixed Types', 'Missing Count'];
+    var columnNames = [
+      'Column Name',
+      'Data Type',
+      'Mixed Types',
+      'Missing Count'
+    ];
 
     return DataFrame(columns: columnNames, summaryData);
   }
@@ -967,14 +978,16 @@ extension DataFrameFunctions on DataFrame {
   /// - `ignore_index`: If `true`, the resulting index will be a new default integer index (0, 1, ..., n-1).
   ///                   Applies to `axis = 0`. For `axis = 1`, it would reset column names to default integers,
   ///                   which is less common and might be handled differently or ignored. Default is `false`.
-  DataFrame concatenate(List<DataFrame> others, {int axis = 0, String join = 'outer', bool ignoreIndex = false}) {
+  DataFrame concatenate(List<DataFrame> others,
+      {int axis = 0, String join = 'outer', bool ignoreIndex = false}) {
     if (others.isEmpty) {
       return copy(); // Concatenating with nothing returns a copy of itself.
     }
 
     List<DataFrame> allDfs = [this, ...others];
 
-    if (axis == 0) { // Row-wise concatenation
+    if (axis == 0) {
+      // Row-wise concatenation
       List<dynamic> finalColumns;
       List<List<dynamic>> finalData = [];
 
@@ -985,14 +998,14 @@ extension DataFrameFunctions on DataFrame {
         }
         // Maintain order of first appearance for columns
         finalColumns = <dynamic>[];
-        for(var df in allDfs){
-            for(var col in df.columns){
-                if(!finalColumns.contains(col)){
-                    finalColumns.add(col);
-                }
+        for (var df in allDfs) {
+          for (var col in df.columns) {
+            if (!finalColumns.contains(col)) {
+              finalColumns.add(col);
             }
+          }
         }
-        
+
         for (var df in allDfs) {
           for (var row in df.rows) {
             final newRow = <dynamic>[];
@@ -1007,18 +1020,20 @@ extension DataFrameFunctions on DataFrame {
         if (allDfs.isEmpty) return DataFrame([]);
         Set<dynamic> commonColumns = Set.from(allDfs.first.columns);
         for (int i = 1; i < allDfs.length; i++) {
-          commonColumns = commonColumns.intersection(Set.from(allDfs[i].columns));
+          commonColumns =
+              commonColumns.intersection(Set.from(allDfs[i].columns));
         }
-        if (commonColumns.isEmpty && allDfs.any((df) => df.columns.isNotEmpty)) {
-             // If intersection is empty but some DFs had columns, result is empty columns
-             finalColumns = [];
+        if (commonColumns.isEmpty &&
+            allDfs.any((df) => df.columns.isNotEmpty)) {
+          // If intersection is empty but some DFs had columns, result is empty columns
+          finalColumns = [];
         } else {
-            finalColumns = commonColumns.toList();
+          finalColumns = commonColumns.toList();
         }
-
 
         for (var df in allDfs) {
-          final colIndicesToKeep = finalColumns.map((col) => df.columns.indexOf(col)).toList();
+          final colIndicesToKeep =
+              finalColumns.map((col) => df.columns.indexOf(col)).toList();
           for (var row in df.rows) {
             final newRow = colIndicesToKeep.map((idx) => row[idx]).toList();
             finalData.add(newRow);
@@ -1027,36 +1042,36 @@ extension DataFrameFunctions on DataFrame {
       } else {
         throw ArgumentError("join must be 'outer' or 'inner'.");
       }
-      
+
       // ignore_index for axis 0 resets the row index, which is implicit in our current list-of-lists data model.
       // If a dedicated index object existed, it would be reset here if ignore_index is true.
       // For now, the data is simply concatenated, and default integer indexing applies.
       return DataFrame._(finalColumns, finalData);
-
-    } else if (axis == 1) { // Column-wise concatenation
+    } else if (axis == 1) {
+      // Column-wise concatenation
       // This implementation for axis=1 is basic and assumes row alignment by index position.
       // A more robust implementation would require a proper Index object for alignment.
-      
+
       List<dynamic> finalCombinedColumns = [];
-      for(var df in allDfs){
-        finalCombinedColumns.addAll(df.columns); // Simple concatenation of column names
+      for (var df in allDfs) {
+        finalCombinedColumns
+            .addAll(df.columns); // Simple concatenation of column names
       }
       // Handle duplicate column names if not ignoring index for columns
-      if(!ignoreIndex) {
-          final Map<dynamic, int> colCounts = {};
-          List<dynamic> tempCols = List.from(finalCombinedColumns);
-          finalCombinedColumns.clear();
-          for(var colName in tempCols){
-              int count = colCounts.putIfAbsent(colName, () => 0);
-              colCounts[colName] = count + 1;
-              if(count > 0){
-                  finalCombinedColumns.add("${colName}_$count");
-              } else {
-                  finalCombinedColumns.add(colName);
-              }
+      if (!ignoreIndex) {
+        final Map<dynamic, int> colCounts = {};
+        List<dynamic> tempCols = List.from(finalCombinedColumns);
+        finalCombinedColumns.clear();
+        for (var colName in tempCols) {
+          int count = colCounts.putIfAbsent(colName, () => 0);
+          colCounts[colName] = count + 1;
+          if (count > 0) {
+            finalCombinedColumns.add("${colName}_$count");
+          } else {
+            finalCombinedColumns.add(colName);
           }
+        }
       }
-
 
       List<List<dynamic>> finalData = [];
       int maxRows = 0;
@@ -1078,14 +1093,14 @@ extension DataFrameFunctions on DataFrame {
         }
         finalData.add(newRow);
       }
-      
-      if (ignoreIndex) { // Reset column names to default integer sequence
-          var finalColumns = List.generate(finalCombinedColumns.length, (i) => i);
-           return DataFrame._(finalColumns, finalData);
-      } else {
-          return DataFrame._(finalCombinedColumns, finalData);
-      }
 
+      if (ignoreIndex) {
+        // Reset column names to default integer sequence
+        var finalColumns = List.generate(finalCombinedColumns.length, (i) => i);
+        return DataFrame._(finalColumns, finalData);
+      } else {
+        return DataFrame._(finalCombinedColumns, finalData);
+      }
     } else {
       throw ArgumentError('axis must be 0 (row-wise) or 1 (column-wise).');
     }
@@ -1408,26 +1423,29 @@ extension DataFrameFunctions on DataFrame {
 
     if (on != null) {
       if (leftOn != null || rightOn != null) {
-        throw ArgumentError("Cannot use 'on' simultaneously with 'leftOn' or 'rightOn'.");
+        throw ArgumentError(
+            "Cannot use 'on' simultaneously with 'leftOn' or 'rightOn'.");
       }
       leftCols = on is String ? [on] : List<String>.from(on);
       rightCols = on is String ? [on] : List<String>.from(on);
     } else {
       if (leftOn == null || rightOn == null) {
-        throw ArgumentError("Either 'on' or both 'leftOn' and 'rightOn' must be specified.");
+        throw ArgumentError(
+            "Either 'on' or both 'leftOn' and 'rightOn' must be specified.");
       }
       leftCols = leftOn is String ? [leftOn] : List<String>.from(leftOn);
       rightCols = rightOn is String ? [rightOn] : List<String>.from(rightOn);
     }
-    
+
     // Handle different join types
     if (how == 'cross') {
       if (on != null || leftOn != null || rightOn != null) {
-        print("Warning: 'on', 'leftOn', and 'rightOn' are ignored for cross join.");
+        print(
+            "Warning: 'on', 'leftOn', and 'rightOn' are ignored for cross join.");
       }
-      return _crossJoin(other, suffixes); // Indicator logic might be added to _crossJoin or handled here
+      return _crossJoin(other,
+          suffixes); // Indicator logic might be added to _crossJoin or handled here
     }
-
 
     if (leftCols.length != rightCols.length) {
       throw ArgumentError(
@@ -1437,13 +1455,15 @@ extension DataFrameFunctions on DataFrame {
     // Validate columns
     for (var col in leftCols) {
       if (!hasColumn(col)) {
-        throw ArgumentError('Left column $col does not exist in left DataFrame');
+        throw ArgumentError(
+            'Left column $col does not exist in left DataFrame');
       }
     }
 
     for (var col in rightCols) {
       if (!other.hasColumn(col)) {
-        throw ArgumentError('Right column $col does not exist in right DataFrame');
+        throw ArgumentError(
+            'Right column $col does not exist in right DataFrame');
       }
     }
 
@@ -1505,7 +1525,7 @@ extension DataFrameFunctions on DataFrame {
             for (var rightRow in rightMap[key]!) {
               newData.add(_joinRows(
                   other, leftRow, rightRow, leftCols, rightCols, suffixes));
-               if (indicator != false) mergeIndicatorValues.add('both');
+              if (indicator != false) mergeIndicatorValues.add('both');
             }
           } else {
             newData.add(_joinRowsWithNull(
@@ -1517,11 +1537,11 @@ extension DataFrameFunctions on DataFrame {
 
       case 'right':
         final leftMap = <List<dynamic>, List<List<dynamic>>>{};
-         for (var leftRow in _data) {
-           final key = leftIndices.map((idx) => leftRow[idx]).toList();
-           leftMap.putIfAbsent(key, () => []);
-           leftMap[key]!.add(leftRow);
-         }
+        for (var leftRow in _data) {
+          final key = leftIndices.map((idx) => leftRow[idx]).toList();
+          leftMap.putIfAbsent(key, () => []);
+          leftMap[key]!.add(leftRow);
+        }
 
         for (var rightRow in other._data) {
           final key = rightIndices.map((idx) => rightRow[idx]).toList();
@@ -1534,13 +1554,14 @@ extension DataFrameFunctions on DataFrame {
           } else {
             newData.add(_joinRowsWithNull(
                 rightRow, false, leftCols, rightCols, _columns, suffixes));
-             if (indicator != false) mergeIndicatorValues.add('right_only');
+            if (indicator != false) mergeIndicatorValues.add('right_only');
           }
         }
         break;
 
       case 'outer':
-        final Set<List<dynamic>> processedRightKeys = {}; // To track right keys already matched
+        final Set<List<dynamic>> processedRightKeys =
+            {}; // To track right keys already matched
 
         for (var leftRow in _data) {
           final key = leftIndices.map((idx) => leftRow[idx]).toList();
@@ -1552,7 +1573,7 @@ extension DataFrameFunctions on DataFrame {
               if (indicator != false) mergeIndicatorValues.add('both');
               matched = true;
             }
-            processedRightKeys.add(key); 
+            processedRightKeys.add(key);
           }
           if (!matched) {
             newData.add(_joinRowsWithNull(
@@ -1564,11 +1585,11 @@ extension DataFrameFunctions on DataFrame {
         // Add remaining right-only rows
         rightMap.forEach((key, rightRows) {
           bool keyAlreadyProcessed = processedRightKeys.any((prk) {
-              if (prk.length != key.length) return false;
-              for(int i=0; i < prk.length; ++i) {
-                if(prk[i] != key[i]) return false;
-              }
-              return true;
+            if (prk.length != key.length) return false;
+            for (int i = 0; i < prk.length; ++i) {
+              if (prk[i] != key[i]) return false;
+            }
+            return true;
           });
 
           if (!keyAlreadyProcessed) {
@@ -1585,19 +1606,19 @@ extension DataFrameFunctions on DataFrame {
         throw ArgumentError(
             'Invalid join type. Supported types are: inner, left, right, outer, cross');
     }
-    
+
     DataFrame resultDf = DataFrame._(newColumns, newData);
 
     if (indicator != false) {
       String indicatorColName = indicator is String ? indicator : '_merge';
-      if (resultDf.hasColumn(indicatorColName)){
-         // Add suffix if indicator column name conflicts
-         int suffixNum = 1;
-         String baseName = indicatorColName;
-         while(resultDf.hasColumn(indicatorColName)){
-           indicatorColName = '${baseName}_$suffixNum';
-           suffixNum++;
-         }
+      if (resultDf.hasColumn(indicatorColName)) {
+        // Add suffix if indicator column name conflicts
+        int suffixNum = 1;
+        String baseName = indicatorColName;
+        while (resultDf.hasColumn(indicatorColName)) {
+          indicatorColName = '${baseName}_$suffixNum';
+          suffixNum++;
+        }
       }
       resultDf.addColumn(indicatorColName, defaultValue: mergeIndicatorValues);
     }
@@ -1817,20 +1838,20 @@ extension DataFrameFunctions on DataFrame {
       int decimalPlaces = 2}) {
     final colName = column.toString();
     final targetColName = newColumn ?? '${colName}_bin';
-    
+
     // Validate column exists
     final colIdx = _columns.indexOf(colName);
     if (colIdx == -1) {
       throw ArgumentError('Column $colName does not exist');
     }
-    
+
     // Extract numeric data from the column
     final numericData = <num>[];
     final rowIndices = <int>[];
-    
+
     for (var i = 0; i < _data.length; i++) {
-    final value = _data[i][colIdx];
-    if (value is num) {
+      final value = _data[i][colIdx];
+      if (value is num) {
         // Skip NaN values
         if (value is double && value.isNaN) {
           continue;
@@ -1839,19 +1860,20 @@ extension DataFrameFunctions on DataFrame {
         rowIndices.add(i);
       }
     }
-    
+
     if (numericData.isEmpty) {
-      throw ArgumentError('Column $colName contains no valid numeric data for binning');
+      throw ArgumentError(
+          'Column $colName contains no valid numeric data for binning');
     }
-    
+
     // Determine bin edges
     List<num> binEdges;
-    
+
     if (bins is int) {
       // Create evenly spaced bins
       final min = numericData.reduce((a, b) => a < b ? a : b);
       final max = numericData.reduce((a, b) => a > b ? a : b);
-      
+
       // Handle case where all values are the same
       if (min == max) {
         // Create small range around the single value
@@ -1859,12 +1881,11 @@ extension DataFrameFunctions on DataFrame {
         binEdges = List.generate(
             bins + 1, (i) => min - delta + i * (2 * delta / bins));
       } else {
-        binEdges = List.generate(
-            bins + 1, (i) => min + i * (max - min) / bins);
+        binEdges = List.generate(bins + 1, (i) => min + i * (max - min) / bins);
       }
     } else if (bins is List<num>) {
       binEdges = List<num>.from(bins);
-      
+
       // Check for duplicates
       final uniqueEdges = binEdges.toSet().toList()..sort();
       if (uniqueEdges.length < binEdges.length) {
@@ -1877,91 +1898,90 @@ extension DataFrameFunctions on DataFrame {
     } else {
       throw ArgumentError('bins must be an integer or a list of numbers');
     }
-    
+
     // Sort bin edges
     binEdges.sort();
-    
+
     // Generate bin labels
     List<String> binLabels;
-    
+
     if (labels != null) {
       if (labels.length != binEdges.length - 1) {
-        throw ArgumentError(
-            'labels must have length equal to bins.length - 1');
+        throw ArgumentError('labels must have length equal to bins.length - 1');
       }
       binLabels = labels;
     } else {
       binLabels = [];
       for (var i = 0; i < binEdges.length - 1; i++) {
         // For right=false, all left brackets are '[' regardless of includeLowest
-        final leftBracket = right ? 
-            ((i == 0 && includeLowest) ? '[' : '(') : 
-            '[';
-        
+        final leftBracket =
+            right ? ((i == 0 && includeLowest) ? '[' : '(') : '[';
+
         // For right=false, all right brackets are ')' except the last one which is ']'
-        final rightBracket = (i == binEdges.length - 2) ? ']' : (right ? ']' : ')');
-        
+        final rightBracket =
+            (i == binEdges.length - 2) ? ']' : (right ? ']' : ')');
+
         // Format with specified decimal places
         final formattedLeft = binEdges[i].toStringAsFixed(decimalPlaces);
         final formattedRight = binEdges[i + 1].toStringAsFixed(decimalPlaces);
-        
-        binLabels.add('$leftBracket$formattedLeft, $formattedRight$rightBracket');
+
+        binLabels
+            .add('$leftBracket$formattedLeft, $formattedRight$rightBracket');
       }
     }
-    
+
     // Assign data to bins
     final binIndices = List<int?>.filled(numericData.length, null);
-    
+
     for (var i = 0; i < numericData.length; i++) {
       final value = numericData[i];
-      
+
       for (var j = 0; j < binEdges.length - 1; j++) {
         final leftEdge = binEdges[j];
         final rightEdge = binEdges[j + 1];
-        
+
         bool inLeftBoundary;
         bool inRightBoundary;
-        
+
         if (right) {
           // For right=true: (left, right] or [left, right] if includeLowest and first bin
-          inLeftBoundary = (j == 0 && includeLowest) ? 
-              value >= leftEdge : 
-              value > leftEdge;
+          inLeftBoundary =
+              (j == 0 && includeLowest) ? value >= leftEdge : value > leftEdge;
           inRightBoundary = value <= rightEdge;
         } else {
           // For right=false: [left, right) or [left, right] for the last bin
           inLeftBoundary = value >= leftEdge;
-          inRightBoundary = (j == binEdges.length - 2) ? 
-              value <= rightEdge : 
-              value < rightEdge;
+          inRightBoundary = (j == binEdges.length - 2)
+              ? value <= rightEdge
+              : value < rightEdge;
         }
-        
+
         if (inLeftBoundary && inRightBoundary) {
           binIndices[i] = j;
           break;
         }
       }
     }
-    
+
     // Create new DataFrame with bin column
     final newData = _data.map((row) => List<dynamic>.from(row)).toList();
     final newColumns = List<dynamic>.from(_columns);
-    
+
     if (!newColumns.contains(targetColName)) {
       newColumns.add(targetColName);
       for (var row in newData) {
         row.add(null);
       }
     }
-    
+
     final targetColIdx = newColumns.indexOf(targetColName);
-    
+
     for (var i = 0; i < rowIndices.length; i++) {
       final rowIdx = rowIndices[i];
       final binIdx = binIndices[i];
       newData[rowIdx][targetColIdx] = binIdx != null ? binLabels[binIdx] : null;
     }
-    
+
     return DataFrame._(newColumns, newData);
   }
 
@@ -2007,10 +2027,15 @@ extension DataFrameFunctions on DataFrame {
   ///   - `values`: Column name to aggregate.
   ///   - `aggFunc`: Aggregation function to apply. Supported: 'mean', 'sum', 'count', 'min', 'max'. Default is 'mean'.
   ///   - `fill_value`: Value to replace missing cells in the pivot table after aggregation.
-  DataFrame pivotTable({required String index, required String columns, required String values,
-      String aggFunc = 'mean', dynamic fillValue}) {
+  DataFrame pivotTable(
+      {required String index,
+      required String columns,
+      required String values,
+      String aggFunc = 'mean',
+      dynamic fillValue}) {
     if (!hasColumn(index) || !hasColumn(columns) || !hasColumn(values)) {
-      throw ArgumentError('Index, columns, or values column not found in DataFrame');
+      throw ArgumentError(
+          'Index, columns, or values column not found in DataFrame');
     }
 
     // Get unique values for index and columns
@@ -2079,9 +2104,10 @@ extension DataFrameFunctions on DataFrame {
               if (values.every((v) => v is num)) {
                 aggResult = values.cast<num>().reduce(min);
               } else {
-                 // Attempt to find min for non-numeric comparable types
+                // Attempt to find min for non-numeric comparable types
                 try {
-                  aggResult = values.reduce((a,b) => (a as Comparable).compareTo(b as Comparable) < 0 ? a : b);
+                  aggResult = values.reduce((a, b) =>
+                      (a as Comparable).compareTo(b as Comparable) < 0 ? a : b);
                 } catch (e) {
                   aggResult = null;
                 }
@@ -2092,7 +2118,8 @@ extension DataFrameFunctions on DataFrame {
                 aggResult = values.cast<num>().reduce(max);
               } else {
                 try {
-                  aggResult = values.reduce((a,b) => (a as Comparable).compareTo(b as Comparable) > 0 ? a : b);
+                  aggResult = values.reduce((a, b) =>
+                      (a as Comparable).compareTo(b as Comparable) > 0 ? a : b);
                 } catch (e) {
                   aggResult = null;
                 }
@@ -2110,7 +2137,8 @@ extension DataFrameFunctions on DataFrame {
     // Apply fill_value
     if (fillValue != null) {
       for (int i = 0; i < pivotData.length; i++) {
-        for (int j = 1; j < pivotData[i].length; j++) { // Start from j=1 to skip the index column
+        for (int j = 1; j < pivotData[i].length; j++) {
+          // Start from j=1 to skip the index column
           if (pivotData[i][j] == null) {
             pivotData[i][j] = fillValue;
           }
@@ -2135,32 +2163,39 @@ extension DataFrameFunctions on DataFrame {
   ///             or require hierarchical columns (currently requires `values` to be specified).
   ///
   /// Returns a new, reshaped DataFrame.
-  DataFrame pivot({required String index, required String columns, String? values}) {
+  DataFrame pivot(
+      {required String index, required String columns, String? values}) {
     if (!hasColumn(index) || !hasColumn(columns)) {
       throw ArgumentError('Index or columns column not found in DataFrame.');
     }
     String valueCol = values ?? '';
 
     if (values != null) {
-        if(!hasColumn(values)) {
-             throw ArgumentError('Values column $values not found in DataFrame.');
-        }
+      if (!hasColumn(values)) {
+        throw ArgumentError('Values column $values not found in DataFrame.');
+      }
     } else {
-        List<String> remainingCols = _columns.map((c) => c.toString()).where((c) => c != index && c != columns).toList();
-        if (remainingCols.isEmpty) {
-            throw ArgumentError('No values columns found to pivot. Specify `values` or ensure other columns exist.');
-        }
-        if (remainingCols.length > 1) {
-            print('Warning: Multiple value columns found and `values` parameter is null. Using first remaining column: ${remainingCols.first}');
-            valueCol = remainingCols.first;
-        } else {
-            valueCol = remainingCols.first;
-        }
+      List<String> remainingCols = _columns
+          .map((c) => c.toString())
+          .where((c) => c != index && c != columns)
+          .toList();
+      if (remainingCols.isEmpty) {
+        throw ArgumentError(
+            'No values columns found to pivot. Specify `values` or ensure other columns exist.');
+      }
+      if (remainingCols.length > 1) {
+        print(
+            'Warning: Multiple value columns found and `values` parameter is null. Using first remaining column: ${remainingCols.first}');
+        valueCol = remainingCols.first;
+      } else {
+        valueCol = remainingCols.first;
+      }
     }
 
-
-    final indexValues = this[index].unique()..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
-    final columnValues = this[columns].unique()..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
+    final indexValues = this[index].unique()
+      ..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
+    final columnValues = this[columns].unique()
+      ..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
 
     final newColumns = <dynamic>[index, ...columnValues];
     final pivotData = <List<dynamic>>[];
@@ -2179,11 +2214,12 @@ extension DataFrameFunctions on DataFrame {
       }
       uniqueIndexColumnPairs.add(pairKey);
     }
-    
+
     // Create a map for quick lookup: {indexValue: {columnValue: value}}
     final Map<dynamic, Map<dynamic, dynamic>> dataMap = {};
-    for(var row in _data) {
-        dataMap.putIfAbsent(row[indexIdx], () => {})[row[columnsIdx]] = row[valuesIdx];
+    for (var row in _data) {
+      dataMap.putIfAbsent(row[indexIdx], () => {})[row[columnsIdx]] =
+          row[valuesIdx];
     }
 
     for (var indexVal in indexValues) {
@@ -2196,7 +2232,6 @@ extension DataFrameFunctions on DataFrame {
 
     return DataFrame._(newColumns, pivotData);
   }
-
 
   /// Converts the DataFrame from wide to long format.
   ///
@@ -2527,15 +2562,14 @@ extension DataFrameFunctions on DataFrame {
   ///                  If 'columns', normalize across columns.
   ///   - `margins`: Add row/column margins (subtotals)
   ///   - `marginsName`: Name of the row/column that will contain the totals
-  DataFrame crosstab({ 
-      required String index, 
+  DataFrame crosstab(
+      {required String index,
       required String column,
-      String? values, 
+      String? values,
       String aggfunc = 'count',
       dynamic normalize = false,
       bool margins = false,
-      String marginsName = 'All'
-  }) {
+      String marginsName = 'All'}) {
     if (!hasColumn(index)) {
       throw ArgumentError('Row column $index does not exist');
     }
@@ -2605,7 +2639,8 @@ extension DataFrameFunctions on DataFrame {
 
             case 'sum':
               if (cellValues.every((v) => v is num)) {
-                cellValue = cellValues.fold<num>(0, (prev, val) => prev + (val as num));
+                cellValue =
+                    cellValues.fold<num>(0, (prev, val) => prev + (val as num));
               } else {
                 cellValue = null;
               }
@@ -2613,7 +2648,8 @@ extension DataFrameFunctions on DataFrame {
 
             case 'mean':
               if (cellValues.every((v) => v is num)) {
-                final sum = cellValues.fold<num>(0, (prev, val) => prev + (val as num));
+                final sum =
+                    cellValues.fold<num>(0, (prev, val) => prev + (val as num));
                 cellValue = sum / cellValues.length;
               } else {
                 cellValue = null;
@@ -2622,9 +2658,11 @@ extension DataFrameFunctions on DataFrame {
 
             case 'min':
               if (cellValues.every((v) => v is num)) {
-                cellValue = cellValues.cast<num>().reduce((a, b) => a < b ? a : b);
+                cellValue =
+                    cellValues.cast<num>().reduce((a, b) => a < b ? a : b);
               } else if (cellValues.isNotEmpty) {
-                cellValue = cellValues.reduce((a, b) => a.toString().compareTo(b.toString()) < 0 ? a : b);
+                cellValue = cellValues.reduce(
+                    (a, b) => a.toString().compareTo(b.toString()) < 0 ? a : b);
               } else {
                 cellValue = null;
               }
@@ -2632,9 +2670,11 @@ extension DataFrameFunctions on DataFrame {
 
             case 'max':
               if (cellValues.every((v) => v is num)) {
-                cellValue = cellValues.cast<num>().reduce((a, b) => a > b ? a : b);
+                cellValue =
+                    cellValues.cast<num>().reduce((a, b) => a > b ? a : b);
               } else if (cellValues.isNotEmpty) {
-                cellValue = cellValues.reduce((a, b) => a.toString().compareTo(b.toString()) > 0 ? a : b);
+                cellValue = cellValues.reduce(
+                    (a, b) => a.toString().compareTo(b.toString()) > 0 ? a : b);
               } else {
                 cellValue = null;
               }
@@ -2646,7 +2686,7 @@ extension DataFrameFunctions on DataFrame {
         }
 
         rowData.add(cellValue);
-        
+
         // Update row and column sums
         if (cellValue is num) {
           rowSum += cellValue;
@@ -2654,7 +2694,7 @@ extension DataFrameFunctions on DataFrame {
           grandTotal += cellValue;
         }
       }
-      
+
       rowSums[rowValue] = rowSum;
       crossTabData.add(rowData);
     }
@@ -2668,14 +2708,14 @@ extension DataFrameFunctions on DataFrame {
     // Apply normalization if requested
     if (normalize != false) {
       String normType = normalize is bool ? 'all' : normalize.toString();
-      
+
       for (var i = 0; i < crossTabData.length; i++) {
         final rowValue = crossTabData[i][0];
-        
+
         for (var j = 1; j < crossTabData[i].length; j++) {
           if (crossTabData[i][j] is num) {
             double divisor = 1.0;
-            
+
             switch (normType) {
               case 'all':
                 divisor = rawGrandTotal;
@@ -2688,7 +2728,7 @@ extension DataFrameFunctions on DataFrame {
                 divisor = rawColSums[colValue] ?? 1.0;
                 break;
             }
-            
+
             if (divisor != 0) {
               crossTabData[i][j] = (crossTabData[i][j] as num) / divisor;
             } else {
@@ -2703,7 +2743,7 @@ extension DataFrameFunctions on DataFrame {
     if (margins) {
       // Add row totals column
       newColumns.add(marginsName);
-      
+
       for (var i = 0; i < crossTabData.length; i++) {
         if (normalize == 'index') {
           // For index normalization, row sum should be 1.0
@@ -2731,10 +2771,10 @@ extension DataFrameFunctions on DataFrame {
           crossTabData[i].add(rawRowSums[crossTabData[i][0]] ?? 0.0);
         }
       }
-      
+
       // Add column totals row
       final totalRow = <dynamic>[marginsName];
-      
+
       for (var j = 1; j < newColumns.length; j++) {
         if (j == newColumns.length - 1) {
           // Last column is the grand total
@@ -2753,7 +2793,7 @@ extension DataFrameFunctions on DataFrame {
           }
         } else {
           final colValue = newColumns[j];
-          
+
           if (normalize == 'index') {
             // For index normalization, calculate the sum of normalized values
             double sum = 0.0;
@@ -2781,7 +2821,7 @@ extension DataFrameFunctions on DataFrame {
           }
         }
       }
-      
+
       crossTabData.add(totalRow);
     }
 
@@ -2871,7 +2911,9 @@ extension DataFrameFunctions on DataFrame {
         // For simplicity, we'll rely on a basic check of the first non-null element's type.
         // A more robust Series.dtype would be better here.
         final seriesData = this[colName].data;
-        dynamic firstNonNull = seriesData.firstWhere((val) => val != replaceMissingValueWith, orElse: () => null);
+        dynamic firstNonNull = seriesData.firstWhere(
+            (val) => val != replaceMissingValueWith,
+            orElse: () => null);
         if (firstNonNull is String) {
           columnsToEncode.add(colName);
         }
@@ -2890,18 +2932,18 @@ extension DataFrameFunctions on DataFrame {
     if (columnsToEncode.isEmpty) {
       return resultDf; // No columns to encode
     }
-    
+
     for (var colName in columnsToEncode) {
       Series originalSeries = this[colName];
       List<dynamic> categories = [];
       Set<dynamic> uniqueValues = {};
-      
+
       bool hasNa = false;
-      for(var val in originalSeries.data) {
+      for (var val in originalSeries.data) {
         if (val == replaceMissingValueWith) {
           hasNa = true;
         } else {
-          if(uniqueValues.add(val)){
+          if (uniqueValues.add(val)) {
             categories.add(val);
           }
         }
@@ -2915,9 +2957,9 @@ extension DataFrameFunctions on DataFrame {
         return a.toString().compareTo(b.toString());
       });
 
-
       if (dummyNA && hasNa) {
-        categories.add(replaceMissingValueWith); // Add a placeholder for NA category
+        categories
+            .add(replaceMissingValueWith); // Add a placeholder for NA category
       }
 
       if (dropFirst && categories.isNotEmpty) {
@@ -2933,30 +2975,29 @@ extension DataFrameFunctions on DataFrame {
         } else {
           currentPrefix = colName;
         }
-        
-        if (category == replaceMissingValueWith) {
-            categoryStr = 'na'; // Consistent string for NA category
-        } else {
-            categoryStr = category.toString();
-        }
 
+        if (category == replaceMissingValueWith) {
+          categoryStr = 'na'; // Consistent string for NA category
+        } else {
+          categoryStr = category.toString();
+        }
 
         String newColName = '$currentPrefix$sep$categoryStr';
         // Ensure new column name is unique if it already exists
         if (resultDf.hasColumn(newColName)) {
-            int suffix = 1;
-            String tempName = newColName;
-            while(resultDf.hasColumn(tempName)){
-                tempName = '${newColName}_$suffix';
-                suffix++;
-            }
-            newColName = tempName;
+          int suffix = 1;
+          String tempName = newColName;
+          while (resultDf.hasColumn(tempName)) {
+            tempName = '${newColName}_$suffix';
+            suffix++;
+          }
+          newColName = tempName;
         }
-
 
         List<int> dummyValues = [];
         for (var val in originalSeries.data) {
-          if (category == replaceMissingValueWith) { // This is the NA dummy column
+          if (category == replaceMissingValueWith) {
+            // This is the NA dummy column
             dummyValues.add(val == replaceMissingValueWith ? 1 : 0);
           } else {
             dummyValues.add(val == category ? 1 : 0);

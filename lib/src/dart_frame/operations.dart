@@ -1,5 +1,3 @@
 part of '../../dartframe.dart';
 
-extension DataFrameOperations on DataFrame {
-
-}
+extension DataFrameOperations on DataFrame {}

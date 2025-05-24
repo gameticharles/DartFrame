@@ -1,7 +1,6 @@
 part of '../../dartframe.dart';
 
 extension SeriesOperations on Series {
-
   dynamic _getMissingRepresentation(Series series) {
     return series._parentDataFrame?.replaceMissingValueWith;
   }
@@ -36,11 +35,14 @@ extension SeriesOperations on Series {
   }
 
   Series _performArithmeticOperation(
-      Series other, dynamic Function(dynamic a, dynamic b) operation, String operationSymbol) {
+      Series other,
+      dynamic Function(dynamic a, dynamic b) operation,
+      String operationSymbol) {
     final self = this;
     final missingRep = _getMissingRepresentation(self);
 
-    if (_areIndexesEffectivelyIdentical(self, other) && self.length == other.length) {
+    if (_areIndexesEffectivelyIdentical(self, other) &&
+        self.length == other.length) {
       // Case 1: Indexes are null/empty/identical, and lengths match
       List<dynamic> resultData = [];
       for (int i = 0; i < self.length; i++) {
@@ -56,10 +58,12 @@ extension SeriesOperations on Series {
           }
         }
       }
-       // Create a default index if both series have null indexes
+      // Create a default index if both series have null indexes
       List<dynamic>? resultIndex = self.index.toList();
-      
-      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: resultIndex);
+
+      return Series(resultData,
+          name: "(${self.name} $operationSymbol ${other.name})",
+          index: resultIndex);
     } else {
       // Case 2: Indexes are different or lengths differ (implying index use)
       List<dynamic> unionIndex = [];
@@ -74,7 +78,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      
+
       // If one series has no index but the other does, treat un-indexed one as having default 0..N-1 index
       // However, the problem implies if indexes are different, we use union.
       // If one is null/empty, its effective index for union purposes is its default 0..N-1 range.
@@ -84,30 +88,31 @@ extension SeriesOperations on Series {
 
       addToUnion(selfEffectiveIndex);
       addToUnion(otherEffectiveIndex);
-      
-      if (unionIndex.isEmpty && (self.length > 0 || other.length > 0) && (self.index.isEmpty && other.index.isEmpty)) {
-          // This case might arise if both have null indexes but different lengths.
-          // The problem statement implies element-wise for identical indexes OR null/empty indexes IF lengths also match.
-          // If lengths don't match and indexes are null, it's ambiguous.
-          // For now, let's assume if _areIndexesEffectivelyIdentical is false, we MUST use union logic.
-          // If unionIndex is still empty here, it implies both series might be empty or had null/empty incompatible indexes.
-          // Let's default to using integer indices if union is empty but data isn't.
-          int maxLen = max(self.length, other.length);
-          if (maxLen > 0 && self.index.isEmpty && other.index.isEmpty) {
-             unionIndex = List.generate(maxLen, (i) => i);
-          }
-      }
 
+      if (unionIndex.isEmpty &&
+          (self.length > 0 || other.length > 0) &&
+          (self.index.isEmpty && other.index.isEmpty)) {
+        // This case might arise if both have null indexes but different lengths.
+        // The problem statement implies element-wise for identical indexes OR null/empty indexes IF lengths also match.
+        // If lengths don't match and indexes are null, it's ambiguous.
+        // For now, let's assume if _areIndexesEffectivelyIdentical is false, we MUST use union logic.
+        // If unionIndex is still empty here, it implies both series might be empty or had null/empty incompatible indexes.
+        // Let's default to using integer indices if union is empty but data isn't.
+        int maxLen = max(self.length, other.length);
+        if (maxLen > 0 && self.index.isEmpty && other.index.isEmpty) {
+          unionIndex = List.generate(maxLen, (i) => i);
+        }
+      }
 
       Map<dynamic, int> selfIndexMap = {};
-      for(int i=0; i < selfEffectiveIndex.length; ++i) {
-          selfIndexMap[selfEffectiveIndex[i]] = i;
+      for (int i = 0; i < selfEffectiveIndex.length; ++i) {
+        selfIndexMap[selfEffectiveIndex[i]] = i;
       }
       Map<dynamic, int> otherIndexMap = {};
-      for(int i=0; i < otherEffectiveIndex.length; ++i) {
-          otherIndexMap[otherEffectiveIndex[i]] = i;
+      for (int i = 0; i < otherEffectiveIndex.length; ++i) {
+        otherIndexMap[otherEffectiveIndex[i]] = i;
       }
-      
+
       List<dynamic> resultData = [];
 
       for (var label in unionIndex) {
@@ -119,23 +124,29 @@ extension SeriesOperations on Series {
 
         if (selfHasLabel) {
           int selfPos = selfIndexMap[label]!;
-          if (selfPos < self.data.length) { // Check bounds
+          if (selfPos < self.data.length) {
+            // Check bounds
             val1 = self.data[selfPos];
-          } else { // Label in index, but data out of bounds (should not happen with effectiveIndex)
-             selfHasLabel = false; 
-          }
-        }
-        
-        if (otherHasLabel) {
-          int otherPos = otherIndexMap[label]!;
-          if (otherPos < other.data.length) { // Check bounds
-            val2 = other.data[otherPos];
           } else {
-             otherHasLabel = false;
+            // Label in index, but data out of bounds (should not happen with effectiveIndex)
+            selfHasLabel = false;
           }
         }
 
-        if (!selfHasLabel || !otherHasLabel || val1 == missingRep || val2 == missingRep) {
+        if (otherHasLabel) {
+          int otherPos = otherIndexMap[label]!;
+          if (otherPos < other.data.length) {
+            // Check bounds
+            val2 = other.data[otherPos];
+          } else {
+            otherHasLabel = false;
+          }
+        }
+
+        if (!selfHasLabel ||
+            !otherHasLabel ||
+            val1 == missingRep ||
+            val2 == missingRep) {
           resultData.add(missingRep);
         } else {
           try {
@@ -145,7 +156,9 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: unionIndex);
+      return Series(resultData,
+          name: "(${self.name} $operationSymbol ${other.name})",
+          index: unionIndex);
     }
   }
 
@@ -181,7 +194,7 @@ extension SeriesOperations on Series {
     return _performArithmeticOperation(other, (a, b) {
       if (b == 0) {
         // According to requirements, return missingRep for errors like division by zero
-        return _getMissingRepresentation(this); 
+        return _getMissingRepresentation(this);
       }
       return a / b;
     }, '/');

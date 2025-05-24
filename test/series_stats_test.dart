@@ -43,25 +43,35 @@ void main() {
     });
 
     group('Series.value_counts()', () {
-      var s = Series(['a', 'b', 'a', 'c', 'a', 'b', null, 'd', null], name: 'counts_test');
+      var s = Series(['a', 'b', 'a', 'c', 'a', 'b', null, 'd', null],
+          name: 'counts_test');
       final defaultMissingRep = null;
 
       var dfSpecific = DataFrame.empty(replaceMissingValueWith: 'MISSING');
-      var sSpecificMissing = Series(['x', 'y', 'x', 'MISSING', 'z', 'MISSING'], name: 'specific_counts');
+      var sSpecificMissing = Series(['x', 'y', 'x', 'MISSING', 'z', 'MISSING'],
+          name: 'specific_counts');
       sSpecificMissing.setParent(dfSpecific, 'specific_counts');
       final specificMissingRep = 'MISSING';
 
       test('basic counts (sorted descending, dropna=true)', () {
-        var counts = s.valueCounts(dropna: false);  // Changed to include nulls
-        expect(counts.index, containsAll(['a', 'b', 'c', 'd', null])); // Order might vary if counts are same
-        expect(counts.data, containsAll([3, 2, 1, 1, 2])); // Default sort is by count desc
+        var counts = s.valueCounts(dropna: false); // Changed to include nulls
+        expect(
+            counts.index,
+            containsAll([
+              'a',
+              'b',
+              'c',
+              'd',
+              null
+            ])); // Order might vary if counts are same
+        expect(counts.data,
+            containsAll([3, 2, 1, 1, 2])); // Default sort is by count desc
         // To make test robust to tie-breaking in sort, check as map
         Map<dynamic, dynamic> countsMap = {};
-        for(int i=0; i<counts.index.length; ++i) {
-            countsMap[counts.index[i]] = counts.data[i];
+        for (int i = 0; i < counts.index.length; ++i) {
+          countsMap[counts.index[i]] = counts.data[i];
         }
-        expect(countsMap, equals({'a':3, 'b':2, null:2, 'd':1, 'c':1}));
-
+        expect(countsMap, equals({'a': 3, 'b': 2, null: 2, 'd': 1, 'c': 1}));
 
         var result = s.valueCounts(); // dropna = true by default
         expect(result.index, containsAllInOrder(['a', 'b'])); // a:3, b:2
@@ -69,18 +79,18 @@ void main() {
         expect(result.index, isNot(contains(defaultMissingRep)));
         expect(result.name, equals('counts_test_value_counts'));
       });
-      
-       test('basic counts explicit dropna=true', () {
+
+      test('basic counts explicit dropna=true', () {
         var result = s.valueCounts(dropna: true);
-        expect(result.data.reduce((a,b) => a+b), equals(7)); // 3a, 2b, 1c, 1d
+        expect(
+            result.data.reduce((a, b) => a + b), equals(7)); // 3a, 2b, 1c, 1d
         expect(result.index, isNot(contains(defaultMissingRep)));
       });
 
-
       test('normalize=true', () {
         var result = s.valueCounts(normalize: true, dropna: true);
-        expect(result.data[0], closeTo(3/7, 0.001)); // 'a': 3/7
-        expect(result.data[1], closeTo(2/7, 0.001)); // 'b': 2/7
+        expect(result.data[0], closeTo(3 / 7, 0.001)); // 'a': 3/7
+        expect(result.data[1], closeTo(2 / 7, 0.001)); // 'b': 2/7
       });
 
       test('sort=false', () {
@@ -92,28 +102,35 @@ void main() {
 
       test('ascending=true', () {
         var result = s.valueCounts(ascending: true, dropna: true);
-        expect(result.data.first <= result.data.last, isTrue); // Check if sorted ascending by count
+        expect(result.data.first <= result.data.last,
+            isTrue); // Check if sorted ascending by count
         expect(result.index.last, equals('a')); // 'a' has highest count
       });
 
       test('dropna=false (default missing)', () {
-        var result = s.valueCounts(dropna: false, sort:true, ascending:false); // Sort to make it predictable
+        var result = s.valueCounts(
+            dropna: false,
+            sort: true,
+            ascending: false); // Sort to make it predictable
         expect(result.index, contains(defaultMissingRep));
         // Expected order by count: a (3), b (2), null (2), c (1), d (1)
         // Find index of null
         int nullIdx = result.index.indexOf(defaultMissingRep);
         expect(nullIdx, isNot(-1));
         expect(result.data[nullIdx], equals(2));
-        expect(result.data.reduce((a,b) => a+b), equals(s.length)); // Sum of counts should be total length
+        expect(result.data.reduce((a, b) => a + b),
+            equals(s.length)); // Sum of counts should be total length
       });
 
       test('dropna=false (specific missing)', () {
-        var result = sSpecificMissing.valueCounts(dropna: false, sort:true, ascending:false);
+        var result = sSpecificMissing.valueCounts(
+            dropna: false, sort: true, ascending: false);
         expect(result.index, contains(specificMissingRep));
         int missingIdx = result.index.indexOf(specificMissingRep);
         expect(missingIdx, isNot(-1));
         expect(result.data[missingIdx], equals(2)); // 'MISSING': 2
-        expect(result.data.reduce((a,b) => a+b), equals(sSpecificMissing.length));
+        expect(result.data.reduce((a, b) => a + b),
+            equals(sSpecificMissing.length));
       });
 
       test('value_counts on empty series', () {
@@ -122,12 +139,12 @@ void main() {
         expect(result.length, equals(0));
         expect(result.name, equals('empty_s_value_counts'));
       });
-      
+
       test('value_counts on series with only missing values', () {
         var sAllMissing = Series([null, null], name: 'all_miss_s');
         var resultDrop = sAllMissing.valueCounts(dropna: true);
         expect(resultDrop.length, equals(0));
-        
+
         var resultNoDrop = sAllMissing.valueCounts(dropna: false);
         expect(resultNoDrop.length, equals(1));
         expect(resultNoDrop.index[0], isNull);

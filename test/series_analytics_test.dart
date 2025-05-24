@@ -44,7 +44,7 @@ void main() {
       final s = Series([null, null, null], name: 'all_nulls');
       expect(s.nunique(), 0);
     });
-    
+
     test('nunique with all missing values (custom marker)', () {
       var df = DataFrame.fromMap({
         'col1': [missingMarker, missingMarker, missingMarker]
@@ -68,12 +68,12 @@ void main() {
       final s = Series(['a', 'b', 'a', 'c', 'a', 'b'], name: 'letters');
       final counts = s.valueCounts(normalize: true);
       expect(counts.index, equals(['a', 'b', 'c']));
-      expect(counts.data, orderedEquals([3/6, 2/6, 1/6]));
+      expect(counts.data, orderedEquals([3 / 6, 2 / 6, 1 / 6]));
     });
 
     test('valueCounts with sort=false', () {
-      
-      final sUnsorted = Series(['z', 'a', 'z', 'b', 'a', 'z'], name: 'unsorted_val_counts');
+      final sUnsorted =
+          Series(['z', 'a', 'z', 'b', 'a', 'z'], name: 'unsorted_val_counts');
       final countsUnsorted = sUnsorted.valueCounts(sort: false);
       // Map: {'z':3, 'a':2, 'b':1}. Keys: 'z', 'a', 'b'. Sorted keys: 'a', 'b', 'z'
       expect(countsUnsorted.index, equals(['z', 'a', 'b']));
@@ -82,13 +82,15 @@ void main() {
 
     test('valueCounts with ascending=true', () {
       final s = Series(['a', 'b', 'a', 'c', 'a', 'b'], name: 'letters');
-      final counts = s.valueCounts(ascending: true); // Sorts by frequency ascending
+      final counts =
+          s.valueCounts(ascending: true); // Sorts by frequency ascending
       expect(counts.index, equals(['c', 'b', 'a']));
       expect(counts.data, equals([1, 2, 3]));
     });
 
     test('valueCounts with dropna=false (nulls)', () {
-      final s = Series(['a', null, 'a', 'b', null, null], name: 'letters_nulls');
+      final s =
+          Series(['a', null, 'a', 'b', null, null], name: 'letters_nulls');
       final counts = s.valueCounts(dropna: false); // sort=true, ascending=false
       // Expected: null:3, a:2, b:1
       expect(counts.index, equals([null, 'a', 'b']));
@@ -105,9 +107,10 @@ void main() {
       expect(counts.index, equals([missingMarker, 'a', 'b']));
       expect(counts.data, equals([3, 2, 1]));
     });
-    
+
     test('valueCounts with dropna=true (default)', () {
-      final s = Series(['a', null, 'a', 'b', null, null], name: 'letters_nulls_drop');
+      final s =
+          Series(['a', null, 'a', 'b', null, null], name: 'letters_nulls_drop');
       final counts = s.valueCounts(); // dropna=true by default
       expect(counts.index, equals(['a', 'b']));
       expect(counts.data, equals([2, 1]));
@@ -119,12 +122,14 @@ void main() {
       expect(counts.data, isEmpty);
       expect(counts.index, isEmpty);
     });
-    
-    test('valueCounts normalize with sum of counts being zero (e.g. all missing and dropna=true)', () {
+
+    test(
+        'valueCounts normalize with sum of counts being zero (e.g. all missing and dropna=true)',
+        () {
       final s = Series([null, null], name: 'all_missing_norm');
       final counts = s.valueCounts(normalize: true, dropna: true);
       expect(counts.data, isEmpty); // No non-missing values to count
-      
+
       final s2 = Series([null, null], name: 'all_missing_norm_keepna');
       final counts2 = s2.valueCounts(normalize: true, dropna: false);
       // Count for null is 2. Total count is 2. Normalized is 2/2 = 1.0
@@ -163,7 +168,7 @@ void main() {
       final s = Series([null, null], name: 'all_nulls_is');
       expect(s.isna().data, equals([true, true]));
     });
-    
+
     test('notna with all nulls', () {
       final s = Series([null, null], name: 'all_nulls_not');
       expect(s.notna().data, equals([false, false]));
@@ -175,7 +180,7 @@ void main() {
       }, replaceMissingValueWith: missingMarker);
       Series s = df['col1'];
       s.setParent(df, 'col1');
-      
+
       final result = s.isna();
       expect(result.data, equals([false, true, false, true, false]));
     });
@@ -186,11 +191,11 @@ void main() {
       }, replaceMissingValueWith: missingMarker);
       Series s = df['col1'];
       s.setParent(df, 'col1');
-      
+
       final result = s.notna();
       expect(result.data, equals([true, false, true, false, true]));
     });
-    
+
     test('isna on empty series', () {
       final s = Series([], name: 'empty_isna');
       expect(s.isna().data, isEmpty);

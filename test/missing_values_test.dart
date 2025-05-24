@@ -21,7 +21,8 @@ void main() {
       expect(df.rows[2][1], isNull, reason: "'missing' should be null");
     });
 
-    test('DataFrame() with specific replaceMissingValueWith and formatData', () {
+    test('DataFrame() with specific replaceMissingValueWith and formatData',
+        () {
       var df = DataFrame(
         [
           [1, 'NA', 3.0],
@@ -48,8 +49,10 @@ void main() {
       // Default replaceMissingValueWith is null
       expect(df.columns, equals(['col1', 'col2', 'col3']));
       expect(df.rows[0][1], isNull, reason: "NA should be null");
-      expect(df.rows[1][1], isNull, reason: "Empty string from CSV should be null");
-      expect(df.rows[2][0], isNull, reason: "Empty string at start of line from CSV should be null");
+      expect(df.rows[1][1], isNull,
+          reason: "Empty string from CSV should be null");
+      expect(df.rows[2][0], isNull,
+          reason: "Empty string at start of line from CSV should be null");
       expect(df.rows[2][2], isNull, reason: "N/A should be null");
       expect(df.rows[0][0], equals(1)); // Parsed as int
       expect(df.rows[0][2], equals('test'));
@@ -81,7 +84,7 @@ void main() {
       expect(df.rows[0][0], equals(1));
       expect(df.rows[1][1], equals('bar'));
     });
-    
+
     test('DataFrame.fromJson with specific replaceMissingValueWith', () async {
       var jsonData = '[{"X": 1, "Y": null}]';
       var df = await DataFrame.fromJson(
@@ -107,8 +110,10 @@ void main() {
       expect(df.rows[2][1], isNull);
       expect(df.rows[0][0], equals(1));
     });
-    
-    test('DataFrame.fromMap with specific replaceMissingValueWith and formatData', () {
+
+    test(
+        'DataFrame.fromMap with specific replaceMissingValueWith and formatData',
+        () {
       var mapData = {
         'colA': [1, null],
         'colB': ['x', 'y'],
@@ -122,7 +127,7 @@ void main() {
       expect(df.rows[0][0], equals(1));
     });
 
-     test('_cleanData behavior direct check', () {
+    test('_cleanData behavior direct check', () {
       // Scenario 1: Default (replaceMissingValueWith = null)
       var df1 = DataFrame.empty(missingDataIndicator: ['NA']);
       expect(df1.cleanData('NA'), isNull);
@@ -131,14 +136,16 @@ void main() {
       expect(df1.cleanData('valid'), equals('valid'));
 
       // Scenario 2: Specific replaceMissingValueWith
-      var df2 = DataFrame.empty(missingDataIndicator: ['NA'], replaceMissingValueWith: 'MISSING');
+      var df2 = DataFrame.empty(
+          missingDataIndicator: ['NA'], replaceMissingValueWith: 'MISSING');
       expect(df2.cleanData('NA'), equals('MISSING'));
       expect(df2.cleanData(null), equals('MISSING'));
       expect(df2.cleanData(''), equals('MISSING'));
       expect(df2.cleanData('valid'), equals('valid'));
-      
+
       // Scenario 3: Specific numeric replaceMissingValueWith
-      var df3 = DataFrame.empty(missingDataIndicator: ['NA'], replaceMissingValueWith: -1.0);
+      var df3 = DataFrame.empty(
+          missingDataIndicator: ['NA'], replaceMissingValueWith: -1.0);
       expect(df3.cleanData('NA'), equals(-1.0));
       expect(df3.cleanData(null), equals(-1.0));
       expect(df3.cleanData(''), equals(-1.0));
@@ -151,8 +158,12 @@ void main() {
       var df = DataFrame([
         [1, null, 3],
         [null, 5, null]
-      ], columns: ['A', 'B', 'C'], formatData: true); // formatData ensures nulls
-      
+      ], columns: [
+        'A',
+        'B',
+        'C'
+      ], formatData: true); // formatData ensures nulls
+
       var dfFilled = df.fillna(0);
       expect(dfFilled.rows[0][1], equals(0));
       expect(dfFilled.rows[1][0], equals(0));
@@ -164,11 +175,15 @@ void main() {
       var df = DataFrame([
         [1, 'NA', 3],
         ['missing', 5, 'NA']
-      ], columns: ['A', 'B', 'C'], 
-         missingDataIndicator: ['NA', 'missing'], 
-         replaceMissingValueWith: -100, 
-         formatData: true);
-      
+      ], columns: [
+        'A',
+        'B',
+        'C'
+      ], missingDataIndicator: [
+        'NA',
+        'missing'
+      ], replaceMissingValueWith: -100, formatData: true);
+
       // df.rows should now have -100 where 'NA' or 'missing' was
       expect(df.rows[0][1], equals(-100));
       expect(df.rows[1][0], equals(-100));
@@ -188,7 +203,11 @@ void main() {
         [4, 5, 6],
         [null, null, null],
         [7, 8, null]
-      ], columns: ['A', 'B', 'C'], formatData: true);
+      ], columns: [
+        'A',
+        'B',
+        'C'
+      ], formatData: true);
 
       var dfDroppedAny = df.dropna(how: 'any');
       expect(dfDroppedAny.rowCount, equals(1));
@@ -207,7 +226,11 @@ void main() {
         [4, 5, 6],
         ['X', 'X', 'X'],
         [7, 8, 'X']
-      ], columns: ['A', 'B', 'C'], replaceMissingValueWith: 'X', formatData: true);
+      ], columns: [
+        'A',
+        'B',
+        'C'
+      ], replaceMissingValueWith: 'X', formatData: true);
       // Note: formatData:true will convert 'X' to 'X' (no change) if it's not a special parsing case
       // but the key is that 'X' is now the missing value marker for dropna.
 
@@ -224,7 +247,11 @@ void main() {
         [1, null, 3],
         [4, null, 6],
         [7, null, 9]
-      ], columns: ['A', 'B', 'C'], formatData: true);
+      ], columns: [
+        'A',
+        'B',
+        'C'
+      ], formatData: true);
 
       var dfDroppedAny = df.dropna(axis: 1, how: 'any');
       expect(dfDroppedAny.columnCount, equals(2));
@@ -235,7 +262,11 @@ void main() {
         [1, null, null],
         [4, 5, null],
         [7, 8, null]
-      ], columns: ['X', 'Y', 'Z'], formatData: true);
+      ], columns: [
+        'X',
+        'Y',
+        'Z'
+      ], formatData: true);
       var dfDroppedAll = dfAllNullCol.dropna(axis: 1, how: 'all');
       expect(dfDroppedAll.columnCount, equals(2));
       expect(dfDroppedAll.columns, equals(['X', 'Y']));
@@ -252,12 +283,13 @@ void main() {
     });
 
     test('Series methods ignore specific replaceMissingValueWith', () {
-      var df = DataFrame.empty(replaceMissingValueWith: -1); // Parent DataFrame sets context
+      var df = DataFrame.empty(
+          replaceMissingValueWith: -1); // Parent DataFrame sets context
       var s = Series([-1, 1, 2, -1, 3], name: 'test_specific');
       s.setParent(df, 'test_specific'); // Link series to DataFrame
 
       expect(s.count(), equals(3)); // Should count 1, 2, 3
-      expect(s.sum(), equals(6));   // 1+2+3
+      expect(s.sum(), equals(6)); // 1+2+3
       expect(s.mean(), equals(2.0)); // 6 / 3
     });
 
@@ -267,17 +299,21 @@ void main() {
         [2.0, 20.0, null],
         [null, 30.0, 30],
         [4.0, 40.0, 40],
-      ], columns: ['N1', 'N2', 'N3'], formatData: true);
+      ], columns: [
+        'N1',
+        'N2',
+        'N3'
+      ], formatData: true);
 
       var desc = df.describe();
       expect(desc['N1']!['count'], equals(3));
-      expect(desc['N1']!['mean'], closeTo((1+2+4)/3, 0.001));
-      
+      expect(desc['N1']!['mean'], closeTo((1 + 2 + 4) / 3, 0.001));
+
       expect(desc['N2']!['count'], equals(3));
-      expect(desc['N2']!['mean'], closeTo((20+30+40)/3, 0.001));
+      expect(desc['N2']!['mean'], closeTo((20 + 30 + 40) / 3, 0.001));
 
       expect(desc['N3']!['count'], equals(3));
-      expect(desc['N3']!['mean'], closeTo((10+30+40)/3, 0.001));
+      expect(desc['N3']!['mean'], closeTo((10 + 30 + 40) / 3, 0.001));
     });
   });
 }

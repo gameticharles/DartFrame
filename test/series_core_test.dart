@@ -15,7 +15,8 @@ void main() {
     });
 
     test('constructor with double data, custom index', () {
-      final s = Series([1.1, 2.2, 3.3], name: 'doubles', index: ['a', 'b', 'c']);
+      final s =
+          Series([1.1, 2.2, 3.3], name: 'doubles', index: ['a', 'b', 'c']);
       expect(s.data, equals([1.1, 2.2, 3.3]));
       expect(s.name, equals('doubles'));
       expect(s.index, equals(['a', 'b', 'c']));
@@ -49,16 +50,17 @@ void main() {
       // For now, let's expect `dynamic` if no single type is predominant.
       // The current Series.dtype returns the type of the first element if counts are equal.
       // So, for [1, 'hello', 2.5, true], it should be int.
-      expect(s.dtype, int); 
-    });
-    
-    test('constructor with mixed data where one type is more common', () {
-      final s = Series([1, 'hello', 2, 3, 'world', 4], name: 'mixed_common_int');
-      expect(s.dtype, int); // int is most common
-       final s2 = Series(['a', 1, 'b', 'c', 2, 'd'], name: 'mixed_common_string');
-      expect(s2.dtype, String); // String is most common
+      expect(s.dtype, int);
     });
 
+    test('constructor with mixed data where one type is more common', () {
+      final s =
+          Series([1, 'hello', 2, 3, 'world', 4], name: 'mixed_common_int');
+      expect(s.dtype, int); // int is most common
+      final s2 =
+          Series(['a', 1, 'b', 'c', 2, 'd'], name: 'mixed_common_string');
+      expect(s2.dtype, String); // String is most common
+    });
 
     test('constructor with empty list', () {
       final s = Series([], name: 'empty');
@@ -94,7 +96,7 @@ void main() {
 
     test('length getter', () {
       expect(Series([], name: 'l0').length, 0);
-      expect(Series([1,2,3], name: 'l3').length, 3);
+      expect(Series([1, 2, 3], name: 'l3').length, 3);
     });
 
     test('dtype with only missing values (null)', () {
@@ -103,12 +105,14 @@ void main() {
     });
 
     test('dtype with only missing values (custom marker)', () {
-      final df = DataFrame.fromMap({'col': [missingMarker, missingMarker]}, replaceMissingValueWith: missingMarker);
+      final df = DataFrame.fromMap({
+        'col': [missingMarker, missingMarker]
+      }, replaceMissingValueWith: missingMarker);
       final s = df['col'];
       s.setParent(df, 'col');
       expect(s.dtype, dynamic);
     });
-    
+
     test('dtype with mixed missing and non-missing', () {
       final s = Series([1, null, 2, 'text', null], name: 'mixed_missing');
       expect(s.dtype, int); // int is the most common non-missing
@@ -141,9 +145,10 @@ void main() {
       final s = Series([], name: 'empty_series');
       expect(s.toString(), equals('Empty Series: empty_series'));
     });
-    
+
     test('toString with long strings and column spacing', () {
-      final s = Series(['long string value', 'short'], name: 'long_strings', index: [0,1]);
+      final s = Series(['long string value', 'short'],
+          name: 'long_strings', index: [0, 1]);
       // Default spacing is 2. 'long string value' is 17 chars. header 'long_strings' is 12.
       // col width for val = 17. col width for name = 12. Max is 17.
       // Padded width is 17 + 2 = 19.
@@ -159,14 +164,14 @@ void main() {
     test('toDataFrame basic', () {
       final s = Series([10, 20], name: 'col_data', index: ['r1', 'r2']);
       final df = s.toDataFrame();
-      
+
       expect(df, isA<DataFrame>());
       expect(df.columns, equals(['col_data']));
       expect(df.rowCount, 2);
       expect(df['col_data'].data, equals([10, 20]));
       // toDataFrame currently doesn't preserve Series index as DataFrame index.
       // It creates a default 0..N-1 index for the DataFrame.
-      expect(df.index, equals([0, 1])); 
+      expect(df.index, equals([0, 1]));
     });
 
     test('toDataFrame empty series', () {

@@ -12,9 +12,13 @@ extension SeriesFunctions on Series {
   /// Mean (average) of the values in the series.
   double mean() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
-      throw Exception("Cannot calculate mean of an empty series or series with all missing values.");
+      throw Exception(
+          "Cannot calculate mean of an empty series or series with all missing values.");
     }
     var sum = numericData.reduce((value, element) => value + element);
     return sum / numericData.length;
@@ -23,21 +27,32 @@ extension SeriesFunctions on Series {
   /// Standard deviation of the values in the series.
   double std() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
-    if (numericData.length < 2) { // Standard deviation of 0 or 1 elements is typically undefined or 0
-      throw Exception("Cannot calculate standard deviation of a series with less than 2 non-missing numeric values.");
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
+    if (numericData.length < 2) {
+      // Standard deviation of 0 or 1 elements is typically undefined or 0
+      throw Exception(
+          "Cannot calculate standard deviation of a series with less than 2 non-missing numeric values.");
     }
     var m = mean(); // mean() is already updated to handle missingRep
-    var variance = numericData.map((x) => pow(x - m, 2)).reduce((a, b) => a + b) / numericData.length;
+    var variance =
+        numericData.map((x) => pow(x - m, 2)).reduce((a, b) => a + b) /
+            numericData.length;
     return sqrt(variance);
   }
 
   /// Minimum value in the series.
   num min() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
-      throw Exception("Cannot find minimum value of an empty series or series with all missing values.");
+      throw Exception(
+          "Cannot find minimum value of an empty series or series with all missing values.");
     }
     return numericData.reduce((a, b) => a < b ? a : b);
   }
@@ -45,9 +60,13 @@ extension SeriesFunctions on Series {
   /// Maximum value in the series.
   num max() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
-      throw Exception("Cannot find maximum value of an empty series or series with all missing values.");
+      throw Exception(
+          "Cannot find maximum value of an empty series or series with all missing values.");
     }
     return numericData.reduce((a, b) => a > b ? a : b);
   }
@@ -75,7 +94,10 @@ extension SeriesFunctions on Series {
   /// Returns the sum of all values in the series.
   num sum() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
       return 0; // Sum of empty set is 0
     }
@@ -87,7 +109,10 @@ extension SeriesFunctions on Series {
   /// Returns the product of all values in the series.
   num prod() {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
       return 1; // Product of empty set is 1
     }
@@ -166,12 +191,12 @@ extension SeriesFunctions on Series {
           }
           result[i] = currentMax;
         } else if (val == missingRep) {
-          result[i] = missingRep; 
-        } else { 
-          result[i] = missingRep; 
+          result[i] = missingRep;
+        } else {
+          result[i] = missingRep;
         }
       }
-    } else { 
+    } else {
       bool encounteredMissing = false;
       for (int i = 0; i < data.length; i++) {
         final val = data[i];
@@ -187,8 +212,8 @@ extension SeriesFunctions on Series {
             currentMax = val;
           }
           result[i] = currentMax;
-        } else { 
-          result[i] = missingRep; 
+        } else {
+          result[i] = missingRep;
           encounteredMissing = true;
         }
       }
@@ -290,7 +315,7 @@ extension SeriesFunctions on Series {
         } else if (val == missingRep) {
           result[i] = missingRep;
         } else {
-          result[i] = missingRep; 
+          result[i] = missingRep;
         }
       }
     } else {
@@ -382,12 +407,13 @@ extension SeriesFunctions on Series {
           }
           result[i] = currentSum;
         } else if (val == missingRep) {
-          result[i] = missingRep; 
-        } else { // Non-numeric, non-missing
+          result[i] = missingRep;
+        } else {
+          // Non-numeric, non-missing
           result[i] = missingRep; // Treat as missing for cumulative calculation
         }
       }
-    } else { 
+    } else {
       bool encounteredMissing = false;
       for (int i = 0; i < data.length; i++) {
         final val = data[i];
@@ -405,8 +431,9 @@ extension SeriesFunctions on Series {
             currentSum = currentSum + val;
           }
           result[i] = currentSum;
-        } else { // Non-numeric, non-missing
-          result[i] = missingRep; 
+        } else {
+          // Non-numeric, non-missing
+          result[i] = missingRep;
           encounteredMissing = true;
         }
       }
@@ -434,7 +461,8 @@ extension SeriesFunctions on Series {
     }
 
     if (maxIndex == -1) {
-      throw Exception("Cannot find idxmax of an empty series or series with all missing/non-numeric values.");
+      throw Exception(
+          "Cannot find idxmax of an empty series or series with all missing/non-numeric values.");
     }
     return maxIndex;
   }
@@ -442,16 +470,22 @@ extension SeriesFunctions on Series {
   /// Quantile (percentile) of the series.
   num quantile(double percentile) {
     dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    final numericData = data.whereType<num>().where((element) => element != missingRep).toList();
+    final numericData = data
+        .whereType<num>()
+        .where((element) => element != missingRep)
+        .toList();
     if (numericData.isEmpty) {
-      throw Exception("Cannot calculate quantile of an empty series or series with all missing values.");
+      throw Exception(
+          "Cannot calculate quantile of an empty series or series with all missing values.");
     }
     if (percentile < 0 || percentile > 1) {
       throw Exception("Percentile must be between 0 and 1.");
     }
     var sortedData = List<num>.from(numericData)..sort();
-    if (sortedData.isEmpty) { // Should be caught by numericData.isEmpty, but as a safeguard.
-        throw Exception("Cannot calculate quantile as no valid numeric data exists after filtering missing values.");
+    if (sortedData.isEmpty) {
+      // Should be caught by numericData.isEmpty, but as a safeguard.
+      throw Exception(
+          "Cannot calculate quantile as no valid numeric data exists after filtering missing values.");
     }
     var index = (sortedData.length - 1) * percentile;
     // Ensure index is within bounds for sortedData
@@ -460,7 +494,7 @@ extension SeriesFunctions on Series {
 
     if (lowerIdx < 0) lowerIdx = 0;
     if (upperIdx >= sortedData.length) upperIdx = sortedData.length - 1;
-    
+
     var lower = sortedData[lowerIdx];
     var upper = sortedData[upperIdx];
     return lower + (upper - lower) * (index - index.floor());
@@ -669,10 +703,8 @@ extension SeriesFunctions on Series {
       throw ArgumentError('Series data must be numeric for qcut.');
     }
 
-    final List<num> numericData = data
-        .where((d) => d != missingRep && d is num)
-        .cast<num>()
-        .toList();
+    final List<num> numericData =
+        data.where((d) => d != missingRep && d is num).cast<num>().toList();
 
     if (numericData.isEmpty) {
       throw ArgumentError('No valid numeric data to perform quantile cut.');
@@ -694,7 +726,8 @@ extension SeriesFunctions on Series {
       // Ensure 0.0 and 1.0 are included for full range coverage if user provides list
       if (!quantilePoints.contains(0.0)) quantilePoints.insert(0, 0.0);
       if (!quantilePoints.contains(1.0)) quantilePoints.add(1.0);
-      quantilePoints = quantilePoints.toSet().toList()..sort(); // Unique and sorted
+      quantilePoints = quantilePoints.toSet().toList()
+        ..sort(); // Unique and sorted
     } else {
       throw ArgumentError('q must be an int or a List<num>.');
     }
@@ -705,33 +738,34 @@ extension SeriesFunctions on Series {
       final pos = (numericData.length - 1) * point;
       final int lowerIdx = pos.floor();
       final int upperIdx = pos.ceil();
-      if (lowerIdx < 0) { // Should not happen with point >= 0
-          binEdges.add(numericData.first);
-      } else if (upperIdx >= numericData.length) { // Should not happen with point <= 1
-          binEdges.add(numericData.last);
+      if (lowerIdx < 0) {
+        // Should not happen with point >= 0
+        binEdges.add(numericData.first);
+      } else if (upperIdx >= numericData.length) {
+        // Should not happen with point <= 1
+        binEdges.add(numericData.last);
       } else {
         final num lower = numericData[lowerIdx];
         final num upper = numericData[upperIdx];
         binEdges.add(lower + (upper - lower) * (pos - lowerIdx));
       }
     }
-    
+
     // Ensure first and last edges are min and max of data to cover all points
     binEdges[0] = numericData.first;
     binEdges[binEdges.length - 1] = numericData.last;
 
-
     // 4. Handle Duplicates in Bin Edges
     if (duplicates == 'raise') {
       for (int i = 0; i < binEdges.length - 1; i++) {
-        if (binEdges[i] == binEdges[i + 1] && binEdges[i] != numericData.last) { 
+        if (binEdges[i] == binEdges[i + 1] && binEdges[i] != numericData.last) {
           // Allow last edge to be same if all remaining data points are identical to max
           throw ArgumentError(
               'Bin edges are not unique: $binEdges. Try duplicates="drop".');
         }
       }
     } else if (duplicates == 'drop') {
-      binEdges = binEdges.toSet().toList()..sort((a,b) => a.compareTo(b));
+      binEdges = binEdges.toSet().toList()..sort((a, b) => a.compareTo(b));
     } else {
       throw ArgumentError('duplicates parameter must be "raise" or "drop".');
     }
@@ -739,7 +773,7 @@ extension SeriesFunctions on Series {
       throw ArgumentError(
           'Cannot cut with less than 2 unique bin edges. Data might be too uniform or q too low.');
     }
-    
+
     // 5. Binning Logic (include_lowest=true, right=true implicitly by how edges are defined and used)
     List<dynamic> binnedData = List.filled(data.length, missingRep);
     for (int i = 0; i < data.length; i++) {
@@ -753,7 +787,7 @@ extension SeriesFunctions on Series {
       // First bin: [edge_0, edge_1]
       if (value >= binEdges[0] && value <= binEdges[1]) {
         binIdx = 0;
-      } 
+      }
       // Subsequent bins: (edge_j, edge_j+1]
       else {
         for (int j = 1; j < binEdges.length - 1; j++) {
@@ -763,11 +797,11 @@ extension SeriesFunctions on Series {
           }
         }
       }
-      
+
       // If value is exactly the first edge and not caught by first bin (e.g., if include_lowest was false)
       // For qcut, the first bin is always inclusive of the minimum.
       if (binIdx == -1 && value == binEdges[0]) {
-          binIdx = 0;
+        binIdx = 0;
       }
 
       if (binIdx != -1) {
@@ -815,15 +849,16 @@ extension SeriesFunctions on Series {
         });
       }
       // Map integer codes to actual labels
-      for(int i=0; i<binnedData.length; ++i){
-          if(binnedData[i] != missingRep && binnedData[i] is int){
-              int idx = binnedData[i] as int;
-              if(idx >=0 && idx < stringLabels.length){
-                  binnedData[i] = stringLabels[idx];
-              } else {
-                  binnedData[i] = missingRep; // Should not happen if binning logic is correct
-              }
+      for (int i = 0; i < binnedData.length; ++i) {
+        if (binnedData[i] != missingRep && binnedData[i] is int) {
+          int idx = binnedData[i] as int;
+          if (idx >= 0 && idx < stringLabels.length) {
+            binnedData[i] = stringLabels[idx];
+          } else {
+            binnedData[i] =
+                missingRep; // Should not happen if binning logic is correct
           }
+        }
       }
       finalLabels = binnedData;
     }
@@ -916,7 +951,7 @@ extension SeriesFunctions on Series {
         // Add more formats as needed, e.g., with milliseconds or Z for UTC
         DateFormat("yyyy-MM-ddTHH:mm:ss'Z'"), // ISO8601 UTC
         DateFormat("yyyy-MM-ddTHH:mm:ss.SSS'Z'"),
-        DateFormat("yyyy-MM-ddTHH:mm:ss.SSS"), 
+        DateFormat("yyyy-MM-ddTHH:mm:ss.SSS"),
       ];
     }
 
@@ -933,7 +968,8 @@ extension SeriesFunctions on Series {
             // Parsing failed
           }
         } else {
-          dtValue = DateTime.tryParse(element); // Handles ISO 8601 and some others
+          dtValue =
+              DateTime.tryParse(element); // Handles ISO 8601 and some others
           if (dtValue == null && inferDatetimeFormat) {
             for (var fmt in commonFormats) {
               try {
@@ -956,8 +992,9 @@ extension SeriesFunctions on Series {
       if (dtValue != null) {
         newData.add(dtValue);
       } else {
-        if (element == missingRep) { // Preserve already missing values
-            newData.add(missingRep);
+        if (element == missingRep) {
+          // Preserve already missing values
+          newData.add(missingRep);
         } else if (errors == 'raise') {
           throw FormatException(
               "Unable to parse \"${element.toString()}\" to DateTime at index $i for Series '$name'.");
@@ -974,8 +1011,6 @@ extension SeriesFunctions on Series {
     return Series(newData, name: name, index: index);
   }
 }
-
-
 
 /// Creates a Series of DateTime objects with a specified range.
 ///
@@ -1012,7 +1047,7 @@ Series dateRange({
   if (start != null) specifiedParams++;
   if (end != null) specifiedParams++;
   if (periods != null) specifiedParams++;
-  
+
   // Special case: allow all three parameters if they're consistent or if periods is 0
   bool allThreeConsistent = false;
   if (specifiedParams == 3) {
@@ -1020,7 +1055,7 @@ Series dateRange({
     if (periods == 0) {
       return Series([], name: name);
     }
-    
+
     // Check if the parameters are consistent
     if (start != null && end != null && periods != null) {
       // Calculate the expected number of days between start and end
@@ -1031,26 +1066,27 @@ Series dateRange({
       }
     }
   }
-  
+
   if (specifiedParams != 2 && !allThreeConsistent) {
-    throw ArgumentError('Exactly two of start, end, or periods must be specified.');
+    throw ArgumentError(
+        'Exactly two of start, end, or periods must be specified.');
   }
-  
+
   if (periods != null && periods < 0) {
     throw ArgumentError('periods cannot be negative.');
   }
-  
+
   // Handle empty series cases
   if (periods == 0) {
     return Series([], name: name);
   }
-  
+
   // Normalize dates if requested
   if (normalize) {
     start = start != null ? DateTime(start.year, start.month, start.day) : null;
     end = end != null ? DateTime(end.year, end.month, end.day) : null;
   }
-  
+
   // Calculate missing parameter
   if (start == null) {
     // Calculate start from end and periods
@@ -1067,24 +1103,29 @@ Series dateRange({
     if (start != null && end != null) {
       // For inclusive range, we need daysBetween + 1
       periods = end.difference(start).inDays + 1;
-      
+
       // Handle case where start is after end
       if (periods <= 0) {
         return Series([], name: name);
       }
     }
   }
-  
+
   // Validate parameters after calculation
-  if (start != null && end != null && periods != null && start.isAfter(end) && periods > 0) {
-    throw ArgumentError('start cannot be after end with a positive periods value.');
+  if (start != null &&
+      end != null &&
+      periods != null &&
+      start.isAfter(end) &&
+      periods > 0) {
+    throw ArgumentError(
+        'start cannot be after end with a positive periods value.');
   }
-  
+
   // Only daily frequency is supported for now
   if (freq != 'D') {
     throw ArgumentError('Only daily frequency ("D") is currently supported.');
   }
-  
+
   // Generate the date range
   List<DateTime> dates = [];
   if (periods != null && start != null) {
@@ -1092,6 +1133,6 @@ Series dateRange({
       dates.add(start.add(Duration(days: i)));
     }
   }
-  
+
   return Series(dates, name: name);
 }

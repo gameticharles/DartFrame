@@ -40,7 +40,8 @@ void main() async {
 
 void dataframe1() async {
   // Load the CSV data into a DataFrame and tries to convert string to the right type
-  var df = await DataFrame.fromCSV( // Added await
+  var df = await DataFrame.fromCSV(
+    // Added await
     csv: csvData,
     formatData: true,
     missingDataIndicator: ['<NA>', 'NA'],

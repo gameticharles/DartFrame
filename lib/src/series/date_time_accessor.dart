@@ -13,20 +13,25 @@ class SeriesDateTimeAccessor {
   SeriesDateTimeAccessor(this._series);
 
   // Helper function to process data and extract components
-  Series _extractComponent(String componentName, dynamic Function(DateTime dt) extractor, {bool isDateTimeOutput = false}) {
+  Series _extractComponent(
+      String componentName, dynamic Function(DateTime dt) extractor,
+      {bool isDateTimeOutput = false}) {
     final missingRep = _series._missingRepresentation; // Use Series' helper
     List<dynamic> resultData = [];
 
     for (var value in _series.data) {
-      if (_series._isMissing(value)) { // Use Series' helper
+      if (_series._isMissing(value)) {
+        // Use Series' helper
         resultData.add(missingRep);
       } else if (value is DateTime) {
         try {
           resultData.add(extractor(value));
-        } catch (e) { // Should not happen with DateTime properties, but good for safety
+        } catch (e) {
+          // Should not happen with DateTime properties, but good for safety
           resultData.add(missingRep);
         }
-      } else { // Not a DateTime and not identified as missing
+      } else {
+        // Not a DateTime and not identified as missing
         resultData.add(missingRep);
       }
     }
@@ -71,12 +76,14 @@ class SeriesDateTimeAccessor {
   /// Returns a Series containing the millisecond (0-999) of each DateTime.
   /// Non-DateTime values or missing values result in the Series' missing value representation.
   /// Example: `series.dt.millisecond`
-  Series get millisecond => _extractComponent('millisecond', (dt) => dt.millisecond);
+  Series get millisecond =>
+      _extractComponent('millisecond', (dt) => dt.millisecond);
 
   /// Returns a Series containing the microsecond (0-999) of each DateTime.
   /// Non-DateTime values or missing values result in the Series' missing value representation.
   /// Example: `series.dt.microsecond`
-  Series get microsecond => _extractComponent('microsecond', (dt) => dt.microsecond);
+  Series get microsecond =>
+      _extractComponent('microsecond', (dt) => dt.microsecond);
 
   /// Returns a Series containing the day of the week for each DateTime.
   /// (e.g., [DateTime.monday] is 1, ..., [DateTime.sunday] is 7).
@@ -94,7 +101,7 @@ class SeriesDateTimeAccessor {
       return dt.difference(firstDayOfYear).inDays + 1;
     });
   }
-  
+
   /// Returns a Series containing only the date part (time set to 00:00:00.000000) of each DateTime.
   /// Non-DateTime values or missing values result in the Series' missing value representation.
   /// Example:

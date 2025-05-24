@@ -10,7 +10,12 @@ void main() {
         expect(df.rowCount, equals(2));
         expect(df.columnCount, equals(2));
         expect(df.columns, equals(['colA', 'colB']));
-        expect(df.rows[0], equals(['1', 'apple'])); // fromCSV reads as strings initially unless formatData
+        expect(
+            df.rows[0],
+            equals([
+              '1',
+              'apple'
+            ])); // fromCSV reads as strings initially unless formatData
       });
 
       test('CSV string with different delimiter and no header', () async {
@@ -38,24 +43,24 @@ void main() {
         expect(df.rows[1], equals([null, 'B'])); // Empty string becomes null
         expect(df.rows[2], equals([30, null])); // NA becomes null
       });
-       test('CSV string with specific missing value placeholder', () async {
+      test('CSV string with specific missing value placeholder', () async {
         final csvString = 'val,cat\n10,A\n,B\n30,NA';
         final df = await DataFrame.fromCSV(
-          csv: csvString,
-          formatData: true,
-          missingDataIndicator: ['NA'],
-          replaceMissingValueWith: -1
-        );
+            csv: csvString,
+            formatData: true,
+            missingDataIndicator: ['NA'],
+            replaceMissingValueWith: -1);
         expect(df.rowCount, equals(3));
         expect(df.rows[0], equals([10, 'A']));
-        expect(df.rows[1], equals([-1, 'B'])); 
-        expect(df.rows[2], equals([30, -1])); 
+        expect(df.rows[1], equals([-1, 'B']));
+        expect(df.rows[2], equals([30, -1]));
       });
     });
 
     group('DataFrame.fromJson()', () {
       test('basic JSON string', () async {
-        final jsonString = '[{"colA": 1, "colB": "apple"}, {"colA": 2, "colB": "banana"}]';
+        final jsonString =
+            '[{"colA": 1, "colB": "apple"}, {"colA": 2, "colB": "banana"}]';
         final df = await DataFrame.fromJson(jsonString: jsonString);
         expect(df.rowCount, equals(2));
         expect(df.columnCount, equals(2));
@@ -64,7 +69,8 @@ void main() {
       });
 
       test('JSON string with formatData and null values', () async {
-        final jsonString = '[{"val": 10, "cat": "A"}, {"val": null, "cat": "B"}]';
+        final jsonString =
+            '[{"val": 10, "cat": "A"}, {"val": null, "cat": "B"}]';
         final df = await DataFrame.fromJson(
           jsonString: jsonString,
           formatData: true,
@@ -76,12 +82,12 @@ void main() {
       });
 
       test('JSON string with specific missing value placeholder', () async {
-        final jsonString = '[{"val": 10, "cat": "A"}, {"val": null, "cat": "B"}]';
+        final jsonString =
+            '[{"val": 10, "cat": "A"}, {"val": null, "cat": "B"}]';
         final df = await DataFrame.fromJson(
-          jsonString: jsonString,
-          formatData: true,
-          replaceMissingValueWith: "MISSING"
-        );
+            jsonString: jsonString,
+            formatData: true,
+            replaceMissingValueWith: "MISSING");
         expect(df.rowCount, equals(2));
         expect(df.rows[0], equals([10, 'A']));
         expect(df.rows[1], equals(["MISSING", 'B']));
