@@ -1,3 +1,7 @@
+# 0.4.1
+
+* **[Fix]** Fixed readme.
+
 # 0.4.0
 
 * **[FEATURE]** Added main library file lib/dartframe.dart exporting library parts and initializing fileIO.
