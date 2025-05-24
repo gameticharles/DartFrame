@@ -6,7 +6,7 @@ repository: https://github.com/gameticharles/DartFrame
 environment:
   sdk: ^3.6.0
 
-documentation: "https://github.com/gameticharles/DartFrame"
+documentation: "https://github.com/gameticharles/DartFrame/blob/main/doc/dataframe.md"
 
 # Add regular dependencies here.
 dependencies:
