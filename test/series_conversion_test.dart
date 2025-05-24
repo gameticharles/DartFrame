@@ -1,6 +1,5 @@
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
-import 'package:intl/intl.dart'; // For toDatetime format tests
 
 void main() {
   const missingMarker = -999; // For tests involving DataFrame context
@@ -67,7 +66,7 @@ void main() {
     });
     
     test('toNumeric empty series', () {
-      final s = Series<String>([], name: 'empty_numeric');
+      final s = Series([], name: 'empty_numeric');
       final numericS = s.toNumeric();
       expect(numericS.data, isEmpty);
     });
@@ -129,8 +128,9 @@ void main() {
     });
 
     test('toDatetime with specific format', () {
-      final s = Series(['26/10/2023', '01/03/2024 14:30'], name: 'custom_format');
-      final datetimeS = s.toDatetime(format: 'dd/MM/yyyy HH:mm'); 
+      // final s = Series(['26/10/2023', '01/03/2024 14:30'], name: 'custom_format');
+      // final datetimeS = s.toDatetime(format: 'dd/MM/yyyy HH:mm'); 
+
       // First entry needs HH:mm too, or parseStrict will fail if format includes time.
       // Let's adjust test or format. For 'dd/MM/yyyy HH:mm', '26/10/2023' is invalid.
       // Test with 'dd/MM/yyyy' for the first, and a separate test for time.
@@ -169,7 +169,7 @@ void main() {
     });
 
     test('toDatetime empty series', () {
-      final s = Series<String>([], name: 'empty_datetime');
+      final s = Series([], name: 'empty_datetime');
       final datetimeS = s.toDatetime();
       expect(datetimeS.data, isEmpty);
     });

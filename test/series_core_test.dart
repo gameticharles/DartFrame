@@ -61,7 +61,7 @@ void main() {
 
 
     test('constructor with empty list', () {
-      final s = Series<int>([], name: 'empty');
+      final s = Series([], name: 'empty');
       expect(s.data, isEmpty);
       expect(s.name, equals('empty'));
       expect(s.index, isEmpty);
@@ -120,9 +120,9 @@ void main() {
       final s = Series([1, 2, 3], name: 'nums');
       final str = s.toString();
       expect(str, contains('nums'));
-      expect(str, contains('0       1'));
-      expect(str, contains('1       2'));
-      expect(str, contains('2       3'));
+      expect(str, contains('0      1'));
+      expect(str, contains('1      2'));
+      expect(str, contains('2      3'));
       expect(str, contains('Length: 3'));
       expect(str, contains('Type: int'));
     });
@@ -131,14 +131,14 @@ void main() {
       final s = Series(['a', 'b'], name: 'chars', index: ['x', 'y']);
       final str = s.toString();
       expect(str, contains('chars'));
-      expect(str, contains('x       a'));
-      expect(str, contains('y       b'));
+      expect(str, contains('x      a'));
+      expect(str, contains('y      b'));
       expect(str, contains('Length: 2'));
       expect(str, contains('Type: String'));
     });
 
     test('toString empty series', () {
-      final s = Series<int>([], name: 'empty_series');
+      final s = Series([], name: 'empty_series');
       expect(s.toString(), equals('Empty Series: empty_series'));
     });
     
@@ -170,7 +170,7 @@ void main() {
     });
 
     test('toDataFrame empty series', () {
-      final s = Series<String>([], name: 'empty_col');
+      final s = Series([], name: 'empty_col');
       final df = s.toDataFrame();
 
       expect(df.columns, equals(['empty_col']));

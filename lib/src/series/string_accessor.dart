@@ -6,7 +6,6 @@ class StringSeriesAccessor {
   StringSeriesAccessor(this._series);
 
   // No longer need _getMissingRep() here, will use _series._missingRepresentation directly.
-
   Series _applyStringOperation(
       dynamic Function(String) operation, String newNameSuffix, {dynamic defaultValueIfError}) {
     final missingRep = _series._missingRepresentation; // Use Series' helper
@@ -25,7 +24,7 @@ class StringSeriesAccessor {
         resultData.add(missingRep);
       }
     }
-    return Series(resultData, name: '${_series.name}$newNameSuffix', index: _series.index?.toList());
+    return Series(resultData, name: '${_series.name}$newNameSuffix', index: _series.index);
   }
 
   Series _applyStringBoolOperation(
@@ -46,7 +45,7 @@ class StringSeriesAccessor {
         resultData.add(missingRep); 
       }
     }
-    return Series(resultData, name: '${_series.name}$newNameSuffix', index: _series.index?.toList());
+    return Series(resultData, name: '${_series.name}$newNameSuffix', index: _series.index);
   }
 
   /// Returns a new Series of `int`s representing the length of each string.
@@ -137,5 +136,60 @@ class StringSeriesAccessor {
     String sanitizedFromName = fromPatternString.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
 
     return _applyStringOperation((s) => s.replaceAll(from, to), '_replace_${sanitizedFromName}_with_$to');
+  }
+
+  /// Returns a new Series where each string is split by the given pattern.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// 
+  /// Parameters:
+  /// - pattern: The pattern to split on (String or RegExp)
+  /// - n: Maximum number of splits to perform (optional)
+  /// 
+  /// Example: `series.str.split('-')`
+  Series split(Pattern pattern, {int? n}) {
+    String patternString = pattern is RegExp ? pattern.pattern : pattern.toString();
+    String sanitizedPatternName = patternString.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+    
+    return _applyStringOperation((s) {
+      if (n != null) {
+        return s.split(pattern).take(n + 1).toList();
+      } else {
+        return s.split(pattern);
+      }
+    }, '_split_$sanitizedPatternName');
+  }
+
+  /// Returns a new Series with the first match of the given regex pattern.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// If no match is found, returns the missing value representation.
+  /// If the regex has capture groups, returns the first group; otherwise returns the full match.
+  /// 
+  /// Parameters:
+  /// - pattern: The regex pattern to match (String or RegExp)
+  /// 
+  /// Example: `series.str.match(r'\\d+')`
+  Series match(Pattern pattern) {
+    RegExp regex = pattern is RegExp ? pattern : RegExp(pattern.toString());
+    String patternString = regex.pattern;
+    String sanitizedPatternName = patternString.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+    
+    return _applyStringOperation((s) {
+      final match = regex.firstMatch(s);
+      if (match == null) {
+        throw Exception('No match found'); // This will be caught and return missing rep
+      }
+      
+      // If there are capture groups, return the first group
+      if (match.groupCount > 0) {
+        return match.group(1) ?? match.group(0)!;
+      }
+      
+      // Otherwise return the full match
+      return match.group(0)!;
+    }, '_match_$sanitizedPatternName');
   }
 }

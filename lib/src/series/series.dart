@@ -1,5 +1,4 @@
 part of '../../dartframe.dart';
-part 'date_time_accessor.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///
@@ -20,12 +19,12 @@ part 'date_time_accessor.dart';
 /// var stringSeries = Series<String>(['a', 'b', 'c'], name: 'Letters');
 /// print(stringSeries); // Outputs: Letters: [a, b, c]
 /// ```
-class Series {
+class Series<T> {
   /// The data of the series.
   ///
   /// This list holds the actual data points of the series. The generic type `T`
   /// allows the series to hold any type of data.
-  List<dynamic> data;
+  List<T?> data;
 
   /// The name of the series.
   ///
@@ -36,13 +35,9 @@ class Series {
   // Add these fields to the Series class
   DataFrame? _parentDataFrame;
   String? _columnName;
-  List<dynamic>? index;
 
-  /// Sets the parent DataFrame reference
-  void setParent(DataFrame parent, String columnName) {
-    _parentDataFrame = parent;
-    _columnName = columnName;
-  }
+  /// Get the index/names of the rows in the series
+  List<dynamic> index;
 
   /// Constructs a `Series` object with the given [data] and [name].
   ///
@@ -53,7 +48,13 @@ class Series {
   /// - `data`: The data points of the series.
   /// - `name`: The name of the series. This parameter is required.
   /// - `index`: Optional list to use as index for the Series
-  Series(this.data, {required this.name, this.index});
+  Series(this.data, {required this.name, List<dynamic>? index}): index = index ??  List.generate(data.length, (i) => i);
+
+  /// Sets the parent DataFrame reference
+  void setParent(DataFrame parent, String columnName) {
+    _parentDataFrame = parent;
+    _columnName = columnName;
+  }
 
   // Helper to get the representation of missing values for this Series.
   // If part of a DataFrame with a custom marker, uses that. Otherwise, defaults to null.
@@ -95,7 +96,7 @@ class Series {
 
     // Calculate the maximum width needed for row headers/index
     int indexWidth = 0;
-    List<dynamic> indexList = index ?? List.generate(data.length, (i) => i);
+    List<dynamic> indexList = index;
 
     for (var idx in indexList) {
       int headerWidth = idx.toString().length;
@@ -183,7 +184,7 @@ class Series {
     return mostCommonType;
   }
 
-// Return the Series as a data frame
+  /// Return the Series as a data frame
   DataFrame toDataFrame() => DataFrame.fromMap({name: data});
 
   /// Accessor for string-specific operations on Series data.
@@ -357,7 +358,7 @@ class Series {
   Series isna() {
     // final missingValue = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
     final boolList = data.map((e) => _isMissing(e)).toList();
-    return Series(boolList, name: '${name}_isna', index: index?.toList());
+    return Series(boolList, name: '${name}_isna', index: index.toList());
   }
 
   /// Returns a boolean Series indicating if each value is not missing.
@@ -382,7 +383,7 @@ class Series {
   Series notna() {
     // final missingValue = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
     final boolList = data.map((e) => !_isMissing(e)).toList();
-    return Series(boolList, name: '${name}_notna', index: index?.toList());
+    return Series(boolList, name: '${name}_notna', index: index.toList());
   }
 
   /// Convert Series to numeric.
@@ -493,7 +494,7 @@ class Series {
         }
       }
     }
-    return Series(newData, name: name, index: index?.toList());
+    return Series(newData, name: name, index: index.toList());
   }
 
   /// Convert Series to datetime.
@@ -616,10 +617,10 @@ class Series {
         newData.add(dtVal);
       }
     }
-    return Series(newData, name: name, index: index?.toList());
+    return Series(newData, name: name, index: index.toList());
   }
 
-    /// Access elements by position or label using boolean indexing.
+  /// Access elements by position or label using boolean indexing.
   ///
   /// Returns a new series containing only the elements for which the boolean condition is true.
   dynamic operator [](dynamic indices) {
@@ -630,7 +631,14 @@ class Series {
           selectedData.add(data[i]);
         }
       }
-    } else {
+    }else if (indices is Series<bool>) {
+      for (int i = 0; i < indices.data.length; i++) {
+        if ((indices as Series).data[i]) {
+          selectedData.add(data[i]);
+        }
+      }
+
+    }else {
       // Handle single index
       return data[indices];
     }
@@ -700,7 +708,7 @@ class Series {
       } else if (value is num) {
         for (int i = 0; i < indices.length; i++) {
           if (dd[i]) {
-            data[i] = value;
+            data[i] = value as T?;
 
             // Update parent DataFrame if this Series is linked to one
             if (_parentDataFrame != null && _columnName != null) {
@@ -716,7 +724,7 @@ class Series {
 
   /// Access a value by label
   dynamic at(dynamic label) {
-    final idx = index?.indexOf(label) ?? -1;
+    final idx = index.indexOf(label);
     if (idx == -1) {
       throw ArgumentError('Label not found: $label');
     }
@@ -766,7 +774,7 @@ class Series {
   /// // Length: 4
   /// // Type: int
   /// ```
-  Series sort_values({
+  Series sortValues({
     bool ascending = true,
     String naPosition = 'last',
   }) {
@@ -774,9 +782,8 @@ class Series {
       throw ArgumentError("naPosition must be either 'first' or 'last'");
     }
 
-    // final missingValue = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
     List<dynamic> currentData = List.from(data);
-    List<dynamic> currentIndex = index != null ? List.from(index!) : List.generate(currentData.length, (i) => i);
+    List<dynamic> currentIndex = List.from(index);
 
     // Create a list of pairs: [value, original_index_in_currentIndex]
     // We use original_index_in_currentIndex to retrieve the correct index label later
@@ -790,8 +797,7 @@ class Series {
     List<List<dynamic>> validValues = [];
 
     for (var pair in pairedList) {
-      // if (pair[0] == missingValue || pair[0] == null) { // Old logic
-      if (_isMissing(pair[0])) { // New logic
+      if (_isMissing(pair[0])) {
         nanValues.add(pair);
       } else {
         validValues.add(pair);
@@ -800,27 +806,40 @@ class Series {
 
     // Sort valid values
     validValues.sort((a, b) {
-      // Ensure comparable types or handle type differences gracefully
+      // First, separate by type category
+      bool aIsNum = a[0] is num;
+      bool bIsNum = b[0] is num;
+      
+      // If types are in different categories (num vs non-num)
+      if (aIsNum && !bIsNum) {
+        return ascending ? -1 : 1; // Numbers come before non-numbers
+      } else if (!aIsNum && bIsNum) {
+        return ascending ? 1 : -1; // Non-numbers come after numbers
+      }
+      
+      // If both are the same type category, try to compare them
       if (a[0] is Comparable && b[0] is Comparable) {
         try {
           int comparisonResult = (a[0] as Comparable).compareTo(b[0] as Comparable);
           return ascending ? comparisonResult : -comparisonResult;
         } catch (e) {
-          // Fallback for non-comparable types within Comparable or type mismatch
-          // This might happen if types are mixed and not directly comparable
-          // For simplicity, treat as equal or maintain original order by returning 0
-          // A more sophisticated approach might involve type-specific comparison logic
-          return 0;
+          // If comparison fails but they're the same type, use string representation
+          return ascending ? 
+              a[0].toString().compareTo(b[0].toString()) : 
+              b[0].toString().compareTo(a[0].toString());
         }
       } else if (a[0] == null && b[0] == null) {
         return 0; // Both are null or missing
       } else if (a[0] == null) {
-        return naPosition == 'first' ? -1 : 1; // Consistent with how NaNs are handled separately
+        return naPosition == 'first' ? -1 : 1;
       } else if (b[0] == null) {
         return naPosition == 'first' ? 1 : -1;
       }
-      // If types are not comparable and not null, maintain original order relative to each other
-      return 0;
+      
+      // If types are not comparable, compare string representations
+      return ascending ? 
+          a[0].toString().compareTo(b[0].toString()) : 
+          b[0].toString().compareTo(a[0].toString());
     });
 
     // Combine sorted valid values and NaNs based on naPosition
@@ -836,25 +855,16 @@ class Series {
     List<dynamic> sortedIndex;
 
     // If original series had an index, use the sorted original index values
-    // Otherwise, the new index will be the default integer index (implicit)
-    if (index != null) {
+    if (index.isNotEmpty) {
       sortedIndex = sortedPairedList.map((pair) => currentIndex[pair[1] as int]).toList();
     } else {
-      // If there was no original index, the new series also won't have an explicit one.
-      // The Series constructor will generate a default one if index is null.
-      sortedIndex = List.generate(sortedData.length, (i) => i); // or pass null to Series constructor for default
+      sortedIndex = List.generate(sortedData.length, (i) => i);
     }
     
-    // Create a new Series with the sorted data and index
-    // Pass null for index if the original series didn't have one and we want default indexing.
-    // However, the logic above creates a default 0..N-1 index if original was null.
-    // To strictly adhere to "if the original series does not have an index, 
-    // the new series should also not have an explicit index",
-    // we should pass null if this.index was null.
     return Series(
       sortedData,
       name: name, // Preserve the original name
-      index: this.index == null ? null : sortedIndex,
+      index: sortedIndex,
     );
   }
 
@@ -885,7 +895,7 @@ class Series {
   /// // Type: int
   ///
   /// var sDefaultIndex = Series([100, 200, 50], name: 'default_idx');
-  /// print(sDefaultIndex.sort_index(ascending: false));
+  /// print(sDefaultIndex.sortIndex(ascending: false));
   /// // Output:
   /// // default_idx:
   /// // 2       50
@@ -894,11 +904,11 @@ class Series {
   /// // Length: 3
   /// // Type: int
   /// ```
-  Series sort_index({
+  Series sortIndex({
     bool ascending = true,
   }) {
     // Use the existing index or generate a default one if null
-    List<dynamic> currentIndexLabels = index != null ? List.from(index!) : List.generate(data.length, (i) => i);
+    List<dynamic> currentIndexLabels = List.from(index);
 
     // Create a list of pairs: [index_label, original_data_position]
     List<List<dynamic>> pairedList = [];
@@ -1010,7 +1020,7 @@ class Series {
   /// // 1                y        20
   /// // 2                z        30
   /// ```
-  dynamic reset_index({
+  dynamic resetIndex({
     dynamic level, // Ignored for now
     bool drop = false,
     String? name,
@@ -1025,8 +1035,7 @@ class Series {
       );
     } else {
       // Return a DataFrame
-      List<dynamic> indexColumnData =
-          this.index != null ? List.from(this.index!) : List.generate(data.length, (i) => i);
+      List<dynamic> indexColumnData = List.from(index);
 
       String indexColumnName = name ?? 'index';
       
@@ -1083,33 +1092,33 @@ class Series {
   /// print(s.fillna(value: 0.0));
   /// // Output:
   /// // data:
-  /// // 0       1.0
-  /// // 1       0.0
-  /// // 2       3.0
-  /// // 3       0.0
-  /// // 4       5.0
+  /// // 0      1.0
+  /// // 1      0.0
+  /// // 2      3.0
+  /// // 3      0.0
+  /// // 4      5.0
   /// // Length: 5
   /// // Type: double
   ///
   /// print(s.fillna(method: 'ffill'));
   /// // Output:
   /// // data:
-  /// // 0       1.0
-  /// // 1       1.0
-  /// // 2       3.0
-  /// // 3       3.0
-  /// // 4       5.0
+  /// // 0      1.0
+  /// // 1      1.0
+  /// // 2      3.0
+  /// // 3      3.0
+  /// // 4      5.0
   /// // Length: 5
   /// // Type: double
   ///
   /// print(s.fillna(method: 'bfill'));
   /// // Output:
   /// // data:
-  /// // 0       1.0
-  /// // 1       3.0
-  /// // 2       3.0
-  /// // 3       5.0
-  /// // 4       5.0
+  /// // 0      1.0
+  /// // 1      3.0
+  /// // 2      3.0
+  /// // 3      5.0
+  /// // 4      5.0
   /// // Length: 5
   /// // Type: double
   /// ```
@@ -1118,7 +1127,7 @@ class Series {
     String? method,
   }) {
     List<dynamic> newData = List.from(data);
-    final List<dynamic>? newIndex = index != null ? List.from(index!) : null;
+    
     // final dynamic missingIndicator = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
 
     // bool isMissing(dynamic val) { // Replaced by _isMissing helper
@@ -1161,7 +1170,7 @@ class Series {
         }
       }
     }
-    return Series(newData, name: this.name, index: newIndex);
+    return Series(newData, name: name, index: List.from(index));
   }
 
   /// Applies a function to each element in the Series.
@@ -1215,8 +1224,8 @@ class Series {
 
     return Series(
       newData,
-      name: this.name,
-      index: this.index != null ? List.from(this.index!) : null,
+      name: name,
+      index: List.from(index),
     );
   }
 
@@ -1268,8 +1277,8 @@ class Series {
 
     return Series(
       boolData,
-      name: '${this.name}_isin',
-      index: this.index != null ? List.from(this.index!) : null,
+      name: '${name}_isin',
+      index: List.from(index),
     );
   }
 

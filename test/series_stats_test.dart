@@ -57,8 +57,8 @@ void main() {
         expect(counts.data, containsAll([3, 2, 1, 1, 2])); // Default sort is by count desc
         // To make test robust to tie-breaking in sort, check as map
         Map<dynamic, dynamic> countsMap = {};
-        for(int i=0; i<counts.index!.length; ++i) {
-            countsMap[counts.index![i]] = counts.data[i];
+        for(int i=0; i<counts.index.length; ++i) {
+            countsMap[counts.index[i]] = counts.data[i];
         }
         expect(countsMap, equals({'a':3, 'b':2, null:2, 'd':1, 'c':1}));
 
@@ -93,7 +93,7 @@ void main() {
       test('ascending=true', () {
         var result = s.valueCounts(ascending: true, dropna: true);
         expect(result.data.first <= result.data.last, isTrue); // Check if sorted ascending by count
-        expect(result.index!.last, equals('a')); // 'a' has highest count
+        expect(result.index.last, equals('a')); // 'a' has highest count
       });
 
       test('dropna=false (default missing)', () {
@@ -101,7 +101,7 @@ void main() {
         expect(result.index, contains(defaultMissingRep));
         // Expected order by count: a (3), b (2), null (2), c (1), d (1)
         // Find index of null
-        int nullIdx = result.index!.indexOf(defaultMissingRep);
+        int nullIdx = result.index.indexOf(defaultMissingRep);
         expect(nullIdx, isNot(-1));
         expect(result.data[nullIdx], equals(2));
         expect(result.data.reduce((a,b) => a+b), equals(s.length)); // Sum of counts should be total length
@@ -110,7 +110,7 @@ void main() {
       test('dropna=false (specific missing)', () {
         var result = sSpecificMissing.valueCounts(dropna: false, sort:true, ascending:false);
         expect(result.index, contains(specificMissingRep));
-        int missingIdx = result.index!.indexOf(specificMissingRep);
+        int missingIdx = result.index.indexOf(specificMissingRep);
         expect(missingIdx, isNot(-1));
         expect(result.data[missingIdx], equals(2)); // 'MISSING': 2
         expect(result.data.reduce((a,b) => a+b), equals(sSpecificMissing.length));
@@ -130,7 +130,7 @@ void main() {
         
         var resultNoDrop = sAllMissing.valueCounts(dropna: false);
         expect(resultNoDrop.length, equals(1));
-        expect(resultNoDrop.index![0], isNull);
+        expect(resultNoDrop.index[0], isNull);
         expect(resultNoDrop.data[0], equals(2));
       });
     });

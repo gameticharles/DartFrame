@@ -32,6 +32,7 @@ part 'src/series/series.dart';
 part 'src/series/operations.dart';
 part 'src/series/functions.dart';
 part 'src/series/string_accessor.dart';
+part 'src/series/date_time_accessor.dart';
 
 // This function should return an instance of FileIODesktop or FileIOWeb depending on the platform.
 FileIO fileIO = FileIO();

@@ -2,7 +2,6 @@ import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
 
 void main() {
-  const missingMarker = -999;
 
   group('Series Indexing and Accessing', () {
     // Tests for [] (operator get)
@@ -32,7 +31,7 @@ void main() {
       test('get by boolean Series', () {
         final s = Series([10, 20, 30, 40], name: 'data', index: ['a', 'b', 'c', 'd']);
         final boolSeries = Series([false, true, false, true], name: 'filter');
-        final result = s[boolSeries]; // Assuming operator[] can take Series<bool>
+        final result = s[boolSeries];
         
         expect(result, isA<Series>());
         expect(result.data, equals([20, 40]));
@@ -167,7 +166,7 @@ void main() {
       });
       
       test('at on empty series', () {
-        final s = Series<int>([], name: 'empty_at', index:[]);
+        final s = Series([], name: 'empty_at', index:[]);
         expect(() => s.at('a'), throwsArgumentError);
       });
     });

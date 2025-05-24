@@ -2014,8 +2014,8 @@ extension DataFrameFunctions on DataFrame {
     }
 
     // Get unique values for index and columns
-    final indexValues = this[index].unique().data;
-    final columnValues = this[columns].unique().data;
+    final indexValues = this[index].unique();
+    final columnValues = this[columns].unique();
 
     // Create new column names
     final newColumns = <dynamic>[index, ...columnValues];
@@ -2159,8 +2159,8 @@ extension DataFrameFunctions on DataFrame {
     }
 
 
-    final indexValues = this[index].unique().data..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
-    final columnValues = this[columns].unique().data..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
+    final indexValues = this[index].unique()..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
+    final columnValues = this[columns].unique()..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
 
     final newColumns = <dynamic>[index, ...columnValues];
     final pivotData = <List<dynamic>>[];
@@ -2549,8 +2549,8 @@ extension DataFrameFunctions on DataFrame {
     }
 
     // Get unique values for rows and columns
-    final rowValues = this[index].unique().data;
-    final columnValues = this[column].unique().data;
+    final rowValues = this[index].unique();
+    final columnValues = this[column].unique();
 
     // Create new column names
     final newColumns = <dynamic>[index, ...columnValues];

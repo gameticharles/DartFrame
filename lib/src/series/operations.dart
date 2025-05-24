@@ -12,8 +12,8 @@ extension SeriesOperations on Series {
     final len1 = s1.length;
     final len2 = s2.length;
 
-    bool s1IndexIsNullOrEmpty = idx1 == null || idx1.isEmpty;
-    bool s2IndexIsNullOrEmpty = idx2 == null || idx2.isEmpty;
+    bool s1IndexIsNullOrEmpty = idx1.isEmpty;
+    bool s2IndexIsNullOrEmpty = idx2.isEmpty;
 
     if (s1IndexIsNullOrEmpty && s2IndexIsNullOrEmpty) {
       return len1 == len2; // If both are null/empty, rely on data length
@@ -24,7 +24,7 @@ extension SeriesOperations on Series {
     }
 
     // Both have non-null, non-empty indexes
-    if (idx1!.length != idx2!.length) {
+    if (idx1.length != idx2.length) {
       return false;
     }
     for (int i = 0; i < idx1.length; i++) {
@@ -57,9 +57,7 @@ extension SeriesOperations on Series {
         }
       }
        // Create a default index if both series have null indexes
-      List<dynamic>? resultIndex = self.index?.toList() ?? 
-                                  (self.index == null && other.index == null ? 
-                                   List.generate(self.length, (i) => i) : null);
+      List<dynamic>? resultIndex = self.index.toList();
       
       return Series(resultData, name: "(${self.name} $operationSymbol ${other.name})", index: resultIndex);
     } else {
@@ -81,13 +79,13 @@ extension SeriesOperations on Series {
       // However, the problem implies if indexes are different, we use union.
       // If one is null/empty, its effective index for union purposes is its default 0..N-1 range.
 
-      List<dynamic> selfEffectiveIndex = self.index ?? List.generate(self.length, (i) => i);
-      List<dynamic> otherEffectiveIndex = other.index ?? List.generate(other.length, (i) => i);
+      List<dynamic> selfEffectiveIndex = self.index;
+      List<dynamic> otherEffectiveIndex = other.index;
 
       addToUnion(selfEffectiveIndex);
       addToUnion(otherEffectiveIndex);
       
-      if (unionIndex.isEmpty && (self.length > 0 || other.length > 0) && (self.index == null && other.index == null) ) {
+      if (unionIndex.isEmpty && (self.length > 0 || other.length > 0) && (self.index.isEmpty && other.index.isEmpty)) {
           // This case might arise if both have null indexes but different lengths.
           // The problem statement implies element-wise for identical indexes OR null/empty indexes IF lengths also match.
           // If lengths don't match and indexes are null, it's ambiguous.
@@ -95,7 +93,7 @@ extension SeriesOperations on Series {
           // If unionIndex is still empty here, it implies both series might be empty or had null/empty incompatible indexes.
           // Let's default to using integer indices if union is empty but data isn't.
           int maxLen = max(self.length, other.length);
-          if (maxLen > 0 && (self.index == null || self.index!.isEmpty) && (other.index == null || other.index!.isEmpty)) {
+          if (maxLen > 0 && self.index.isEmpty && other.index.isEmpty) {
              unionIndex = List.generate(maxLen, (i) => i);
           }
       }

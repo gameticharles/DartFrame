@@ -33,7 +33,7 @@ class SeriesDateTimeAccessor {
     return Series(
       resultData,
       name: '${_series.name}_$componentName',
-      index: _series.index?.toList(), // Use toList() for safety
+      index: _series.index.toList(), // Use toList() for safety
     );
   }
 

@@ -31,7 +31,7 @@ void main() {
     });
 
     test('nunique on empty series', () {
-      final s = Series<int>([], name: 'empty');
+      final s = Series([], name: 'empty');
       expect(s.nunique(), 0);
     });
 
@@ -72,24 +72,12 @@ void main() {
     });
 
     test('valueCounts with sort=false', () {
-      final s = Series(['c', 'a', 'b', 'a', 'c', 'a'], name: 'letters'); // c, a, b, a, c, a
-      final counts = s.valueCounts(sort: false);
-      // Order might depend on map iteration order if not sorted.
-      // For stability in tests, it's better to check if the map content is correct.
-      // Or, if sort=false implies original appearance order of unique keys, that's harder.
-      // Pandas: when sort=False, the resulting Series is NOT sorted by frequency.
-      // The order of the items is the order in which they appear in the original Series.
-      // Current impl: sorts by key if sort=false due to Map.entries.toList() behavior.
-      // Let's assume for now it sorts by key if sort=false.
-      // This means 'a':3, 'b':1, 'c':2 -> index ['a', 'b', 'c'], data [3,1,2]
-      // The current impl of valueCounts sorts by value (count) if sort=true.
-      // If sort=false, it uses the natural order of keys from the map.
-      // Let's test current behavior:
+      
       final sUnsorted = Series(['z', 'a', 'z', 'b', 'a', 'z'], name: 'unsorted_val_counts');
       final countsUnsorted = sUnsorted.valueCounts(sort: false);
       // Map: {'z':3, 'a':2, 'b':1}. Keys: 'z', 'a', 'b'. Sorted keys: 'a', 'b', 'z'
-      expect(countsUnsorted.index, equals(['a', 'b', 'z']));
-      expect(countsUnsorted.data, equals([2, 1, 3]));
+      expect(countsUnsorted.index, equals(['z', 'a', 'b']));
+      expect(countsUnsorted.data, equals([3, 2, 1]));
     });
 
     test('valueCounts with ascending=true', () {
@@ -126,7 +114,7 @@ void main() {
     });
 
     test('valueCounts on empty series', () {
-      final s = Series<String>([], name: 'empty_vc');
+      final s = Series([], name: 'empty_vc');
       final counts = s.valueCounts();
       expect(counts.data, isEmpty);
       expect(counts.index, isEmpty);
@@ -204,12 +192,12 @@ void main() {
     });
     
     test('isna on empty series', () {
-      final s = Series<int>([], name: 'empty_isna');
+      final s = Series([], name: 'empty_isna');
       expect(s.isna().data, isEmpty);
     });
 
     test('notna on empty series', () {
-      final s = Series<int>([], name: 'empty_notna');
+      final s = Series([], name: 'empty_notna');
       expect(s.notna().data, isEmpty);
     });
   });

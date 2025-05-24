@@ -5,10 +5,10 @@ void main() {
   // Define a custom missing value marker for tests that need it
   const missingMarker = -999;
 
-  group('Series.sort_values() tests', () {
+  group('Series.sortValues() tests', () {
     test('sorts numeric series ascending', () {
       final s = Series([3, 1, 4, 1, 5, 9, 2, 6], name: 'numbers');
-      final sortedS = s.sort_values();
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals([1, 1, 2, 3, 4, 5, 6, 9]));
       expect(sortedS.name, equals('numbers'));
       // Default index should be reset and correspond to new order
@@ -17,35 +17,35 @@ void main() {
 
     test('sorts numeric series descending', () {
       final s = Series([3, 1, 4, 1, 5, 9, 2, 6], name: 'numbers');
-      final sortedS = s.sort_values(ascending: false);
+      final sortedS = s.sortValues(ascending: false);
       expect(sortedS.data, equals([9, 6, 5, 4, 3, 2, 1, 1]));
       expect(sortedS.index, equals([5, 7, 4, 2, 0, 6, 1, 3]));
     });
 
     test('sorts string series', () {
       final s = Series(['banana', 'apple', 'cherry'], name: 'fruits');
-      final sortedS = s.sort_values();
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals(['apple', 'banana', 'cherry']));
       expect(sortedS.index, equals([1, 0, 2]));
     });
 
     test('handles naPosition="first"', () {
       final s = Series([3, null, 1, 4, null, 2], name: 'data_with_nulls');
-      final sortedS = s.sort_values(naPosition: 'first');
+      final sortedS = s.sortValues(naPosition: 'first');
       expect(sortedS.data, equals([null, null, 1, 2, 3, 4]));
       expect(sortedS.index, equals([1, 4, 2, 5, 0, 3]));
     });
 
     test('handles naPosition="last" (default)', () {
       final s = Series([3, null, 1, 4, null, 2], name: 'data_with_nulls');
-      final sortedS = s.sort_values(); // naPosition defaults to 'last'
+      final sortedS = s.sortValues(); // naPosition defaults to 'last'
       expect(sortedS.data, equals([1, 2, 3, 4, null, null]));
       expect(sortedS.index, equals([2, 5, 0, 3, 1, 4]));
     });
     
     test('sorts with custom index', () {
       final s = Series([10, 30, 20], name: 'vals', index: ['a', 'b', 'c']);
-      final sortedS = s.sort_values();
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals([10, 20, 30]));
       expect(sortedS.index, equals(['a', 'c', 'b']));
     });
@@ -55,7 +55,7 @@ void main() {
       Series s = df['col1'];
       s.setParent(df, 'col1'); // Manually set parent for testing replaceMissingValueWith
 
-      final sortedS = s.sort_values(naPosition: 'first');
+      final sortedS = s.sortValues(naPosition: 'first');
       expect(sortedS.data, equals([missingMarker, missingMarker, 5, 10, 20]));
       expect(sortedS.index, equals([1, 4, 2, 0, 3]));
     });
@@ -65,21 +65,21 @@ void main() {
       Series s = df['col1'];
       s.setParent(df, 'col1');
 
-      final sortedS = s.sort_values(ascending: true, naPosition: 'last');
+      final sortedS = s.sortValues(ascending: true, naPosition: 'last');
       expect(sortedS.data, equals([5, 10, 20, missingMarker, missingMarker]));
       expect(sortedS.index, equals([2, 0, 3, 1, 4]));
     });
 
     test('sorts empty series', () {
-      final s = Series<int>([], name: 'empty');
-      final sortedS = s.sort_values();
+      final s = Series([], name: 'empty');
+      final sortedS = s.sortValues();
       expect(sortedS.data, isEmpty);
       expect(sortedS.index, isEmpty);
     });
 
     test('sorts series with all same values', () {
       final s = Series([5, 5, 5], name: 'fives', index: [0,1,2]);
-      final sortedS = s.sort_values();
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals([5, 5, 5]));
       // Order of original indices for equal values can be stable or implementation-dependent.
       // Pandas keeps original order for equal elements. Let's assume stable sort for indices.
@@ -88,49 +88,42 @@ void main() {
     
     test('sorts series with mixed comparable types (numbers)', () {
       final s = Series([10, 1.0, 20.5, 2], name: 'mixed_numbers');
-      final sortedS = s.sort_values();
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals([1.0, 2, 10, 20.5]));
       expect(sortedS.index, equals([1,3,0,2]));
     });
 
     // Test with a mix of types that might not be directly comparable by default Comparable.
-    // The current sort_values implementation has a try-catch that returns 0 (maintains order)
+    // The current sortValues implementation has a try-catch that returns 0 (maintains order)
     // for non-Comparable types or comparison errors.
     test('sorts series with non-directly comparable types (maintains order for uncomparables)', () {
       final s = Series([10, 'apple', 5, 'banana'], name: 'mixed_types', index: ['a', 'b', 'c', 'd']);
-      // Expected behavior: numbers sort amongst themselves, strings amongst themselves.
-      // Relative order of numbers vs strings depends on internal stability or type checks not explicitly defined as primary sort criteria.
-      // Current impl: sorts [10,5] -> [5,10] and ['apple', 'banana'] -> ['apple', 'banana']
-      // Then it concatenates them: [5, 10, 'apple', 'banana'] because of how it separates NaNs vs non-NaNs.
-      // For truly mixed types without a clear universal comparison, the behavior can be tricky.
-      // Pandas would raise a TypeError for sorting mixed types like int and str.
-      // Our current implementation's fallback (return 0) attempts to be stable for uncomparable parts.
-      // Let's test the current behavior.
-      final sortedS = s.sort_values();
+      
+      final sortedS = s.sortValues();
       expect(sortedS.data, equals([5, 10, 'apple', 'banana'])); // Based on current fallback
       expect(sortedS.index, equals(['c', 'a', 'b', 'd']));
     });
 
   });
 
-  group('Series.sort_index() tests', () {
+  group('Series.sortIndex() tests', () {
     test('sorts by numeric index ascending', () {
       final s = Series([10, 20, 30, 40], name: 'data', index: [3, 1, 4, 0]);
-      final sortedS = s.sort_index();
+      final sortedS = s.sortIndex();
       expect(sortedS.data, equals([40, 20, 10, 30]));
       expect(sortedS.index, equals([0, 1, 3, 4]));
     });
 
     test('sorts by numeric index descending', () {
       final s = Series([10, 20, 30, 40], name: 'data', index: [3, 1, 4, 0]);
-      final sortedS = s.sort_index(ascending: false);
+      final sortedS = s.sortIndex(ascending: false);
       expect(sortedS.data, equals([30, 10, 20, 40]));
       expect(sortedS.index, equals([4, 3, 1, 0]));
     });
 
     test('sorts by string index', () {
       final s = Series([1, 2, 3], name: 'items', index: ['c', 'a', 'b']);
-      final sortedS = s.sort_index();
+      final sortedS = s.sortIndex();
       expect(sortedS.data, equals([2, 3, 1]));
       expect(sortedS.index, equals(['a', 'b', 'c']));
     });
@@ -140,11 +133,11 @@ void main() {
       // So sorting by this index should effectively do nothing if ascending=true
       // or reverse the series if ascending=false.
       final s = Series([100, 200, 50], name: 'default_idx');
-      final sortedS = s.sort_index(); // Ascending default
+      final sortedS = s.sortIndex(); // Ascending default
       expect(sortedS.data, equals([100, 200, 50]));
       expect(sortedS.index, equals([0, 1, 2]));
 
-      final sortedSDesc = s.sort_index(ascending: false);
+      final sortedSDesc = s.sortIndex(ascending: false);
       expect(sortedSDesc.data, equals([50, 200, 100]));
       expect(sortedSDesc.index, equals([2, 1, 0]));
     });
@@ -153,33 +146,33 @@ void main() {
       // Behavior with duplicate indices: Pandas keeps the original relative order of data for duplicate index values.
       // The current List.sort in Dart is stable, so this should be the case.
       final s = Series([10, 20, 30, 40, 50], name: 'dupe_idx', index: ['b', 'a', 'c', 'a', 'b']);
-      final sortedS = s.sort_index();
+      final sortedS = s.sortIndex();
       // Expected: 'a's first (20, 40), then 'b's (10, 50), then 'c' (30)
       expect(sortedS.data, equals([20, 40, 10, 50, 30]));
       expect(sortedS.index, equals(['a', 'a', 'b', 'b', 'c']));
     });
 
     test('sorts empty series by index', () {
-      final s = Series<int>([], name: 'empty', index: []);
-      final sortedS = s.sort_index();
+      final s = Series([], name: 'empty', index: []);
+      final sortedS = s.sortIndex();
       expect(sortedS.data, isEmpty);
       expect(sortedS.index, isEmpty);
     });
     
     test('sorts index with null values (nulls first)', () {
       final s = Series([10, 20, 30, 40], name: 'idx_with_nulls', index: [1, null, 0, null]);
-      final sortedS = s.sort_index(); // Default null handling should place them first or as per Comparable
-      // Current sort_index has basic null handling (nulls first)
+      final sortedS = s.sortIndex(); // Default null handling should place them first or as per Comparable
+      // Current sortIndex has basic null handling (nulls first)
       expect(sortedS.data, equals([20, 40, 30, 10])); // data corresponding to sorted null, null, 0, 1
       expect(sortedS.index, equals([null, null, 0, 1]));
     });
 
   });
 
-  group('Series.reset_index() tests', () {
+  group('Series.resetIndex() tests', () {
     test('drop=true, returns Series with default index', () {
       final s = Series([10, 20, 30], name: 'mydata', index: ['a', 'b', 'c']);
-      final result = s.reset_index(drop: true);
+      final result = s.resetIndex(drop: true);
 
       expect(result, isA<Series>());
       expect(result.data, equals([10, 20, 30]));
@@ -190,41 +183,42 @@ void main() {
     test('drop=false, returns DataFrame, named Series, named index', () {
       final s = Series([10, 20, 30], name: 'mydata', index: ['x', 'y', 'z']);
       // If Series.index had a name property, it would be used.
-      // For now, the 'name' param in reset_index is for the new index column.
-      final result = s.reset_index(drop: false, name: 'idx_col');
+      // For now, the 'name' param in resetIndex is for the new index column.
+      final result = s.resetIndex(drop: false, name: 'idx_col');
+      print(result is DataFrame);
       
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['idx_col', 'mydata']));
-      expect(result['idx_col'].data, equals(['x', 'y', 'z']));
-      expect(result['mydata'].data, equals([10, 20, 30]));
+      expect(result.column('idx_col').data, equals(['x', 'y', 'z']));
+      expect(result.column('mydata').data, equals([10, 20, 30]));
       expect(result.index, equals([0, 1, 2])); // DataFrame gets its own default index
     });
 
     test('drop=false, unnamed Series (name=\'\'), default index column name', () {
       final s = Series([10, 20], name: '', index: ['a', 'b']);
-      final result = s.reset_index(drop: false); // name for index col defaults to 'index'
+      final result = s.resetIndex(drop: false); // name for index col defaults to 'index'
       
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['index', '0'])); // Unnamed series data col becomes '0'
-      expect(result['index'].data, equals(['a', 'b']));
-      expect(result['0'].data, equals([10, 20]));
+      expect(result.column('index').data, equals(['a', 'b']));
+      expect(result.column('0').data, equals([10, 20]));
     });
     
     test('drop=false, Series name is "0", index column name defaults to "index"', () {
       final s = Series([10, 20], name: '0', index: ['a', 'b']);
-      final result = s.reset_index(drop: false);
+      final result = s.resetIndex(drop: false);
       
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['index', '0']));
-      expect(result['index'].data, equals(['a', 'b']));
-      expect(result['0'].data, equals([10, 20]));
+      expect(result.column('index').data, equals(['a', 'b']));
+      expect(result.column('0').data, equals([10, 20]));
     });
 
     test('drop=false, Series name is "index", index column name also "index" (conflict)', () {
       // Current impl: if series name is 'index' and index col name (from param or default) is also 'index',
       // series data column becomes 'index_values'.
       final s = Series([10, 20], name: 'index', index: ['a', 'b']);
-      final result = s.reset_index(drop: false); // Index col name defaults to 'index'
+      final result = s.resetIndex(drop: false); // Index col name defaults to 'index'
       
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['index', 'index_values']));
@@ -235,30 +229,16 @@ void main() {
     test('drop=false, custom name for index column that conflicts with Series name', () {
       final s = Series([10, 20], name: 'mydata', index: ['a', 'b']);
       // If user forces index column name to be 'mydata'
-      final result = s.reset_index(drop: false, name: 'mydata');
-      // The current logic for conflict (`seriesDataColumnName = '${this.name}_values';`)
-      // only triggers if BOTH are 'index'. A more robust conflict resolution might be needed.
-      // For now, this will result in a DataFrame with two columns named 'mydata', which is problematic
-      // for DataFrame.fromMap if not handled by DataFrame's constructor or if map keys must be unique.
-      // Assuming DataFrame.fromMap would overwrite or Dart map would just have one entry.
-      // Let's test current behavior. The implementation tries to make seriesDataColumnName unique
-      // only if both default to 'index'. If user explicitly names them the same, it's on them.
-      // The DataFrame.fromMap will likely use the last one added if keys are same.
-      // Let's assume the user provides different names or accepts default behavior.
-      // The test for `name: 'mydata'` where `this.name` is also `mydata` is tricky.
-      // The current `reset_index` code doesn't explicitly prevent this for user-supplied names.
-      // It only auto-adjusts if `indexColumnName == 'index' && seriesDataColumnName == 'index'`.
-      // So, if `s.name = 'A'` and `name = 'A'`, then `dfData` would be `{'A': index, 'A': data}`.
-      // `Map.from()` would take the last one. So, 'A' would be `data`.
-      // This indicates a potential improvement area for `reset_index` for user-named conflicts.
-      // For now, we'll test the non-conflicting user-named scenario.
-      final resultNonConflict = s.reset_index(drop: false, name: 'new_idx_col');
+
+      //final result = s.resetIndex(drop: false, name: 'mydata');
+
+      final resultNonConflict = s.resetIndex(drop: false, name: 'new_idx_col');
       expect(resultNonConflict.columns, equals(['new_idx_col', 'mydata']));
     });
 
     test('drop=false, Series with default index', () {
       final s = Series([10, 20], name: 'data'); // Index is [0,1] by default
-      final result = s.reset_index(drop: false, name: 'original_idx');
+      final result = s.resetIndex(drop: false, name: 'original_idx');
       
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['original_idx', 'data']));
@@ -267,8 +247,8 @@ void main() {
     });
 
     test('empty series, drop=true', () {
-      final s = Series<int>([], name: 'empty', index: []);
-      final result = s.reset_index(drop: true);
+      final s = Series([], name: 'empty', index: []);
+      final result = s.resetIndex(drop: true);
       expect(result, isA<Series>());
       expect(result.data, isEmpty);
       expect(result.index, isEmpty);
@@ -276,8 +256,8 @@ void main() {
     });
 
     test('empty series, drop=false', () {
-      final s = Series<int>([], name: 'empty', index: []);
-      final result = s.reset_index(drop: false, name: 'idx');
+      final s = Series([], name: 'empty', index: []);
+      final result = s.resetIndex(drop: false, name: 'idx');
       expect(result, isA<DataFrame>());
       expect(result.columns, equals(['idx', 'empty'])); // or '0' if name was empty
       expect(result['idx'].data, isEmpty);
@@ -358,7 +338,7 @@ void main() {
     
     test('fillna with value takes precedence if method is invalid', () {
       final s = Series([1, null, 3], name: 'val_prec');
-      final filledS = s.fillna(value: 99, method: 'invalid_method'); // Should throw ArgumentError for invalid method
+      //final filledS = s.fillna(value: 99, method: 'invalid_method'); // Should throw ArgumentError for invalid method
       expect(() => s.fillna(value: 99, method: 'invalid_method'), throwsArgumentError);
       
       // If method is null, value is used

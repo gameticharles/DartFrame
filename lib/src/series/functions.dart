@@ -657,7 +657,7 @@ extension SeriesFunctions on Series {
   ///   or if duplicate bin edges are found and duplicates is 'raise'.
   Series qcut(
     dynamic q, {
-    List<dynamic>? labels,
+    dynamic labels,
     int precision = 3,
     String duplicates = 'raise',
     // bool retbins = false, // Deferred for now
