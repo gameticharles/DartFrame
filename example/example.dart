@@ -1,12 +1,6 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() async {
-  dataframe1(); // Execute dataframe1 function
-  dataframe2();
-
-  // Load the CSV data into a DataFrame and tries to convert string to the right type
-  // List input; each inner List is a row of data
-  // List input Using parameters to set column/row names
   final df = DataFrame([
     [1, 2, 3.0],
     [4, 5, 6],
@@ -36,6 +30,10 @@ void main() async {
   print(df);
 
   print(df['a'][2] * 2);
+
+  dataframe1();
+  dataframe2();
+
 }
 
 void dataframe1() async {

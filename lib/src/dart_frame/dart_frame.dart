@@ -672,7 +672,37 @@ class DataFrame {
   ///
   /// Throws an [IndexError] if the index is out of range.
   /// Throws an [ArgumentError] if the name does not match a column.
-  Series operator [](dynamic key) {
+  dynamic operator [](dynamic key) {
+    // Handle boolean Series for filtering (pandas-like indexing)
+    if (key is Series && key.data.every((element) => element is bool || element == null)) {
+      // Create a new DataFrame with only the rows where the Series value is true
+      List<List<dynamic>> filteredData = [];
+      List<dynamic> filteredIndex = [];
+      
+      // Ensure the Series length matches the DataFrame row count
+      if (key.length != rowCount) {
+        throw ArgumentError('Boolean Series length must match DataFrame row count');
+      }
+      
+      // Filter rows based on boolean values
+      for (int i = 0; i < rowCount; i++) {
+        if (key.data[i] == true) {
+          filteredData.add(List<dynamic>.from(_data[i]));
+          filteredIndex.add(index[i]);
+        }
+      }
+      
+      // Return a new DataFrame with the filtered data
+      return DataFrame._(
+        List<dynamic>.from(_columns),
+        filteredData,
+        index: filteredIndex,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: _missingDataIndicator,
+      );
+    }
+
     if (key is int) {
       if (key < 0 || key >= _columns.length) {
         throw IndexError.withLength(

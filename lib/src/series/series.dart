@@ -626,8 +626,9 @@ class Series<T> {
                 // Try next format
               }
             }
-            if (dtVal == null)
+            if (dtVal == null) {
               conversionError = true; // None of the inferred formats worked
+            }
           } else if (dtVal == null && !inferDatetimeFormat) {
             conversionError =
                 true; // DateTime.tryParse failed and not inferring

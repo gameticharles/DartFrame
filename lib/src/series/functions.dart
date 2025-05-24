@@ -676,7 +676,7 @@ extension SeriesFunctions on Series {
   /// Discretize variable into equal-sized buckets based on rank or based on sample quantiles.
   ///
   /// Parameters:
-  /// - q: Number of quantiles (int) or array of quantiles (`List<num>`, e.g., [0, .25, .5, .75, 1.] for quartiles).
+  /// - q: Number of quantiles (int) or array of quantiles (`List<num>`, e.g., `[0, .25, .5, .75, 1.]` for quartiles).
   /// - labels: Used as labels for the resulting bins. Must be of the same length as the
   ///   number of bins. If false, returns only integer indicators of the bins.
   ///   If null (default), labels are constructed from the bin edges.

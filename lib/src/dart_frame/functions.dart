@@ -1405,7 +1405,7 @@ extension DataFrameFunctions on DataFrame {
   ///           If specified, `leftOn` and `rightOn` must be null.
   ///   - `leftOn`: Column(s) from the left DataFrame to use as keys.
   ///   - `rightOn`: Column(s) from the right DataFrame to use as keys.
-  ///   - `suffixes`: Suffixes to apply to overlapping column names (default: ['_x', '_y']).
+  ///   - `suffixes`: Suffixes to apply to overlapping column names (default: `['_x', '_y']`).
   ///   - `indicator`: If `true`, adds a column to the output DataFrame called '_merge'
   ///                  with information on the source of each row ('left_only', 'right_only', 'both').
   ///                  If a String is provided, it is used as the name for the indicator column.

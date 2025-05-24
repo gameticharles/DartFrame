@@ -187,8 +187,9 @@ class DataFrameLocAccessor {
     } else {
       // Single row label
       List<int> intRowIdxList = _getIntRowIndices(rowSelector);
-      if (intRowIdxList.isEmpty)
+      if (intRowIdxList.isEmpty) {
         throw ArgumentError('Row label not found: $rowSelector');
+      }
       int intRowIdx = intRowIdxList.first;
 
       // Return a Series representing the row
@@ -212,8 +213,9 @@ class DataFrameLocAccessor {
 
     if (isSingleRow) {
       List<int> intRowIdxList = _getIntRowIndices(rowSelector);
-      if (intRowIdxList.isEmpty)
+      if (intRowIdxList.isEmpty) {
         throw ArgumentError('Row label not found: $rowSelector');
+      }
       int intRowIdx = intRowIdxList.first;
 
       if (colSelector is List) {
@@ -231,8 +233,9 @@ class DataFrameLocAccessor {
       } else {
         // df.loc(rowLabel, colLabel) -> Single value
         List<int> intColIdxList = _getIntColIndices(colSelector);
-        if (intColIdxList.isEmpty)
+        if (intColIdxList.isEmpty) {
           throw ArgumentError('Column label not found: $colSelector');
+        }
         int intColIdx = intColIdxList.first;
         return _df._data[intRowIdx][intColIdx];
       }
@@ -264,8 +267,9 @@ class DataFrameLocAccessor {
       } else {
         // df.loc([rowLabel1, rowLabel2], colLabel) -> Series
         List<int> intColIdxList = _getIntColIndices(colSelector);
-        if (intColIdxList.isEmpty)
+        if (intColIdxList.isEmpty) {
           throw ArgumentError('Column label not found: $colSelector');
+        }
         int intColIdx = intColIdxList.first;
 
         List<dynamic> columnData =

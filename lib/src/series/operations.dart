@@ -164,74 +164,302 @@ extension SeriesOperations on Series {
 
   /// **Addition (+) operator:**
   ///
-  /// Adds the corresponding elements of this Series and another Series,
-  /// handling index alignment.
-  Series operator +(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a + b, '+');
+  /// Adds the corresponding elements of this Series and another Series or a numeric value.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, adds that value to each element in the Series.
+  Series operator +(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val + other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name + $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a + b, '+');
+    }
+    throw Exception("Can only add Series to Series or num.");
   }
 
   /// **Subtraction (-) operator:**
   ///
-  /// Subtract the corresponding elements of this Series and another Series,
-  /// handling index alignment.
-  Series operator -(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a - b, '-');
+  /// Subtracts a numeric value or another Series from this Series.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, subtracts that value from each element in the Series.
+  Series operator -(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val - other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name - $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a - b, '-');
+    }
+    throw Exception("Can only subtract Series or num from Series.");
   }
 
   /// **Multiplication (*) operator:**
   ///
-  /// Multiplies the corresponding elements of this Series and another Series,
-  /// handling index alignment.
-  Series operator *(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a * b, '*');
+  /// Multiplies the elements of this Series by a numeric value or another Series.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, multiplies each element in the Series by that value.
+  Series operator *(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val * other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name * $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a * b, '*');
+    }
+    throw Exception("Can only multiply Series by Series or num.");
   }
 
   /// **Division (/) operator:**
   ///
-  /// Divides the corresponding elements of this Series and another Series,
-  /// handling index alignment and division by zero.
-  Series operator /(Series other) {
-    return _performArithmeticOperation(other, (a, b) {
-      if (b == 0) {
-        // According to requirements, return missingRep for errors like division by zero
-        return _getMissingRepresentation(this);
+  /// Divides the elements of this Series by a numeric value or another Series.
+  /// - If other is a Series, handles index alignment and division by zero.
+  /// - If other is a num, divides each element in the Series by that value.
+  Series operator /(dynamic other) {
+    if (other is num) {
+      if (other == 0) {
+        // Return a Series filled with missing values for division by zero
+        return Series(List.filled(length, _getMissingRepresentation(this)),
+            name: "$name / $other",
+            index: index.toList());
       }
-      return a / b;
-    }, '/');
+      
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val / other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name / $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) {
+        if (b == 0) {
+          // According to requirements, return missingRep for errors like division by zero
+          return _getMissingRepresentation(this);
+        }
+        return a / b;
+      }, '/');
+    }
+    throw Exception("Can only divide Series by Series or num.");
   }
 
   /// **Floor Division (~/) operator:**
   ///
-  /// Floor divides the corresponding elements of this Series and another Series,
-  /// handling index alignment and division by zero.
-  Series operator ~/(Series other) {
-    return _performArithmeticOperation(other, (a, b) {
-      if (b == 0) {
-        return _getMissingRepresentation(this);
+  /// Floor divides the elements of this Series by a numeric value or another Series.
+  /// - If other is a Series, handles index alignment and division by zero.
+  /// - If other is a num, floor divides each element in the Series by that value.
+  Series operator ~/(dynamic other) {
+    if (other is num) {
+      if (other == 0) {
+        // Return a Series filled with missing values for division by zero
+        return Series(List.filled(length, _getMissingRepresentation(this)),
+            name: "$name ~/ $other",
+            index: index.toList());
       }
-      return a ~/ b;
-    }, '~/');
+      
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val ~/ other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name ~/ $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) {
+        if (b == 0) {
+          return _getMissingRepresentation(this);
+        }
+        return a ~/ b;
+      }, '~/');
+    }
+    throw Exception("Can only floor divide Series by Series or num.");
   }
 
   /// **Modulo (%) operator:**
   ///
-  /// Computes the modulo of corresponding elements of this Series and another Series,
-  /// handling index alignment and division by zero.
-  Series operator %(Series other) {
-    return _performArithmeticOperation(other, (a, b) {
-      if (b == 0) {
-        return _getMissingRepresentation(this);
+  /// Computes the modulo of elements of this Series by a numeric value or another Series.
+  /// - If other is a Series, handles index alignment and division by zero.
+  /// - If other is a num, computes the modulo of each element in the Series by that value.
+  Series operator %(dynamic other) {
+    if (other is num) {
+      if (other == 0) {
+        // Return a Series filled with missing values for division by zero
+        return Series(List.filled(length, _getMissingRepresentation(this)),
+            name: "$name % $other",
+            index: index.toList());
       }
-      return a % b;
-    }, '%');
+      
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val % other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name % $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) {
+        if (b == 0) {
+          return _getMissingRepresentation(this);
+        }
+        return a % b;
+      }, '%');
+    }
+    throw Exception("Can only compute modulo of Series by Series or num.");
   }
 
   /// **Bitwise XOR (^) operator:**
   ///
-  /// Performs bitwise XOR on corresponding elements of this Series and another Series,
-  /// handling index alignment.
-  Series operator ^(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a ^ b, '^');
+  /// Performs bitwise XOR on elements of this Series with a numeric value or another Series.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, performs bitwise XOR of each element in the Series with that value.
+  Series operator ^(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val ^ other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name ^ $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a ^ b, '^');
+    }
+    throw Exception("Can only perform bitwise XOR on Series with Series or num.");
+  }
+
+  /// Bitwise AND (&) operator.
+  ///
+  /// Performs a bitwise AND operation between the elements of this Series and 
+  /// a numeric value or another Series.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, performs bitwise AND of each element with that value.
+  Series operator &(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val & other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name & $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a & b, '&');
+    }
+    throw Exception("Can only perform bitwise AND on Series with Series or num.");
+  }
+
+  /// Bitwise OR (|) operator.
+  ///
+  /// Performs a bitwise OR operation between the elements of this Series and 
+  /// a numeric value or another Series.
+  /// - If other is a Series, handles index alignment.
+  /// - If other is a num, performs bitwise OR of each element with that value.
+  Series operator |(dynamic other) {
+    if (other is num) {
+      List<dynamic> resultData = [];
+      for (int i = 0; i < length; i++) {
+        var val = data[i];
+        if (val == _getMissingRepresentation(this)) {
+          resultData.add(_getMissingRepresentation(this));
+        } else {
+          try {
+            resultData.add(val | other);
+          } catch (e) {
+            resultData.add(_getMissingRepresentation(this));
+          }
+        }
+      }
+      return Series(resultData, 
+          name: "$name | $other", 
+          index: index.toList());
+    } else if (other is Series) {
+      return _performArithmeticOperation(other, (a, b) => a | b, '|');
+    }
+    throw Exception("Can only perform bitwise OR on Series with Series or num.");
   }
 
   /// Less than (<) operator:
@@ -393,21 +621,6 @@ extension SeriesOperations on Series {
   // @override
   // int get hashCode => data.hashCode ^ name.hashCode;
 
-  /// Bitwise AND (&) operator.
-  ///
-  /// Performs a bitwise AND operation between the corresponding elements
-  /// of this Series and another Series, handling index alignment.
-  Series operator &(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a & b, '&');
-  }
-
-  /// Bitwise OR (|) operator.
-  ///
-  /// Performs a bitwise OR operation between the corresponding elements
-  /// of this Series and another Series, handling index alignment.
-  Series operator |(Series other) {
-    return _performArithmeticOperation(other, (a, b) => a | b, '|');
-  }
 
   /// Not equal to (!=) operator:
   ///
