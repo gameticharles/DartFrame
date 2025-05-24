@@ -128,5 +128,52 @@ void main() {
         expect(result.data, equals(['@pple', null, 'b@n@n@']));
       });
     });
+
+    group('str.split()', () {
+      test('split basic', () {
+        var s = Series(['a-b-c', 'x-y', null, 'z'], name: 'split_series');
+        var result = s.str.split('-');
+        expect(result.data, equals([['a', 'b', 'c'], ['x', 'y'], defaultMissingRep, ['z']]));
+        expect(result.name, equals('strings_split_-')); // Assuming Series.name for simplicity
+      });
+
+      test('split with limit (n)', () {
+        var s = Series(['a-b-c-d', 'x-y'], name: 'split_limit');
+        var result = s.str.split('-', n: 1); // Max 1 split, so 2 elements
+        expect(result.data, equals([['a', 'b-c-d'], ['x', 'y']]));
+      });
+      
+      test('split on non-string or missing', () {
+        var result = sMixedType.str.split('-');
+        expect(result.data, equals([[' One '], specificMissingRep, ['Three'], specificMissingRep, specificMissingRep]));
+      });
+    });
+    
+    group('str.match()', () {
+      test('match basic regex', () {
+        var s = Series(['apple1', 'banana2', 'orange3', null, 'grape4'], name: 'match_series');
+        var result = s.str.match(r'\d+'); // Match one or more digits
+        expect(result.data, equals(['1', '2', '3', defaultMissingRep, '4']));
+        expect(result.name, equals('strings_match_\\d+'));
+      });
+
+      test('match no match returns missing', () {
+        var s = Series(['apple', 'banana', 'orange'], name: 'no_match');
+        var result = s.str.match(r'\d+');
+        expect(result.data, equals([defaultMissingRep, defaultMissingRep, defaultMissingRep]));
+      });
+
+      test('match on non-string or missing', () {
+        var result = sMixedType.str.match(r'\d+');
+        expect(result.data, equals([specificMissingRep, specificMissingRep, specificMissingRep, specificMissingRep, specificMissingRep]));
+      });
+      
+      test('match extracts first group if regex has groups', () {
+        var s = Series(['item_123', 'product_45', 'detail_6'], name: 'group_match');
+        var result = s.str.match(RegExp(r'item_(\d+)')); // Capture group for digits after 'item_'
+        expect(result.data, equals(['123', defaultMissingRep, defaultMissingRep]));
+      });
+    });
+
   });
 }

@@ -5,18 +5,15 @@ class StringSeriesAccessor {
 
   StringSeriesAccessor(this._series);
 
-  dynamic _getMissingRep() {
-    return _series._parentDataFrame?.replaceMissingValueWith;
-  }
+  // No longer need _getMissingRep() here, will use _series._missingRepresentation directly.
 
   Series _applyStringOperation(
       dynamic Function(String) operation, String newNameSuffix, {dynamic defaultValueIfError}) {
-    final missingRep = _getMissingRep();
+    final missingRep = _series._missingRepresentation; // Use Series' helper
     List<dynamic> resultData = [];
 
     for (var value in _series.data) {
-      // Check if the value is the missing value placeholder
-      if (value == missingRep) {
+      if (_series._isMissing(value)) { // Use Series' helper
         resultData.add(missingRep);
       } else if (value is String) {
         try {
@@ -24,7 +21,7 @@ class StringSeriesAccessor {
         } catch (e) {
           resultData.add(defaultValueIfError ?? missingRep);
         }
-      } else {
+      } else { // Not a string and not identified as missing by _isMissing (e.g. a number)
         resultData.add(missingRep);
       }
     }
@@ -33,70 +30,107 @@ class StringSeriesAccessor {
 
   Series _applyStringBoolOperation(
       bool Function(String) operation, String newNameSuffix) {
-    final missingRep = _getMissingRep();
-    List<dynamic> resultData = []; // Will store bools or missingRep
+    final missingRep = _series._missingRepresentation; // Use Series' helper
+    List<dynamic> resultData = []; 
 
     for (var value in _series.data) {
-      // Check if the value is the missing value placeholder
-      if (value == missingRep) {
+      if (_series._isMissing(value)) { // Use Series' helper
         resultData.add(missingRep);
       } else if (value is String) {
         try {
           resultData.add(operation(value));
         } catch (e) {
-          resultData.add(missingRep); // Error during operation
+          resultData.add(missingRep); 
         }
-      } else {
-        resultData.add(missingRep); // Not a string or already a missing value
+      } else { // Not a string and not identified as missing
+        resultData.add(missingRep); 
       }
     }
     return Series(resultData, name: '${_series.name}$newNameSuffix', index: _series.index?.toList());
   }
 
-  /// Returns a new Series of ints representing the length of each string.
-  /// Non-string elements or nulls result in the Series' missing value representation.
+  /// Returns a new Series of `int`s representing the length of each string.
+  ///
+  /// For elements that are not strings or are missing (as defined by the
+  /// Series' context, i.e., `null` or `_parentDataFrame.replaceMissingValueWith`),
+  /// the result in the new Series will be the Series' missing value representation.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['apple', 'banana', null, 'kiwi'], name: 'fruits');
+  /// print(s.str.len());
+  /// // Output:
+  /// // fruits_len:
+  /// // 0       5
+  /// // 1       6
+  /// // 2       null (or df missing rep)
+  /// // 3       4
+  /// // Length: 4
+  /// // Type: int
+  /// ```
   Series len() {
     return _applyStringOperation((s) => s.length, '_len');
   }
 
   /// Returns a new Series with all strings converted to lowercase.
-  /// Non-strings/nulls remain as the Series' missing value representation.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.lower()`
   Series lower() {
     return _applyStringOperation((s) => s.toLowerCase(), '_lower');
   }
 
   /// Returns a new Series with all strings converted to uppercase.
-  /// Non-strings/nulls remain as the Series' missing value representation.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.upper()`
   Series upper() {
     return _applyStringOperation((s) => s.toUpperCase(), '_upper');
   }
 
   /// Returns a new Series with leading/trailing whitespace removed from each string.
-  /// Non-strings/nulls remain as the Series' missing value representation.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.strip()`
   Series strip() {
     return _applyStringOperation((s) => s.trim(), '_strip');
   }
 
-  /// Returns a new Series of bools indicating if each string starts with the given pattern.
-  /// Non-strings/nulls result in the Series' missing value representation.
+  /// Returns a new Series of bools indicating if each string starts with the given `pattern`.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.startswith('A')`
   Series startswith(String pattern) {
     return _applyStringBoolOperation((s) => s.startsWith(pattern), '_startswith_$pattern');
   }
 
-  /// Returns a new Series of bools indicating if each string ends with the given pattern.
-  /// Non-strings/nulls result in the Series' missing value representation.
+  /// Returns a new Series of bools indicating if each string ends with the given `pattern`.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.endswith('.com')`
   Series endswith(String pattern) {
     return _applyStringBoolOperation((s) => s.endsWith(pattern), '_endswith_$pattern');
   }
 
-  /// Returns a new Series of bools indicating if each string contains the given pattern.
-  /// Non-strings/nulls result in the Series' missing value representation.
+  /// Returns a new Series of bools indicating if each string contains the given `pattern`.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.contains('substring')`
   Series contains(String pattern) {
     return _applyStringBoolOperation((s) => s.contains(pattern), '_contains_$pattern');
   }
 
   /// Returns a new Series where occurrences of `from` (String or RegExp) in each string are replaced with `to`.
-  /// Non-strings/nulls remain as the Series' missing value representation.
+  ///
+  /// For elements that are not strings or are missing,
+  /// the result will be the Series' missing value representation.
+  /// Example: `series.str.replace('old', 'new')`
   Series replace(Pattern from, String to) {
     String fromPatternString = from is RegExp ? from.pattern : from.toString();
     // Sanitize fromPatternString for name to avoid issues with special characters if any
