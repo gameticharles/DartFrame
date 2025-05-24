@@ -79,10 +79,10 @@
 
 For more detailed information on specific classes and their functionalities, please refer to the following documents:
 
-- [DataFrame Documentation](./docs/dataframe.md)
-- [Series Documentation](./docs/series.md)
-- [GeoDataFrame Documentation](./docs/geodataframe.md)
-- [GeoSeries Documentation](./docs/geoseries.md)
+- [DataFrame Documentation](./doc/dataframe.md)
+- [Series Documentation](./doc/series.md)
+- [GeoDataFrame Documentation](./doc/geodataframe.md)
+- [GeoSeries Documentation](./doc/geoseries.md)
 
 ---
 
