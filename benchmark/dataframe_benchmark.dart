@@ -21,9 +21,11 @@ class DataFrameCreationFromMapBenchmark extends BenchmarkBase {
       if (j % 3 == 0) {
         dataMap['col_$j'] = List.generate(rows, (i) => _random.nextInt(rows));
       } else if (j % 3 == 1) {
-        dataMap['col_$j'] = List.generate(rows, (i) => _random.nextDouble() * rows);
+        dataMap['col_$j'] =
+            List.generate(rows, (i) => _random.nextDouble() * rows);
       } else {
-        dataMap['col_$j'] = List.generate(rows, (i) => 'val_${_random.nextInt(rows)}');
+        dataMap['col_$j'] =
+            List.generate(rows, (i) => 'val_${_random.nextInt(rows)}');
       }
     }
   }
@@ -130,7 +132,7 @@ class DataFrameColumnAssignmentBenchmark extends BenchmarkBase {
 
   DataFrameColumnAssignmentBenchmark(this.rows, this.cols)
       : super('DataFrame.columnAssignment(rows:$rows,cols:$cols)');
-  
+
   @override
   void setup() {
     final Map<String, List<dynamic>> dataMap = {};
@@ -138,7 +140,8 @@ class DataFrameColumnAssignmentBenchmark extends BenchmarkBase {
       dataMap['col_$j'] = List.generate(rows, (i) => i);
     }
     df = DataFrame.fromMap(dataMap);
-    seriesToAssign = Series(List.generate(rows, (i) => i + 100), name: 'newCol');
+    seriesToAssign =
+        Series(List.generate(rows, (i) => i + 100), name: 'newCol');
   }
 
   @override
@@ -161,7 +164,6 @@ class DataFrameRowAccessIlocBenchmark extends BenchmarkBase {
   late int indexToAccess;
   late List<int> indicesToAccess;
 
-
   DataFrameRowAccessIlocBenchmark(this.rows, this.cols)
       : super('DataFrame.rowAccess.iloc(rows:$rows,cols:$cols)');
 
@@ -173,9 +175,9 @@ class DataFrameRowAccessIlocBenchmark extends BenchmarkBase {
     }
     df = DataFrame.fromMap(dataMap);
     indexToAccess = rows ~/ 2;
-    indicesToAccess = [0, rows ~/ 2, rows -1];
+    indicesToAccess = [0, rows ~/ 2, rows - 1];
     if (rows < 3) indicesToAccess = [0];
-     if (rows == 0) indicesToAccess = []; // Handle empty case
+    if (rows == 0) indicesToAccess = []; // Handle empty case
   }
 
   @override
@@ -197,7 +199,7 @@ class DataFrameRowAccessLocBenchmark extends BenchmarkBase {
 
   DataFrameRowAccessLocBenchmark(this.rows, this.cols)
       : super('DataFrame.rowAccess.loc(rows:$rows,cols:$cols)');
-  
+
   @override
   void setup() {
     final Map<String, List<dynamic>> dataMap = {};
@@ -206,13 +208,14 @@ class DataFrameRowAccessLocBenchmark extends BenchmarkBase {
     }
     final index = List.generate(rows, (i) => 'idx_$i');
     df = DataFrame.fromMap(dataMap, index: index);
-    
+
     if (rows > 0) {
       labelToAccess = 'idx_${rows ~/ 2}';
-      labelsToAccess = ['idx_0', 'idx_${rows ~/2}', 'idx_${rows-1}'];
+      labelsToAccess = ['idx_0', 'idx_${rows ~/ 2}', 'idx_${rows - 1}'];
       if (rows < 3) labelsToAccess = ['idx_0'];
     } else {
-      labelToAccess = 'idx_dummy'; // Avoid null error, though it won't be accessed
+      labelToAccess =
+          'idx_dummy'; // Avoid null error, though it won't be accessed
       labelsToAccess = [];
     }
   }
@@ -234,42 +237,53 @@ class DataFrameGroupByOneColumnAggregateMeanBenchmark extends BenchmarkBase {
   final int numGroups;
   late DataFrame df;
 
-  DataFrameGroupByOneColumnAggregateMeanBenchmark(this.rows, this.cols, this.numGroups)
-      : super('DataFrame.groupBy.oneColMean(rows:$rows,cols:$cols,groups:$numGroups)');
+  DataFrameGroupByOneColumnAggregateMeanBenchmark(
+      this.rows, this.cols, this.numGroups)
+      : super(
+            'DataFrame.groupBy.oneColMean(rows:$rows,cols:$cols,groups:$numGroups)');
 
   @override
   void setup() {
     final Map<String, List<dynamic>> dataMap = {};
-    dataMap['groupKey'] = List.generate(rows, (i) => 'group_${_random.nextInt(numGroups)}');
-    for (int j = 1; j < cols; j++) { // One key, rest numerical
-      dataMap['valCol_$j'] = List.generate(rows, (i) => _random.nextDouble() * 100);
+    dataMap['groupKey'] =
+        List.generate(rows, (i) => 'group_${_random.nextInt(numGroups)}');
+    for (int j = 1; j < cols; j++) {
+      // One key, rest numerical
+      dataMap['valCol_$j'] =
+          List.generate(rows, (i) => _random.nextDouble() * 100);
     }
     df = DataFrame.fromMap(dataMap);
   }
 
   @override
   void run() {
-    if (rows == 0 || cols <=1 ) return;
+    if (rows == 0 || cols <= 1) return;
     df.groupBy('groupKey');
   }
 }
 
-class DataFrameGroupByMultipleColumnsAggregateSumBenchmark extends BenchmarkBase {
+class DataFrameGroupByMultipleColumnsAggregateSumBenchmark
+    extends BenchmarkBase {
   final int rows;
   final int cols;
   final int numGroups1;
   final int numGroups2;
   late DataFrame df;
 
-  DataFrameGroupByMultipleColumnsAggregateSumBenchmark(this.rows, this.cols, this.numGroups1, this.numGroups2)
-      : super('DataFrame.groupBy.multiColSum(rows:$rows,cols:$cols,g1:$numGroups1,g2:$numGroups2)');
-  
+  DataFrameGroupByMultipleColumnsAggregateSumBenchmark(
+      this.rows, this.cols, this.numGroups1, this.numGroups2)
+      : super(
+            'DataFrame.groupBy.multiColSum(rows:$rows,cols:$cols,g1:$numGroups1,g2:$numGroups2)');
+
   @override
   void setup() {
     final Map<String, List<dynamic>> dataMap = {};
-    dataMap['groupKey1'] = List.generate(rows, (i) => 'g1_${_random.nextInt(numGroups1)}');
-    dataMap['groupKey2'] = List.generate(rows, (i) => 'g2_${_random.nextInt(numGroups2)}');
-    for (int j = 2; j < cols; j++) { // Two keys, rest numerical
+    dataMap['groupKey1'] =
+        List.generate(rows, (i) => 'g1_${_random.nextInt(numGroups1)}');
+    dataMap['groupKey2'] =
+        List.generate(rows, (i) => 'g2_${_random.nextInt(numGroups2)}');
+    for (int j = 2; j < cols; j++) {
+      // Two keys, rest numerical
       dataMap['valCol_$j'] = List.generate(rows, (i) => _random.nextInt(100));
     }
     df = DataFrame.fromMap(dataMap);
@@ -278,7 +292,8 @@ class DataFrameGroupByMultipleColumnsAggregateSumBenchmark extends BenchmarkBase
   @override
   void run() {
     if (rows == 0 || cols <= 2) return;
-    df.groupByAgg(['groupKey1', 'groupKey2'],{'groupKey1': 'sum', 'groupKey2':'sum'});
+    df.groupByAgg(
+        ['groupKey1', 'groupKey2'], {'groupKey1': 'sum', 'groupKey2': 'sum'});
   }
 }
 
@@ -307,7 +322,7 @@ class DataFrameConcatenateRowsBenchmark extends BenchmarkBase {
 
   @override
   void run() {
-    df1.concatenate([df2],  axis: 0);
+    df1.concatenate([df2], axis: 0);
   }
 }
 
@@ -335,7 +350,7 @@ class DataFrameConcatenateColsBenchmark extends BenchmarkBase {
 
   @override
   void run() {
-    df1.concatenate([df2],  axis: 1);
+    df1.concatenate([df2], axis: 1);
   }
 }
 
@@ -372,12 +387,12 @@ class DataFrameFilterMultipleConditionsBenchmark extends BenchmarkBase {
 
   DataFrameFilterMultipleConditionsBenchmark(this.rows, this.cols)
       : super('DataFrame.filter.multiConditions(rows:$rows,cols:$cols)');
-  
+
   @override
   void setup() {
     final Map<String, List<dynamic>> dataMap = {};
-     dataMap['col_0'] = List.generate(rows, (i) => _random.nextInt(rows));
-     dataMap['col_1'] = List.generate(rows, (i) => _random.nextDouble() * rows);
+    dataMap['col_0'] = List.generate(rows, (i) => _random.nextInt(rows));
+    dataMap['col_1'] = List.generate(rows, (i) => _random.nextDouble() * rows);
     for (int j = 2; j < cols; j++) {
       dataMap['col_$j'] = List.generate(rows, (i) => 'val_$i');
     }
@@ -388,10 +403,10 @@ class DataFrameFilterMultipleConditionsBenchmark extends BenchmarkBase {
   void run() {
     if (rows == 0 || cols < 2) return;
     // ignore: unused_local_variable
-    var filtered = df[(df['col_0'] > (rows * 0.25)) & (df['col_1'] < (rows * 0.75))];
+    var filtered =
+        df[(df['col_0'] > (rows * 0.25)) & (df['col_1'] < (rows * 0.75))];
   }
 }
-
 
 void main() {
   final rowCounts = [1000, 10000, 100000, 1000000]; // Updated row counts
@@ -399,10 +414,9 @@ void main() {
   final groupCounts = [5, 50]; // Number of distinct groups
 
   // Add an empty DataFrame case for robustness checks on creation/access
-  DataFrameCreationFromMapBenchmark(0,0).report();
-  DataFrameRowAccessIlocBenchmark(0,0).report();
-  DataFrameRowAccessLocBenchmark(0,0).report();
-
+  DataFrameCreationFromMapBenchmark(0, 0).report();
+  DataFrameRowAccessIlocBenchmark(0, 0).report();
+  DataFrameRowAccessLocBenchmark(0, 0).report();
 
   for (var r in rowCounts) {
     for (var c in colCounts) {
@@ -410,34 +424,41 @@ void main() {
       DataFrameCreationFromRowsBenchmark(r, c).report();
       DataFrameCreationFromCSVStringBenchmark(r, c).report();
 
-      if (c > 0) { // Column access needs at least one column
+      if (c > 0) {
+        // Column access needs at least one column
         DataFrameColumnAccessByNameBenchmark(r, c).report();
         DataFrameColumnAssignmentBenchmark(r, c).report();
       }
-      
+
       //DataFrameRowAccessIlocBenchmark(r, c).report();
       DataFrameRowAccessLocBenchmark(r, c).report();
 
-      if (c > 1) { // Need at least one value column for aggregation
+      if (c > 1) {
+        // Need at least one value column for aggregation
         for (var g in groupCounts) {
-          if (g > 0 && g <= r) { // Number of groups should be positive and not exceed rows
-             DataFrameGroupByOneColumnAggregateMeanBenchmark(r, c, g).report();
-             if (c > 2 && g*g <=r) { // Need at least one value column for multi-group
-                DataFrameGroupByMultipleColumnsAggregateSumBenchmark(r, c, g, g).report();
-             }
+          if (g > 0 && g <= r) {
+            // Number of groups should be positive and not exceed rows
+            DataFrameGroupByOneColumnAggregateMeanBenchmark(r, c, g).report();
+            if (c > 2 && g * g <= r) {
+              // Need at least one value column for multi-group
+              DataFrameGroupByMultipleColumnsAggregateSumBenchmark(r, c, g, g)
+                  .report();
+            }
           }
         }
       }
-      
-      if (c > 0) { // Filtering needs at least one column
+
+      if (c > 0) {
+        // Filtering needs at least one column
         //DataFrameFilterOneConditionBenchmark(r, c).report();
       }
-      if (c > 1) { // Multi-condition filter needs at least two columns
+      if (c > 1) {
+        // Multi-condition filter needs at least two columns
         //DataFrameFilterMultipleConditionsBenchmark(r, c).report();
       }
     }
   }
-  
+
   // Concatenate benchmarks with specific sizes
   DataFrameConcatenateRowsBenchmark(5000, 10, 5000).report();
   DataFrameConcatenateColsBenchmark(5000, 5, 5).report();

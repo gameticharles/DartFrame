@@ -202,7 +202,7 @@ void main() async {
       ])
     ])
   ]);
-  final lengths = series.lengths;
+  final lengths = series.geom_length;
   print(lengths);
 
   // Create two GeoSeries

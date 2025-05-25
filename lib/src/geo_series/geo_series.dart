@@ -2,7 +2,8 @@ part of '../../dartframe.dart';
 
 /// A GeoSeries represents a column of geometry data.
 /// It extends Series with spatial functionality.
-class GeoSeries extends Series<GeoJSONGeometry?> { // Ensure Series type is GeoJSONGeometry?
+class GeoSeries extends Series<GeoJSONGeometry?> {
+  // Ensure Series type is GeoJSONGeometry?
   /// The coordinate reference system of the geometries.
   final String? crs;
 
@@ -28,7 +29,8 @@ class GeoSeries extends Series<GeoJSONGeometry?> { // Ensure Series type is GeoJ
         //.where((geom) => geom != null) // This was filtering out nulls, which might be valid data points
         .toList();
 
-    return GeoSeries(geometries.cast<GeoJSONGeometry?>(), crs: crs, name: name, index: index);
+    return GeoSeries(geometries.cast<GeoJSONGeometry?>(),
+        crs: crs, name: name, index: index);
   }
 
   /// Creates a GeoSeries of Point geometries from lists of x, y(, z) coordinates.
@@ -123,15 +125,16 @@ class GeoSeries extends Series<GeoJSONGeometry?> { // Ensure Series type is GeoJ
             result.add(feature.coordinates);
           } else if (feature is GeoJSONGeometryCollection) {
             // For GeometryCollection, maybe return a list of its geometries' coordinates or objects
-            result.add(feature.geometries.map((g) => g.toMap()).toList()); // Example: list of maps
-          }
-           else {
+            result.add(feature.geometries
+                .map((g) => g.toMap())
+                .toList()); // Example: list of maps
+          } else {
             // Default empty coordinates for unsupported geometry types
             result.add([]);
           }
         }
       } else {
-         result.add(null); // Preserve nulls
+        result.add(null); // Preserve nulls
       }
     }
 

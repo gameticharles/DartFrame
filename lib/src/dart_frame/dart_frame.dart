@@ -674,16 +674,18 @@ class DataFrame {
   /// Throws an [ArgumentError] if the name does not match a column.
   dynamic operator [](dynamic key) {
     // Handle boolean Series for filtering (pandas-like indexing)
-    if (key is Series && key.data.every((element) => element is bool || element == null)) {
+    if (key is Series &&
+        key.data.every((element) => element is bool || element == null)) {
       // Create a new DataFrame with only the rows where the Series value is true
       List<List<dynamic>> filteredData = [];
       List<dynamic> filteredIndex = [];
-      
+
       // Ensure the Series length matches the DataFrame row count
       if (key.length != rowCount) {
-        throw ArgumentError('Boolean Series length must match DataFrame row count');
+        throw ArgumentError(
+            'Boolean Series length must match DataFrame row count');
       }
-      
+
       // Filter rows based on boolean values
       for (int i = 0; i < rowCount; i++) {
         if (key.data[i] == true) {
@@ -691,7 +693,7 @@ class DataFrame {
           filteredIndex.add(index[i]);
         }
       }
-      
+
       // Return a new DataFrame with the filtered data
       return DataFrame._(
         List<dynamic>.from(_columns),

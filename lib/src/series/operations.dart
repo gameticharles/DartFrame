@@ -182,9 +182,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name + $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name + $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a + b, '+');
     }
@@ -211,9 +209,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name - $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name - $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a - b, '-');
     }
@@ -240,9 +236,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name * $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name * $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a * b, '*');
     }
@@ -259,10 +253,9 @@ extension SeriesOperations on Series {
       if (other == 0) {
         // Return a Series filled with missing values for division by zero
         return Series(List.filled(length, _getMissingRepresentation(this)),
-            name: "$name / $other",
-            index: index.toList());
+            name: "$name / $other", index: index.toList());
       }
-      
+
       List<dynamic> resultData = [];
       for (int i = 0; i < length; i++) {
         var val = data[i];
@@ -276,9 +269,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name / $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name / $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) {
         if (b == 0) {
@@ -301,10 +292,9 @@ extension SeriesOperations on Series {
       if (other == 0) {
         // Return a Series filled with missing values for division by zero
         return Series(List.filled(length, _getMissingRepresentation(this)),
-            name: "$name ~/ $other",
-            index: index.toList());
+            name: "$name ~/ $other", index: index.toList());
       }
-      
+
       List<dynamic> resultData = [];
       for (int i = 0; i < length; i++) {
         var val = data[i];
@@ -318,9 +308,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name ~/ $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name ~/ $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) {
         if (b == 0) {
@@ -342,10 +330,9 @@ extension SeriesOperations on Series {
       if (other == 0) {
         // Return a Series filled with missing values for division by zero
         return Series(List.filled(length, _getMissingRepresentation(this)),
-            name: "$name % $other",
-            index: index.toList());
+            name: "$name % $other", index: index.toList());
       }
-      
+
       List<dynamic> resultData = [];
       for (int i = 0; i < length; i++) {
         var val = data[i];
@@ -359,9 +346,7 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name % $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name % $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) {
         if (b == 0) {
@@ -393,18 +378,17 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name ^ $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name ^ $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a ^ b, '^');
     }
-    throw Exception("Can only perform bitwise XOR on Series with Series or num.");
+    throw Exception(
+        "Can only perform bitwise XOR on Series with Series or num.");
   }
 
   /// Bitwise AND (&) operator.
   ///
-  /// Performs a bitwise AND operation between the elements of this Series and 
+  /// Performs a bitwise AND operation between the elements of this Series and
   /// a numeric value or another Series.
   /// - If other is a Series, handles index alignment.
   /// - If other is a num, performs bitwise AND of each element with that value.
@@ -423,18 +407,17 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name & $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name & $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a & b, '&');
     }
-    throw Exception("Can only perform bitwise AND on Series with Series or num.");
+    throw Exception(
+        "Can only perform bitwise AND on Series with Series or num.");
   }
 
   /// Bitwise OR (|) operator.
   ///
-  /// Performs a bitwise OR operation between the elements of this Series and 
+  /// Performs a bitwise OR operation between the elements of this Series and
   /// a numeric value or another Series.
   /// - If other is a Series, handles index alignment.
   /// - If other is a num, performs bitwise OR of each element with that value.
@@ -453,13 +436,12 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, 
-          name: "$name | $other", 
-          index: index.toList());
+      return Series(resultData, name: "$name | $other", index: index.toList());
     } else if (other is Series) {
       return _performArithmeticOperation(other, (a, b) => a | b, '|');
     }
-    throw Exception("Can only perform bitwise OR on Series with Series or num.");
+    throw Exception(
+        "Can only perform bitwise OR on Series with Series or num.");
   }
 
   /// Less than (<) operator:
@@ -620,7 +602,6 @@ extension SeriesOperations on Series {
   // /// Override hashCode to be consistent with the overridden '==' operator
   // @override
   // int get hashCode => data.hashCode ^ name.hashCode;
-
 
   /// Not equal to (!=) operator:
   ///

@@ -10,7 +10,8 @@ class SeriesCreationIntBenchmark extends BenchmarkBase {
   final int size;
   late List<int> data;
 
-  SeriesCreationIntBenchmark(this.size) : super('Series.creation.int(size:$size)');
+  SeriesCreationIntBenchmark(this.size)
+      : super('Series.creation.int(size:$size)');
 
   @override
   void setup() {
@@ -27,7 +28,8 @@ class SeriesCreationDoubleBenchmark extends BenchmarkBase {
   final int size;
   late List<double> data;
 
-  SeriesCreationDoubleBenchmark(this.size) : super('Series.creation.double(size:$size)');
+  SeriesCreationDoubleBenchmark(this.size)
+      : super('Series.creation.double(size:$size)');
 
   @override
   void setup() {
@@ -44,7 +46,8 @@ class SeriesCreationStringBenchmark extends BenchmarkBase {
   final int size;
   late List<String> data;
 
-  SeriesCreationStringBenchmark(this.size) : super('Series.creation.string(size:$size)');
+  SeriesCreationStringBenchmark(this.size)
+      : super('Series.creation.string(size:$size)');
 
   @override
   void setup() {
@@ -62,11 +65,13 @@ class SeriesCreationDateTimeBenchmark extends BenchmarkBase {
   late List<DateTime> data;
   final DateTime start = DateTime(2020, 1, 1);
 
-  SeriesCreationDateTimeBenchmark(this.size) : super('Series.creation.dateTime(size:$size)');
+  SeriesCreationDateTimeBenchmark(this.size)
+      : super('Series.creation.dateTime(size:$size)');
 
   @override
   void setup() {
-    data = List.generate(size, (i) => start.add(Duration(days: _random.nextInt(365 * 5))));
+    data = List.generate(
+        size, (i) => start.add(Duration(days: _random.nextInt(365 * 5))));
   }
 
   @override
@@ -80,7 +85,8 @@ class SeriesCreationWithIndexBenchmark extends BenchmarkBase {
   late List<int> data;
   late List<String> index;
 
-  SeriesCreationWithIndexBenchmark(this.size) : super('Series.creation.withIndex(size:$size)');
+  SeriesCreationWithIndexBenchmark(this.size)
+      : super('Series.creation.withIndex(size:$size)');
 
   @override
   void setup() {
@@ -99,7 +105,8 @@ class SeriesSortValuesIntBenchmark extends BenchmarkBase {
   final int size;
   late Series s;
 
-  SeriesSortValuesIntBenchmark(this.size) : super('Series.sortValues.int(size:$size)');
+  SeriesSortValuesIntBenchmark(this.size)
+      : super('Series.sortValues.int(size:$size)');
 
   @override
   void setup() {
@@ -117,11 +124,13 @@ class SeriesSortValuesStringBenchmark extends BenchmarkBase {
   final int size;
   late Series s;
 
-  SeriesSortValuesStringBenchmark(this.size) : super('Series.sortValues.string(size:$size)');
+  SeriesSortValuesStringBenchmark(this.size)
+      : super('Series.sortValues.string(size:$size)');
 
   @override
   void setup() {
-    final data = List.generate(size, (i) => 'val_${_random.nextInt(size * 100)}');
+    final data =
+        List.generate(size, (i) => 'val_${_random.nextInt(size * 100)}');
     s = Series(data, name: 'sort_string');
   }
 
@@ -135,12 +144,15 @@ class SeriesSortValuesWithMissingBenchmark extends BenchmarkBase {
   final int size;
   late Series s;
 
-  SeriesSortValuesWithMissingBenchmark(this.size) : super('Series.sortValues.withMissing(size:$size)');
+  SeriesSortValuesWithMissingBenchmark(this.size)
+      : super('Series.sortValues.withMissing(size:$size)');
 
   @override
   void setup() {
     final data = List<int?>.generate(size, (i) {
-      return _random.nextDouble() < 0.2 ? null : _random.nextInt(size * 10); // 20% missing
+      return _random.nextDouble() < 0.2
+          ? null
+          : _random.nextInt(size * 10); // 20% missing
     });
     s = Series(data, name: 'sort_missing_int');
   }
@@ -161,7 +173,8 @@ class SeriesSortIndexBenchmark extends BenchmarkBase {
   @override
   void setup() {
     final data = List.generate(size, (i) => i);
-    var stringIndex = List.generate(size, (i) => 'idx_${_random.nextInt(size * 10)}');
+    var stringIndex =
+        List.generate(size, (i) => 'idx_${_random.nextInt(size * 10)}');
     // No need to shuffle stringIndex explicitly for benchmark, as sortIndex sorts it.
     s = Series(data, name: 'sort_by_index', index: stringIndex);
   }
@@ -177,7 +190,8 @@ class SeriesApplySimpleMathBenchmark extends BenchmarkBase {
   final int size;
   late Series s;
 
-  SeriesApplySimpleMathBenchmark(this.size) : super('Series.apply.simpleMath(size:$size)');
+  SeriesApplySimpleMathBenchmark(this.size)
+      : super('Series.apply.simpleMath(size:$size)');
 
   @override
   void setup() {
@@ -194,7 +208,8 @@ class SeriesApplyToStringBenchmark extends BenchmarkBase {
   final int size;
   late Series s;
 
-  SeriesApplyToStringBenchmark(this.size) : super('Series.apply.toString(size:$size)');
+  SeriesApplyToStringBenchmark(this.size)
+      : super('Series.apply.toString(size:$size)');
 
   @override
   void setup() {
@@ -214,11 +229,13 @@ class SeriesIsInBenchmark extends BenchmarkBase {
   late Series s;
   late List<int> lookupValues;
 
-  SeriesIsInBenchmark(this.size, this.lookupSize) : super('Series.isin(size:$size,lookups:$lookupSize)');
+  SeriesIsInBenchmark(this.size, this.lookupSize)
+      : super('Series.isin(size:$size,lookups:$lookupSize)');
 
   @override
   void setup() {
-    s = Series(List.generate(size, (i) => _random.nextInt(size * 2)), name: 'isin_series');
+    s = Series(List.generate(size, (i) => _random.nextInt(size * 2)),
+        name: 'isin_series');
     lookupValues = List.generate(lookupSize, (i) => _random.nextInt(size * 2));
   }
 
@@ -235,12 +252,15 @@ class SeriesFillNaFfillBenchmark extends BenchmarkBase {
   late Series s;
 
   SeriesFillNaFfillBenchmark(this.size, this.missingPercentage)
-      : super('Series.fillna.ffill(size:$size,missing:${(missingPercentage*100).toInt()}%)');
+      : super(
+            'Series.fillna.ffill(size:$size,missing:${(missingPercentage * 100).toInt()}%)');
 
   @override
   void setup() {
     final data = List<double?>.generate(size, (i) {
-      return _random.nextDouble() < missingPercentage ? null : _random.nextDouble() * 100;
+      return _random.nextDouble() < missingPercentage
+          ? null
+          : _random.nextDouble() * 100;
     });
     s = Series(data, name: 'fillna_ffill');
   }
@@ -257,12 +277,15 @@ class SeriesFillNaBfillBenchmark extends BenchmarkBase {
   late Series s;
 
   SeriesFillNaBfillBenchmark(this.size, this.missingPercentage)
-      : super('Series.fillna.bfill(size:$size,missing:${(missingPercentage*100).toInt()}%)');
+      : super(
+            'Series.fillna.bfill(size:$size,missing:${(missingPercentage * 100).toInt()}%)');
 
   @override
   void setup() {
     final data = List<double?>.generate(size, (i) {
-      return _random.nextDouble() < missingPercentage ? null : _random.nextDouble() * 100;
+      return _random.nextDouble() < missingPercentage
+          ? null
+          : _random.nextDouble() * 100;
     });
     s = Series(data, name: 'fillna_bfill');
   }
@@ -283,7 +306,8 @@ class SeriesDtYearBenchmark extends BenchmarkBase {
 
   @override
   void setup() {
-    final data = List.generate(size, (i) => baseDate.add(Duration(days: _random.nextInt(10000))));
+    final data = List.generate(
+        size, (i) => baseDate.add(Duration(days: _random.nextInt(10000))));
     s = Series(data, name: 'dt_series');
   }
 
@@ -298,11 +322,13 @@ class SeriesDtDayOfWeekBenchmark extends BenchmarkBase {
   late Series s;
   final DateTime baseDate = DateTime(2000, 1, 1);
 
-  SeriesDtDayOfWeekBenchmark(this.size) : super('Series.dt.weekday(size:$size)');
+  SeriesDtDayOfWeekBenchmark(this.size)
+      : super('Series.dt.weekday(size:$size)');
 
   @override
   void setup() {
-    final data = List.generate(size, (i) => baseDate.add(Duration(days: _random.nextInt(10000))));
+    final data = List.generate(
+        size, (i) => baseDate.add(Duration(days: _random.nextInt(10000))));
     s = Series(data, name: 'dt_series');
   }
 
@@ -321,7 +347,10 @@ class SeriesDtDateBenchmark extends BenchmarkBase {
 
   @override
   void setup() {
-    final data = List.generate(size, (i) => baseDate.add(Duration(days: _random.nextInt(10000), hours: _random.nextInt(24))));
+    final data = List.generate(
+        size,
+        (i) => baseDate.add(Duration(
+            days: _random.nextInt(10000), hours: _random.nextInt(24))));
     s = Series(data, name: 'dt_series');
   }
 
@@ -368,13 +397,11 @@ class SeriesAddSeriesBenchmark extends BenchmarkBase {
   }
 }
 
-
 void main() {
   // Configuration parameters
   final sizes = [100, 1000, 10000, 100000, 1000000];
   final missingPercentages = [0.1, 0.5]; // 10%, 50%
- 
-  
+
   // Group benchmarks by category for better organization
   runCreationBenchmarks(sizes);
   runSortingBenchmarks(sizes);
@@ -410,13 +437,14 @@ void runSortingBenchmarks(List<int> sizes) {
 // Transformation benchmarks
 void runTransformationBenchmarks(List<int> sizes) {
   print('\n=== SERIES TRANSFORMATION BENCHMARKS ===');
-   final lookupSizes = [10, 100];
+  final lookupSizes = [10, 100];
   for (var size in sizes) {
     SeriesApplySimpleMathBenchmark(size).report();
     SeriesApplyToStringBenchmark(size).report();
-    
+
     // IsIn benchmarks with different lookup sizes
-    final validLookupSizes = lookupSizes.where((lookupSize) => lookupSize <= size).toList();
+    final validLookupSizes =
+        lookupSizes.where((lookupSize) => lookupSize <= size).toList();
     for (var lookupSize in validLookupSizes) {
       SeriesIsInBenchmark(size, lookupSize).report();
     }
@@ -424,7 +452,8 @@ void runTransformationBenchmarks(List<int> sizes) {
 }
 
 // Missing value handling benchmarks
-void runMissingValueBenchmarks(List<int> sizes, List<double> missingPercentages) {
+void runMissingValueBenchmarks(
+    List<int> sizes, List<double> missingPercentages) {
   print('\n=== SERIES MISSING VALUE BENCHMARKS ===');
   for (var size in sizes) {
     for (var percentage in missingPercentages) {
