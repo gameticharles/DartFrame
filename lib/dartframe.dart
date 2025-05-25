@@ -13,12 +13,17 @@ import 'src/file_helper/file_io.dart';
 
 export 'package:geojson_vi/geojson_vi.dart';
 
+import 'package:ffi/ffi.dart' as ffi;
+import 'src/geos_ffi/geos_bindings.dart';
+import 'src/geos_ffi/geos_utils.dart';
+
 part 'src/utils/utils.dart';
 
 part 'src/geo_series/geo_series.dart';
 part 'src/geo_series/functions.dart';
 //Geoprocess
 part 'src/geo_series/geo_processes/buffer.dart';
+part 'src/geo_series/geo_processes/functions.dart';
 
 part 'src/geo_dart_frame/geodata_frame.dart';
 part 'src/geo_dart_frame/functions.dart';

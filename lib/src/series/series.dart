@@ -1358,4 +1358,6 @@ class Series<T> {
     }
     return uniqueValues;
   }
+
+  List<dynamic> toList() => data;
 }

@@ -15,6 +15,7 @@ dependencies:
   geoxml: ^2.6.1
   web: ^1.1.1
   r_tree: ^3.0.1
+  ffi: ^2.1.4
 
 dev_dependencies:
   benchmark_harness: ^2.3.1
