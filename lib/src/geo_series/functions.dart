@@ -366,110 +366,108 @@ extension GeoSeriesFunctions on GeoSeries {
   GeoSeries get centroid {
     final centroids = data.map((geom) {
       if (geom == null) return GeoJSONPoint([0, 0]);
-      if (geom is GeoJSONGeometry) {
-        if (geom is GeoJSONPoint) {
-          return geom;
-        } else if (geom is GeoJSONPolygon) {
-          if (geom.coordinates.isEmpty ||
-              geom.coordinates[0].isEmpty ||
-              geom.coordinates[0].length < 3) {
-            return GeoJSONPoint([0, 0]);
-          }
-          final coords = geom.coordinates[0];
-          double sumX = 0, sumY = 0;
-          int numPoints = 0;
-          for (int k = 0; k < coords.length - 1; k++) {
-            sumX += coords[k][0];
-            sumY += coords[k][1];
-            numPoints++;
-          }
-          if (!_arePointsEqual(coords.first, coords.last) ||
-              coords.length - 1 == 0) {
-            if (coords.isNotEmpty && numPoints < coords.length) {
-              sumX += coords.last[0];
-              sumY += coords.last[1];
-              numPoints++;
-            }
-          }
-          if (numPoints == 0) return GeoJSONPoint([0, 0]);
-          return GeoJSONPoint([sumX / numPoints, sumY / numPoints]);
-        } else if (geom is GeoJSONLineString) {
-          final coords = geom.coordinates;
-          if (coords.isEmpty) return GeoJSONPoint([0, 0]);
-          double sumX = 0, sumY = 0;
-          for (var point in coords) {
-            sumX += point[0];
-            sumY += point[1];
-          }
-          return GeoJSONPoint([sumX / coords.length, sumY / coords.length]);
-        } else if (geom is GeoJSONMultiPoint) {
-          final coords = geom.coordinates;
-          if (coords.isEmpty) return GeoJSONPoint([0, 0]);
-          double sumX = 0, sumY = 0;
-          for (var point in coords) {
-            sumX += point[0];
-            sumY += point[1];
-          }
-          return GeoJSONPoint([sumX / coords.length, sumY / coords.length]);
-        } else if (geom is GeoJSONMultiLineString) {
-          final lineStrings = geom.coordinates;
-          if (lineStrings.isEmpty) return GeoJSONPoint([0, 0]);
-          double sumX = 0, sumY = 0;
-          int totalPoints = 0;
-          for (var lineString in lineStrings) {
-            if (lineString.isEmpty) continue;
-            for (var point in lineString) {
-              sumX += point[0];
-              sumY += point[1];
-              totalPoints++;
-            }
-          }
-          if (totalPoints > 0) {
-            return GeoJSONPoint([sumX / totalPoints, sumY / totalPoints]);
-          }
-          return GeoJSONPoint([0, 0]);
-        } else if (geom is GeoJSONMultiPolygon) {
-          final polygons = geom.coordinates;
-          if (polygons.isEmpty) return GeoJSONPoint([0, 0]);
-          double totalArea = 0;
-          double weightedSumX = 0;
-          double weightedSumY = 0;
-          for (var polygonRings in polygons) {
-            if (polygonRings.isNotEmpty && polygonRings[0].length >= 3) {
-              final coords = polygonRings[0];
-              double sumX = 0, sumY = 0;
-              int numPoints = 0;
-              for (int k = 0; k < coords.length - 1; k++) {
-                sumX += coords[k][0];
-                sumY += coords[k][1];
-                numPoints++;
-              }
-              if (!_arePointsEqual(coords.first, coords.last) ||
-                  coords.length - 1 == 0) {
-                if (coords.isNotEmpty && numPoints < coords.length) {
-                  sumX += coords.last[0];
-                  sumY += coords.last[1];
-                  numPoints++;
-                }
-              }
-              if (numPoints == 0) continue;
-              final centroidX = sumX / numPoints;
-              final centroidY = sumY / numPoints;
-              final currentPolygonArea =
-                  _calculatePolygonAreaForCentroid(polygonRings);
-              totalArea += currentPolygonArea;
-              weightedSumX += centroidX * currentPolygonArea;
-              weightedSumY += centroidY * currentPolygonArea;
-            }
-          }
-          if (totalArea > 0) {
-            return GeoJSONPoint(
-                [weightedSumX / totalArea, weightedSumY / totalArea]);
-          }
+      if (geom is GeoJSONPoint) {
+        return geom;
+      } else if (geom is GeoJSONPolygon) {
+        if (geom.coordinates.isEmpty ||
+            geom.coordinates[0].isEmpty ||
+            geom.coordinates[0].length < 3) {
           return GeoJSONPoint([0, 0]);
         }
+        final coords = geom.coordinates[0];
+        double sumX = 0, sumY = 0;
+        int numPoints = 0;
+        for (int k = 0; k < coords.length - 1; k++) {
+          sumX += coords[k][0];
+          sumY += coords[k][1];
+          numPoints++;
+        }
+        if (!_arePointsEqual(coords.first, coords.last) ||
+            coords.length - 1 == 0) {
+          if (coords.isNotEmpty && numPoints < coords.length) {
+            sumX += coords.last[0];
+            sumY += coords.last[1];
+            numPoints++;
+          }
+        }
+        if (numPoints == 0) return GeoJSONPoint([0, 0]);
+        return GeoJSONPoint([sumX / numPoints, sumY / numPoints]);
+      } else if (geom is GeoJSONLineString) {
+        final coords = geom.coordinates;
+        if (coords.isEmpty) return GeoJSONPoint([0, 0]);
+        double sumX = 0, sumY = 0;
+        for (var point in coords) {
+          sumX += point[0];
+          sumY += point[1];
+        }
+        return GeoJSONPoint([sumX / coords.length, sumY / coords.length]);
+      } else if (geom is GeoJSONMultiPoint) {
+        final coords = geom.coordinates;
+        if (coords.isEmpty) return GeoJSONPoint([0, 0]);
+        double sumX = 0, sumY = 0;
+        for (var point in coords) {
+          sumX += point[0];
+          sumY += point[1];
+        }
+        return GeoJSONPoint([sumX / coords.length, sumY / coords.length]);
+      } else if (geom is GeoJSONMultiLineString) {
+        final lineStrings = geom.coordinates;
+        if (lineStrings.isEmpty) return GeoJSONPoint([0, 0]);
+        double sumX = 0, sumY = 0;
+        int totalPoints = 0;
+        for (var lineString in lineStrings) {
+          if (lineString.isEmpty) continue;
+          for (var point in lineString) {
+            sumX += point[0];
+            sumY += point[1];
+            totalPoints++;
+          }
+        }
+        if (totalPoints > 0) {
+          return GeoJSONPoint([sumX / totalPoints, sumY / totalPoints]);
+        }
+        return GeoJSONPoint([0, 0]);
+      } else if (geom is GeoJSONMultiPolygon) {
+        final polygons = geom.coordinates;
+        if (polygons.isEmpty) return GeoJSONPoint([0, 0]);
+        double totalArea = 0;
+        double weightedSumX = 0;
+        double weightedSumY = 0;
+        for (var polygonRings in polygons) {
+          if (polygonRings.isNotEmpty && polygonRings[0].length >= 3) {
+            final coords = polygonRings[0];
+            double sumX = 0, sumY = 0;
+            int numPoints = 0;
+            for (int k = 0; k < coords.length - 1; k++) {
+              sumX += coords[k][0];
+              sumY += coords[k][1];
+              numPoints++;
+            }
+            if (!_arePointsEqual(coords.first, coords.last) ||
+                coords.length - 1 == 0) {
+              if (coords.isNotEmpty && numPoints < coords.length) {
+                sumX += coords.last[0];
+                sumY += coords.last[1];
+                numPoints++;
+              }
+            }
+            if (numPoints == 0) continue;
+            final centroidX = sumX / numPoints;
+            final centroidY = sumY / numPoints;
+            final currentPolygonArea =
+                _calculatePolygonAreaForCentroid(polygonRings);
+            totalArea += currentPolygonArea;
+            weightedSumX += centroidX * currentPolygonArea;
+            weightedSumY += centroidY * currentPolygonArea;
+          }
+        }
+        if (totalArea > 0) {
+          return GeoJSONPoint(
+              [weightedSumX / totalArea, weightedSumY / totalArea]);
+        }
+        return GeoJSONPoint([0, 0]);
       }
-      return GeoJSONPoint([0, 0]);
+          return GeoJSONPoint([0, 0]);
     }).toList();
     return GeoSeries(centroids,
         crs: crs, name: '${name}_centroid', index: index);
@@ -538,11 +536,11 @@ extension GeoSeriesFunctions on GeoSeries {
           return GeoJSONGeometryCollection([]);
         }
         return GeoJSONMultiPoint([coords.first, coords.last]);
-      } else if (geom is GeoJSONPoint)
+      } else if (geom is GeoJSONPoint) {
         return GeoJSONGeometryCollection([]);
-      else if (geom is GeoJSONMultiPoint)
+      } else if (geom is GeoJSONMultiPoint) {
         return GeoJSONGeometryCollection([]);
-      else if (geom is GeoJSONMultiLineString) {
+      } else if (geom is GeoJSONMultiLineString) {
         if (geom.coordinates.isEmpty) return GeoJSONGeometryCollection([]);
         List<List<double>> boundaryPoints = [];
         for (var lineStringCoords in geom.coordinates) {
