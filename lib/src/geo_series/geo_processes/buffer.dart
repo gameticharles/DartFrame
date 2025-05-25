@@ -1,6 +1,6 @@
-part of '../../dartframe.dart';
+part of '../../../dartframe.dart';
 
-extension GeoSeriesGeoProcess on GeoSeries {
+extension BufferGeoProcess on GeoSeries {
   /// Creates a buffer around each geometry in the GeoSeries.
   ///
   /// Returns a GeoSeries of geometries representing all points within a given distance
