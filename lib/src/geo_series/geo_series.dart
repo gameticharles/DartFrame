@@ -2,7 +2,7 @@ part of '../../dartframe.dart';
 
 /// A GeoSeries represents a column of geometry data.
 /// It extends Series with spatial functionality.
-class GeoSeries extends Series {
+class GeoSeries extends Series<GeoJSONGeometry?> { // Ensure Series type is GeoJSONGeometry?
   /// The coordinate reference system of the geometries.
   final String? crs;
 
@@ -25,10 +25,10 @@ class GeoSeries extends Series {
   }) {
     final geometries = featureCollection.features
         .map((feature) => feature?.geometry)
-        .where((geom) => geom != null)
+        //.where((geom) => geom != null) // This was filtering out nulls, which might be valid data points
         .toList();
 
-    return GeoSeries(geometries, crs: crs, name: name, index: index);
+    return GeoSeries(geometries.cast<GeoJSONGeometry?>(), crs: crs, name: name, index: index);
   }
 
   /// Creates a GeoSeries of Point geometries from lists of x, y(, z) coordinates.
@@ -115,11 +115,23 @@ class GeoSeries extends Series {
             result.add(feature.coordinates);
           } else if (feature is GeoJSONPolygon) {
             result.add(feature.coordinates);
-          } else {
+          } else if (feature is GeoJSONMultiPoint) {
+            result.add(feature.coordinates);
+          } else if (feature is GeoJSONMultiLineString) {
+            result.add(feature.coordinates);
+          } else if (feature is GeoJSONMultiPolygon) {
+            result.add(feature.coordinates);
+          } else if (feature is GeoJSONGeometryCollection) {
+            // For GeometryCollection, maybe return a list of its geometries' coordinates or objects
+            result.add(feature.geometries.map((g) => g.toMap()).toList()); // Example: list of maps
+          }
+           else {
             // Default empty coordinates for unsupported geometry types
             result.add([]);
           }
         }
+      } else {
+         result.add(null); // Preserve nulls
       }
     }
 
@@ -132,33 +144,39 @@ class GeoSeries extends Series {
       if (geom is GeoJSONGeometry) {
         return geom.toWkt();
       }
-      return 'POINT(0 0)';
+      // For null geometries, GeoPandas returns None. Here, we can use a specific string or null.
+      return null; // Or 'GEOMETRYCOLLECTION EMPTY' or specific WKT for empty based on type
     }).toList();
 
     return Series(wktStrings, name: '${name}_wkt', index: index);
   }
 
-  /// Converts the GeoSeries to a Series of WKT strings.
-  Series asWkt() {
-    return toWkt();
-  }
-
   /// Creates a new GeoSeries from this one, ensuring all geometries are valid.
   /// Invalid geometries are replaced with default points.
+  /// This is a simplified version of make_valid. True validity is complex.
   GeoSeries makeValid() {
     final validGeometries = data.map((geom) {
-      if (geom is GeoJSONGeometry) {
-        if (geom is GeoJSONPolygon && !_isValidPolygon(geom.coordinates)) {
-          return GeoJSONPoint([0, 0]); // Replace with default point
-        } else if (geom is GeoJSONMultiPolygon &&
-            !geom.coordinates.every((polygon) => _isValidPolygon(polygon))) {
-          return GeoJSONPoint([0, 0]); // Replace with default point
-        }
-        return geom;
+      if (geom is GeoJSONPolygon && !_isValidPolygon(geom.coordinates)) {
+        return null; // Replace invalid with null, as GeoPandas might
+      } else if (geom is GeoJSONMultiPolygon &&
+          !geom.coordinates.every((polygon) => _isValidPolygon(polygon))) {
+        return null; // Replace invalid with null
       }
-      return GeoJSONPoint([0, 0]); // Default
+      // Further checks for other types could be added here.
+      // For now, assume other types are valid if they conform to GeoJSON structure.
+      return geom;
     }).toList();
 
     return GeoSeries(validGeometries, crs: crs, name: name, index: index);
+  }
+
+  /// Returns the geometry at the specified integer index.
+  ///
+  /// This is equivalent to `series.data[index]`.
+  GeoJSONGeometry? get_geometry(int index) {
+    if (index < 0 || index >= data.length) {
+      throw RangeError.index(index, data, 'index', 'Index out of range');
+    }
+    return data[index];
   }
 }

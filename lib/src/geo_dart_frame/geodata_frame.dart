@@ -95,7 +95,7 @@ class GeoDataFrame extends DataFrame {
 
   /// Gets the total bounds of all geometries in the GeoDataFrame.
   /// Returns `[minX, minY, maxX, maxY]` for the entire collection.
-  List<double> get totalBounds => geometry.totalBounds;
+  List<double> get totalBounds => geometry.total_bounds;
 
   /// Returns a GeoDataFrame containing the centroids of all geometries.
   GeoSeries get centroid => geometry.centroid;

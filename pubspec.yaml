@@ -14,6 +14,7 @@ dependencies:
   geojson_vi: ^2.2.5
   geoxml: ^2.6.1
   web: ^1.1.1
+  r_tree: ^3.0.1
 
 dev_dependencies:
   benchmark_harness: ^2.3.1
