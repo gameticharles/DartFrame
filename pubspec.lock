@@ -286,6 +286,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.2"
+  r_tree:
+    dependency: "direct main"
+    description:
+      name: r_tree
+      sha256: ebdef3322be74faaed6ce0d7b7e14cc7e287a7c7ee0a948ef10d43f5095ff41c
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   shelf:
     dependency: transitive
     description:
