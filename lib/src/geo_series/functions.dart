@@ -1,5 +1,9 @@
 part of '../../dartframe.dart';
 
+import 'package:ffi/ffi.dart' as ffi;
+import '../geos_ffi/geos_bindings.dart';
+import '../geos_ffi/geos_utils.dart';
+
 extension GeoSeriesFunctions on GeoSeries {
   /// Gets coordinates from a GeoSeries as a DataFrame of floats.
   ///
@@ -127,6 +131,1072 @@ extension GeoSeriesFunctions on GeoSeries {
       result = DataFrame(coordData, columns: columns, index: indices);
     }
 
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is almost equal to the corresponding geometry in `other` within a given tolerance.
+  Series<bool> geomAlmostEquals(dynamic other, double tolerance, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'geomAlmostEquals' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosAlmostEquals(g, other, tolerance, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_geom_almost_equals', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosAlmostEquals(
+                data[i], other.data[i], tolerance, bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "geomAlmostEquals with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_geom_almost_equals', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for geomAlmostEquals method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is almost equal to geom2 using GEOS, within a tolerance.
+  bool _geosAlmostEquals(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2, double tolerance,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+    if (tolerance < 0) {
+        print("Warning: geomAlmostEquals called with negative tolerance ($tolerance). Using absolute value.");
+        tolerance = tolerance.abs();
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSEqualsExact_r(contextHandle, tempGeosGeom1, tempGeosGeom2, tolerance);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSEqualsExact_r (geomAlmostEquals) reported an error for geometries (WKT): '$wkt1' and '$wkt2' with tolerance $tolerance");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      if (tempGeosGeom1 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is within a specified distance of the corresponding geometry in `other`.
+  Series<bool> dwithin(dynamic other, double distance, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'dwithin' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosDWithin(g, other, distance, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_dwithin', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosDWithin(
+                data[i], other.data[i], distance, bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "dwithin with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_dwithin', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for dwithin method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is within a given distance of geom2 using GEOS
+  bool _geosDWithin(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2, double distance,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+    if (distance < 0) {
+        // GEOS may handle this, but it's clearer to define behavior.
+        // Typically, distance cannot be negative.
+        print("Warning: dwithin called with negative distance ($distance). Returning false.");
+        return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSDistanceWithin_r(contextHandle, tempGeosGeom1, tempGeosGeom2, distance);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSDistanceWithin_r reported an error for geometries (WKT): '$wkt1' and '$wkt2' with distance $distance");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      if (tempGeosGeom1 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is topologically covered by the corresponding geometry in `other`.
+  Series<bool> coveredBy(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'coveredBy' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosCoveredBy(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_coveredBy', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosCoveredBy(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "coveredBy with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_coveredBy', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for coveredBy method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is topologically covered by geom2 using GEOS
+  bool _geosCoveredBy(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSCoveredBy_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSCoveredBy_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      if (tempGeosGeom1 != ffi.nullptr) { // Added null check for safety, though should be non-null
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) { // Added null check for safety
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that topologically covers the corresponding geometry in `other`.
+  Series<bool> covers(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'covers' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosCovers(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_covers', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosCovers(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "covers with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_covers', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for covers method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 topologically covers geom2 using GEOS
+  bool _geosCovers(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSCovers_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSCovers_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that topologically overlaps the corresponding geometry in `other`.
+  Series<bool> overlaps(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'overlaps' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosOverlaps(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_overlaps', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosOverlaps(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "overlaps with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_overlaps', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for overlaps method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 topologically overlaps geom2 using GEOS
+  bool _geosOverlaps(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSOverlaps_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSOverlaps_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that topologically crosses the corresponding geometry in `other`.
+  Series<bool> crosses(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'crosses' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosCrosses(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_crosses', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosCrosses(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "crosses with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_crosses', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for crosses method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 topologically crosses geom2 using GEOS
+  bool _geosCrosses(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSCrosses_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSCrosses_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that topologically touches the corresponding geometry in `other`.
+  Series<bool> touches(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'touches' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosTouches(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_touches', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosTouches(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "touches with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_touches', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for touches method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 topologically touches geom2 using GEOS
+  bool _geosTouches(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSTouches_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSTouches_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is topologically equal to the corresponding geometry in `other`.
+  Series<bool> geom_equals(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'geom_equals' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosEquals(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_geom_equals', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosEquals(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "geom_equals with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_geom_equals', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for geom_equals method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is topologically equal to geom2 using GEOS
+  bool _geosEquals(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      // NOTE: GEOSEquals_r is for topological equality.
+      final charResult =
+          bindings.GEOSEquals_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSEquals_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is spatially within the corresponding geometry in `other`.
+  Series<bool> within(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'within' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosWithin(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_within', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(
+                _geosWithin(data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false);
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+          // No specific adjustment needed if resultData.length == index.length or resultData.length > index.length
+          // (which implies 'this' series was shorter or equal length to 'other')
+          // as resultIndex is already this.index.
+
+        } else {
+          throw UnimplementedError(
+              "within with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_within', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for within method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is within geom2 using GEOS
+  bool _geosWithin(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // Note: GEOSGeometry is already ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      // geoJSONToGEOS logs its own errors
+      return false;
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      if (geosGeom1 != ffi.nullptr) { // Should always be true here, but good practice
+          bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      }
+      // geoJSONToGEOS logs its own errors
+      return false;
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly.
+    // The _ptr suffix is not part of the actual typedef in geos_bindings.dart.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // Redundant null check if geoJSONToGEOS guarantees non-null or throws,
+      // and if prior checks catch ffi.nullptr. But safe.
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false;
+      }
+      final charResult =
+          bindings.GEOSWithin_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // 2 indicates an exception in GEOS
+        String? wkt1 = "Error fetching WKT";
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) {}
+        try { wkt2 = geom2.toWKT(); } catch (_) {}
+        print("GEOSWithin_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1; // 1 for true, 0 for false
+      }
+    } finally {
+      // Ensure GEOS geometries are destroyed
+      if (tempGeosGeom1 != ffi.nullptr) {
+        bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) {
+        bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each aligned geometry that intersects other.
+  Series intersects(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosIntersects(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData,
+            name: '${name}_intersects', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            // Assuming data[i] and other.data[i] are the geometries to compare
+            // If series need to be aligned by index first, that's a more complex operation
+            // For now, this is positional alignment.
+            resultData.add(_geosIntersects(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false);
+          }
+          // If 'this' series was shorter, resultData is already commonLength.
+          // The index should match 'this' series' index, truncated if 'this' was longer.
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          } else if (resultData.length > index.length && length < other.length) {
+            // This case implies 'this' series was shorter than 'other',
+            // and resultData was padded to 'this.length'.
+            // No change to resultIndex needed if it's already 'this.index'.
+          }
+
+
+        } else { // No alignment, iterate over this series, compare each with other (scalar)
+            throw UnimplementedError("intersects with align=false is not yet fully specified for GeoSeries vs GeoSeries. Defaulting to align=true behavior for now or consider scalar comparison.");
+            // If it were scalar comparison:
+            // for (int i = 0; i < length; ++i) {
+            //   resultData.add(_geosIntersects(data[i], other.data[0], bindings, contextHandle)); // Example: compare all of this to first of other
+            // }
+        }
+         return Series<bool>(resultData, name: '${name}_intersects', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for intersects method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if one geometry intersects another using GEOS
+  bool _geosIntersects(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    final geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    final geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(
+          contextHandle, geosGeom1); // Clean up geosGeom1
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Correct typedef for GEOSGeometry pointers for clarity, actual type is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This check is slightly redundant if geoJSONToGEOS handles its errors well, but safe.
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false;
+      }
+      final charResult = bindings.GEOSIntersects_r(
+          contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // 2 indicates an exception in GEOS
+        String? wkt1, wkt2;
+        try { wkt1 = geom1.toWKT(); } catch (_) { wkt1 = "Invalid WKT for geom1"; }
+        try { wkt2 = geom2.toWKT(); } catch (_) { wkt2 = "Invalid WKT for geom2"; }
+        print(
+            "GEOSIntersects_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1; // 1 for true, 0 for false
+      }
+    } finally {
+      // Ensure GEOS geometries are destroyed
+      // Null check already performed for tempGeosGeom1 & tempGeosGeom2 before use in GEOSIntersects_r
+      // but as a safety for the destroy calls themselves if the pointers were re-assigned or nulled.
+      if (tempGeosGeom1 != ffi.nullptr) {
+         bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) {
+        bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
     return result;
   }
 
@@ -644,106 +1714,542 @@ extension GeoSeriesFunctions on GeoSeries {
 
   /// Returns a Series of boolean values with value True for each aligned geometry that contains other.
   Series contains(dynamic other, {bool align = true}) {
-    if (other is GeoJSONGeometry) {
-      final result = data.map((g) => _containsGeometry(g, other)).toList();
-      return Series(result, name: '${name}_contains', index: index);
-    } else if (other is GeoSeries) {
-      // Simplified positional for now
-      List<bool> resultData = [];
-      int len = min(length, other.length);
-      for (int i = 0; i < len; ++i) {
-        resultData.add(_containsGeometry(data[i], other.data[i]));
-      }
-      for (int i = len; i < length; ++i) {
-        resultData.add(false); // Or NaN-like if preferred for Series<bool>
-      }
-      return Series(resultData, name: '${name}_contains', index: index);
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context");
     }
-    throw ArgumentError("Other must be GeoJSONGeometry or GeoSeries");
-  }
 
-  /// Helper method to check if one geometry contains another
-  bool _containsGeometry(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2) {
-    if (geom1 == null || geom2 == null) return false;
-    if (_isGeometryEmpty(geom1) || _isGeometryEmpty(geom2)) return false;
-
-    if (geom1 is GeoJSONPolygon && geom2 is GeoJSONPoint) {
-      if (geom1.coordinates.isEmpty || geom1.coordinates[0].length < 4) {
-        return false;
-      }
-      // Point in polygon (exterior)
-      if (!_pointInPolygon(geom2.coordinates, geom1.coordinates[0])) {
-        return false;
-      }
-      // Point not in any hole
-      for (int i = 1; i < geom1.coordinates.length; i++) {
-        if (_pointInPolygon(geom2.coordinates, geom1.coordinates[i])) {
-          return false;
+    try {
+      if (other is GeoJSONGeometry) {
+        final result = data
+            .map((g) => _geosContains(g, other, bindings, contextHandle))
+            .toList();
+        return Series(result, name: '${name}_contains', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        // Determine common length for alignment, or use full length if not aligning (though align=true is default)
+        int commonLength = length; // Default if align is false or lengths are same
+        if (align) {
+          commonLength = min(length, other.length);
         }
-      }
-      return true;
-    }
-    if (geom1 is GeoJSONPoint && geom2 is GeoJSONPoint) {
-      return _arePointsEqual(geom1.coordinates, geom2.coordinates);
-    }
-    if (geom1 is GeoJSONLineString && geom2 is GeoJSONPoint) {
-      if (geom1.coordinates.length < 2) return false;
-      return _pointOnLine(geom2.coordinates, geom1.coordinates);
-    }
-    // Basic LineString contains LineString (all points of geom2 on geom1)
-    if (geom1 is GeoJSONLineString && geom2 is GeoJSONLineString) {
-      if (geom1.coordinates.length < 2 || geom2.coordinates.length < 2) {
-        return false;
-      }
-      return geom2.coordinates.every((p) => _pointOnLine(p, geom1.coordinates));
-    }
-    // Polygon contains LineString: all points of LineString must be in Polygon
-    if (geom1 is GeoJSONPolygon && geom2 is GeoJSONLineString) {
-      if (geom1.coordinates.isEmpty ||
-          geom1.coordinates[0].length < 4 ||
-          geom2.coordinates.length < 2) {
-        return false;
-      }
-      return geom2.coordinates
-          .every((p) => _containsGeometry(geom1, GeoJSONPoint(p)));
-    }
-    // Polygon contains Polygon: all points of geom2's exterior ring must be in geom1.
-    // This is a simplification and doesn't handle all edge cases (e.g. shared boundaries, holes).
-    if (geom1 is GeoJSONPolygon && geom2 is GeoJSONPolygon) {
-      if (geom1.coordinates.isEmpty ||
-          geom1.coordinates[0].length < 4 ||
-          geom2.coordinates.isEmpty ||
-          geom2.coordinates[0].length < 4) {
-        return false;
-      }
-      return geom2.coordinates[0]
-          .every((p) => _containsGeometry(geom1, GeoJSONPoint(p)));
-    }
+        // If align is true and lengths differ, consider how to handle indices.
+        // Current Series constructor might not align indices perfectly if resultData is shorter.
+        // This simplified loop matches geopandas behavior for default align=True (element-wise up to shortest)
 
-    // Fallback for MultiGeometries (simplified: check first component)
-    if (geom1 is GeoJSONMultiPoint && geom1.coordinates.isNotEmpty) {
-      return _containsGeometry(GeoJSONPoint(geom1.coordinates[0]), geom2);
-    }
-    if (geom1 is GeoJSONMultiLineString &&
-        geom1.coordinates.isNotEmpty &&
-        geom1.coordinates[0].isNotEmpty) {
-      return _containsGeometry(GeoJSONLineString(geom1.coordinates[0]), geom2);
-    }
-    if (geom1 is GeoJSONMultiPolygon &&
-        geom1.coordinates.isNotEmpty &&
-        geom1.coordinates[0].isNotEmpty) {
-      return _containsGeometry(GeoJSONPolygon(geom1.coordinates[0]), geom2);
-    }
+        for (int i = 0; i < commonLength; ++i) {
+          resultData.add(
+              _geosContains(data[i], other.data[i], bindings, contextHandle));
+        }
+        // If align is true and this series is longer, fill remaining with false
+        if (align && length > other.length) {
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false);
+          }
+        }
+        // If align is true and other series is longer, the result series will be of length `this.length`
+        // matching geopandas behavior where `s1.contains(s2)` has index of `s1`.
 
-    return false;
+        // Create index for the result series. If aligning and lengths differ,
+        // the result should match the index of `this` GeoSeries up to commonLength.
+        List<dynamic> resultIndex = index;
+        if (align && length != other.length) {
+           // If `this` series is longer, its index is already fine.
+           // If `other` series is longer, `resultData` will be of `this.length`, so `this.index` is fine.
+           // If `resultData` became shorter than `this.length` due to `other` being shorter,
+           // then `this.index` needs to be truncated for the Series constructor.
+           if (resultData.length < index.length) {
+             resultIndex = index.sublist(0, resultData.length);
+           }
+        }
+
+
+        return Series(resultData, name: '${name}_contains', index: resultIndex);
+      }
+      throw ArgumentError("Other must be GeoJSONGeometry or GeoSeries");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
   }
 
-  /// Check if a polygon contains another polygon (simplified for the example)
-  bool _isPolygonContainingPolygon(List<List<List<double>>> poly1Rings,
-      List<List<List<double>>> poly2Rings) {
-    // This was a very specific example check, better to use the general logic in _containsGeometry
-    return false;
+  /// Helper method to check if one geometry contains another using GEOS
+  bool _geosContains(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    final geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      // geoJSONToGEOS should log its own errors
+      return false;
+    }
+
+    final geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1); // Clean up geosGeom1
+      // geoJSONToGEOS should log its own errors
+      return false;
+    }
+
+    // Use temporary variables for the finally block to ensure correct pointers are used
+    // if initial ones were null (though caught above, this is safer pattern)
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // Double check, though geoJSONToGEOS returning nullptr should be caught above
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false;
+      }
+
+      final charResult = bindings.GEOSContains_r(
+          contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // 2 indicates an exception in GEOS
+        // GEOSHasError in GEOS C API might give more info, or a message handler.
+        // For now, just log based on WKT.
+        String? wkt1, wkt2;
+        try {
+          wkt1 = geom1.toWKT();
+        } catch (_) {
+          wkt1 = "Invalid WKT for geom1";
+        }
+        try {
+          wkt2 = geom2.toWKT();
+        } catch (_) {
+          wkt2 = "Invalid WKT for geom2";
+        }
+        print(
+            "GEOSContains_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1; // 1 for true, 0 for false
+      }
+    } finally {
+      // Ensure GEOS geometries are destroyed
+      if (tempGeosGeom1 != ffi.nullptr) {
+        bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) {
+        bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
   }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that is spatially disjoint from the corresponding geometry in `other`.
+  Series<bool> disjoint(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'disjoint' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosDisjoint(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_disjoint', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosDisjoint(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); // Or specific value for disjoint, typically false if no counterpart
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+          // No specific adjustment needed if resultData.length == index.length or resultData.length > index.length
+          // as resultIndex is already this.index.
+
+        } else {
+          throw UnimplementedError(
+              "disjoint with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_disjoint', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for disjoint method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 is disjoint from geom2 using GEOS
+  bool _geosDisjoint(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      // geosGeom1 was successfully created, so it must be destroyed.
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      // However, it adds a layer of safety before dereferencing.
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        // This case should ideally not be reached if the prior checks are correct.
+        // If it is, it implies an issue in logic or assumptions about geoJSONToGEOS.
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSDisjoint_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (charResult == 2) { // 2 indicates an exception in GEOS
+        String? wkt1 = "Error fetching WKT"; // Default error string
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { /* Keep default error string */ }
+        try { wkt2 = geom2.toWKT(); } catch (_) { /* Keep default error string */ }
+        print("GEOSDisjoint_r reported an error for geometries (WKT): '$wkt1' and '$wkt2'");
+        result = false;
+      } else {
+        result = charResult == 1; // 1 for true, 0 for false
+      }
+    } finally {
+      // Ensure GEOS geometries are destroyed.
+      // The pointers tempGeosGeom1 and tempGeosGeom2 hold the original values of
+      // geosGeom1 and geosGeom2 that were valid (non-null) when passed to GEOSDisjoint_r.
+      // No need to check for ffi.nullptr again here if they were valid for the GEOS call.
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+    }
+    return result;
+  }
+
+  /// Returns a Series of DE-9IM intersection matrix strings for each geometry in this series
+  /// when related to the corresponding geometry in `other`.
+  Series<String?> relate(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'relate' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<String?> resultData = data.map((g) {
+          return _geosRelate(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<String?>(resultData, name: '${name}_relate', index: index);
+      } else if (other is GeoSeries) {
+        List<String?> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosRelate(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are null
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(null); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "relate with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<String?>(resultData, name: '${name}_relate', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for relate method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to compute the DE-9IM matrix for geom1 related to geom2 using GEOS
+  String? _geosRelate(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    if (geom1 == null || geom2 == null) {
+      return null;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return null; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return null; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual;
+    // the actual type from geos_bindings.dart is GEOSGeometry.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    String? de9imMatrix;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return null; 
+      }
+      final nativeMatrix =
+          bindings.GEOSRelate_r(contextHandle, tempGeosGeom1, tempGeosGeom2);
+
+      if (nativeMatrix == ffi.nullptr) { // GEOSRelate_r returns NULL on exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        print("GEOSRelate_r reported an error or returned NULL for geometries (WKT): '$wkt1' and '$wkt2'");
+        de9imMatrix = null;
+      } else {
+        de9imMatrix = nativeMatrix.toDartString();
+        // GEOSFree_r expects Pointer<Void>, so cast nativeMatrix
+        bindings.GEOSFree_r(contextHandle, nativeMatrix.cast<ffi.Void>());
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      if (tempGeosGeom1 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return de9imMatrix;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that matches the DE-9IM `pattern` when related to the corresponding geometry in `other`.
+  Series<bool> relatePattern(dynamic other, String pattern, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'relatePattern' method.");
+    }
+
+    ffi.Pointer<Utf8> nativePattern = ffi.nullptr;
+    try {
+      nativePattern = pattern.toNativeUtf8();
+      if (nativePattern == ffi.nullptr) {
+        throw ArgumentError("Failed to convert pattern string to native UTF8.");
+      }
+
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosRelatePattern(g, other, nativePattern, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_relate_pattern', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosRelatePattern(
+                data[i], other.data[i], nativePattern, bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "relatePattern with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_relate_pattern', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for relatePattern method");
+    } finally {
+      if (nativePattern != ffi.nullptr) {
+        malloc.free(nativePattern);
+      }
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 relates to geom2 via a DE-9IM pattern using GEOS
+  bool _geosRelatePattern(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2, 
+      ffi.Pointer<Utf8> nativePattern,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    
+    if (geom1 == null || geom2 == null || nativePattern == ffi.nullptr) {
+      return false;
+    }
+
+    // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
+    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == ffi.nullptr) {
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == ffi.nullptr) {
+      bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
+      return false; // geoJSONToGEOS logs errors
+    }
+
+    // Using GEOSGeometry (which is a Pointer type) directly for temp variables.
+    // The GEOSGeometry_ptr? type hint in the task description is conceptual.
+    GEOSGeometry tempGeosGeom1 = geosGeom1;
+    GEOSGeometry tempGeosGeom2 = geosGeom2;
+    bool result = false;
+
+    try {
+      // This null check is technically redundant if the above checks are thorough
+      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
+      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+        return false; 
+      }
+      final charResult =
+          bindings.GEOSRelatePattern_r(contextHandle, tempGeosGeom1, tempGeosGeom2, nativePattern);
+
+      if (charResult == 2) { // GEOS exception
+        String? wkt1 = "Error fetching WKT"; 
+        String? wkt2 = "Error fetching WKT";
+        String patternStr = "Error fetching pattern";
+        try { wkt1 = geom1.toWKT(); } catch (_) { }
+        try { wkt2 = geom2.toWKT(); } catch (_) { }
+        try { patternStr = nativePattern.toDartString(); } catch (_) {}
+
+        print("GEOSRelatePattern_r reported an error for geometries (WKT): '$wkt1' and '$wkt2' with pattern '$patternStr'");
+        result = false;
+      } else {
+        result = charResult == 1;
+      }
+    } finally {
+      // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
+      // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
+      if (tempGeosGeom1 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
+      }
+      if (tempGeosGeom2 != ffi.nullptr) { 
+          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
+      }
+    }
+    return result;
+  }
+
+  /// Returns a Series of boolean values with value True for each geometry in this series
+  /// that properly contains the corresponding geometry in `other`.
+  /// Proper containment means the interior of this geometry contains the other, and their boundaries do not touch.
+  Series<bool> containsProperly(dynamic other, {bool align = true}) {
+    final bindings = GEOSFFIBindings.defaultLibrary();
+    final contextHandle = bindings.GEOS_init_r();
+
+    if (contextHandle == ffi.nullptr) {
+      throw StateError("Failed to initialize GEOS context for 'containsProperly' method.");
+    }
+
+    try {
+      if (other is GeoJSONGeometry) {
+        final List<bool> resultData = data.map((g) {
+          return _geosContainsProperly(g, other, bindings, contextHandle);
+        }).toList();
+        return Series<bool>(resultData, name: '${name}_contains_properly', index: index);
+      } else if (other is GeoSeries) {
+        List<bool> resultData = [];
+        List<dynamic> resultIndex = index; // Default to this series' index
+
+        if (align) {
+          int commonLength = min(length, other.length);
+          for (int i = 0; i < commonLength; ++i) {
+            resultData.add(_geosContainsProperly(
+                data[i], other.data[i], bindings, contextHandle));
+          }
+          // If this series is longer, remaining are false
+          for (int i = commonLength; i < length; ++i) {
+            resultData.add(false); 
+          }
+          
+          if (resultData.length < index.length) {
+            resultIndex = index.sublist(0, resultData.length);
+          }
+
+        } else {
+          throw UnimplementedError(
+              "containsProperly with align=false is not yet implemented for GeoSeries vs GeoSeries.");
+        }
+        return Series<bool>(resultData, name: '${name}_contains_properly', index: resultIndex);
+      }
+      throw ArgumentError(
+          "Other must be GeoJSONGeometry or GeoSeries for containsProperly method");
+    } finally {
+      bindings.GEOS_finish_r(contextHandle);
+    }
+  }
+
+  /// Helper method to check if geom1 properly contains geom2 using GEOS,
+  /// by checking GEOSContains and not GEOSTouches.
+  bool _geosContainsProperly(GeoJSONGeometry? geom1, GeoJSONGeometry? geom2,
+      GEOSFFIBindings bindings, GEOSContextHandle_t contextHandle) {
+    
+    if (geom1 == null || geom2 == null) {
+      return false;
+    }
+
+    // Call _geosContains. This helper will manage its own GEOS geometry conversions and cleanup.
+    final bool containsResult = _geosContains(geom1, geom2, bindings, contextHandle);
+
+    if (!containsResult) {
+      return false; // If it doesn't contain, it can't contain properly.
+    }
+
+    // Call _geosTouches. This helper also manages its own GEOS geometry conversions and cleanup.
+    final bool touchesResult = _geosTouches(geom1, geom2, bindings, contextHandle);
+
+    // Contains properly if it contains AND does not touch.
+    return containsResult && !touchesResult;
+  }
+
+
+  // _isPolygonContainingPolygon can be removed as it was part of the old _containsGeometry
+  // bool _isPolygonContainingPolygon(...) { ... }
 
   /// Check if a geometry is empty
   bool _isGeometryEmpty(GeoJSONGeometry? geom) {
@@ -770,6 +2276,8 @@ extension GeoSeriesFunctions on GeoSeries {
   }
 
   /// Check if a point is inside a polygon ring using the ray casting algorithm
+  // This method is part of the old geometry logic, and can be removed or kept if used by other methods.
+  // For GEOS 'contains', this specific implementation is no longer directly used by the 'contains' method.
   bool _pointInPolygon(List<double> point, List<List<double>> polygonRing) {
     bool inside = false;
     double x = point[0];
