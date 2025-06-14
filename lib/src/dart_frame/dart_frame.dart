@@ -839,7 +839,7 @@ class DataFrame {
       if (_data.isEmpty && newColumn) {
         int numRowsToCreate = seriesData.length;
         if (alignByIndex) { // If aligning by a new series index, df index should become that.
-            index = List.from(seriesIndex!);
+            index = List.from(seriesIndex);
             numRowsToCreate = seriesIndex.length;
         } else {
             index = List.generate(numRowsToCreate, (i) => i);
@@ -852,7 +852,7 @@ class DataFrame {
       if (alignByIndex) {
         valuesToSet = List.filled(index.length, replaceMissingValueWith, growable: true);
         Map<dynamic, dynamic> seriesMap = {};
-        for (int i = 0; i < seriesIndex!.length; i++) {
+        for (int i = 0; i < seriesIndex.length; i++) {
           seriesMap[seriesIndex[i]] = seriesData[i];
         }
         for (int i = 0; i < index.length; i++) {

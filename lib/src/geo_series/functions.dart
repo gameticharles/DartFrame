@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 part of '../../dartframe.dart';
 
 extension GeoSeriesFunctions on GeoSeries {
@@ -602,7 +604,7 @@ extension GeoSeriesFunctions on GeoSeries {
           totalLength += tempSeries.geom_length.data[0] as double;
         }
         return totalLength;
-      } else if (geom is GeoJSONPoint || geom is GeoJSONMultiPoint) return 0.0;
+      } else if (geom is GeoJSONPoint || geom is GeoJSONMultiPoint) {return 0.0;}
       return 0.0;
     }).toList();
     return Series(lengths, name: '${name}_geom_length', index: index);
