@@ -489,7 +489,7 @@ void main() {
       });
       test('Series.index is default integer index', () {
         final result = dateRange(start: DateTime(2023, 1, 1), periods: 3);
-        expect(result.index, isNull); // Default index is null for Series
+        expect(result.index, [0, 1, 2]); // Default index is null for Series
       });
     });
 

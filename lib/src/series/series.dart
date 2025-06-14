@@ -399,7 +399,7 @@ class Series<T> {
   /// Attempts to convert elements of the Series to numeric types (`int` or `double`).
   ///
   /// Parameters:
-  ///   - `errors` (String, default `'raise'`):
+  ///   - `errors` (String, default `'ignore'`):
   ///     - If `'raise'`, then invalid parsing will raise an exception.
   ///     - If `'coerce'`, then invalid parsing will be set as the Series' missing value representation.
   ///     - If `'ignore'`, then invalid parsing will return the input.
@@ -414,7 +414,7 @@ class Series<T> {
   /// Throws:
   ///   - `FormatException` if `errors == 'raise'` and a value cannot be parsed.
   ///   - `ArgumentError` if `errors` or `downcast` has an invalid value.
-  Series toNumeric({String errors = 'raise', String? downcast}) {
+  Series toNumeric({String errors = 'ignore', String? downcast}) {
     if (!['raise', 'coerce', 'ignore'].contains(errors)) {
       throw ArgumentError("errors must be one of 'raise', 'coerce', 'ignore'");
     }

@@ -12,7 +12,7 @@ import 'geos_bindings.dart';
 ///
 /// Returns `ffi.nullptr` if [dartGeom] is null or if conversion fails.
 /// Throws exceptions if GEOS reader creation fails. Returns `nullptr` if WKT parsing fails.
-GEOSGeometry geoJSONToGEOS(
+GEOSGeometry GeoJSONToGEOS(
   GeoJSONGeometry? dartGeom,
   GEOSFFIBindings bindings,
   GEOSContextHandle_t contextHandle,

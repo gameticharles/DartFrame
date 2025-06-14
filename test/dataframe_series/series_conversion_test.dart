@@ -21,7 +21,7 @@ void main() {
 
     test('toNumeric errors="raise" (default)', () {
       final s = Series(['1', 'abc', '3'], name: 'invalid_str');
-      expect(() => s.toNumeric(), throwsA(isA<FormatException>()));
+      expect(() => s.toNumeric(errors: 'raise'), throwsA(isA<FormatException>()));
     });
 
     test('toNumeric errors="coerce" with null as missing', () {

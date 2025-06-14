@@ -167,8 +167,15 @@ class StringSeriesAccessor {
         patternString.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
 
     return _applyStringOperation((s) {
-      if (n != null) {
-        return s.split(pattern).take(n + 1).toList();
+      if (n != null && n >= 0) {
+        List<String> parts = s.split(pattern);
+        if (parts.length > n) {
+          List<String> result = parts.sublist(0, n);
+          result.add(parts.sublist(n).join(pattern is RegExp ? pattern.pattern : pattern.toString()));
+          return result;
+        } else {
+          return parts;
+        }
       } else {
         return s.split(pattern);
       }
@@ -189,6 +196,7 @@ class StringSeriesAccessor {
   Series match(Pattern pattern) {
     RegExp regex = pattern is RegExp ? pattern : RegExp(pattern.toString());
     String patternString = regex.pattern;
+    // Allow alphanumeric, underscore, and backslash for regex patterns
     String sanitizedPatternName =
         patternString.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
 

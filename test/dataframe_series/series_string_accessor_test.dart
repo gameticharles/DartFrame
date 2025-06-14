@@ -227,7 +227,7 @@ void main() {
               ['z']
             ]));
         expect(result.name,
-            equals('strings_split_-')); // Assuming Series.name for simplicity
+            equals('split_series_split__'));
       });
 
       test('split with limit (n)', () {
@@ -261,7 +261,7 @@ void main() {
             name: 'match_series');
         var result = s.str.match(r'\d+'); // Match one or more digits
         expect(result.data, equals(['1', '2', '3', defaultMissingRep, '4']));
-        expect(result.name, equals('strings_match_\\d+'));
+        expect(result.name, equals('match_series_match__d_'));
       });
 
       test('match no match returns missing', () {

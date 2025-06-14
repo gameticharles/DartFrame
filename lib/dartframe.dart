@@ -3,6 +3,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:geoxml/geoxml.dart';
@@ -13,11 +14,11 @@ import 'src/file_helper/file_io.dart';
 
 export 'package:geojson_vi/geojson_vi.dart';
 
-import 'package:ffi/ffi.dart' as ffi;
 import 'src/geos_ffi/geos_bindings.dart';
 import 'src/geos_ffi/geos_utils.dart';
 
 part 'src/utils/utils.dart';
+part 'src/utils/lists.dart';
 
 part 'src/geo_series/geo_series.dart';
 part 'src/geo_series/functions.dart';

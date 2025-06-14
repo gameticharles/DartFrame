@@ -1,5 +1,22 @@
 part of '../../dartframe.dart';
 
+
+// Helper function to check for default integer index (e.g., [0, 1, 2, ...])
+bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
+  if (idxList.length != expectedLength) {
+    return false;
+  }
+  if (expectedLength == 0) { // An empty list is a valid default index for 0 items.
+    return true;
+  }
+  for (int i = 0; i < expectedLength; i++) {
+    if (idxList[i] != i) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// A class representing a DataFrame, which is a 2-dimensional labeled data structure
 /// with columns of potentially different types.
 class DataFrame {
@@ -676,25 +693,63 @@ class DataFrame {
     // Handle boolean Series for filtering (pandas-like indexing)
     if (key is Series &&
         key.data.every((element) => element is bool || element == null)) {
-      // Create a new DataFrame with only the rows where the Series value is true
-      List<List<dynamic>> filteredData = [];
-      List<dynamic> filteredIndex = [];
+      Series booleanFilter;
 
-      // Ensure the Series length matches the DataFrame row count
-      if (key.length != rowCount) {
-        throw ArgumentError(
-            'Boolean Series length must match DataFrame row count');
+      bool keyHasDefaultIndex = _isDefaultIntegerIndex(key.index, key.length);
+      bool dfHasDefaultIndex = _isDefaultIntegerIndex(index, rowCount);
+
+      // Case 1: Boolean Series has default index, DataFrame has non-default index
+      if (keyHasDefaultIndex && !dfHasDefaultIndex) {
+        if (key.length != rowCount) {
+          throw ArgumentError(
+              'Boolean Series with default index (length ${key.length}) must match DataFrame row count ($rowCount) when DataFrame has a non-default index.');
+        }
+        // If lengths match, use the boolean series directly, it will be applied row-wise.
+        booleanFilter = key;
+      }
+      // Case 2: Boolean Series has non-default index, OR both have default indices
+      else {
+        // Subcase 2.1: Indices are identical (implies lengths also match if truly identical)
+        if (listEqual([key.index, index])) {
+          if (key.length != rowCount) { // This should ideally not happen if indices are truly equal
+            throw ArgumentError(
+                'Boolean Series has matching index but mismatched length (${key.length} vs $rowCount). This indicates an inconsistency.');
+          }
+          booleanFilter = key;
+        }
+        // Subcase 2.2: Both have default indices but lengths differ (error)
+        else if (keyHasDefaultIndex && dfHasDefaultIndex && key.length != rowCount) {
+          throw ArgumentError(
+              'Boolean Series (length ${key.length}) and DataFrame (length $rowCount) both have default indices but lengths do not match.');
+        }
+        // Subcase 2.3: Indices differ and require alignment
+        else {
+          List<bool?> alignedValues = List.filled(rowCount, false, growable: false);
+          for (int i = 0; i < rowCount; i++) {
+            var dfIndexValue = index[i];
+            int seriesIndexPos = key.index.indexOf(dfIndexValue);
+            if (seriesIndexPos != -1) {
+              alignedValues[i] = key.data[seriesIndexPos] as bool?;
+            } else {
+              // Value from df.index not found in key.index, treat as false
+              alignedValues[i] = false;
+            }
+          }
+          booleanFilter = Series(alignedValues, index: List.from(index), name: key.name);
+        }
       }
 
-      // Filter rows based on boolean values
+      List<List<dynamic>> filteredData = [];
+      List<dynamic> filteredIndex = [];
       for (int i = 0; i < rowCount; i++) {
-        if (key.data[i] == true) {
+        // booleanFilter.data should now be correctly aligned or directly usable.
+        // Nulls in booleanFilter.data are treated as false by `== true`.
+        if (i < booleanFilter.length && booleanFilter.data[i] == true) {
           filteredData.add(List<dynamic>.from(_data[i]));
           filteredIndex.add(index[i]);
         }
       }
 
-      // Return a new DataFrame with the filtered data
       return DataFrame._(
         List<dynamic>.from(_columns),
         filteredData,
@@ -757,151 +812,90 @@ class DataFrame {
   /// Throws an `ArgumentError` if the length of the data does not match the number of columns or rows.
   /// Throws an `ArgumentError` if the key is not an integer or string.
   void operator []=(dynamic key, dynamic newData) {
-    // Handle Series with index alignment
-    if (newData is Series) {
-      // If the Series has a custom index, we need to align it with the DataFrame's index
-      if (newData.index.isNotEmpty && !_isDefaultNumericIndex(newData.index)) {
-        // For existing column, align by index
-        if (key is String && _columns.contains(key)) {
-          int columnIndex = _columns.indexOf(key);
+    if (key is String) {
+      List<dynamic> valuesToSet;
+      List<dynamic>? seriesIndex = newData is Series ? newData.index : null;
+      List<dynamic> seriesData = newData is Series ? newData.data : (newData is List ? newData : [newData]);
 
-          // Create a map from Series index to values for quick lookup
-          Map<dynamic, dynamic> indexToValue = {};
-          for (int i = 0; i < newData.index.length; i++) {
-            indexToValue[newData.index[i]] = newData.data[i];
-          }
+      // Determine if the Series has a non-default index that needs alignment
+      bool alignByIndex = seriesIndex != null &&
+          seriesIndex.isNotEmpty &&
+          !_isDefaultNumericIndex(seriesIndex);
 
-          // Update values based on matching indices
-          for (int i = 0; i < index.length; i++) {
-            if (indexToValue.containsKey(index[i])) {
-              _data[i][columnIndex] = indexToValue[index[i]];
-            }
-          }
+      int columnIndex = _columns.indexOf(key);
+      bool newColumn = columnIndex == -1;
 
-          return; // Early return as we've handled the assignment
+      if (newColumn) {
+        // Add new column
+        _columns.add(key);
+        columnIndex = _columns.length - 1;
+        // Ensure all existing rows have a placeholder for the new column
+        for (int i = 0; i < _data.length; i++) {
+          _data[i].add(replaceMissingValueWith); // Initialize with missing value
         }
       }
-    }
 
-    // Convert Series to List if needed
-    List<dynamic> data = newData is Series ? newData.data : newData;
+      // If DataFrame is empty and we are adding a new column
+      if (_data.isEmpty && newColumn) {
+        int numRowsToCreate = seriesData.length;
+        if (alignByIndex) { // If aligning by a new series index, df index should become that.
+            index = List.from(seriesIndex!);
+            numRowsToCreate = seriesIndex.length;
+        } else {
+            index = List.generate(numRowsToCreate, (i) => i);
+        }
 
-    // Check if the key is an index (row update)
-    if (key is int) {
-      // Check if the row index is valid
+        _data = List.generate(numRowsToCreate, (i) => List.filled(_columns.length, replaceMissingValueWith, growable: true));
+      }
+
+      // Prepare valuesToSet based on alignment strategy
+      if (alignByIndex) {
+        valuesToSet = List.filled(index.length, replaceMissingValueWith, growable: true);
+        Map<dynamic, dynamic> seriesMap = {};
+        for (int i = 0; i < seriesIndex!.length; i++) {
+          seriesMap[seriesIndex[i]] = seriesData[i];
+        }
+        for (int i = 0; i < index.length; i++) {
+          if (seriesMap.containsKey(index[i])) {
+            valuesToSet[i] = seriesMap[index[i]];
+          }
+        }
+      } else {
+        // Direct assignment or length adjustment for default-indexed Series or List
+        valuesToSet = List.filled(index.length, replaceMissingValueWith, growable: true);
+        for (int i = 0; i < index.length; i++) {
+          if (i < seriesData.length) {
+            valuesToSet[i] = seriesData[i];
+          } else {
+            break; // Stop if series data is shorter
+          }
+        }
+      }
+
+      // Set the data for the column
+      for (int i = 0; i < _data.length; i++) {
+         if (newColumn && _data[i].length <= columnIndex) { // Should have been handled by init
+             _data[i].addAll(List.filled((columnIndex + 1 - _data[i].length).toInt(), replaceMissingValueWith));
+         }
+        _data[i][columnIndex] = valuesToSet[i];
+      }
+
+    } else if (key is int) {
+      // Row assignment (assuming newData is a List matching column count)
       if (key < 0 || key >= _data.length) {
         throw RangeError('Row index out of range');
       }
-
-      // Check if the length of the data matches the number of columns
-      if (data.length != _columns.length) {
+      List<dynamic> rowData = newData is Series ? newData.data : newData;
+      if (rowData.length != _columns.length) {
         throw ArgumentError(
             'Length of data must match the number of columns (${_columns.length})');
       }
-
-      // Update the row at the specified index - create a new growable list
-      _data[key] = List<dynamic>.from(data);
-    }
-    // Check if the key is a column label (column update)
-    else if (key is String) {
-      int columnIndex = _columns.indexOf(key);
-
-      // If the column exists, update it
-      if (columnIndex != -1) {
-        // If data is longer than the DataFrame, expand the DataFrame
-        if (data.length > _data.length) {
-          // Calculate how many new rows we need to add
-          int additionalRows = data.length - _data.length;
-
-          // Add new rows with null values for all existing columns
-          for (int i = 0; i < additionalRows; i++) {
-            // Create a new growable list with nulls for each column
-            List<dynamic> newRow =
-                List<dynamic>.filled(_columns.length, null, growable: true);
-            _data.add(newRow);
-
-            // Also extend the index
-            if (index.isNotEmpty) {
-              // If the last index is numeric, continue the sequence
-              if (index.last is int) {
-                index.add(index.last + 1);
-              } else {
-                // Otherwise just use the row number
-                index.add(_data.length - 1);
-              }
-            }
-          }
-        }
-
-        // Update the column with the data
-        for (int i = 0; i < _data.length; i++) {
-          // If we have data for this row, use it; otherwise use null
-          _data[i][columnIndex] = i < data.length ? data[i] : null;
-        }
-      }
-      // If the column doesn't exist, add a new one
-      else {
-        // Handle empty DataFrame case
-        if (_data.isEmpty) {
-          // Initialize with empty rows for the first column
-          _data = List.generate(data.length, (_) => <dynamic>[]);
-          _columns.add(key);
-
-          // Add the new column data
-          for (int i = 0; i < data.length; i++) {
-            _data[i].add(data[i]);
-          }
-
-          // Initialize index if empty
-          if (index.isEmpty) {
-            index = List.generate(data.length, (i) => i);
-          }
-        } else {
-          // If data is longer than the DataFrame, expand the DataFrame
-          if (data.length > _data.length) {
-            // Calculate how many new rows we need to add
-            int additionalRows = data.length - _data.length;
-
-            // Add new rows with null values for all existing columns
-            for (int i = 0; i < additionalRows; i++) {
-              // Create a new growable list with nulls for each column
-              List<dynamic> newRow =
-                  List<dynamic>.filled(_columns.length, null, growable: true);
-              _data.add(newRow);
-
-              // Also extend the index
-              if (index.isNotEmpty) {
-                // If the last index is numeric, continue the sequence
-                if (index.last is int) {
-                  index.add(index.last + 1);
-                } else {
-                  // Otherwise just use the row number
-                  index.add(_data.length - 1);
-                }
-              }
-            }
-          }
-
-          // Add the new column
-          _columns.add(key);
-
-          // Add the new column data to each row
-          for (int i = 0; i < _data.length; i++) {
-            _data[i].add(i < data.length ? data[i] : null);
-          }
-        }
-      }
-    }
-    // Handle unsupported key types
-    else if (key is List || key is Series) {
-      throw ArgumentError('List and Series keys are not yet supported');
+      _data[key] = List<dynamic>.from(rowData);
     } else {
       throw ArgumentError(
           'Key must be an integer (for row) or string (for column)');
     }
-  }
-
-  // Helper method to check if an index is the default numeric index
+  } // Helper method to check if an index is the default numeric index
   bool _isDefaultNumericIndex(List<dynamic> idx) {
     if (idx.isEmpty) return true;
 

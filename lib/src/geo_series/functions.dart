@@ -202,7 +202,7 @@ extension GeoSeriesFunctions on GeoSeries {
 
   /// Returns a Series of boolean values indicating if geometries are empty.
   /// A null geometry is considered not empty by GeoPandas, so this also returns false for null.
-  Series get isEmpty {
+  Series<bool> get isEmpty {
     final emptyFlags = data.map((geom) {
       if (geom == null) {
         return false; // Consistent with GeoPandas: None is not empty.

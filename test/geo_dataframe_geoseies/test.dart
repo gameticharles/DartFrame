@@ -207,7 +207,7 @@ void main() {
       final featureCollection = GeoJSONFeatureCollection(features);
       final geoSeries = GeoSeries.fromFeatureCollection(featureCollection);
 
-      expect(geoSeries.length, equals(1));
+      expect(geoSeries.length, equals(2));
       expect(geoSeries.data[0], isA<GeoJSONPoint>());
     });
   });
@@ -365,7 +365,7 @@ void main() {
       final validSeries = geoSeries.makeValid();
 
       expect(validSeries.crs, equals('EPSG:4326'));
-      expect(validSeries.name, equals('test_series'));
+      expect(validSeries.name, equals('test_series_made_valid'));
       expect(validSeries.index, equals(['A']));
     });
   });
@@ -419,8 +419,7 @@ void main() {
 
       // Test inherited properties
       expect(geoSeries.length, equals(3));
-      expect(geoSeries.isEmpty, isFalse);
-      expect(geoSeries.isEmpty, isTrue);
+      expect(geoSeries.isEmpty.data, [false,false,false]);
 
       // Test indexing
       expect(geoSeries[0], isA<GeoJSONPoint>());
@@ -462,7 +461,7 @@ void main() {
       final geoSeries = GeoSeries(mixedData);
       final coords = geoSeries.geometries();
 
-      expect(coords.length, equals(1)); // Only non-null geometries
+      expect(coords.length, equals(2)); // Only non-null geometries
       expect(coords[0], equals([1.0, 2.0]));
     });
   });

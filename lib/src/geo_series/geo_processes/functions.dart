@@ -1,13 +1,14 @@
 part of '../../../dartframe.dart';
 
 extension GeoProcess on GeoSeries{
+
   /// Returns a Series of boolean values with value True for each geometry in this series
   /// that is exactly equal to the corresponding geometry in `other` (tolerance 0.0).
   Series<bool> geomEqualsExact(dynamic other, {bool align = true}) {
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'geomEqualsExact' method.");
     }
 
@@ -58,13 +59,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -77,8 +78,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       // For exact equality, tolerance is 0.0
@@ -98,10 +99,10 @@ extension GeoProcess on GeoSeries{
     } finally {
       // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
       // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
-      if (tempGeosGeom1 != ffi.nullptr) { 
+      if (tempGeosGeom1 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) { 
+      if (tempGeosGeom2 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
@@ -114,7 +115,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'geomAlmostEquals' method.");
     }
 
@@ -169,13 +170,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -188,8 +189,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -208,10 +209,10 @@ extension GeoProcess on GeoSeries{
     } finally {
       // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
       // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
-      if (tempGeosGeom1 != ffi.nullptr) { 
+      if (tempGeosGeom1 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) { 
+      if (tempGeosGeom2 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
@@ -224,7 +225,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'dwithin' method.");
     }
 
@@ -281,13 +282,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -300,8 +301,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -320,10 +321,10 @@ extension GeoProcess on GeoSeries{
     } finally {
       // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
       // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
-      if (tempGeosGeom1 != ffi.nullptr) { 
+      if (tempGeosGeom1 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) { 
+      if (tempGeosGeom2 != nullptr) { 
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
@@ -336,7 +337,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'coveredBy' method.");
     }
 
@@ -386,13 +387,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -406,8 +407,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -426,10 +427,10 @@ extension GeoProcess on GeoSeries{
     } finally {
       // tempGeosGeom1 and tempGeosGeom2 are guaranteed non-null if they reached the GEOS call.
       // The destroy calls are on the original geosGeom1 and geosGeom2 which were assigned to temp vars.
-      if (tempGeosGeom1 != ffi.nullptr) { // Added null check for safety, though should be non-null
+      if (tempGeosGeom1 != nullptr) { // Added null check for safety, though should be non-null
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) { // Added null check for safety
+      if (tempGeosGeom2 != nullptr) { // Added null check for safety
           bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
@@ -442,7 +443,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'covers' method.");
     }
 
@@ -492,13 +493,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -512,8 +513,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -544,7 +545,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'overlaps' method.");
     }
 
@@ -594,13 +595,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -614,8 +615,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -646,7 +647,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'crosses' method.");
     }
 
@@ -696,13 +697,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -716,8 +717,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -748,7 +749,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'touches' method.");
     }
 
@@ -798,13 +799,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -818,8 +819,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       final charResult =
@@ -850,7 +851,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'geom_equals' method.");
     }
 
@@ -900,13 +901,13 @@ extension GeoProcess on GeoSeries{
     }
 
     // GEOSGeometry is ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       return false; // geoJSONToGEOS logs errors
     }
@@ -920,8 +921,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This null check is technically redundant if the above checks are thorough
-      // and geoJSONToGEOS either returns a valid pointer or ffi.nullptr (which is checked).
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and geoJSONToGEOS either returns a valid pointer or nullptr (which is checked).
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false; 
       }
       // NOTE: GEOSEquals_r is for topological equality.
@@ -953,7 +954,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context for 'within' method.");
     }
 
@@ -1006,15 +1007,15 @@ extension GeoProcess on GeoSeries{
     }
 
     // Note: GEOSGeometry is already ffi.Pointer<GEOSGeometry_opaque>
-    GEOSGeometry geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    GEOSGeometry geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       // geoJSONToGEOS logs its own errors
       return false;
     }
 
-    GEOSGeometry geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
-      if (geosGeom1 != ffi.nullptr) { // Should always be true here, but good practice
+    GEOSGeometry geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
+      if (geosGeom1 != nullptr) { // Should always be true here, but good practice
           bindings.GEOSGeom_destroy_r(contextHandle, geosGeom1);
       }
       // geoJSONToGEOS logs its own errors
@@ -1029,8 +1030,8 @@ extension GeoProcess on GeoSeries{
 
     try {
       // Redundant null check if geoJSONToGEOS guarantees non-null or throws,
-      // and if prior checks catch ffi.nullptr. But safe.
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      // and if prior checks catch nullptr. But safe.
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false;
       }
       final charResult =
@@ -1048,10 +1049,10 @@ extension GeoProcess on GeoSeries{
       }
     } finally {
       // Ensure GEOS geometries are destroyed
-      if (tempGeosGeom1 != ffi.nullptr) {
+      if (tempGeosGeom1 != nullptr) {
         bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) {
+      if (tempGeosGeom2 != nullptr) {
         bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
@@ -1063,7 +1064,7 @@ extension GeoProcess on GeoSeries{
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
-    if (contextHandle == ffi.nullptr) {
+    if (contextHandle == nullptr) {
       throw StateError("Failed to initialize GEOS context");
     }
 
@@ -1125,13 +1126,13 @@ extension GeoProcess on GeoSeries{
       return false;
     }
 
-    final geosGeom1 = geoJSONToGEOS(geom1, bindings, contextHandle);
-    if (geosGeom1 == ffi.nullptr) {
+    final geosGeom1 = GeoJSONToGEOS(geom1, bindings, contextHandle);
+    if (geosGeom1 == nullptr) {
       return false; // geoJSONToGEOS logs errors
     }
 
-    final geosGeom2 = geoJSONToGEOS(geom2, bindings, contextHandle);
-    if (geosGeom2 == ffi.nullptr) {
+    final geosGeom2 = GeoJSONToGEOS(geom2, bindings, contextHandle);
+    if (geosGeom2 == nullptr) {
       bindings.GEOSGeom_destroy_r(
           contextHandle, geosGeom1); // Clean up geosGeom1
       return false; // geoJSONToGEOS logs errors
@@ -1144,7 +1145,7 @@ extension GeoProcess on GeoSeries{
 
     try {
       // This check is slightly redundant if geoJSONToGEOS handles its errors well, but safe.
-      if (tempGeosGeom1 == ffi.nullptr || tempGeosGeom2 == ffi.nullptr) {
+      if (tempGeosGeom1 == nullptr || tempGeosGeom2 == nullptr) {
         return false;
       }
       final charResult = bindings.GEOSIntersects_r(
@@ -1164,10 +1165,10 @@ extension GeoProcess on GeoSeries{
       // Ensure GEOS geometries are destroyed
       // Null check already performed for tempGeosGeom1 & tempGeosGeom2 before use in GEOSIntersects_r
       // but as a safety for the destroy calls themselves if the pointers were re-assigned or nulled.
-      if (tempGeosGeom1 != ffi.nullptr) {
+      if (tempGeosGeom1 != nullptr) {
          bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom1);
       }
-      if (tempGeosGeom2 != ffi.nullptr) {
+      if (tempGeosGeom2 != nullptr) {
         bindings.GEOSGeom_destroy_r(contextHandle, tempGeosGeom2);
       }
     }
