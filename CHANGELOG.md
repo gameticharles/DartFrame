@@ -1,3 +1,13 @@
+# 0.4.3
+
+* **[Fix]** Formatted files.
+* **[IMPROVEMENT]** Reorganize test files into dataframe_series directory
+* **[IMPROVEMENT]** Rename geoJSONToGEOS to GeoJSONToGEOS for consistency fix(geo_series)
+* **[IMPROVEMENT]** Specify Series return type for isEmpty getter chore(dartframe)
+* **[IMPROVEMENT]** Add dart:ffi import and include src/utils/lists.dart fix(series)
+* **[IMPROVEMENT]** Change default errors parameter to 'ignore' in toNumeric refactor(string_accessor)
+* **[IMPROVEMENT]** Improve split pattern handling with n parameter
+
 # 0.4.2
 
 * **[Fix]** Formatted files.
