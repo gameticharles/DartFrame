@@ -1,9 +1,6 @@
 # 0.4.4
 
-* **[Fix]** Formatted files.
-* **[IMPROVEMENT]** Reorganize test files into dataframe_series directory
-* **[IMPROVEMENT]** Rename geoJSONToGEOS to GeoJSONToGEOS for consistency fix(geo_series)
-* **[IMPROVEMENT]** Specify Series return type for isEmpty getter chore(dartframe)
+* **[Fix]** Refactor(geo_series): rename snake_case methods to camelCase for consistency
 
 # 0.4.3
 
