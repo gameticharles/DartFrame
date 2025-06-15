@@ -1,5 +1,3 @@
-// ignore_for_file: unused_element
-
 part of '../../dartframe.dart';
 
 extension GeoSeriesFunctions on GeoSeries {
@@ -160,11 +158,11 @@ extension GeoSeriesFunctions on GeoSeries {
   /// Returns a Series containing the count of geometries in each multi-part geometry.
   Series get countGeometries {
     final counts = data.map((geom) {
-      if (geom == null) return 0;
+      // if (geom == null) return 0;
       if (geom is GeoJSONMultiPoint) return geom.coordinates.length;
       if (geom is GeoJSONMultiLineString) return geom.coordinates.length;
       if (geom is GeoJSONMultiPolygon) return geom.coordinates.length;
-      if (geom is GeoJSONGeometry) return 1; // Single geometries
+      if (geom is GeoJSONGeometry) return 1; 
       return 0;
     }).toList();
     return Series(counts, name: '${name}_geometry_count', index: index);
@@ -322,7 +320,7 @@ extension GeoSeriesFunctions on GeoSeries {
   }
 
   /// Gets the total bounds of all geometries in the GeoSeries.
-  List<double> get total_bounds {
+  List<double> get totalBounds {
     List<double>? currentOverallBounds;
     for (var geom in data) {
       List<double> geomBounds;
@@ -476,7 +474,7 @@ extension GeoSeriesFunctions on GeoSeries {
   }
 
   /// Gets the type of each geometry.
-  Series get geom_type {
+  Series get geomType {
     final types = data.map((geom) {
       if (geom == null) return 'Unknown';
       if (geom is GeoJSONPoint) return 'Point';
@@ -572,7 +570,7 @@ extension GeoSeriesFunctions on GeoSeries {
   }
 
   /// Returns a Series containing the length of each geometry expressed in the units of the CRS.
-  Series get geom_length {
+  Series get geomLength {
     final lengths = data.map((geom) {
       if (geom == null) return 0.0;
       if (geom is GeoJSONLineString) {
@@ -601,7 +599,7 @@ extension GeoSeriesFunctions on GeoSeries {
         double totalLength = 0.0;
         for (var subGeom in geom.geometries) {
           final tempSeries = GeoSeries([subGeom], crs: crs);
-          totalLength += tempSeries.geom_length.data[0] as double;
+          totalLength += tempSeries.geomLength.data[0] as double;
         }
         return totalLength;
       } else if (geom is GeoJSONPoint || geom is GeoJSONMultiPoint) {return 0.0;}
@@ -740,13 +738,6 @@ extension GeoSeriesFunctions on GeoSeries {
     return false;
   }
 
-  /// Check if a polygon contains another polygon (simplified for the example)
-  bool _isPolygonContainingPolygon(List<List<List<double>>> poly1Rings,
-      List<List<List<double>>> poly2Rings) {
-    // This was a very specific example check, better to use the general logic in _containsGeometry
-    return false;
-  }
-
   /// Check if a geometry is empty
   bool _isGeometryEmpty(GeoJSONGeometry? geom) {
     if (geom == null) return true;
@@ -871,6 +862,7 @@ extension GeoSeriesFunctions on GeoSeries {
         name: '${name}_exterior', crs: crs, index: index);
   }
 
+  /// Get the interiors
   Series get interiors {
     final allInteriors = data.map((geom) {
       List<List<List<double>>> interiorRingsCoords = [];
@@ -930,7 +922,7 @@ extension GeoSeriesFunctions on GeoSeries {
     return Series(values, name: '${name}_z', index: index);
   }
 
-  GeoSeries get representative_point {
+  GeoSeries get representativePoint {
     final points = data.map((geom) {
       if (geom == null || _isGeometryEmpty(geom)) {
         return GeoJSONGeometryCollection([]);
@@ -1060,7 +1052,7 @@ extension GeoSeriesFunctions on GeoSeries {
         .toList();
   }
 
-  GeoSeries set_precision(double gridSize) {
+  GeoSeries setPrecision(double gridSize) {
     if (gridSize == 0) {
       return GeoSeries(List.from(data),
           name: name, crs: crs, index: index);
@@ -1096,7 +1088,7 @@ extension GeoSeriesFunctions on GeoSeries {
         List<GeoJSONGeometry> roundedGeoms = [];
         for (var subGeom in geom.geometries) {
           var tempSeries = GeoSeries([subGeom], crs: crs);
-          var roundedSubGeom = tempSeries.set_precision(gridSize).data[0];
+          var roundedSubGeom = tempSeries.setPrecision(gridSize).data[0];
           if (roundedSubGeom != null) roundedGeoms.add(roundedSubGeom);
         }
         return GeoJSONGeometryCollection(roundedGeoms);
@@ -1107,7 +1099,7 @@ extension GeoSeriesFunctions on GeoSeries {
         name: '${name}_prec', crs: crs, index: index);
   }
 
-  Series get get_precision {
+  Series get getPrecision {
     final values = data.map((_) => double.nan).toList();
     return Series(values, name: '${name}_precision', index: index);
   }
@@ -1569,21 +1561,21 @@ extension GeoSeriesFunctions on GeoSeries {
           if (!_isLineStringSimple(GeoJSONLineString(geom.coordinates[i]))) {
             return false;
           }
-          // TODO: Add checks for interior ring containment and non-intersection with other rings.
+          // TO BE DONE: Add checks for interior ring containment and non-intersection with other rings.
         }
         return true;
       }
 
       if (geom is GeoJSONMultiLineString) {
         if (geom.coordinates.isEmpty) return false;
-        // TODO: Also check that lines only intersect at endpoints for full OGC simplicity.
+        // TO BE DONE: Also check that lines only intersect at endpoints for full OGC simplicity.
         return geom.coordinates.every(
             (lineCoords) => _isLineStringSimple(GeoJSONLineString(lineCoords)));
       }
 
       if (geom is GeoJSONMultiPolygon) {
         if (geom.coordinates.isEmpty) return false;
-        // TODO: Also check that polygons only touch at boundaries for full OGC simplicity.
+        // TO BE DONE: Also check that polygons only touch at boundaries for full OGC simplicity.
         return geom.coordinates.every((polyCoords) =>
             GeoSeries([GeoJSONPolygon(polyCoords)], crs: crs, index: [0])
                 .isSimple
@@ -1592,7 +1584,8 @@ extension GeoSeriesFunctions on GeoSeries {
 
       if (geom is GeoJSONGeometryCollection) {
         if (geom.geometries.isEmpty) return false;
-        // TODO: Check interactions between components for full OGC simplicity.
+        // TO BE DONE: Check interactions between components for full OGC simplicity.
+        
         return geom.geometries.every(
             (g) => GeoSeries([g], crs: crs, index: [0]).isSimple.data[0]);
       }
@@ -1610,7 +1603,7 @@ extension GeoSeriesFunctions on GeoSeries {
 
       if (geom is GeoJSONPolygon) {
         if (!_isValidPolygon(geom.coordinates)) {
-          // TODO: _isValidPolygon could return a reason string directly for more detail
+          // TO BE DONE: _isValidPolygon could return a reason string directly for more detail
           return "Invalid Polygon";
         }
       } else if (geom is GeoJSONMultiPolygon) {

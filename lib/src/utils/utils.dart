@@ -149,35 +149,6 @@ String _getDriverForExtension(String filePath) {
   return _extensionToDriver[".$extension"] ?? 'Unknown';
 }
 
-/// Calculate the area of a polygon using the Shoelace formula
-double _calculatePolygonArea(List<List<List<double>>> polygonCoords) {
-  if (polygonCoords.isEmpty || polygonCoords[0].length < 3) {
-    return 0.0;
-  }
-
-  // Use the outer ring for area calculation
-  final ring = polygonCoords[0];
-  double area = 0.0;
-
-  for (int i = 0; i < ring.length - 1; i++) {
-    area += (ring[i][0] * ring[i + 1][1]) - (ring[i + 1][0] * ring[i][1]);
-  }
-
-  // Close the polygon
-  area += (ring.last[0] * ring.first[1]) - (ring.first[0] * ring.last[1]);
-
-  return (area.abs() / 2.0);
-}
-
-/// Helper method to check if two points are equal
-bool _arePointsEqual(List<double> point1, List<double> point2) {
-  if (point1.length != point2.length) return false;
-  for (int i = 0; i < point1.length; i++) {
-    if (point1[i] != point2[i]) return false;
-  }
-  return true;
-}
-
 /// Checks if a polygon is valid according to Simple Feature Access rules.
 bool _isValidPolygon(List<List<List<double>>> polygonCoords) {
   // Check if we have at least one ring

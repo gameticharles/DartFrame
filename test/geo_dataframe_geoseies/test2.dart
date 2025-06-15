@@ -567,21 +567,21 @@ void main() {
       test('Point geom_equals Point (identical)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('LineString geom_equals LineString (identical)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('Polygon geom_equals Polygon (identical)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
     });
@@ -591,35 +591,35 @@ void main() {
       test('Polygon geom_equals Polygon (different starting vertex)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]); // ((0 0, 1 0, 1 1, 0 1, 0 0))
         final g2 = GeoSeries_fromWKT(['POLYGON ((1 0, 1 1, 0 1, 0 0, 1 0))']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('LineString geom_equals LineString (reversed order of points)', () {
         final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['LINESTRING (1 1, 0 0)']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
       
       test('LineString geom_equals LineString (with extra collinear point)', () {
         final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 2 2)']);
         final g2 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 1, 2 2)']); // (1,1) is collinear
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('LineString geom_equals MultiLineString (single identical component)', () {
         final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTILINESTRING ((0 0, 1 1))']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('Polygon geom_equals MultiPolygon (single identical component)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)))']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
     });
@@ -629,28 +629,28 @@ void main() {
       test('Point not geom_equals Point (different)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['point2']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
 
       test('LineString not geom_equals LineString (different length/shape)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); // (0 0, 1 1)
         final g2 = GeoSeries_fromWKT([testWKTs['line2']!]); // (1 1, 2 2) - shares endpoint but not equal
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
 
       test('Polygon not geom_equals Polygon (different area/shape)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['poly_disjoint']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
 
       test('Polygon not geom_equals LineString (different dimension)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)']); // Closed LineString
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
     });
@@ -660,35 +660,35 @@ void main() {
       test('MultiPoint geom_equals MultiPoint (identical, same order)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('MultiPoint geom_equals MultiPoint (same points, different order)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT (1 1, 0 0)']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
       
       test('MultiPoint not geom_equals MultiPoint (different points)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 2 2)']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
 
       test('MultiPolygon geom_equals MultiPolygon (identical components, same order)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
         final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('MultiPolygon geom_equals MultiPolygon (identical components, different order)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
         final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((2 0, 3 0, 3 1, 2 1, 2 0)), ((0 0, 1 0, 1 1, 0 1, 0 0)))']);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
     });
@@ -700,48 +700,48 @@ void main() {
       test('EmptyPoint.geom_equals(EmptyPoint)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('EmptyLineString.geom_equals(EmptyLineString)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('EmptyPolygon.geom_equals(EmptyPolygon)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
       test('EmptyPoint.geom_equals(EmptyLineString)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         // GEOS: Empty geometries of different dimensions are not equal.
         expect(result.toList(), [false]);
       });
        test('EmptyPoint.geom_equals(EmptyPolygon)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
       test('EmptyLineString.geom_equals(EmptyPolygon)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
 
       test('Point.geom_equals(EmptyPoint)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
-        final result = s1.geom_equals(g2);
+        final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
     });
@@ -751,21 +751,21 @@ void main() {
       test('Series: point1.geom_equals(point_identical_to_point1)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         expect(result.toList(), [true]);
       });
 
       test('Series: [point1, line1] geom_equals [point_identical_to_point1, line1_reversed]', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, 'LINESTRING (1 1, 0 0)']);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         expect(result.toList(), [true, true]);
       });
       
       test('Series with different lengths (s1 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         // point1.geom_equals(point_identical_to_point1) -> true
         // line1.geom_equals(no_geom) -> false (as per current padding logic)
         expect(result.toList(), [true, false]); 
@@ -775,7 +775,7 @@ void main() {
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         expect(result.toList(), [true]); // Result matches length of s1
         expect(result.index.length, 1);
       });
@@ -783,14 +783,14 @@ void main() {
       test('Series with null geometry in calling series for geom_equals', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, null]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         expect(result.toList(), [true, false]); // null geom equals nothing -> false
       });
 
       test('Series with null geometry in other series for geom_equals', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, null]);
-        final result = s1.geom_equals(s2);
+        final result = s1.geomEquals(s2);
         expect(result.toList(), [true, false]); // line1 equals null -> false
       });
     });

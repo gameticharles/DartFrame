@@ -498,19 +498,19 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   ///   index: ['a', 'b']
   /// );
   ///
-  /// final geomA = series.get_geometry('a');
+  /// final geomA = series.getGeometry('a');
   /// print(geomA?.toWkt()); // Output: POINT (1 1)
   ///
-  /// final geomA = series.get_geometry(0);
+  /// final geomA = series.getGeometry(0);
   /// print(geomA?.toWkt()); // Output: POINT (1 1)
   ///
   /// try {
-  ///   series.get_geometry('c');
+  ///   series.getGeometry('c');
   /// } catch (e) {
   ///   print(e); // Output: StateError: No element
   /// }
   /// ```
-  GeoJSONGeometry? get_geometry(dynamic indexLabel) {
+  GeoJSONGeometry? getGeometry(dynamic indexLabel) {
     if (indexLabel is int) {
       if (indexLabel < 0 || indexLabel >= data.length) {
           throw RangeError.index(indexLabel, data, 'index', 'Index out of range');

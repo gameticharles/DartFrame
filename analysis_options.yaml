@@ -12,11 +12,11 @@
 # The core lints are also what is used by pub.dev for scoring packages.
 
 include: package:lints/recommended.yaml
-analyzer:
-  errors:
-    non_constant_identifier_names: ignore
-    unnecessary_type_check: ignore
-    unused_element: ignore
+# analyzer:
+#   errors:
+#     non_constant_identifier_names: ignore
+#     unnecessary_type_check: ignore
+#     unused_element: ignore
 
 # Uncomment the following section to specify additional rules.
 

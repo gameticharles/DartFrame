@@ -847,7 +847,7 @@ extension GeoProcess on GeoSeries{
 
   /// Returns a Series of boolean values with value True for each geometry in this series
   /// that is topologically equal to the corresponding geometry in `other`.
-  Series<bool> geom_equals(dynamic other, {bool align = true}) {
+  Series<bool> geomEquals(dynamic other, {bool align = true}) {
     final bindings = GEOSFFIBindings.defaultLibrary();
     final contextHandle = bindings.GEOS_init_r();
 
