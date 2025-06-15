@@ -326,7 +326,7 @@ print('Column headers: ${gdf.headers}');
 
 ### 5. `propertyCount` (int)
 
-Gets the number of properties (columns) in the `GeoDataFrame`. Equivalent to `gdf.columns.length`.
+Gets the number of properties (columns) in the `GeoDataFrame`. Equivalent to `gdf.columns.length` or `gdf.shape.columns`.
 
 **Example:**
 
@@ -334,42 +334,36 @@ Gets the number of properties (columns) in the `GeoDataFrame`. Equivalent to `gd
 print('Number of properties: ${gdf.propertyCount}');
 ```
 
-### 6. `totalBounds` (List<double>)
+### 6. Coordinate Reference System (`crs`)
 
-Calculates the total bounding box for all geometries in the `GeoDataFrame`. Returns a list: `[minX, minY, maxX, maxY]`.
-
-**Example:**
-
+The CRS of a `GeoDataFrame` is determined by the CRS of its active geometry `GeoSeries`.
 ```dart
-List<double> bounds = gdf.totalBounds;
-print('Total bounds: $bounds');
+// Assuming gdf is a GeoDataFrame
+String? currentCrs = gdf.geometry.crs;
+print('GeoDataFrame CRS: $currentCrs');
+
+// To set or change the CRS, you would typically create a new GeoSeries 
+// with the desired CRS and assign it back to the geometry column,
+// or use a dedicated reprojection method if available.
+// Example (conceptual, actual reprojection method may vary):
+// GeoSeries reprojectedGeoms = gdf.geometry.toCrs('EPSG:3857');
+// gdf.geometry = reprojectedGeoms; 
 ```
 
-### 7. `centroid` (GeoSeries)
+### 7. `geometries({bool asGeoJSON = false})` (List<dynamic>)
 
-Returns a `GeoSeries` containing the centroids of all geometries in the `GeoDataFrame`.
-
-**Example:**
-
-```dart
-GeoSeries centroids = gdf.centroid;
-print(centroids.getCoordinates());
-```
-
-### 8. `geometries({bool asGeoJSON = false})` (List<dynamic>)
-
-Extracts the geometries.
-- If `asGeoJSON` is `true` (default is `false`), returns a list of `GeoJSONGeometry` objects.
-- If `asGeoJSON` is `false`, returns a list of coordinate lists (behavior might depend on geometry type).
+Extracts the geometries from the active geometry column (`GeoSeries`). This method delegates to the `geometries()` method of the underlying `GeoSeries`.
+- If `asGeoJSON` is `true`, returns a list of `GeoJSONGeometry` objects.
+- If `asGeoJSON` is `false` (default), returns a list of coordinate lists.
 
 **Example:**
-
 ```dart
+// Assuming gdf is a GeoDataFrame
 List<GeoJSONGeometry> geoJsonGeoms = gdf.geometries(asGeoJSON: true);
-// List<dynamic> coordGeoms = gdf.geometries(); // Default might be coordinate lists
+// List<dynamic> coordGeoms = gdf.geometries(); // Default (asGeoJSON: false)
 ```
 
-### 9. `featureCollection` (GeoJSONFeatureCollection)
+### 8. `featureCollection` (GeoJSONFeatureCollection)
 
 A getter that converts the `GeoDataFrame` into a `GeoJSONFeatureCollection` object. Equivalent to calling `toFeatureCollection()`.
 
@@ -384,19 +378,67 @@ GeoJSONFeatureCollection fc = gdf.featureCollection;
 
 Since `GeoDataFrame` extends `DataFrame`, you can use standard `DataFrame` methods to modify attribute data:
 
-- Adding columns: `gdf.addColumn('new_prop', defaultValue: 'someValue');` or `gdf['new_prop'] = [...];`
-- Updating values: `gdf.updateColumn(rowIndex, 'propName', newValue);` or `gdf['propName'][rowIndex] = newValue;`
-- Dropping columns: `gdf.drop('propName');`
-- Filtering rows (which returns a new `DataFrame` that can be used to create a new `GeoDataFrame`).
+- Adding columns: `gdf.addColumn('new_prop', defaultValue: 'someValue');` or `gdf['new_prop'] = Series(['val1', 'val2'], name: 'new_prop');`
+- Updating values: `gdf.updateCell(rowIndex, 'propName', newValue);` or by accessing the column Series: `gdf['propName'][rowIndex] = newValue;`
+- Dropping columns: `gdf.drop(['propName']);`
+- Filtering rows (which returns a new `DataFrame` that can be used to create a new `GeoDataFrame` if desired).
 
-To modify geometries, you typically assign a new `GeoSeries` or a list of new geometry objects to the geometry column:
+To modify geometries, you typically assign a new `GeoSeries` or a list of new `GeoJSONGeometry` objects to the active geometry column:
 ```dart
-// Example: Buffering geometries and updating the geometry column
-GeoSeries bufferedGeometries = gdf.geometry.buffer(distance: 10.0);
-gdf[gdf.geometryColumn] = bufferedGeometries.data; // Assign the list of new geometries
+// Example: Creating a new GeoSeries (e.g., by buffering) and assigning it
+// GeoSeries bufferedGeometries = gdf.geometry.buffer(distance: 10.0); // Assuming a buffer method exists
+// gdf.geometry = bufferedGeometries; // Assign the new GeoSeries
+
+// Or assigning a list of new geometry objects (must match length)
+// List<GeoJSONGeometry?> newGeoms = [...]; 
+// gdf[gdf.geometryColName] = newGeoms; 
 ```
 
 ## Geospatial Operations
+
+Geospatial operations and analyses on a `GeoDataFrame` are primarily performed by accessing its active geometry column (which is a `GeoSeries`) and then applying methods from the `GeoSeries` class or its `GeoSpatialExtension` (for properties like `area`, `bounds`, `isValid`, etc.).
+
+**Typical Workflow:**
+1. Access the geometry `GeoSeries`: `GeoSeries myGeoColumn = gdf.geometry;` (or `gdf[gdf.geometryColName] as GeoSeries;`)
+2. Apply `GeoSeries` methods/properties: `Series areas = myGeoColumn.area;`
+3. Optionally, assign results back to the `GeoDataFrame`: `gdf['areas'] = areas.data;`
+
+**Example:**
+```dart
+// Assume 'gdf' is a GeoDataFrame with a geometry column named 'geometry'
+// containing Polygon geometries.
+
+// 1. Access the geometry column
+GeoSeries geometrySeries = gdf.geometry;
+
+// 2. Perform a spatial operation (e.g., calculate area)
+Series<double> areas = geometrySeries.area;
+
+// 3. Assign the results back as a new column in the GeoDataFrame
+gdf['calculated_area'] = areas.data; // Assigning the raw list of data
+
+// 4. Perform another operation (e.g., get bounds)
+DataFrame bounds = geometrySeries.bounds; // Returns a DataFrame
+
+// Merge bounds back if desired (requires careful index alignment)
+// gdf = gdf.join(bounds, leftOn: gdf.indexName, rightOn: bounds.indexName, suffixes: ['_orig', '_bounds']);
+
+
+// For a comprehensive list of available spatial properties and methods, 
+// please refer to the GeoSeries documentation (`doc/geoseries.md`).
+```
+
+### Common Geospatial Computations (via GeoSeries)
+
+- **`gdf.geometry.area`**: Computes the area of each geometry. (Returns `Series<double>`)
+- **`gdf.geometry.bounds`**: Computes the bounding box of each geometry. (Returns `DataFrame`)
+- **`gdf.geometry.isValid`**: Checks validity of each geometry. (Returns `Series<bool>`)
+- **`gdf.geometry.isSimple`**: Checks simplicity of each geometry. (Returns `Series<bool>`)
+- **`gdf.geometry.toWkt()`**: Converts geometries to WKT strings. (Returns `Series<String>`)
+- **`gdf.geometry.makeValid()`**: Attempts to make geometries valid. (Returns `GeoSeries`)
+- **`gdf.geometry.getCoordinates()`**: Extracts coordinates into a DataFrame. (Returns `DataFrame`)
+
+Refer to `doc/geoseries.md` for detailed examples of these and other `GeoSeries` methods.
 
 ### 1. `toFile()`
 
@@ -469,3 +511,346 @@ GeoJSONFeatureCollection featureCollection = gdf.toFeatureCollection();
 ```
 
 This documentation provides a comprehensive overview of the `GeoDataFrame` class, its functionalities, and how to use it for handling geospatial data within the DartFrame environment. For more specific methods inherited from `DataFrame`, please refer to the `DataFrame` documentation.
+
+---
+
+## General Usage Examples (from README)
+
+This section provides a collection of common usage examples for `GeoDataFrame`, originally from the main README.
+
+### Creating a GeoDataFrame (from README)
+
+#### From a file
+
+```dart
+// Read from a CSV file with coordinate columns
+// final geoDataFrame = await GeoDataFrame.readFile(
+//   'path/to/data.csv',
+//   coordinatesColumns: {
+//     'longitude': 1,  // column index for longitude
+//     'latitude': 2    // column index for latitude
+//   },
+//   coordinateType: 'lonlat'
+// );
+
+// Read from a GeoJSON file
+// final geoJson = await GeoDataFrame.readFile('path/to/data.geojson');
+
+// Read from a GPX file
+// final gpxData = await GeoDataFrame.readFile('path/to/tracks.gpx');
+```
+*(Note: `readFile` examples assume the existence of specified files and appropriate data format.)*
+
+#### From coordinates
+
+```dart
+// Create from a list of coordinate pairs
+final coordinates = [
+  [0.0, 0.0],
+  [1.0, 0.0],
+  [1.0, 1.0],
+  [0.0, 1.0]
+];
+
+final gdfFromCoords = GeoDataFrame.fromCoordinates(
+  coordinates,
+  coordinateType: 'xy'  // or 'lonlat'
+);
+// print(gdfFromCoords);
+```
+
+#### From an existing DataFrame
+
+```dart
+// Convert a DataFrame with a geometry column (e.g., WKT) to a GeoDataFrame
+final dataFrameWithWKT = DataFrame(
+  [
+    [1, 'Point A', 'POINT(0 0)'],
+    [2, 'Point B', 'POINT(1 1)'],
+  ],
+  columns: ['id', 'name', 'wkt_geom'],
+);
+
+final gdfFromDf = GeoDataFrame( // Using default constructor
+  dataFrameWithWKT,
+  geometryColumn: 'wkt_geom', // Specifies the column containing WKT strings
+  crs: 'EPSG:4326'
+);
+// print(gdfFromDf.geometry);
+
+// The static GeoDataFrame.fromDataFrame can also be used, especially if
+// geometries need to be constructed from coordinate columns.
+// Example:
+// final dfWithXY = DataFrame([
+//   [1, 'CityA', 10.0, 20.0],
+// ], columns: ['id', 'name', 'x', 'y']);
+// final gdfFromXYCols = GeoDataFrame.fromDataFrame(
+//   dfWithXY,
+//   coordinateType: 'xy', // Will look for 'x' and 'y' columns
+//   geometryType: 'point',
+//   crs: 'EPSG:4326'
+// );
+// print(gdfFromXYCols.geometry);
+```
+
+#### From GeoJSON String
+
+```dart
+// Example: Create from GeoJSON string
+final geoJsonString = '''
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"title": "Location A"},
+      "geometry": {"type": "Point", "coordinates": [105.77, 21.07]}
+    },
+    {
+      "type": "Feature",
+      "properties": {"title": "Line B"},
+      "geometry": {"type": "LineString", "coordinates": [[105.0, 21.0],[105.5, 21.5]]}
+    }
+  ]
+}
+''';
+
+// Parse the GeoJSON string
+final geoJson = GeoJSON.fromJSON(geoJsonString);
+
+// Create a GeoDataFrame from the parsed GeoJSON
+GeoDataFrame? fromJsonGeoDF;
+if (geoJson is GeoJSONFeatureCollection) {
+  // Extract all unique property keys to use as headers for attribute columns
+  final jsonHeaders = <String>{};
+  for (var feature in geoJson.features) {
+    if (feature?.properties != null) {
+      jsonHeaders.addAll(feature!.properties!.keys);
+    }
+  }
+  
+  fromJsonGeoDF = GeoDataFrame.fromFeatureCollection( // Using the dedicated factory
+    geoJson,
+    // The GeoDataFrame.fromFeatureCollection constructor automatically handles properties.
+    // If using the default GeoDataFrame constructor with a GeoJSONFeatureCollection,
+    // you might need to manually construct the DataFrame part first.
+    // The example in README was slightly different, adapting to typical constructor patterns.
+    crs: 'EPSG:4326',
+  );
+  
+  // print('\nGeoDataFrame from GeoJSON string:');
+  // print('Features: ${fromJsonGeoDF?.featureCount}');
+  // print('Properties: ${fromJsonGeoDF?.attributes.columns.join(', ')}');
+  
+  // Demonstrate querying features (if using a method that allows property access, like a custom filter)
+  // The findFeatures method shown in README might be a higher-level utility or conceptual.
+  // Standard filtering would be on fromJsonGeoDF.attributes:
+  if (fromJsonGeoDF != null) {
+    var selection = fromJsonGeoDF.attributes.filter((row) {
+      // Assuming 'title' column exists in attributes from properties
+      return row[fromJsonGeoDF!.attributes.columns.indexOf('title')] == 'Location A';
+    });
+    // print('Selected features based on title "Location A": ${selection.rowCount}');
+  }
+}
+```
+
+### Accessing Data (from README)
+
+```dart
+// Assuming 'gdf' is a created GeoDataFrame
+// final gdf = GeoDataFrame.fromCoordinates([[0,0],[1,1]], coordinateType:'xy');
+
+// Get the number of features
+// print(gdf.featureCount); // Equivalent to gdf.rowCount or gdf.shape.rows
+
+// Access the attribute table as DataFrame
+// DataFrame attributes = gdf.attributes;
+// print(attributes);
+
+// Access a specific feature (row)
+// This would typically be done using standard DataFrame row access, e.g., gdf.iloc[0] or gdf.loc['some_index']
+// The getFeature(index) method is not a standard DataFrame/GeoDataFrame method from the core API.
+// Example: Row as Series (iloc)
+// if (gdf.rowCount > 0) {
+//   Series featureRow = gdf.iloc[0]; 
+//   print(featureRow);
+// }
+
+
+// Get all geometries as a GeoSeries
+// GeoSeries geometries = gdf.geometry;
+// print(geometries);
+```
+
+### Manipulating Data (from README)
+
+*(Many of these operations like `addFeature`, `deleteFeature`, `addProperty` are high-level concepts. Standard DataFrame/GeoDataFrame manipulation involves column/row operations.)*
+
+```dart
+// Assuming 'gdf' is a GeoDataFrame
+final initialCoords = [[0.0,0.0],[1.0,1.0]];
+var gdf = GeoDataFrame.fromCoordinates(initialCoords, coordinateType: 'xy', crs: 'EPSG:4326');
+gdf['name'] = Series(['Point Zero', 'Point One'], name: 'name');
+// print('Initial GDF:\n$gdf');
+
+// Add a new feature (conceptually - requires creating a new GDF or adding a row)
+// To add a feature, you'd typically create a new GeoDataFrame by concatenating,
+// or prepare a new row and use a method like `addRow` (if available and adapted for GeoDataFrame).
+// For simplicity, let's show adding a new geometry and attribute via extending existing Series
+// and creating a new GeoDataFrame (a common immutable pattern).
+
+// var newPoint = GeoJSONPoint([10.0, 20.0]);
+// var newAttributes = {'name': 'New Point', 'value': 42}; // This would be a new row for attributes DataFrame
+
+// A more direct way to add a row if GDF supports it or via DataFrame methods:
+// This is a conceptual example as GeoDataFrame might not have a direct addFeature.
+// One might do:
+// var newRowData = {'name': 'New Point', 'value': 42, gdf.geometryColName: GeoJSONPoint([10.0, 20.0])};
+// (This requires a method to append a map as a new row, which DataFrame might have)
+
+
+// Delete a feature (row)
+// var gdfAfterDelete = gdf.drop([0]); // Drops row at index 0
+// print('GDF after deleting first feature:\n$gdfAfterDelete');
+
+// Add a property (column) to all features
+gdf['category'] = Series(['default', 'default'], name: 'category'); // Broadcast or set Series
+// print('GDF after adding category:\n$gdf');
+
+// Update properties (attributes)
+// gdf.attributes['name'][0] = 'Old Point Zero'; // This would modify attributes DataFrame if mutable
+// A safer way or if immutable:
+var names = gdf['name'].toList(); // Get as list
+if (names.isNotEmpty) names[0] = 'Old Point Zero';
+gdf['name'] = Series(names, name: 'name'); // Assign back
+// print('GDF after updating name property:\n$gdf');
+
+
+// Use DataFrame operations on attributes
+// var filteredAttributes = gdf.attributes.filter((row) => row[gdf.attributes.columns.indexOf('name')] == 'Point One');
+// print('Filtered attributes:\n$filteredAttributes');
+```
+
+### Spatial Properties in Attributes (from README)
+
+The README mentions that `GeoDataFrame` might automatically calculate and add certain spatial properties to its attribute table. This behavior (if implemented) would typically occur during creation or when a specific method is called. The properties mentioned were: `geometry` (WKT string), `area`, `geom_type`, `is_valid`, `bounds`.
+
+**Conceptual Example if properties are auto-added to attributes:**
+```dart
+// var gdfWithAutoProps = await GeoDataFrame.readFile('path/to/data.geojson');
+// This implies that after reading, gdfWithAutoProps.attributes might contain columns like:
+// 'original_prop1', 'original_prop2', ..., 'geometry_wkt', 'area', 'geom_type', 'is_valid_geom', 'bounds_list'
+
+// Accessing these auto-generated attribute columns:
+// String wkt = gdfWithAutoProps.attributes['geometry_wkt'][0];
+// double area = gdfWithAutoProps.attributes['area'][0];
+// String type = gdfWithAutoProps.attributes['geom_type'][0];
+// bool isValid = gdfWithAutoProps.attributes['is_valid_geom'][0];
+// List<double> bounds = gdfWithAutoProps.attributes['bounds_list'][0];
+```
+*(**Note**: Standard practice is often to compute these on demand from the primary geometry `GeoSeries` rather than auto-populating them as attribute columns, to avoid data redundancy and ensure they are always up-to-date if geometries change. If this auto-population is a feature, its exact mechanism and when it occurs should be clearly defined in the GeoDataFrame's specific documentation or constructor/method behavior.)*
+
+### Exporting Data (from README)
+
+```dart
+// Assuming 'gdf' is a GeoDataFrame
+// await gdf.toFile('output.geojson');
+// await gdf.toFile('output.csv'); // This would primarily save the attribute table.
+// await gdf.toFile('output.gpx');
+// await gdf.toFile('output.kml');
+```
+
+### Finding Features (from README)
+
+The README mentions a `findFeatures` method. This seems to be a high-level utility. Standard filtering is often done on the `GeoDataFrame` (which is a `DataFrame`) using boolean indexing or `where` clauses, potentially combined with spatial operations on the geometry `GeoSeries`.
+
+```dart
+// Example from README (conceptual, as findFeatures might be specific)
+// var foundFeatures = gdf.findFeatures((feature) => 
+//   feature.properties!['population'] > 1000 && 
+//   feature.properties!['area'] < 500 // 'area' here would be an attribute
+// );
+
+// Standard filtering approach:
+// Assume 'gdf' has 'population' and an 'calculated_area' (from gdf.geometry.area) columns
+// Series populationFilter = gdf['population'].apply((pop) => pop != null && pop > 1000);
+// Series areaFilter = gdf['calculated_area'].apply((area) => area != null && area < 500);
+// GeoDataFrame filteredGDF = gdf[populationFilter & areaFilter]; 
+// print('Found features using standard filtering: ${filteredGDF.rowCount}');
+```
+
+### Complete Example (from README, adapted)
+```dart
+Future<void> mainGeoDataFrameExample() async {
+  // For this example, let's assume a CSV 'data.csv' exists:
+  // id,name,latitude,longitude,population
+  // 1,PlaceA,21.071,105.774,50000
+  // 2,PlaceB,21.072,105.775,8000
+  // 3,PlaceC,21.073,105.776,120000
+
+  // final geoDataFrame = await GeoDataFrame.readFile(
+  //   'data.csv', // Replace with actual path or load differently for a runnable example
+  //   delimiter: ',',
+  //   hasHeader: true,
+  //   coordinatesColumns: {
+  //     'latitude': 2, // Index of 'latitude' column
+  //     'longitude': 3 // Index of 'longitude' column
+  //   },
+  //   coordinateType: 'lonlat',
+  //   crs: 'EPSG:4326'
+  // );
+
+  // Create a sample GeoDataFrame for demonstration as readFile is commented out
+  var data = {
+    'id': [1, 2, 3],
+    'name': ['PlaceA', 'PlaceB', 'PlaceC'],
+    'latitude': [21.071, 21.072, 21.073],
+    'longitude': [105.774, 105.775, 105.776],
+    'population': [50000, 8000, 120000]
+  };
+  var tempDf = DataFrame.fromMap(data);
+  final geoDataFrame = GeoDataFrame.fromDataFrame(
+    tempDf,
+    coordinateType: 'lonlat', // Uses 'latitude' and 'longitude' columns
+    crs: 'EPSG:4326'
+  );
+
+
+  print('Number of features: ${geoDataFrame.featureCount}');
+  print('Properties (Headers): ${geoDataFrame.headers}');
+  
+  // Add a new property column
+  // geoDataFrame.addProperty('category', defaultValue: 'residential'); // addProperty might be conceptual
+  // Using standard DataFrame column assignment:
+  List<String> categories = List.filled(geoDataFrame.rowCount, 'residential', growable: true);
+  geoDataFrame['category'] = Series(categories, name: 'category');
+  
+  // Calculate statistics on a numeric column from attributes
+  if (geoDataFrame.attributes.columns.contains('population')) {
+    print('Population statistics:');
+    print(geoDataFrame.attributes['population'].describe());
+  }
+  
+  // Filter features (standard DataFrame filtering)
+  // GeoDataFrame urbanAreasGDF = geoDataFrame[geoDataFrame['population'].apply((p) => p!= null && p > 10000)];
+  
+  // The findFeatures method from README seems custom. A standard way:
+  var attributesWithPopulation = geoDataFrame.attributes;
+  if (attributesWithPopulation.columns.contains('population')) {
+      Series populationSeries = attributesWithPopulation['population'];
+      List<bool> filterCriteria = populationSeries.data.map((pop) {
+          if (pop is num) return pop > 10000;
+          return false;
+      }).toList();
+      
+      GeoDataFrame urbanAreasGDF = geoDataFrame[filterCriteria];
+      print('Urban areas count: ${urbanAreasGDF.rowCount}');
+      
+      // Export the filtered data
+      // await urbanAreasGDF.toFile('urban_areas.geojson');
+      // print('Urban areas exported to urban_areas.geojson (conceptual)');
+  }
+}
+```
+
