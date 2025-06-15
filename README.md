@@ -2,7 +2,6 @@
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Likes](https://img.shields.io/pub/likes/dartframe)](https://pub.dartlang.org/packages/dartframe/score)
 [![Points](https://img.shields.io/pub/points/dartframe)](https://pub.dartlang.org/packages/dartframe/score)
-[![Popularity](https://img.shields.io/pub/popularity/dartframe)](https://pub.dartlang.org/packages/dartframe/score)
 [![SDK Version](https://badgen.net/pub/sdk-version/dartframe)](https://pub.dartlang.org/packages/dartframe)
 
 [![Last Commits](https://img.shields.io/github/last-commit/gameticharles/dartframe?ogo=github&logoColor=white)](https://github.com/gameticharles/dartframe/commits/master)
