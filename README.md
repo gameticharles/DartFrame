@@ -575,9 +575,9 @@ Tests are located in the test directory. To run tests, execute dart test in the 
 
 Performance benchmarks are available in the `benchmark` directory. These benchmarks, built using the `benchmark_harness` package, help measure the performance of various operations on `Series` and `DataFrame` objects.
 
-For detailed instructions on how to run these benchmarks and interpret their output, please see [benchmark/BENCHMARKING.MD](./benchmark/BENCHMARKING.MD).
+For detailed instructions on how to run these benchmarks and interpret their output, please see [benchmark/BENCHMARKING.MD](./benchmark/BENCHMARKING.md).
 
-Reference (simulated) performance numbers can be found in [benchmark/RESULTS.MD](./benchmark/RESULTS.MD).
+Reference (simulated) performance numbers can be found in [benchmark/RESULTS.MD](./benchmark/RESULTS.md).
 
 ---
 
