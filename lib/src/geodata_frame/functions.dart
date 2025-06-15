@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'geodata_frame.dart';
 
 extension GeoDataFrameFunctions on GeoDataFrame {
   /// Adds a new feature to the GeoDataFrame.
@@ -27,7 +27,7 @@ extension GeoDataFrameFunctions on GeoDataFrame {
     }
 
     // Add the row to the internal data structure
-    _data.add(newRow);
+    rows.add(newRow);
 
     // Add any new properties as columns if they don't exist
     if (properties != null) {
@@ -38,8 +38,8 @@ extension GeoDataFrameFunctions on GeoDataFrame {
 
           // Update the value in the new row for this column
           final colIndex = columns.indexOf(key);
-          if (colIndex >= 0 && colIndex < _data.last.length) {
-            _data.last[colIndex] = properties[key];
+          if (colIndex >= 0 && colIndex < rows.last.length) {
+            rows.last[colIndex] = properties[key];
           }
         }
       }
@@ -58,11 +58,11 @@ extension GeoDataFrameFunctions on GeoDataFrame {
 
   /// Gets a specific feature as a GeoJSONFeature.
   GeoJSONFeature? getFeature(int index) {
-    if (index < 0 || index >= _data.length) {
+    if (index < 0 || index >= rows.length) {
       return null;
     }
 
-    final row = _data[index];
+    final row = rows[index];
     final geomIndex = columns.indexOf(geometryColumn);
     final geom = geomIndex >= 0 && geomIndex < row.length
         ? row[geomIndex]
@@ -84,7 +84,7 @@ extension GeoDataFrameFunctions on GeoDataFrame {
   List<GeoJSONFeature> findFeatures(bool Function(GeoJSONFeature) query) {
     final features = <GeoJSONFeature>[];
 
-    for (int i = 0; i < _data.length; i++) {
+    for (int i = 0; i < rows.length; i++) {
       final feature = getFeature(i);
       if (feature != null && query(feature)) {
         features.add(feature);
@@ -101,8 +101,8 @@ extension GeoDataFrameFunctions on GeoDataFrame {
   List<Map<String, dynamic>> toRows() {
     final result = <Map<String, dynamic>>[];
 
-    for (int i = 0; i < _data.length; i++) {
-      final row = _data[i];
+    for (int i = 0; i < rows.length; i++) {
+      final row = rows[i];
       final Map<String, dynamic> rowMap = {};
 
       // Add all properties

@@ -1,4 +1,4 @@
-part of '../../../dartframe.dart';
+part of '../geo_series.dart';
 
 extension BufferGeoProcess on GeoSeries {
   /// Creates a buffer around each geometry in the GeoSeries.

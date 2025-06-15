@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'geodata_frame.dart';
 
 /// Extension to convert GeoJSON geometries to Well-Known Text (WKT) format
 extension GeoJSONGeometryToWkt on GeoJSONGeometry {

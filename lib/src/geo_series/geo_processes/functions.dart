@@ -1,4 +1,4 @@
-part of '../../../dartframe.dart';
+part of '../geo_series.dart';
 
 extension GeoProcess on GeoSeries {
   /// Returns a Series of boolean values with value True for each geometry in this series

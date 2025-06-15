@@ -1,10 +1,10 @@
-part of '../../dartframe.dart';
+import 'package:geojson_vi/geojson_vi.dart';
 
 /// Parses a WKT string into a GeoJSON geometry.
 ///
 /// This is a simplified parser that handles basic WKT formats.
 /// For production use, consider using a more robust WKT parser.
-GeoJSONGeometry _parseWKT(String wkt) {
+GeoJSONGeometry parseWKT(String wkt) {
   wkt = wkt.trim();
 
   // Parse POINT
@@ -116,7 +116,7 @@ List<String> _splitRings(String ringsString) {
 }
 
 /// A constant map linking file extensions to their respective drivers.
-const Map<String, String> _extensionToDriver = {
+const Map<String, String> extensionToDriver = {
   ".csv": "CSV",
   ".txt": "TXT",
   ".json": "GeoJSON",
@@ -144,13 +144,13 @@ const Map<String, String> _extensionToDriver = {
 /// Determines the appropriate driver for a given file extension.
 ///
 /// Returns the driver as a string. If no matching driver is found, returns 'Unknown'.
-String _getDriverForExtension(String filePath) {
+String getDriverForExtension(String filePath) {
   String extension = filePath.split('.').last.toLowerCase();
-  return _extensionToDriver[".$extension"] ?? 'Unknown';
+  return extensionToDriver[".$extension"] ?? 'Unknown';
 }
 
 /// Checks if a polygon is valid according to Simple Feature Access rules.
-bool _isValidPolygon(List<List<List<double>>> polygonCoords) {
+bool isValidPolygon(List<List<List<double>>> polygonCoords) {
   // Check if we have at least one ring
   if (polygonCoords.isEmpty) {
     return false;

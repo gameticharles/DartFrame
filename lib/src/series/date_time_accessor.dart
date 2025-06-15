@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'series.dart';
 
 /// Accessor for datetime-like properties of Series data.
 ///

@@ -1,4 +1,15 @@
-part of '../../dartframe.dart';
+library;
+
+import 'dart:ffi';
+import 'dart:math';
+
+import '../../dartframe.dart';
+import '../geos_ffi/geos_bindings.dart';
+import '../geos_ffi/geos_utils.dart';
+
+part 'functions.dart';
+part 'geo_processes/functions.dart';
+part 'geo_processes/buffer.dart';
 
 /// A `GeoSeries` represents a Series of geometric objects.
 ///
@@ -46,7 +57,7 @@ part of '../../dartframe.dart';
 /// // Accessing CRS
 /// print(geoSeries.crs); // Output: EPSG:4326
 /// ```
-class GeoSeries extends Series<GeoJSONGeometry?> {
+class GeoSeries extends Series {
   /// The Coordinate Reference System of the geometries in the series.
   ///
   /// This is for informational purposes and is not used in calculations by default
@@ -113,7 +124,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   /// ```
   factory GeoSeries.fromWKT(List<String> wktStrings,
       {String? crs, String name = 'geometry', List<dynamic>? index}) {
-    final geometries = wktStrings.map((wkt) => _parseWKT(wkt)).toList();
+    final geometries = wktStrings.map((wkt) => parseWKT(wkt)).toList();
     return GeoSeries(geometries, crs: crs, name: name, index: index);
   }
 
@@ -365,7 +376,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   /// // Name: my_geoms_wkt, Length: 3, dtype: String
   /// ```
   Series<String> toWkt({String fallback = 'EMPTY'}) {
-    final List<String> wktList = data.map((geom) {
+    final List<String> wktList = data.map<String>((geom) {
       try {
         return geom?.toWkt() ?? fallback;
       } catch (e) {
@@ -461,17 +472,20 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
         } else if (geom is GeoJSONGeometryCollection) {
           // For geometry collections, recursively copy each geometry
           final copiedGeometries = geom.geometries.map((g) {
-            if (g is GeoJSONPoint)
+            if (g is GeoJSONPoint) {
               return GeoJSONPoint(List.from(g.coordinates));
-            if (g is GeoJSONLineString)
+            }
+            if (g is GeoJSONLineString) {
               return GeoJSONLineString(g.coordinates
                   .map((coord) => List<double>.from(coord))
                   .toList());
-            if (g is GeoJSONPolygon)
+            }
+            if (g is GeoJSONPolygon) {
               return GeoJSONPolygon(g.coordinates
                   .map((ring) =>
                       ring.map((coord) => List<double>.from(coord)).toList())
                   .toList());
+            }
             // Add other geometry types as needed
             return g; // fallback
           }).toList();

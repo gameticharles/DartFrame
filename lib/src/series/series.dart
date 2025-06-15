@@ -1,4 +1,14 @@
-part of '../../dartframe.dart';
+library;
+
+import 'package:intl/intl.dart';
+import 'dart:math';
+
+import '../data_frame/data_frame.dart';
+
+part 'date_time_accessor.dart';
+part 'string_accessor.dart';
+part 'operations.dart';
+part 'functions.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///

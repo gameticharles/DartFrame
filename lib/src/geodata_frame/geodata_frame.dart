@@ -1,4 +1,15 @@
-part of '../../dartframe.dart';
+library;
+
+import 'package:geojson_vi/geojson_vi.dart';
+import 'package:geoxml/geoxml.dart';
+
+import '../data_frame/data_frame.dart';
+import '../geo_series/geo_series.dart';
+import '../file_helper/file_io.dart';
+import '../utils/utils.dart';
+
+part 'functions.dart';
+part 'extension.dart';
 
 /// The `GeoDataFrame` class for handling geospatial data in various formats.
 ///
@@ -150,7 +161,7 @@ class GeoDataFrame extends DataFrame {
         geometry = value;
       } else if (value is String) {
         // Try to parse as WKT
-        geometry = _parseWKT(value);
+        geometry = parseWKT(value);
       } else if (value is List) {
         // Try to parse as coordinate list
         if (value.length >= 2) {
@@ -616,7 +627,7 @@ class GeoDataFrame extends DataFrame {
     String? crs,
   }) async {
     if (driver == 'Auto') {
-      driver = _getDriverForExtension(filePath);
+      driver = getDriverForExtension(filePath);
     }
 
     FileIO fileIO = FileIO();
@@ -957,7 +968,7 @@ class GeoDataFrame extends DataFrame {
     bool defaultDelimitAllFields = false,
   }) async {
     if (driver == 'Auto') {
-      driver = _getDriverForExtension(filePath);
+      driver = getDriverForExtension(filePath);
     }
 
     FileIO fileIO = FileIO();

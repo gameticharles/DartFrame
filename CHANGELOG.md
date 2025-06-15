@@ -1,3 +1,11 @@
+# 0.5.0
+
+* **[IMPROVEMENT]** Reorganize codebase into discrete libraries and update dependencies
+* **[IMPROVEMENT]** Restructure into separate library with parts
+* **[IMPROVEMENT]** Cleaned code base
+* **[IMPROVEMENT]** Refactor(utils): make functions public and remove main test
+* **[IMPROVEMENT]** Chore(dependencies): update intl and geoxml versions
+
 # 0.4.5
 
 * **[Fix]** fix formatting and indentation in multiple files

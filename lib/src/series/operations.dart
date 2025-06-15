@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'series.dart';
 
 extension SeriesOperations on Series {
   dynamic _getMissingRepresentation(Series series) {

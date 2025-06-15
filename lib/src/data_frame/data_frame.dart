@@ -1,4 +1,14 @@
-part of '../../dartframe.dart';
+import 'dart:convert';
+
+import 'package:intl/intl.dart';
+import 'dart:math';
+
+import '../../dartframe.dart';
+import '../file_helper/file_io.dart';
+
+part 'accessors.dart';
+part 'functions.dart';
+part 'operations.dart';
 
 // Helper function to check for default integer index (e.g., [0, 1, 2, ...])
 bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
@@ -283,6 +293,7 @@ class DataFrame {
     String? csvContent = csv;
     if (csvContent == null && inputFilePath != null) {
       // Read file
+      FileIO fileIO = FileIO();
       csvContent = await fileIO.readFromFile(inputFilePath);
     } else if (csvContent == null) {
       throw ArgumentError('Either csv or inputFilePath must be provided.');
@@ -339,6 +350,7 @@ class DataFrame {
     String? jsonContent = jsonString;
     if (jsonContent == null && inputFilePath != null) {
       // Read file
+      FileIO fileIO = FileIO();
       jsonContent = await fileIO.readFromFile(inputFilePath);
     } else if (jsonContent == null) {
       throw ArgumentError(
@@ -599,7 +611,7 @@ class DataFrame {
   ({int rows, int columns}) get shape =>
       (rows: _data.length, columns: _columns.length);
 
-  /// Returns a Series object for the specified column name.
+  /// Returns a Series object for the specified column name or index.
   ///
   /// This method provides a convenient way to access a column as a Series.
   ///
@@ -609,15 +621,17 @@ class DataFrame {
   ///   {'A': 1, 'B': 'x'},
   ///   {'A': 2, 'B': 'y'},
   /// ]);
-  /// var colA = df.column('A');
-  /// print(colA.data); // [1, 2]
+  /// var colAByName = df.column('A');
+  /// print(colAByName.data); // [1, 2]
+  /// var colAByIndex = df.column(0);
+  /// print(colAByIndex.data); // [1, 2]
   /// ```
-  Series column(String name) {
-    if (!_columns.contains(name)) {
-      throw ArgumentError('Column "$name" not found in DataFrame');
-    }
-    return this[name];
+  Series column(dynamic key) {
+    // The operator[] already handles String and int keys, 
+    // and throws appropriate errors if the key is invalid or not found.
+    return this[key];
   }
+
 
   /// Returns a Map representation of the row that matches the given criteria.
   ///
@@ -775,7 +789,7 @@ class DataFrame {
           message: null,
         );
       }
-      var series = Series(rows.map((row) => row[key]).toList(),
+      var series = Series<dynamic>(rows.map((row) => row[key]).toList(),
           name: _columns[key], index: index);
       series.setParent(this, _columns[key].toString());
       return series;
@@ -784,7 +798,7 @@ class DataFrame {
       if (columnIndex == -1) {
         throw ArgumentError.value(key, 'columnName', 'Column does not exist');
       }
-      var series = Series(rows.map((row) => row[columnIndex]).toList(),
+      var series = Series<dynamic>(rows.map((row) => row[columnIndex]).toList(),
           name: key, index: index);
       series.setParent(this, key);
       return series;

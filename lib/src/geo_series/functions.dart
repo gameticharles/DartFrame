@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'geo_series.dart';
 
 extension GeoSeriesFunctions on GeoSeries {
   /// Gets coordinates from a GeoSeries as a DataFrame of floats.
@@ -1615,4 +1615,41 @@ extension GeoSeriesFunctions on GeoSeries {
     }).toList();
     return Series(reasons, name: '${name}_is_valid_reason', index: index);
   }
+
+  /// Checks if a polygon is valid according to Simple Feature Access rules.
+  bool _isValidPolygon(List<List<List<double>>> polygonCoords) {
+    // Check if we have at least one ring
+    if (polygonCoords.isEmpty) {
+      return false;
+    }
+
+    // For each ring
+    for (var ring in polygonCoords) {
+      // A ring must have at least 4 points (to be closed)
+      if (ring.length < 4) {
+        return false;
+      }
+
+      // First and last points must be the same (closed ring)
+      if (ring.first[0] != ring.last[0] || ring.first[1] != ring.last[1]) {
+        return false;
+      }
+
+      // Check for self-intersection (simplified check)
+      // A complete check would require more complex algorithms
+      // This is a basic check for duplicate points
+      Set<String> pointSet = {};
+      for (int i = 0; i < ring.length - 1; i++) {
+        // Skip last point (duplicate of first)
+        String pointKey = '${ring[i][0]},${ring[i][1]}';
+        if (pointSet.contains(pointKey)) {
+          return false; // Duplicate point found
+        }
+        pointSet.add(pointKey);
+      }
+    }
+
+    return true;
+  }
+
 }

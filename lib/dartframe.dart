@@ -1,45 +1,11 @@
-// ignore_for_file: depend_on_referenced_packages
-
 library;
-
-import 'dart:convert';
-import 'dart:ffi';
-import 'dart:math';
-
-import 'package:geoxml/geoxml.dart';
-import 'package:intl/intl.dart';
-import 'package:geojson_vi/geojson_vi.dart';
-
-import 'src/file_helper/file_io.dart';
 
 export 'package:geojson_vi/geojson_vi.dart';
 
-import 'src/geos_ffi/geos_bindings.dart';
-import 'src/geos_ffi/geos_utils.dart';
+export 'src/series/series.dart';
+export 'src/geo_series/geo_series.dart';
+export 'src/data_frame/data_frame.dart';
+export 'src/geodata_frame/geodata_frame.dart';
 
-part 'src/utils/utils.dart';
-part 'src/utils/lists.dart';
-
-part 'src/geo_series/geo_series.dart';
-part 'src/geo_series/functions.dart';
-//Geoprocess
-part 'src/geo_series/geo_processes/buffer.dart';
-part 'src/geo_series/geo_processes/functions.dart';
-
-part 'src/geo_dart_frame/geodata_frame.dart';
-part 'src/geo_dart_frame/functions.dart';
-part 'src/geo_dart_frame/extension.dart';
-
-part 'src/dart_frame/dart_frame.dart';
-part 'src/dart_frame/operations.dart';
-part 'src/dart_frame/functions.dart';
-part 'src/dart_frame/accessors.dart';
-
-part 'src/series/series.dart';
-part 'src/series/operations.dart';
-part 'src/series/functions.dart';
-part 'src/series/string_accessor.dart';
-part 'src/series/date_time_accessor.dart';
-
-// This function should return an instance of FileIODesktop or FileIOWeb depending on the platform.
-FileIO fileIO = FileIO();
+export 'src/utils/utils.dart';
+export 'src/utils/lists.dart';

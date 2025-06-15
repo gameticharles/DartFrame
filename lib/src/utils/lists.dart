@@ -1,5 +1,3 @@
-part of '../../dartframe.dart';
-
 /// Comparison options for list equality checking
 enum ListComparisonMode {
   /// Strict comparison: order matters, types must match exactly
@@ -90,8 +88,9 @@ class ListComparisonException implements Exception {
   String toString() {
     final buffer = StringBuffer('ListComparisonException: $message');
     if (context != null) buffer.write(' (Context: $context)');
-    if (originalError != null)
+    if (originalError != null) {
       buffer.write(' (Original error: $originalError)');
+    }
     return buffer.toString();
   }
 }
@@ -699,8 +698,9 @@ bool _flexibleCompareElements(dynamic elem1, dynamic elem2,
   // Attempt type coercion if allowed
   if (config.allowTypeCoercion) {
     // Try converting both to strings
-    if (_compareStrings(elem1.toString(), elem2.toString(), config))
+    if (_compareStrings(elem1.toString(), elem2.toString(), config)) {
       return true;
+    }
 
     // Try numeric conversion
     final num1 = _tryParseNumber(elem1);
@@ -752,8 +752,9 @@ bool _compareMaps(
 
   for (final key in map1.keys) {
     if (!map2.containsKey(key)) return false;
-    if (!_deepCompareElements(map1[key], map2[key], config, context))
+    if (!_deepCompareElements(map1[key], map2[key], config, context)) {
       return false;
+    }
   }
 
   return true;
@@ -911,221 +912,4 @@ class ListEqualPresets {
   );
 }
 
-// Example usage and comprehensive test functions
-void main() {
-  print('=== Enhanced List Equality Function Tests ===\n');
 
-  // Basic usage examples
-  print('=== Basic Usage Examples ===');
-  print(listEqual([
-    [1, 2, 3],
-    [1, 2, 3]
-  ])); // true
-  print(listEqual([
-    [1, 2, 3],
-    [1, 2, 4]
-  ])); // false
-  print(listEqual([
-    [1, 2, 3],
-    [3, 2, 1]
-  ])); // false (order matters)
-
-  // Multiple lists
-  print('\n=== Multiple Lists Comparison ===');
-  print(listEqual([
-    [1, 2],
-    [1, 2],
-    [1, 2]
-  ])); // true
-  print(listEqual([
-    [1, 2],
-    [1, 2],
-    [1, 3]
-  ])); // false
-
-  // Unordered comparison
-  print('\n=== Unordered Comparison ===');
-  print(listEqual([
-    [1, 2, 3],
-    [3, 2, 1]
-  ], ListEqualPresets.unordered)); // true
-  print(listEqual([
-    ['a', 'b', 'c'],
-    ['c', 'a', 'b']
-  ], ListEqualPresets.unordered)); // true
-
-  // String options
-  print('\n=== String Comparison Options ===');
-  print(listEqual([
-    ['Hello', ' World '],
-    ['hello', 'world']
-  ], ListEqualPresets.flexibleString)); // true
-
-  // Numeric tolerance
-  print('\n=== Numeric Tolerance ===');
-  const numericConfig = ListEqualConfig(numericTolerance: 0.01);
-  print(listEqual([
-    [1.0, 2.0],
-    [1.001, 2.001]
-  ], numericConfig)); // true
-
-  // Deep comparison
-  print('\n=== Deep Comparison ===');
-  print(listEqual([
-    [
-      1,
-      [2, 3],
-      {'a': 4}
-    ],
-    [
-      1,
-      [2, 3],
-      {'a': 4}
-    ]
-  ], ListEqualPresets.deep)); // true
-
-  // Flexible comparison
-  print('\n=== Flexible Comparison ===');
-  print(listEqual([
-    ['1', '2'],
-    [1, 2]
-  ], ListEqualPresets.flexible)); // true
-
-  // Custom comparators
-  print('\n=== Custom Comparators ===');
-  final customConfig = ListEqualConfig(customComparators: {
-    DateTime: (a, b) =>
-        (a as DateTime).millisecondsSinceEpoch ==
-        (b as DateTime).millisecondsSinceEpoch,
-  });
-  final date1 = DateTime(2023, 1, 1);
-  final date2 = DateTime(2023, 1, 1);
-  print(listEqual([
-    [date1],
-    [date2]
-  ], customConfig)); // true
-
-  // Detailed comparison results
-  print('\n=== Detailed Comparison Results ===');
-  final result = listEqualDetailed([
-    [1, 2, 3],
-    [1, 2, 4]
-  ]);
-  print('Result: $result');
-
-  // Extension method usage
-  print('\n=== Extension Method Usage ===');
-  final list1 = [1, 2, 3];
-  final list2 = [1, 2, 3];
-  print('Extension method result: ${list1.isEqualTo(list2)}'); // true
-
-  // Performance test simulation
-  print('\n=== Performance Test (Simulated) ===');
-  final largeList1 = List.generate(1000, (i) => i);
-  final largeList2 = List.generate(1000, (i) => i);
-  final perfResult =
-      listEqualDetailed([largeList1, largeList2], ListEqualPresets.optimized);
-  print(
-      'Large list comparison: ${perfResult.isEqual} (${perfResult.elapsedTime.inMicroseconds}μs)');
-
-  // Type-specific comparisons
-  print('\n=== Type-specific Comparisons ===');
-
-  // DateTime comparison
-  final now1 = DateTime.now();
-  final now2 = DateTime.fromMillisecondsSinceEpoch(now1.millisecondsSinceEpoch);
-  print('DateTime comparison: ${listEqual([
-        [now1],
-        [now2]
-      ])}'); // true
-
-  // Duration comparison
-  final duration1 = const Duration(hours: 1, minutes: 30);
-  final duration2 = const Duration(minutes: 90);
-  print('Duration comparison: ${listEqual([
-        [duration1],
-        [duration2]
-      ])}'); // true
-
-  // RegExp comparison
-  final regex1 = RegExp(r'\d+', caseSensitive: false);
-  final regex2 = RegExp(r'\d+', caseSensitive: false);
-  print('RegExp comparison: ${listEqual([
-        [regex1],
-        [regex2]
-      ])}'); // true
-
-  // Boolean coercion in flexible mode
-  print('\n=== Boolean Coercion (Flexible Mode) ===');
-  print(listEqual([
-    ['true', 1, 'yes'],
-    [true, true, true]
-  ], ListEqualPresets.flexible)); // true
-
-  // Error handling
-  print('\n=== Error Handling ===');
-  try {
-    listEqual([]);
-  } catch (e) {
-    print('Caught expected error: $e');
-  }
-
-  // Circular reference detection
-  print('\n=== Circular Reference Detection ===');
-  try {
-    final circularList = <dynamic>[1, 2];
-    circularList.add(circularList); // Create circular reference
-
-    final result = listEqualDetailed([
-      circularList,
-      [1, 2, 'something']
-    ], ListEqualPresets.safeDeep);
-    print('Circular reference handled: ${result.isEqual}');
-  } catch (e) {
-    print('Circular reference detected: $e');
-  }
-
-  // Nested structure comparison
-  print('\n=== Complex Nested Structures ===');
-  final complex1 = [
-    1,
-    [
-      2,
-      3,
-      [4, 5]
-    ],
-    {
-      'a': 6,
-      'b': [7, 8]
-    },
-    {9, 10, 11}
-  ];
-  final complex2 = [
-    1,
-    [
-      2,
-      3,
-      [4, 5]
-    ],
-    {
-      'a': 6,
-      'b': [7, 8]
-    },
-    {9, 10, 11}
-  ];
-  print('Complex nested: ${listEqual([
-        complex1,
-        complex2
-      ], ListEqualPresets.deep)}'); // true
-
-  // Mixed type flexible comparison
-  print('\n=== Mixed Type Flexible Comparison ===');
-  final mixed1 = ['1', 2.0, true, '4.5'];
-  final mixed2 = [1, 2, 1, 4.5];
-  print('Mixed types flexible: ${listEqual([
-        mixed1,
-        mixed2
-      ], ListEqualPresets.flexible)}'); // true
-
-  print('\n=== All Tests Completed ===');
-}

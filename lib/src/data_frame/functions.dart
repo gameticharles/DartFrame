@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'data_frame.dart';
 
 extension DataFrameFunctions on DataFrame {
   /// Selects columns from the DataFrame by their names.

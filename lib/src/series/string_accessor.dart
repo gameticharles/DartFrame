@@ -1,4 +1,4 @@
-part of '../../dartframe.dart';
+part of 'series.dart';
 
 class StringSeriesAccessor {
   final Series _series;

@@ -1,6 +1,4 @@
-// ignore_for_file: unnecessary_null_comparison
-
-part of '../../dartframe.dart';
+part of 'series.dart';
 
 extension SeriesFunctions on Series {
   /// Count of non-null values in the series.
@@ -1095,20 +1093,18 @@ Series dateRange({
     }
   } else if (end == null) {
     // Calculate end from start and periods
-    if (start != null && periods != null) {
+    if (periods != null) {
       end = start.add(Duration(days: periods - 1));
     }
   } else if (periods == null) {
     // Calculate periods from start and end
-    if (start != null && end != null) {
-      // For inclusive range, we need daysBetween + 1
+    // For inclusive range, we need daysBetween + 1
       periods = end.difference(start).inDays + 1;
 
       // Handle case where start is after end
       if (periods <= 0) {
         return Series([], name: name);
       }
-    }
   }
 
   // Validate parameters after calculation
