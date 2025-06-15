@@ -171,7 +171,9 @@ class StringSeriesAccessor {
         List<String> parts = s.split(pattern);
         if (parts.length > n) {
           List<String> result = parts.sublist(0, n);
-          result.add(parts.sublist(n).join(pattern is RegExp ? pattern.pattern : pattern.toString()));
+          result.add(parts
+              .sublist(n)
+              .join(pattern is RegExp ? pattern.pattern : pattern.toString()));
           return result;
         } else {
           return parts;

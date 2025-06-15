@@ -77,7 +77,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   /// ```
   GeoSeries(super.values, {this.crs, super.name = 'geometry', super.index});
 
-   /// Creates a `GeoSeries` from a list of Well-Known Text (WKT) strings.
+  /// Creates a `GeoSeries` from a list of Well-Known Text (WKT) strings.
   ///
   /// Each WKT string in the input list is parsed into its corresponding
   /// `GeoJSONGeometry` object. If a WKT string is invalid or cannot be parsed,
@@ -117,7 +117,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
     return GeoSeries(geometries, crs: crs, name: name, index: index);
   }
 
-   /// Creates a `GeoSeries` from a `GeoJSONFeatureCollection`.
+  /// Creates a `GeoSeries` from a `GeoJSONFeatureCollection`.
   ///
   /// Each feature in the `GeoJSONFeatureCollection` provides a geometry for the
   /// `GeoSeries`. The properties of the features are not directly stored in the
@@ -189,7 +189,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   /// Throws:
   ///   - `ArgumentError` if `x` and `y` lists have different lengths, or if `z` is
   ///     provided and has a different length.
-  /// 
+  ///
   /// Example:
   /// ```dart
   /// import 'package:dartframe/dartframe.dart';
@@ -434,21 +434,44 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
         if (geom is GeoJSONPoint) {
           newGeoms.add(GeoJSONPoint(List.from(geom.coordinates)));
         } else if (geom is GeoJSONLineString) {
-          newGeoms.add(GeoJSONLineString(geom.coordinates.map((coord) => List<double>.from(coord)).toList()));
+          newGeoms.add(GeoJSONLineString(geom.coordinates
+              .map((coord) => List<double>.from(coord))
+              .toList()));
         } else if (geom is GeoJSONPolygon) {
-          newGeoms.add(GeoJSONPolygon(geom.coordinates.map((ring) => ring.map((coord) => List<double>.from(coord)).toList()).toList()));
+          newGeoms.add(GeoJSONPolygon(geom.coordinates
+              .map((ring) =>
+                  ring.map((coord) => List<double>.from(coord)).toList())
+              .toList()));
         } else if (geom is GeoJSONMultiPoint) {
-          newGeoms.add(GeoJSONMultiPoint(geom.coordinates.map((coord) => List<double>.from(coord)).toList()));
+          newGeoms.add(GeoJSONMultiPoint(geom.coordinates
+              .map((coord) => List<double>.from(coord))
+              .toList()));
         } else if (geom is GeoJSONMultiLineString) {
-          newGeoms.add(GeoJSONMultiLineString(geom.coordinates.map((line) => line.map((coord) => List<double>.from(coord)).toList()).toList()));
+          newGeoms.add(GeoJSONMultiLineString(geom.coordinates
+              .map((line) =>
+                  line.map((coord) => List<double>.from(coord)).toList())
+              .toList()));
         } else if (geom is GeoJSONMultiPolygon) {
-          newGeoms.add(GeoJSONMultiPolygon(geom.coordinates.map((polygon) => polygon.map((ring) => ring.map((coord) => List<double>.from(coord)).toList()).toList()).toList()));
+          newGeoms.add(GeoJSONMultiPolygon(geom.coordinates
+              .map((polygon) => polygon
+                  .map((ring) =>
+                      ring.map((coord) => List<double>.from(coord)).toList())
+                  .toList())
+              .toList()));
         } else if (geom is GeoJSONGeometryCollection) {
           // For geometry collections, recursively copy each geometry
           final copiedGeometries = geom.geometries.map((g) {
-            if (g is GeoJSONPoint) return GeoJSONPoint(List.from(g.coordinates));
-            if (g is GeoJSONLineString) return GeoJSONLineString(g.coordinates.map((coord) => List<double>.from(coord)).toList());
-            if (g is GeoJSONPolygon) return GeoJSONPolygon(g.coordinates.map((ring) => ring.map((coord) => List<double>.from(coord)).toList()).toList());
+            if (g is GeoJSONPoint)
+              return GeoJSONPoint(List.from(g.coordinates));
+            if (g is GeoJSONLineString)
+              return GeoJSONLineString(g.coordinates
+                  .map((coord) => List<double>.from(coord))
+                  .toList());
+            if (g is GeoJSONPolygon)
+              return GeoJSONPolygon(g.coordinates
+                  .map((ring) =>
+                      ring.map((coord) => List<double>.from(coord)).toList())
+                  .toList());
             // Add other geometry types as needed
             return g; // fallback
           }).toList();
@@ -461,20 +484,23 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
         // Simplified "repair": replace invalid polygons or empty/invalid geoms with a default point.
         // More sophisticated repair would be needed for real-world scenarios.
         if (geom is GeoJSONPolygon || _isGeometryEmpty(geom)) {
-          newGeoms.add(GeoJSONPoint([0,0])); 
+          newGeoms.add(GeoJSONPoint([0, 0]));
         } else {
           // For other types, create a copy as above
           if (geom is GeoJSONPoint) {
             newGeoms.add(GeoJSONPoint(List.from(geom.coordinates)));
           } else if (geom is GeoJSONLineString) {
-            newGeoms.add(GeoJSONLineString(geom.coordinates.map((coord) => List<double>.from(coord)).toList()));
+            newGeoms.add(GeoJSONLineString(geom.coordinates
+                .map((coord) => List<double>.from(coord))
+                .toList()));
           } else {
             newGeoms.add(geom); // fallback
           }
         }
       }
     }
-    return GeoSeries(newGeoms, name: '${name}_made_valid', crs: crs, index: index);
+    return GeoSeries(newGeoms,
+        name: '${name}_made_valid', crs: crs, index: index);
   }
 
   /// Retrieves the geometry at a specific index label.
@@ -513,7 +539,7 @@ class GeoSeries extends Series<GeoJSONGeometry?> {
   GeoJSONGeometry? getGeometry(dynamic indexLabel) {
     if (indexLabel is int) {
       if (indexLabel < 0 || indexLabel >= data.length) {
-          throw RangeError.index(indexLabel, data, 'index', 'Index out of range');
+        throw RangeError.index(indexLabel, data, 'index', 'Index out of range');
       }
       return data[indexLabel];
     }

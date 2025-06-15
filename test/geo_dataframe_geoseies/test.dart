@@ -419,7 +419,7 @@ void main() {
 
       // Test inherited properties
       expect(geoSeries.length, equals(3));
-      expect(geoSeries.isEmpty.data, [false,false,false]);
+      expect(geoSeries.isEmpty.data, [false, false, false]);
 
       // Test indexing
       expect(geoSeries[0], isA<GeoJSONPoint>());

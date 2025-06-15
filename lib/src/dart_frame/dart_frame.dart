@@ -1,12 +1,12 @@
 part of '../../dartframe.dart';
 
-
 // Helper function to check for default integer index (e.g., [0, 1, 2, ...])
 bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
   if (idxList.length != expectedLength) {
     return false;
   }
-  if (expectedLength == 0) { // An empty list is a valid default index for 0 items.
+  if (expectedLength == 0) {
+    // An empty list is a valid default index for 0 items.
     return true;
   }
   for (int i = 0; i < expectedLength; i++) {
@@ -711,20 +711,24 @@ class DataFrame {
       else {
         // Subcase 2.1: Indices are identical (implies lengths also match if truly identical)
         if (listEqual([key.index, index])) {
-          if (key.length != rowCount) { // This should ideally not happen if indices are truly equal
+          if (key.length != rowCount) {
+            // This should ideally not happen if indices are truly equal
             throw ArgumentError(
                 'Boolean Series has matching index but mismatched length (${key.length} vs $rowCount). This indicates an inconsistency.');
           }
           booleanFilter = key;
         }
         // Subcase 2.2: Both have default indices but lengths differ (error)
-        else if (keyHasDefaultIndex && dfHasDefaultIndex && key.length != rowCount) {
+        else if (keyHasDefaultIndex &&
+            dfHasDefaultIndex &&
+            key.length != rowCount) {
           throw ArgumentError(
               'Boolean Series (length ${key.length}) and DataFrame (length $rowCount) both have default indices but lengths do not match.');
         }
         // Subcase 2.3: Indices differ and require alignment
         else {
-          List<bool?> alignedValues = List.filled(rowCount, false, growable: false);
+          List<bool?> alignedValues =
+              List.filled(rowCount, false, growable: false);
           for (int i = 0; i < rowCount; i++) {
             var dfIndexValue = index[i];
             int seriesIndexPos = key.index.indexOf(dfIndexValue);
@@ -735,7 +739,8 @@ class DataFrame {
               alignedValues[i] = false;
             }
           }
-          booleanFilter = Series(alignedValues, index: List.from(index), name: key.name);
+          booleanFilter =
+              Series(alignedValues, index: List.from(index), name: key.name);
         }
       }
 
@@ -815,7 +820,9 @@ class DataFrame {
     if (key is String) {
       List<dynamic> valuesToSet;
       List<dynamic>? seriesIndex = newData is Series ? newData.index : null;
-      List<dynamic> seriesData = newData is Series ? newData.data : (newData is List ? newData : [newData]);
+      List<dynamic> seriesData = newData is Series
+          ? newData.data
+          : (newData is List ? newData : [newData]);
 
       // Determine if the Series has a non-default index that needs alignment
       bool alignByIndex = seriesIndex != null &&
@@ -831,26 +838,32 @@ class DataFrame {
         columnIndex = _columns.length - 1;
         // Ensure all existing rows have a placeholder for the new column
         for (int i = 0; i < _data.length; i++) {
-          _data[i].add(replaceMissingValueWith); // Initialize with missing value
+          _data[i]
+              .add(replaceMissingValueWith); // Initialize with missing value
         }
       }
 
       // If DataFrame is empty and we are adding a new column
       if (_data.isEmpty && newColumn) {
         int numRowsToCreate = seriesData.length;
-        if (alignByIndex) { // If aligning by a new series index, df index should become that.
-            index = List.from(seriesIndex);
-            numRowsToCreate = seriesIndex.length;
+        if (alignByIndex) {
+          // If aligning by a new series index, df index should become that.
+          index = List.from(seriesIndex);
+          numRowsToCreate = seriesIndex.length;
         } else {
-            index = List.generate(numRowsToCreate, (i) => i);
+          index = List.generate(numRowsToCreate, (i) => i);
         }
 
-        _data = List.generate(numRowsToCreate, (i) => List.filled(_columns.length, replaceMissingValueWith, growable: true));
+        _data = List.generate(
+            numRowsToCreate,
+            (i) => List.filled(_columns.length, replaceMissingValueWith,
+                growable: true));
       }
 
       // Prepare valuesToSet based on alignment strategy
       if (alignByIndex) {
-        valuesToSet = List.filled(index.length, replaceMissingValueWith, growable: true);
+        valuesToSet =
+            List.filled(index.length, replaceMissingValueWith, growable: true);
         Map<dynamic, dynamic> seriesMap = {};
         for (int i = 0; i < seriesIndex.length; i++) {
           seriesMap[seriesIndex[i]] = seriesData[i];
@@ -862,7 +875,8 @@ class DataFrame {
         }
       } else {
         // Direct assignment or length adjustment for default-indexed Series or List
-        valuesToSet = List.filled(index.length, replaceMissingValueWith, growable: true);
+        valuesToSet =
+            List.filled(index.length, replaceMissingValueWith, growable: true);
         for (int i = 0; i < index.length; i++) {
           if (i < seriesData.length) {
             valuesToSet[i] = seriesData[i];
@@ -874,12 +888,14 @@ class DataFrame {
 
       // Set the data for the column
       for (int i = 0; i < _data.length; i++) {
-         if (newColumn && _data[i].length <= columnIndex) { // Should have been handled by init
-             _data[i].addAll(List.filled((columnIndex + 1 - _data[i].length).toInt(), replaceMissingValueWith));
-         }
+        if (newColumn && _data[i].length <= columnIndex) {
+          // Should have been handled by init
+          _data[i].addAll(List.filled(
+              (columnIndex + 1 - _data[i].length).toInt(),
+              replaceMissingValueWith));
+        }
         _data[i][columnIndex] = valuesToSet[i];
       }
-
     } else if (key is int) {
       // Row assignment (assuming newData is a List matching column count)
       if (key < 0 || key >= _data.length) {
@@ -896,6 +912,7 @@ class DataFrame {
           'Key must be an integer (for row) or string (for column)');
     }
   } // Helper method to check if an index is the default numeric index
+
   bool _isDefaultNumericIndex(List<dynamic> idx) {
     if (idx.isEmpty) return true;
 

@@ -29,7 +29,8 @@ GEOSGeometry GeoJSONToGEOS(
     nativeWkt = wktString.toNativeUtf8();
   } catch (e) {
     print('Error converting GeoJSON to WKT or WKT to native UTF8: $e');
-    return ffi.nullptr; // Return nullptr if WKT conversion or native string conversion fails
+    return ffi
+        .nullptr; // Return nullptr if WKT conversion or native string conversion fails
   }
 
   final wktReader = bindings.GEOSWKTReader_create_r(contextHandle);
@@ -38,14 +39,16 @@ GEOSGeometry GeoJSONToGEOS(
     throw Exception('Failed to create GEOSWKTReader.');
   }
 
-  final geosGeom = bindings.GEOSWKTReader_read_r(contextHandle, wktReader, nativeWkt);
+  final geosGeom =
+      bindings.GEOSWKTReader_read_r(contextHandle, wktReader, nativeWkt);
 
   malloc.free(nativeWkt); // Free nativeWkt after use
   bindings.GEOSWKTReader_destroy_r(contextHandle, wktReader);
 
   if (geosGeom == ffi.nullptr) {
     // WKT parsing failed
-    print('GEOSWKTReader_read_r failed to parse WKT. Input WKT might be invalid.');
+    print(
+        'GEOSWKTReader_read_r failed to parse WKT. Input WKT might be invalid.');
     // The task asks to "throw an informative exception or return nullptr after logging".
     // Returning nullptr is chosen here.
     return ffi.nullptr;
@@ -79,9 +82,11 @@ String? geosToWKT(
   // If these bindings do not exist, this will cause a compile-time error.
   // The subtask for geos_bindings.dart should ideally have included them.
   bindings.GEOSWKTWriter_setTrim_r(contextHandle, wktWriter, 1); // Enable trim
-  bindings.GEOSWKTWriter_setOutputDimension_r(contextHandle, wktWriter, 3); // Default to 3D
+  bindings.GEOSWKTWriter_setOutputDimension_r(
+      contextHandle, wktWriter, 3); // Default to 3D
 
-  final nativeWkt = bindings.GEOSWKTWriter_write_r(contextHandle, wktWriter, geosGeom);
+  final nativeWkt =
+      bindings.GEOSWKTWriter_write_r(contextHandle, wktWriter, geosGeom);
   // Destroy the writer immediately after use, regardless of nativeWkt outcome.
   bindings.GEOSWKTWriter_destroy_r(contextHandle, wktWriter);
 

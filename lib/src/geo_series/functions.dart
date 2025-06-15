@@ -162,7 +162,7 @@ extension GeoSeriesFunctions on GeoSeries {
       if (geom is GeoJSONMultiPoint) return geom.coordinates.length;
       if (geom is GeoJSONMultiLineString) return geom.coordinates.length;
       if (geom is GeoJSONMultiPolygon) return geom.coordinates.length;
-      if (geom is GeoJSONGeometry) return 1; 
+      if (geom is GeoJSONGeometry) return 1;
       return 0;
     }).toList();
     return Series(counts, name: '${name}_geometry_count', index: index);
@@ -181,8 +181,7 @@ extension GeoSeriesFunctions on GeoSeries {
       }
       return 0;
     }).toList();
-    return Series(counts,
-        name: '${name}_interior_rings_count', index: index);
+    return Series(counts, name: '${name}_interior_rings_count', index: index);
   }
 
   /// Returns a Series of boolean values indicating if a LineString's or LinearRing's
@@ -467,7 +466,7 @@ extension GeoSeriesFunctions on GeoSeries {
         }
         return GeoJSONPoint([0, 0]);
       }
-          return GeoJSONPoint([0, 0]);
+      return GeoJSONPoint([0, 0]);
     }).toList();
     return GeoSeries(centroids,
         crs: crs, name: '${name}_centroid', index: index);
@@ -602,7 +601,9 @@ extension GeoSeriesFunctions on GeoSeries {
           totalLength += tempSeries.geomLength.data[0] as double;
         }
         return totalLength;
-      } else if (geom is GeoJSONPoint || geom is GeoJSONMultiPoint) {return 0.0;}
+      } else if (geom is GeoJSONPoint || geom is GeoJSONMultiPoint) {
+        return 0.0;
+      }
       return 0.0;
     }).toList();
     return Series(lengths, name: '${name}_geom_length', index: index);
@@ -1054,8 +1055,7 @@ extension GeoSeriesFunctions on GeoSeries {
 
   GeoSeries setPrecision(double gridSize) {
     if (gridSize == 0) {
-      return GeoSeries(List.from(data),
-          name: name, crs: crs, index: index);
+      return GeoSeries(List.from(data), name: name, crs: crs, index: index);
     }
     if (gridSize < 0) throw ArgumentError("grid_size must be non-negative");
 
@@ -1120,8 +1120,8 @@ extension GeoSeriesFunctions on GeoSeries {
       }
 
       for (int i = 0; i < commonLength; i++) {
-        distances.add(
-            _calculateDistanceBetweenGeometries(data[i], other.data[i]));
+        distances
+            .add(_calculateDistanceBetweenGeometries(data[i], other.data[i]));
       }
       for (int i = commonLength; i < length; i++) {
         distances.add(double.nan);
@@ -1158,13 +1158,13 @@ extension GeoSeriesFunctions on GeoSeries {
       for (var p1c in geom1.coordinates) {
         if (_pointToLineStringDistance(GeoJSONPoint(p1c), geom2) < 1e-9) {
           return 0.0;
-      }
         }
+      }
       for (var p2c in geom2.coordinates) {
         if (_pointToLineStringDistance(GeoJSONPoint(p2c), geom1) < 1e-9) {
           return 0.0;
-      }
         }
+      }
       double minD = double.infinity;
       for (var p1c in geom1.coordinates) {
         minD = min(minD, _pointToLineStringDistance(GeoJSONPoint(p1c), geom2));
@@ -1183,8 +1183,7 @@ extension GeoSeriesFunctions on GeoSeries {
       for (var v in line.coordinates) {
         if (_pointToPolygonDistance(GeoJSONPoint(v), poly) < 1e-9) return 0.0;
       }
-      for (var ring in poly.coordinates)
-      {
+      for (var ring in poly.coordinates) {
         for (var pv in ring) {
           if (_pointToLineStringDistance(GeoJSONPoint(pv), line) < 1e-9) {
             return 0.0;
@@ -1198,8 +1197,7 @@ extension GeoSeriesFunctions on GeoSeries {
             _pointToPolygonDistance(GeoJSONPoint(v), poly,
                 skipInsideCheck: true));
       }
-      for (var ring in poly.coordinates)
-      {
+      for (var ring in poly.coordinates) {
         for (var pv in ring) {
           minD = min(minD, _pointToLineStringDistance(GeoJSONPoint(pv), line));
         }
@@ -1207,16 +1205,14 @@ extension GeoSeriesFunctions on GeoSeries {
       return minD == double.infinity ? double.nan : minD;
     }
     if (geom1 is GeoJSONPolygon && geom2 is GeoJSONPolygon) {
-      for (var r1 in geom1.coordinates)
-      {
+      for (var r1 in geom1.coordinates) {
         for (var v1 in r1) {
           if (_pointToPolygonDistance(GeoJSONPoint(v1), geom2) < 1e-9) {
             return 0.0;
           }
         }
       }
-      for (var r2 in geom2.coordinates)
-      {
+      for (var r2 in geom2.coordinates) {
         for (var v2 in r2) {
           if (_pointToPolygonDistance(GeoJSONPoint(v2), geom1) < 1e-9) {
             return 0.0;
@@ -1224,8 +1220,7 @@ extension GeoSeriesFunctions on GeoSeries {
         }
       }
       double minD = double.infinity;
-      for (var r1 in geom1.coordinates)
-      {
+      for (var r1 in geom1.coordinates) {
         for (var v1 in r1) {
           minD = min(
               minD,
@@ -1233,7 +1228,7 @@ extension GeoSeriesFunctions on GeoSeries {
                   skipInsideCheck: true));
         }
       }
-      for (var r2 in geom2.coordinates){
+      for (var r2 in geom2.coordinates) {
         for (var v2 in r2) {
           minD = min(
               minD,
@@ -1264,8 +1259,8 @@ extension GeoSeriesFunctions on GeoSeries {
               minD,
               _calculateDistanceBetweenGeometries(
                   GeoJSONLineString(lCoords), geom2));
-      }
         }
+      }
       return minD == double.infinity ? double.nan : minD;
     } else if (geom2 is GeoJSONMultiLineString) {
       return _calculateDistanceBetweenGeometries(geom2, geom1);
@@ -1279,8 +1274,8 @@ extension GeoSeriesFunctions on GeoSeries {
               minD,
               _calculateDistanceBetweenGeometries(
                   GeoJSONPolygon(pRings), geom2));
-      }
         }
+      }
       return minD == double.infinity ? double.nan : minD;
     } else if (geom2 is GeoJSONMultiPolygon) {
       return _calculateDistanceBetweenGeometries(geom2, geom1);
@@ -1311,7 +1306,9 @@ extension GeoSeriesFunctions on GeoSeries {
     final double t = ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / l2;
     if (t < 0.0) {
       return _distance(pCoords, segA);
-    } else if (t > 1.0) {return _distance(pCoords, segB);}
+    } else if (t > 1.0) {
+      return _distance(pCoords, segB);
+    }
     final List<double> projection = [ax + t * (bx - ax), ay + t * (by - ay)];
     return _distance(pCoords, projection);
   }
@@ -1400,7 +1397,7 @@ extension GeoSeriesFunctions on GeoSeries {
     if (geometry is GeoJSONMultiPolygon) {
       // Corrected from 'geom' to 'geometry'
       List<List<double>> coords = [];
-      for (var polygon in geometry.coordinates){
+      for (var polygon in geometry.coordinates) {
         for (var ring in polygon) {
           coords.addAll(ring);
         }
@@ -1585,7 +1582,7 @@ extension GeoSeriesFunctions on GeoSeries {
       if (geom is GeoJSONGeometryCollection) {
         if (geom.geometries.isEmpty) return false;
         // TO BE DONE: Check interactions between components for full OGC simplicity.
-        
+
         return geom.geometries.every(
             (g) => GeoSeries([g], crs: crs, index: [0]).isSimple.data[0]);
       }

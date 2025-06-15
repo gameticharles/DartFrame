@@ -66,13 +66,26 @@ void main() {
         () {
       var df = DataFrame.fromMap({
         'A': [1, 2, 3, 4]
-      }, index: [ 'w', 'x', 'y', 'z']);
+      }, index: [
+        'w',
+        'x',
+        'y',
+        'z'
+      ]);
       final s = Series([10, 20],
           name: 'B', index: ['x', 'y']); // Index is subset of df
-      df['B'] = s; // DataFrame's addColumn or equivalent logic handles alignment
+      df['B'] =
+          s; // DataFrame's addColumn or equivalent logic handles alignment
 
       expect(df.columns, equals(['A', 'B']));
-      expect(df['B'].data, equals([ null, 10, 20, null])); // Aligns, others are null (or df.replaceMissingValueWith)
+      expect(
+          df['B'].data,
+          equals([
+            null,
+            10,
+            20,
+            null
+          ])); // Aligns, others are null (or df.replaceMissingValueWith)
       expect(df['B'].index, equals(['w', 'x', 'y', 'z']));
     });
 
@@ -97,7 +110,11 @@ void main() {
     test('Set with Series, different unaligned index (some overlap)', () {
       var df = DataFrame.fromMap({
         'A': [1, 2, 3]
-      }, index: ['a','b','c']);
+      }, index: [
+        'a',
+        'b',
+        'c'
+      ]);
       final s = Series([10, 20, 30],
           name: 'B',
           index: ['b', 'c', 'd']); // 'd' not in df, 'a' in df not in s
@@ -188,7 +205,12 @@ void main() {
     final df = DataFrame.fromMap({
       'A': [10, 20, 30, 40],
       'B': [11, 22, 33, 44],
-    }, index: ['w', 'x', 'y', 'z']);
+    }, index: [
+      'w',
+      'x',
+      'y',
+      'z'
+    ]);
 
     test('Boolean Series with aligned index', () {
       final boolSeries = Series([true, false, true, false], name: 'filter');
@@ -203,7 +225,8 @@ void main() {
     test('Boolean Series with partially aligned index (subset)', () {
       // df index: w,x,y,z. boolSeries index: x,y
       // Pandas aligns boolean series to df index, fills missing with False
-      final boolSeries = Series([true, false], name: 'filter_subset', index: ['x', 'y']);
+      final boolSeries =
+          Series([true, false], name: 'filter_subset', index: ['x', 'y']);
       DataFrame result = df[boolSeries];
 
       // Expected: filter becomes [F (w), T (x), F (y), F (z)] after aligning to df.index
@@ -215,7 +238,8 @@ void main() {
     test('Boolean Series with partially aligned index (superset)', () {
       // df index: w,x,y,z. boolSeries index: v,w,x,y,z,a
       // Pandas aligns boolean series to df index. Extra indices in boolSeries are ignored.
-      final boolSeries = Series([true, false, true, false, true, false], name: 'filter_superset', index: ['v','w','x','y','z','a']);
+      final boolSeries = Series([true, false, true, false, true, false],
+          name: 'filter_superset', index: ['v', 'w', 'x', 'y', 'z', 'a']);
       DataFrame result = df[boolSeries];
 
       // Expected: filter becomes [F(w), T(x), F(y), T(z)] based on df.index
@@ -230,7 +254,8 @@ void main() {
       // Pandas behavior: if boolean series index is default int and DF index is not,
       // AND lengths match, it applies row-wise.
       // If lengths don't match, it usually raises an error.
-      final boolSeries = Series([false, true, true, false], name: 'filter_default_idx');
+      final boolSeries =
+          Series([false, true, true, false], name: 'filter_default_idx');
       DataFrame result = df[boolSeries];
 
       expect(result.rowCount, 2);
@@ -240,9 +265,11 @@ void main() {
 
     test('Boolean Series with default index (length mismatch)', () {
       final boolSeriesShort = Series([true, false], name: 'filter_short');
-      expect(() => df[boolSeriesShort], throwsA(isA<ArgumentError>())); // Or specific error
+      expect(() => df[boolSeriesShort],
+          throwsA(isA<ArgumentError>())); // Or specific error
 
-      final boolSeriesLong = Series([true, false, true, false, true], name: 'filter_long');
+      final boolSeriesLong =
+          Series([true, false, true, false, true], name: 'filter_long');
       expect(() => df[boolSeriesLong], throwsA(isA<ArgumentError>()));
     });
   });
@@ -292,7 +319,8 @@ void main() {
       expect(resultAligned.index, equals(['w', 'x', 'y', 'z']));
 
       // Test with Series with default index (should align with df['A'] by position)
-      Series seriesDefaultIdx = Series([10, 10, 10, 10], index: ['w','x','y','z'], name: 'ten');
+      Series seriesDefaultIdx =
+          Series([10, 10, 10, 10], index: ['w', 'x', 'y', 'z'], name: 'ten');
       Series resultDefault = colA +
           seriesDefaultIdx; // colA has index, seriesDefaultIdx has null index
       expect(resultDefault.data, equals([1 + 10, 2 + 10, 3 + 10, 4 + 10]));

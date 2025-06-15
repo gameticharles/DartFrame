@@ -226,8 +226,7 @@ void main() {
               defaultMissingRep,
               ['z']
             ]));
-        expect(result.name,
-            equals('split_series_split__'));
+        expect(result.name, equals('split_series_split__'));
       });
 
       test('split with limit (n)', () {

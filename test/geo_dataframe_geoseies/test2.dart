@@ -10,11 +10,13 @@ final Map<String, String> testWKTs = {
   'point_inside_poly': 'POINT (0.5 0.5)',
   'point_outside_poly': 'POINT (2 2)',
   'point_on_poly_boundary': 'POINT (0 0)', // On boundary of poly1
-  'point_on_poly_boundary_non_vertex': 'POINT (0 0.5)', // On boundary of poly1, not a vertex
+  'point_on_poly_boundary_non_vertex':
+      'POINT (0 0.5)', // On boundary of poly1, not a vertex
   'point_on_line1': 'POINT (0.5 0.5)', // On line1
   'point_not_on_line1': 'POINT (2 2)', // Not on line1
   'point_endpoint_of_line1': 'POINT (0 0)', // Endpoint of line1
-  'point_in_hole': 'POINT (0.25 0.25)', // Assuming poly_hole is centered near here
+  'point_in_hole':
+      'POINT (0.25 0.25)', // Assuming poly_hole is centered near here
   'point1': 'POINT (1 1)',
   'point2': 'POINT (2 0)',
   'point_identical_to_point1': 'POINT (1 1)',
@@ -27,29 +29,41 @@ final Map<String, String> testWKTs = {
   'line1': 'LINESTRING (0 0, 1 1)', // Diagonal
   'line2': 'LINESTRING (1 1, 2 2)', // Extends line1
   'line_crosses_line1': 'LINESTRING (0 1, 1 0)', // Crosses line1 at (0.5, 0.5)
-  'line_touches_line1_endpoint': 'LINESTRING (1 1, 2 0)', // Touches line1 at (1,1)
-  'line_overlaps_line1_partial': 'LINESTRING (0.5 0.5, 1.5 1.5)', // Overlaps part of line1 and extends
+  'line_touches_line1_endpoint':
+      'LINESTRING (1 1, 2 0)', // Touches line1 at (1,1)
+  'line_overlaps_line1_partial':
+      'LINESTRING (0.5 0.5, 1.5 1.5)', // Overlaps part of line1 and extends
   'line_disjoint_from_line1': 'LINESTRING (2 0, 3 1)',
-  'line_touches_poly_boundary': 'LINESTRING (0 0, 0.5 0)', // Touches edge of poly1
-  'line_endpoint_touches_poly_vertex': 'LINESTRING (0 0, -1 -1)', // Endpoint (0,0) touches vertex of poly1
+  'line_touches_poly_boundary':
+      'LINESTRING (0 0, 0.5 0)', // Touches edge of poly1
+  'line_endpoint_touches_poly_vertex':
+      'LINESTRING (0 0, -1 -1)', // Endpoint (0,0) touches vertex of poly1
 
   // Polygons
   'poly1': 'POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))', // Unit square
-  'poly_hole': 'POLYGON ((0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', // Smaller square, can be hole or contained poly
+  'poly_hole':
+      'POLYGON ((0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', // Smaller square, can be hole or contained poly
   'poly_disjoint': 'POLYGON ((2 0, 3 0, 3 1, 2 1, 2 0))', // Disjoint from poly1
-  'poly2_overlaps_poly1': 'POLYGON ((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5))', // Overlaps poly1
-  'poly3_touches_poly1': 'POLYGON ((1 0, 2 0, 2 1, 1 1, 1 0))', // Touches poly1 at edge x=1
-  'poly_touches_poly1_at_point': 'POLYGON ((1 1, 2 1, 2 2, 1 2, 1 1))', // Touches poly1 at point (1,1)
+  'poly2_overlaps_poly1':
+      'POLYGON ((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5))', // Overlaps poly1
+  'poly3_touches_poly1':
+      'POLYGON ((1 0, 2 0, 2 1, 1 1, 1 0))', // Touches poly1 at edge x=1
+  'poly_touches_poly1_at_point':
+      'POLYGON ((1 1, 2 1, 2 2, 1 2, 1 1))', // Touches poly1 at point (1,1)
   'poly_identical_to_poly1': 'POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))',
-  'poly_shares_edge_with_poly1_exterior': 'POLYGON ((0 0, 1 0, 1 -1, 0 -1, 0 0))', // Shares edge (0,0)-(1,0)
-  'poly4_contains_poly1_hole': 'POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0), (0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', // poly1 with poly_hole as a hole
-  
+  'poly_shares_edge_with_poly1_exterior':
+      'POLYGON ((0 0, 1 0, 1 -1, 0 -1, 0 0))', // Shares edge (0,0)-(1,0)
+  'poly4_contains_poly1_hole':
+      'POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0), (0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', // poly1 with poly_hole as a hole
+
   // Multi-Geometries
   'mpoint_in_poly': 'MULTIPOINT (0.1 0.1, 0.2 0.2)', // Intersects poly1
-  'mpoint_one_in_poly': 'MULTIPOINT (0.1 0.1, 2 2)', // One point intersects poly1
+  'mpoint_one_in_poly':
+      'MULTIPOINT (0.1 0.1, 2 2)', // One point intersects poly1
   'mpoint_partially_in_poly': 'MULTIPOINT (0.1 0.1, 1.2 1.2)',
   'mline_in_poly': 'MULTILINESTRING ((0.1 0.1, 0.2 0.2), (0.3 0.3, 0.4 0.4))',
-  'mpoly_in_poly': 'MULTIPOLYGON (((0.1 0.1, 0.2 0.1, 0.2 0.2, 0.1 0.2, 0.1 0.1)))',
+  'mpoly_in_poly':
+      'MULTIPOLYGON (((0.1 0.1, 0.2 0.1, 0.2 0.2, 0.1 0.2, 0.1 0.1)))',
 
   // Empty Geometries (WKT for empty geometries can be tricky/varied, use GEOS standards)
   'empty_point': 'POINT EMPTY',
@@ -58,7 +72,8 @@ final Map<String, String> testWKTs = {
 };
 
 // Helper to create GeoSeries from a list of WKT strings.
-GeoSeries GeoSeries_fromWKT(List<dynamic> wkts, {String name = 'geometry', List<dynamic>? index}) {
+GeoSeries GeoSeries_fromWKT(List<dynamic> wkts,
+    {String name = 'geometry', List<dynamic>? index}) {
   final geoms = wkts.map((wkt) {
     if (wkt == null) return null;
     if (wkt == 'POINT EMPTY') return GeoJSONPoint([]);
@@ -68,9 +83,7 @@ GeoSeries GeoSeries_fromWKT(List<dynamic> wkts, {String name = 'geometry', List<
   }).toList();
 
   return GeoSeries(geoms, name: name, index: index);
-
 }
-
 
 void main() {
   group('GeoSeries.contains() tests', () {
@@ -99,7 +112,8 @@ void main() {
       });
 
       test('Point in a hole of a polygon', () {
-        final polyWithHole = GeoSeries_fromWKT([testWKTs['poly4_contains_poly1_hole']!]);
+        final polyWithHole =
+            GeoSeries_fromWKT([testWKTs['poly4_contains_poly1_hole']!]);
         final pointInHole = GeoSeries_fromWKT([testWKTs['point_in_hole']!]);
         final result = polyWithHole.contains(pointInHole);
         expect(result.toList(), [false]);
@@ -134,13 +148,16 @@ void main() {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final line = GeoSeries_fromWKT([testWKTs['line_crossing_poly']!]);
         final result = poly.contains(line);
-        expect(result.toList(), [false]); // Crosses means it's not fully contained
+        expect(
+            result.toList(), [false]); // Crosses means it's not fully contained
       });
     });
 
     // 3. Polygon in Polygon
     group('Polygon in Polygon scenarios', () {
-      test('Polygon completely inside another polygon (as a hole definition, but used as geometry here)', () {
+      test(
+          'Polygon completely inside another polygon (as a hole definition, but used as geometry here)',
+          () {
         final polyOuter = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final polyInner = GeoSeries_fromWKT([testWKTs['poly_hole']!]);
         final result = polyOuter.contains(polyInner);
@@ -156,25 +173,31 @@ void main() {
 
       test('Identical polygons', () {
         final poly1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyIdentical = GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
+        final polyIdentical =
+            GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
         final result = poly1.contains(polyIdentical);
         expect(result.toList(), [true]);
       });
-      
-      test('Polygon B contained within Polygon A, B shares an edge with A exterior (still contained)', () {
-        final polyA = GeoSeries_fromWKT([testWKTs['poly1']!]); // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))
+
+      test(
+          'Polygon B contained within Polygon A, B shares an edge with A exterior (still contained)',
+          () {
+        final polyA = GeoSeries_fromWKT(
+            [testWKTs['poly1']!]); // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))
         // Polygon B shares edge (0,0)-(1,0) with polyA but is otherwise inside if its other points are within.
         // Example: POLYGON ((0 0, 1 0, 0.5 0.5, 0 0)) - this is a triangle sharing an edge and pointing inwards
-        final polyB = GeoSeries_fromWKT(['POLYGON ((0 0, 1 0, 0.5 0.5, 0 0))']); 
+        final polyB = GeoSeries_fromWKT(['POLYGON ((0 0, 1 0, 0.5 0.5, 0 0))']);
         final result = polyA.contains(polyB);
         expect(result.toList(), [true]);
       });
 
-
       test('Polygon B contained within a hole of Polygon A', () {
-        final polyAWithHole = GeoSeries_fromWKT([testWKTs['poly4_contains_poly1_hole']!]);
+        final polyAWithHole =
+            GeoSeries_fromWKT([testWKTs['poly4_contains_poly1_hole']!]);
         // poly_contained_in_hole is smaller than poly_hole and inside it
-        final polyBInHole = GeoSeries_fromWKT(['POLYGON ((0.25 0.25, 0.75 0.25, 0.75 0.75, 0.25 0.75, 0.25 0.25))']);
+        final polyBInHole = GeoSeries_fromWKT([
+          'POLYGON ((0.25 0.25, 0.75 0.25, 0.75 0.75, 0.25 0.75, 0.25 0.25))'
+        ]);
         final result = polyAWithHole.contains(polyBInHole);
         expect(result.toList(), [false]);
       });
@@ -191,11 +214,12 @@ void main() {
 
       test('MultiPoint partially in Polygon', () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final mpoint = GeoSeries_fromWKT([testWKTs['mpoint_partially_in_poly']!]);
+        final mpoint =
+            GeoSeries_fromWKT([testWKTs['mpoint_partially_in_poly']!]);
         final result = poly.contains(mpoint);
         expect(result.toList(), [false]);
       });
-      
+
       test('Polygon contains MultiPoint (all points inside)', () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final mpoint = GeoSeries_fromWKT([testWKTs['mpoint_in_poly']!]);
@@ -228,7 +252,7 @@ void main() {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final emptyPoint = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final result = poly.contains(emptyPoint);
-        expect(result.toList(), [false]); 
+        expect(result.toList(), [false]);
       });
 
       test('EmptyPolygon.contains(Point)', () {
@@ -255,33 +279,43 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [poly1, poly_disjoint] contains [point_inside_poly, point_outside_poly_from_disjoint]', () {
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+      test(
+          'Series: [poly1, poly_disjoint] contains [point_inside_poly, point_outside_poly_from_disjoint]',
+          () {
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
         // point_outside_poly_from_disjoint is actually inside poly_disjoint
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, 'POINT (2.5 0.5)']);
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, 'POINT (2.5 0.5)']);
         final result = polySeries.contains(pointSeries);
         expect(result.toList(), [true, true]);
       });
-      
-      test('Series: [poly1, poly1] contains [point_inside_poly, point_outside_poly]', () {
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
+
+      test(
+          'Series: [poly1, poly1] contains [point_inside_poly, point_outside_poly]',
+          () {
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
         final result = polySeries.contains(pointSeries);
         expect(result.toList(), [true, false]);
       });
 
       test('Series with different lengths (polySeries longer)', () {
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
         final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!]);
         final result = polySeries.contains(pointSeries);
         // Expect result to be length of polySeries, with second element false due to no corresponding point.
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (pointSeries longer)', () {
         final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
         final result = polySeries.contains(pointSeries);
         // Expect result to be length of polySeries.
         expect(result.toList(), [true]);
@@ -290,14 +324,18 @@ void main() {
 
       test('Series with null geometry in calling series', () {
         final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, null]);
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point1']!]);
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point1']!]);
         final result = polySeries.contains(pointSeries);
-        expect(result.toList(), [true, false]); // null geom can't contain anything
+        expect(
+            result.toList(), [true, false]); // null geom can't contain anything
       });
 
       test('Series with null geometry in other series', () {
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, null]);
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
+        final pointSeries =
+            GeoSeries_fromWKT([testWKTs['point_inside_poly']!, null]);
         final result = polySeries.contains(pointSeries);
         expect(result.toList(), [true, false]); // cannot contain a null geom
       });
@@ -315,15 +353,18 @@ void main() {
       });
 
       test('Point intersects LineString (point on line)', () {
-        final line = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
-        final point = GeoSeries_fromWKT([testWKTs['point_on_line1']!]); // POINT (0.5 0.5)
+        final line =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final point =
+            GeoSeries_fromWKT([testWKTs['point_on_line1']!]); // POINT (0.5 0.5)
         final result = line.intersects(point); // Line intersects Point
         expect(result.toList(), [true]);
 
         final pointSeries = GeoSeries_fromWKT([testWKTs['point_on_line1']!]);
         final lineGeom = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final result2 = pointSeries.intersects(lineGeom); // Point intersects Line
-         expect(result2.toList(), [true]);
+        final result2 =
+            pointSeries.intersects(lineGeom); // Point intersects Line
+        expect(result2.toList(), [true]);
       });
 
       test('Point intersects Polygon (point in polygon)', () {
@@ -332,7 +373,7 @@ void main() {
         final result = poly.intersects(point);
         expect(result.toList(), [true]);
       });
-       test('Point intersects Polygon (point on boundary)', () {
+      test('Point intersects Polygon (point on boundary)', () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final point = GeoSeries_fromWKT([testWKTs['point_on_poly_boundary']!]);
         final result = poly.intersects(point);
@@ -365,29 +406,31 @@ void main() {
 
       test('LineString touches LineString (at endpoint)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final line2 = GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
+        final line2 =
+            GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
         final result = line1.intersects(line2);
         expect(result.toList(), [true]);
       });
-      
+
       test('LineString overlaps LineString (partially)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]); // (0 0, 1 1)
-        final line2 = GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]); // (0.5 0.5, 1.5 1.5)
+        final line2 = GeoSeries_fromWKT(
+            [testWKTs['line_overlaps_line1_partial']!]); // (0.5 0.5, 1.5 1.5)
         final result = line1.intersects(line2);
         expect(result.toList(), [true]);
       });
 
       test('LineString overlaps LineString (fully, line1 contains line2)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]); // (0 0, 1 1)
-        final line2 = GeoSeries_fromWKT(['LINESTRING (0.25 0.25, 0.75 0.75)']); 
+        final line2 = GeoSeries_fromWKT(['LINESTRING (0.25 0.25, 0.75 0.75)']);
         final result = line1.intersects(line2);
         expect(result.toList(), [true]);
       });
 
-
       test('LineString disjoint from LineString', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final line2 = GeoSeries_fromWKT([testWKTs['line_disjoint_from_line1']!]);
+        final line2 =
+            GeoSeries_fromWKT([testWKTs['line_disjoint_from_line1']!]);
         final result = line1.intersects(line2);
         expect(result.toList(), [false]);
       });
@@ -408,7 +451,8 @@ void main() {
 
       test('LineString touches Polygon boundary', () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final line = GeoSeries_fromWKT([testWKTs['line_touches_poly_boundary']!]);
+        final line =
+            GeoSeries_fromWKT([testWKTs['line_touches_poly_boundary']!]);
         final result = poly.intersects(line);
         expect(result.toList(), [true]);
       });
@@ -432,7 +476,8 @@ void main() {
 
       test('Polygon contains Polygon', () {
         final polyOuter = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyInner = GeoSeries_fromWKT([testWKTs['poly_hole']!]); // poly_hole is smaller and inside poly1
+        final polyInner = GeoSeries_fromWKT(
+            [testWKTs['poly_hole']!]); // poly_hole is smaller and inside poly1
         final result = polyOuter.intersects(polyInner);
         expect(result.toList(), [true]);
       });
@@ -446,7 +491,8 @@ void main() {
 
       test('Identical polygons', () {
         final poly1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyIdentical = GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
+        final polyIdentical =
+            GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
         final result = poly1.intersects(polyIdentical);
         expect(result.toList(), [true]);
       });
@@ -463,15 +509,18 @@ void main() {
 
       test('MultiLineString intersects LineString (one line touches)', () {
         final line = GeoSeries_fromWKT([testWKTs['line1']!]); // (0,0)-(1,1)
-        final mline = GeoSeries_fromWKT(['MULTILINESTRING ((1 1, 2 0), (3 3, 4 4))']); // First line touches line1
+        final mline = GeoSeries_fromWKT([
+          'MULTILINESTRING ((1 1, 2 0), (3 3, 4 4))'
+        ]); // First line touches line1
         final result = line.intersects(mline);
         expect(result.toList(), [true]);
       });
 
       test('MultiPolygon intersects Polygon (one poly overlaps)', () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final mpoly = GeoSeries_fromWKT(
-            ['MULTIPOLYGON (((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5)), ((2 2, 3 2, 3 3, 2 3, 2 2)))']);
+        final mpoly = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5)), ((2 2, 3 2, 3 3, 2 3, 2 2)))'
+        ]);
         final result = poly.intersects(mpoly);
         expect(result.toList(), [true]);
       });
@@ -504,7 +553,6 @@ void main() {
 
     // 6. `other` as `GeoSeries`
     group('`other` as GeoSeries scenarios', () {
-      
       test('Series: poly1.intersects(poly2_overlaps_poly1)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!]);
@@ -512,26 +560,33 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [poly1, poly_disjoint] intersects [poly2_overlaps_poly1, point1]', () {
+      test(
+          'Series: [poly1, poly_disjoint] intersects [poly2_overlaps_poly1, point1]',
+          () {
         // poly1 intersects poly2_overlaps_poly1 -> true
         // poly_disjoint does not intersect point1 -> false
-        final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['point1']!]);
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly2_overlaps_poly1']!, testWKTs['point1']!]);
         final result = s1.intersects(s2);
         expect(result.toList(), [true, false]);
       });
-      
+
       test('Series with different lengths (s1 longer)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!]);
         final result = s1.intersects(s2);
-        expect(result.toList(), [true, false]); // Second element of s1 has no counterpart
+        expect(result.toList(),
+            [true, false]); // Second element of s1 has no counterpart
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
         final result = s1.intersects(s2);
         expect(result.toList(), [true]); // Result matches length of s1
         expect(result.index.length, 1);
@@ -539,21 +594,22 @@ void main() {
 
       test('Series with null geometry in calling series', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, null]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
         final result = s1.intersects(s2);
         expect(result.toList(), [true, false]); // null geom intersects nothing
       });
 
       test('Series with null geometry in other series', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, null]);
         final result = s1.intersects(s2);
-        expect(result.toList(), [true, false]); // poly_disjoint intersects null -> false
+        expect(result.toList(),
+            [true, false]); // poly_disjoint intersects null -> false
       });
-      
     });
   });
-
 
 // Note: This test suite relies on the GEOS definition of "intersects".
 // ST_Intersects(A, B) is true if the geometries "spatially intersect" - (share any portion of space).
@@ -589,7 +645,8 @@ void main() {
     // 2. Topologically Equal (Different Representations)
     group('Topologically Equal (Different Representations) scenarios', () {
       test('Polygon geom_equals Polygon (different starting vertex)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]); // ((0 0, 1 0, 1 1, 0 1, 0 0))
+        final s1 = GeoSeries_fromWKT(
+            [testWKTs['poly1']!]); // ((0 0, 1 0, 1 1, 0 1, 0 0))
         final g2 = GeoSeries_fromWKT(['POLYGON ((1 0, 1 1, 0 1, 0 0, 1 0))']);
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
@@ -601,15 +658,19 @@ void main() {
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
-      
-      test('LineString geom_equals LineString (with extra collinear point)', () {
+
+      test('LineString geom_equals LineString (with extra collinear point)',
+          () {
         final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 2 2)']);
-        final g2 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 1, 2 2)']); // (1,1) is collinear
+        final g2 = GeoSeries_fromWKT(
+            ['LINESTRING (0 0, 1 1, 2 2)']); // (1,1) is collinear
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
-      test('LineString geom_equals MultiLineString (single identical component)', () {
+      test(
+          'LineString geom_equals MultiLineString (single identical component)',
+          () {
         final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTILINESTRING ((0 0, 1 1))']);
         final result = s1.geomEquals(g2);
@@ -618,7 +679,8 @@ void main() {
 
       test('Polygon geom_equals MultiPolygon (single identical component)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)))']);
+        final g2 =
+            GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)))']);
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
@@ -633,9 +695,11 @@ void main() {
         expect(result.toList(), [false]);
       });
 
-      test('LineString not geom_equals LineString (different length/shape)', () {
+      test('LineString not geom_equals LineString (different length/shape)',
+          () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); // (0 0, 1 1)
-        final g2 = GeoSeries_fromWKT([testWKTs['line2']!]); // (1 1, 2 2) - shares endpoint but not equal
+        final g2 = GeoSeries_fromWKT(
+            [testWKTs['line2']!]); // (1 1, 2 2) - shares endpoint but not equal
         final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
@@ -649,7 +713,8 @@ void main() {
 
       test('Polygon not geom_equals LineString (different dimension)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final g2 = GeoSeries_fromWKT(['LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)']); // Closed LineString
+        final g2 = GeoSeries_fromWKT(
+            ['LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)']); // Closed LineString
         final result = s1.geomEquals(g2);
         expect(result.toList(), [false]);
       });
@@ -664,13 +729,14 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('MultiPoint geom_equals MultiPoint (same points, different order)', () {
+      test('MultiPoint geom_equals MultiPoint (same points, different order)',
+          () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT (1 1, 0 0)']);
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
-      
+
       test('MultiPoint not geom_equals MultiPoint (different points)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 1 1)']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT (0 0, 2 2)']);
@@ -678,16 +744,28 @@ void main() {
         expect(result.toList(), [false]);
       });
 
-      test('MultiPolygon geom_equals MultiPolygon (identical components, same order)', () {
-        final s1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
-        final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
+      test(
+          'MultiPolygon geom_equals MultiPolygon (identical components, same order)',
+          () {
+        final s1 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))'
+        ]);
+        final g2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))'
+        ]);
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
 
-      test('MultiPolygon geom_equals MultiPolygon (identical components, different order)', () {
-        final s1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
-        final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((2 0, 3 0, 3 1, 2 1, 2 0)), ((0 0, 1 0, 1 1, 0 1, 0 0)))']);
+      test(
+          'MultiPolygon geom_equals MultiPolygon (identical components, different order)',
+          () {
+        final s1 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))'
+        ]);
+        final g2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((2 0, 3 0, 3 1, 2 1, 2 0)), ((0 0, 1 0, 1 1, 0 1, 0 0)))'
+        ]);
         final result = s1.geomEquals(g2);
         expect(result.toList(), [true]);
       });
@@ -725,7 +803,7 @@ void main() {
         // GEOS: Empty geometries of different dimensions are not equal.
         expect(result.toList(), [false]);
       });
-       test('EmptyPoint.geom_equals(EmptyPolygon)', () {
+      test('EmptyPoint.geom_equals(EmptyPolygon)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
         final result = s1.geomEquals(g2);
@@ -755,26 +833,30 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [point1, line1] geom_equals [point_identical_to_point1, line1_reversed]', () {
+      test(
+          'Series: [point1, line1] geom_equals [point_identical_to_point1, line1_reversed]',
+          () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, 'LINESTRING (1 1, 0 0)']);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['point_identical_to_point1']!, 'LINESTRING (1 1, 0 0)']);
         final result = s1.geomEquals(s2);
         expect(result.toList(), [true, true]);
       });
-      
+
       test('Series with different lengths (s1 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
         final result = s1.geomEquals(s2);
         // point1.geom_equals(point_identical_to_point1) -> true
         // line1.geom_equals(no_geom) -> false (as per current padding logic)
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
         final result = s1.geomEquals(s2);
         expect(result.toList(), [true]); // Result matches length of s1
         expect(result.index.length, 1);
@@ -782,14 +864,17 @@ void main() {
 
       test('Series with null geometry in calling series for geom_equals', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, null]);
-        final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['point_identical_to_point1']!, testWKTs['line1']!]);
         final result = s1.geomEquals(s2);
-        expect(result.toList(), [true, false]); // null geom equals nothing -> false
+        expect(result.toList(),
+            [true, false]); // null geom equals nothing -> false
       });
 
       test('Series with null geometry in other series for geom_equals', () {
         final s1 = GeoSeries_fromWKT([testWKTs['point1']!, testWKTs['line1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, null]);
+        final s2 =
+            GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!, null]);
         final result = s1.geomEquals(s2);
         expect(result.toList(), [true, false]); // line1 equals null -> false
       });
@@ -1080,10 +1165,12 @@ void main() {
 
       test('One Polygon completely contains another (not overlaps)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]); // Outer
-        final g2 = GeoSeries_fromWKT([testWKTs['poly_hole']!]); // Inner, contained by poly1
+        final g2 = GeoSeries_fromWKT(
+            [testWKTs['poly_hole']!]); // Inner, contained by poly1
         final result = s1.overlaps(g2);
         expect(result.toList(), [false]); // s1 contains g2
-        final result2 = GeoSeries_fromWKT(g2.toWkt().data).overlaps(GeoSeries_fromWKT(s1[0]!.toWKT()));
+        final result2 = GeoSeries_fromWKT(g2.toWkt().data)
+            .overlaps(GeoSeries_fromWKT(s1[0]!.toWKT()));
         expect(result2.toList(), [false]); // g2 is within s1
       });
 
@@ -1104,35 +1191,45 @@ void main() {
 
     // 2. LineString overlaps LineString
     group('LineString overlaps LineString scenarios', () {
-      test('LineStrings overlap along a segment (not identical, neither contains other)', () {
+      test(
+          'LineStrings overlap along a segment (not identical, neither contains other)',
+          () {
         // line1: (0 0, 1 1), line_overlaps_line1_partial: (0.5 0.5, 1.5 1.5)
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); 
-        final g2 = GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
-        final result = s1.overlaps(g2);
-        expect(result.toList(), [true]);
-      });
-      
-      test('LineStrings overlap (longer example)', () {
-        final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 2 2, 4 4)']);
-        final g2 = GeoSeries_fromWKT(['LINESTRING (1 1, 3 3)']); // Overlaps segment (1,1)-(2,2) and (2,2)-(3,3)
+        final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
+        final g2 =
+            GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
         final result = s1.overlaps(g2);
         expect(result.toList(), [true]);
       });
 
+      test('LineStrings overlap (longer example)', () {
+        final s1 = GeoSeries_fromWKT(['LINESTRING (0 0, 2 2, 4 4)']);
+        final g2 = GeoSeries_fromWKT([
+          'LINESTRING (1 1, 3 3)'
+        ]); // Overlaps segment (1,1)-(2,2) and (2,2)-(3,3)
+        final result = s1.overlaps(g2);
+        expect(result.toList(), [true]);
+      });
 
       test('LineStrings only touch at an endpoint (not overlaps)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final g2 = GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
+        final g2 =
+            GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
         final result = s1.overlaps(g2);
         expect(result.toList(), [false]);
       });
 
-      test('One LineString is a subset of another but not identical (not overlaps)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
-        final g2 = GeoSeries_fromWKT(['LINESTRING (0.25 0.25, 0.75 0.75)']); // Subset of line1
+      test(
+          'One LineString is a subset of another but not identical (not overlaps)',
+          () {
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final g2 = GeoSeries_fromWKT(
+            ['LINESTRING (0.25 0.25, 0.75 0.75)']); // Subset of line1
         final result = s1.overlaps(g2);
         expect(result.toList(), [false]); // s1 contains g2
-        final result2 = GeoSeries_fromWKT(g2.toWkt().data).overlaps(GeoSeries_fromWKT(s1[0]!.toWKT()));
+        final result2 = GeoSeries_fromWKT(g2.toWkt().data)
+            .overlaps(GeoSeries_fromWKT(s1[0]!.toWKT()));
         expect(result2.toList(), [false]); // g2 is within s1
       });
 
@@ -1147,19 +1244,22 @@ void main() {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!]);
         final result = s1.overlaps(g2);
-        expect(result.toList(), [false]); // Intersection is a Point (lower dimension)
+        expect(result.toList(),
+            [false]); // Intersection is a Point (lower dimension)
       });
     });
 
     // 3. Point overlaps Point (MultiPoint)
     group('Point overlaps Point (MultiPoint) scenarios', () {
-      test('MultiPoint overlaps MultiPoint (share some but not all points)', () {
+      test('MultiPoint overlaps MultiPoint (share some but not all points)',
+          () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT ((0 0), (1 1))']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT ((1 1), (2 2))']);
         final result = s1.overlaps(g2);
-        expect(result.toList(), [true]); // Intersection is (1 1), same dim, not equal to inputs
+        expect(result.toList(),
+            [true]); // Intersection is (1 1), same dim, not equal to inputs
       });
-      
+
       test('MultiPoint contains MultiPoint (not overlaps)', () {
         final s1 = GeoSeries_fromWKT(['MULTIPOINT ((0 0), (1 1), (2 2))']);
         final g2 = GeoSeries_fromWKT(['MULTIPOINT ((1 1), (2 2))']);
@@ -1179,7 +1279,7 @@ void main() {
         final g2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
         final result = s1.overlaps(g2);
         expect(result.toList(), [false]); // If they intersect, they are equal.
-        
+
         final g3 = GeoSeries_fromWKT([testWKTs['point2']!]);
         final result2 = s1.overlaps(g3);
         expect(result2.toList(), [false]); // Disjoint
@@ -1187,7 +1287,8 @@ void main() {
     });
 
     // 4. Different Dimensions
-    group('Different Dimensions scenarios for overlaps() (should be false)', () {
+    group('Different Dimensions scenarios for overlaps() (should be false)',
+        () {
       test('LineString vs Polygon', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line_crossing_poly']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['poly1']!]);
@@ -1209,8 +1310,12 @@ void main() {
         // mpolyA: contains poly1 and a disjoint poly A2
         // mpolyB: contains poly2_overlaps_poly1 and a disjoint poly B2
         // Intersection is overlap of poly1 and poly2_overlaps_poly1
-        final s1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((10 0, 11 0, 11 1, 10 1, 10 0)))']);
-        final g2 = GeoSeries_fromWKT(['MULTIPOLYGON (((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5)), ((12 0, 13 0, 13 1, 12 1, 12 0)))']);
+        final s1 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((10 0, 11 0, 11 1, 10 1, 10 0)))'
+        ]);
+        final g2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0.5 0.5, 1.5 0.5, 1.5 1.5, 0.5 1.5, 0.5 0.5)), ((12 0, 13 0, 13 1, 12 1, 12 0)))'
+        ]);
         final result = s1.overlaps(g2);
         expect(result.toList(), [true]);
       });
@@ -1218,8 +1323,10 @@ void main() {
       test('MultiLineString overlaps MultiLineString', () {
         // mlineA: contains line1 and a disjoint line A2
         // mlineB: contains line_overlaps_line1_partial and disjoint line B2
-        final s1 = GeoSeries_fromWKT(['MULTILINESTRING ((0 0, 1 1), (10 0, 11 1))']);
-        final g2 = GeoSeries_fromWKT(['MULTILINESTRING ((0.5 0.5, 1.5 1.5), (12 0, 13 1))']);
+        final s1 =
+            GeoSeries_fromWKT(['MULTILINESTRING ((0 0, 1 1), (10 0, 11 1))']);
+        final g2 = GeoSeries_fromWKT(
+            ['MULTILINESTRING ((0.5 0.5, 1.5 1.5), (12 0, 13 1))']);
         final result = s1.overlaps(g2);
         expect(result.toList(), [true]);
       });
@@ -1240,7 +1347,7 @@ void main() {
         final result = s1.overlaps(g2);
         expect(result.toList(), [false]);
       });
-      
+
       test('EmptyLineString.overlaps(EmptyLineString)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
@@ -1258,34 +1365,42 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [poly1, line1] overlaps [poly2_overlaps_poly1, line_overlaps_line1_partial]', () {
+      test(
+          'Series: [poly1, line1] overlaps [poly2_overlaps_poly1, line_overlaps_line1_partial]',
+          () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['line1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['line_overlaps_line1_partial']!]);
+        final s2 = GeoSeries_fromWKT([
+          testWKTs['poly2_overlaps_poly1']!,
+          testWKTs['line_overlaps_line1_partial']!
+        ]);
         final result = s1.overlaps(s2);
         expect(result.toList(), [true, true]);
       });
-      
+
       test('Series with different lengths (s1 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!]);
         final result = s1.overlaps(s2);
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
         final result = s1.overlaps(s2);
-        expect(result.toList(), [true]); 
+        expect(result.toList(), [true]);
         expect(result.index.length, 1);
       });
 
       test('Series with null geometry in calling series for overlaps', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, null]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly2_overlaps_poly1']!, testWKTs['poly_disjoint']!]);
         final result = s1.overlaps(s2);
-        expect(result.toList(), [true, false]); // null geom overlaps nothing -> false
+        expect(result.toList(),
+            [true, false]); // null geom overlaps nothing -> false
       });
 
       test('Series with null geometry in other series for overlaps', () {
@@ -1301,22 +1416,26 @@ void main() {
     // 1. LineString crosses LineString
     group('LineString crosses LineString scenarios', () {
       test('LineString crosses LineString (intersect in interiors)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
-        final g2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!]); // LINESTRING (0 1, 1 0)
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final g2 = GeoSeries_fromWKT(
+            [testWKTs['line_crosses_line1']!]); // LINESTRING (0 1, 1 0)
         final result = s1.crosses(g2);
         expect(result.toList(), [true]);
       });
 
       test('LineStrings only touch at an endpoint (not crosses)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final g2 = GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
+        final g2 =
+            GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
         final result = s1.crosses(g2);
         expect(result.toList(), [false]);
       });
 
       test('LineStrings overlap along a segment (not crosses)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final g2 = GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
+        final g2 =
+            GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
         final result = s1.crosses(g2);
         expect(result.toList(), [false]);
       });
@@ -1329,14 +1448,17 @@ void main() {
       });
 
       test('One LineString contained within another (not crosses)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
-        final g2 = GeoSeries_fromWKT(['LINESTRING (0.25 0.25, 0.75 0.75)']); // Contained in line1
+        final s1 =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final g2 = GeoSeries_fromWKT(
+            ['LINESTRING (0.25 0.25, 0.75 0.75)']); // Contained in line1
         final result = s1.crosses(g2);
         expect(result.toList(), [false]); // s1 contains g2, does not cross
-        final result2 = GeoSeries_fromWKT(g2.toWkt().data).crosses(GeoSeries_fromWKT(s1[0]!.toWKT()));
-        expect(result2.toList(), [false]);// g2 is within s1, does not cross
+        final result2 = GeoSeries_fromWKT(g2.toWkt().data)
+            .crosses(GeoSeries_fromWKT(s1[0]!.toWKT()));
+        expect(result2.toList(), [false]); // g2 is within s1, does not cross
       });
-       test('Identical LineStrings (not crosses)', () {
+      test('Identical LineStrings (not crosses)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final result = s1.crosses(g2);
@@ -1347,12 +1469,15 @@ void main() {
     // 2. LineString crosses Polygon
     group('LineString crosses Polygon scenarios', () {
       test('LineString intersects interior and exterior of Polygon', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line_crossing_poly']!]); // LINESTRING (-0.5 0.5, 1.5 0.5)
-        final g2 = GeoSeries_fromWKT([testWKTs['poly1']!]); // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))
+        final s1 = GeoSeries_fromWKT([
+          testWKTs['line_crossing_poly']!
+        ]); // LINESTRING (-0.5 0.5, 1.5 0.5)
+        final g2 = GeoSeries_fromWKT(
+            [testWKTs['poly1']!]); // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))
         final result = s1.crosses(g2);
         expect(result.toList(), [true]);
       });
-      
+
       test('Polygon crosses LineString (same as above, reversed role)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['line_crossing_poly']!]);
@@ -1375,7 +1500,9 @@ void main() {
       });
 
       test('LineString disjoint from Polygon (not crosses)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line_disjoint_from_line1']!]); // Also disjoint from poly1
+        final s1 = GeoSeries_fromWKT([
+          testWKTs['line_disjoint_from_line1']!
+        ]); // Also disjoint from poly1
         final g2 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = s1.crosses(g2);
         expect(result.toList(), [false]);
@@ -1404,7 +1531,7 @@ void main() {
         final result = s1.crosses(g2);
         expect(result.toList(), [false]);
       });
-      
+
       test('Polygon crosses Point', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['point1']!]);
@@ -1433,35 +1560,47 @@ void main() {
     // 5. Multi-Geometries
     group('Multi-Geometries scenarios for crosses()', () {
       test('MultiLineString crosses Polygon (one line crosses)', () {
-        final s1 = GeoSeries_fromWKT(['MULTILINESTRING ((-0.5 0.5, 1.5 0.5), (2 2, 3 3))']); // First line crosses poly1
+        final s1 = GeoSeries_fromWKT([
+          'MULTILINESTRING ((-0.5 0.5, 1.5 0.5), (2 2, 3 3))'
+        ]); // First line crosses poly1
         final g2 = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = s1.crosses(g2);
         expect(result.toList(), [true]);
       });
 
-      test('LineString crosses MultiPolygon (line crosses one polygon in collection)', () {
+      test(
+          'LineString crosses MultiPolygon (line crosses one polygon in collection)',
+          () {
         final s1 = GeoSeries_fromWKT([testWKTs['line_crossing_poly']!]);
-        final g2 = GeoSeries_fromWKT(
-            ['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']); // poly1 and poly_disjoint
+        final g2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))'
+        ]); // poly1 and poly_disjoint
         final result = s1.crosses(g2);
         expect(result.toList(), [true]); // Crosses the first polygon (poly1)
       });
-      
-      test('MultiPoint crosses LineString (some points on, some not, but interior of MPoint must intersect interior AND exterior of Line)', () {
-        // For MultiPoint/LineString, ST_Crosses is true if at least one point is on the line and 
+
+      test(
+          'MultiPoint crosses LineString (some points on, some not, but interior of MPoint must intersect interior AND exterior of Line)',
+          () {
+        // For MultiPoint/LineString, ST_Crosses is true if at least one point is on the line and
         // at least one point is not on the line.
         // The "interior" of a MultiPoint is the set of points. The "boundary" is empty.
         // The "interior" of a LineString is the line minus its boundary points.
         // Intersection of MPoint interior and LineString interior means a point is on the LineString's interior.
         // Intersection of MPoint interior and LineString exterior means a point is off the LineString.
-        final s1 = GeoSeries_fromWKT(['MULTIPOINT (0.5 0.5, 2 2)']); // (0.5,0.5) is on line1, (2,2) is not
-        final g2 = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final s1 = GeoSeries_fromWKT([
+          'MULTIPOINT (0.5 0.5, 2 2)'
+        ]); // (0.5,0.5) is on line1, (2,2) is not
+        final g2 =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
         final result = s1.crosses(g2);
         expect(result.toList(), [true]);
       });
 
       test('MultiPoint crosses Polygon (some points in, some out)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['mpoint_partially_in_poly']!]); // MULTIPOINT (0.1 0.1, 1.2 1.2)
+        final s1 = GeoSeries_fromWKT([
+          testWKTs['mpoint_partially_in_poly']!
+        ]); // MULTIPOINT (0.1 0.1, 1.2 1.2)
         final g2 = GeoSeries_fromWKT([testWKTs['poly1']!]); // Unit square
         final result = s1.crosses(g2);
         expect(result.toList(), [true]);
@@ -1483,7 +1622,7 @@ void main() {
         final result = s1.crosses(g2);
         expect(result.toList(), [false]);
       });
-      
+
       test('EmptyLineString.crosses(EmptyPolygon)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
         final g2 = GeoSeries_fromWKT([testWKTs['empty_polygon']!]);
@@ -1501,41 +1640,51 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [line1, line_crossing_poly] crosses [line_crosses_line1, poly1]', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!, testWKTs['poly1']!]);
+      test(
+          'Series: [line1, line_crossing_poly] crosses [line_crosses_line1, poly1]',
+          () {
+        final s1 = GeoSeries_fromWKT(
+            [testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['line_crosses_line1']!, testWKTs['poly1']!]);
         final result = s1.crosses(s2);
         expect(result.toList(), [true, true]);
       });
-      
+
       test('Series with different lengths (s1 longer)', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
+        final s1 = GeoSeries_fromWKT(
+            [testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!]);
         final result = s1.crosses(s2);
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!, testWKTs['poly1']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['line_crosses_line1']!, testWKTs['poly1']!]);
         final result = s1.crosses(s2);
-        expect(result.toList(), [true]); 
+        expect(result.toList(), [true]);
         expect(result.index.length, 1);
       });
 
       test('Series with null geometry in calling series for crosses', () {
         final s1 = GeoSeries_fromWKT([testWKTs['line1']!, null]);
-        final s2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!, testWKTs['line1']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['line_crosses_line1']!, testWKTs['line1']!]);
         final result = s1.crosses(s2);
-        expect(result.toList(), [true, false]); // null geom crosses nothing -> false
+        expect(result.toList(),
+            [true, false]); // null geom crosses nothing -> false
       });
 
       test('Series with null geometry in other series for crosses', () {
-        final s1 = GeoSeries_fromWKT([testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
+        final s1 = GeoSeries_fromWKT(
+            [testWKTs['line1']!, testWKTs['line_crossing_poly']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['line_crosses_line1']!, null]);
         final result = s1.crosses(s2);
-        expect(result.toList(), [true, false]); // line_crossing_poly crosses null -> false
+        expect(result.toList(),
+            [true, false]); // line_crossing_poly crosses null -> false
       });
     });
   });
@@ -1544,8 +1693,10 @@ void main() {
     // 1. Point Touches
     group('Point Touches scenarios', () {
       test('Point touches LineString (point is an endpoint of the line)', () {
-        final point = GeoSeries_fromWKT([testWKTs['point_endpoint_of_line1']!]); // POINT (0 0)
-        final line = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final point = GeoSeries_fromWKT(
+            [testWKTs['point_endpoint_of_line1']!]); // POINT (0 0)
+        final line =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
         final result = point.touches(line);
         expect(result.toList(), [true]);
       });
@@ -1554,21 +1705,26 @@ void main() {
         // A point's boundary is itself. A line's boundary is its endpoints.
         // For a point to touch a line, the point must be one of the line's endpoints.
         // If the point is in the interior of the line, it's 'intersects' but not 'touches'.
-        final point = GeoSeries_fromWKT([testWKTs['point_on_line1']!]); // POINT (0.5 0.5)
-        final line = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final point =
+            GeoSeries_fromWKT([testWKTs['point_on_line1']!]); // POINT (0.5 0.5)
+        final line =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
         final result = point.touches(line);
-        expect(result.toList(), [false]); 
+        expect(result.toList(), [false]);
       });
 
-      test('Point touches Polygon (point is on the boundary, not a vertex)', () {
-        final point = GeoSeries_fromWKT([testWKTs['point_on_poly_boundary_non_vertex']!]); // POINT (0 0.5)
+      test('Point touches Polygon (point is on the boundary, not a vertex)',
+          () {
+        final point = GeoSeries_fromWKT(
+            [testWKTs['point_on_poly_boundary_non_vertex']!]); // POINT (0 0.5)
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = point.touches(poly);
         expect(result.toList(), [true]);
       });
 
       test('Point touches Polygon (point is a vertex of the polygon)', () {
-        final point = GeoSeries_fromWKT([testWKTs['point_on_poly_boundary']!]); // POINT (0 0)
+        final point = GeoSeries_fromWKT(
+            [testWKTs['point_on_poly_boundary']!]); // POINT (0 0)
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = point.touches(poly);
         expect(result.toList(), [true]);
@@ -1591,9 +1747,12 @@ void main() {
 
     // 2. LineString Touches
     group('LineString Touches scenarios', () {
-      test('LineString touches LineString (share an endpoint, do not overlap otherwise)', () {
+      test(
+          'LineString touches LineString (share an endpoint, do not overlap otherwise)',
+          () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final line2 = GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
+        final line2 =
+            GeoSeries_fromWKT([testWKTs['line_touches_line1_endpoint']!]);
         final result = line1.touches(line2);
         expect(result.toList(), [true]);
       });
@@ -1608,27 +1767,36 @@ void main() {
 
       test('LineStrings overlap along a segment (not touches)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]);
-        final line2 = GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
+        final line2 =
+            GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]);
         final result = line1.touches(line2);
         expect(result.toList(), [false]);
       });
 
-      test('LineString endpoint on another LineString\'s interior (touches)', () {
-        final line1 = GeoSeries_fromWKT(['LINESTRING(0 0, 2 0)']); // Target line
-        final line2 = GeoSeries_fromWKT(['LINESTRING(1 0, 1 1)']); // Touches at (1,0) which is interior to line1
+      test('LineString endpoint on another LineString\'s interior (touches)',
+          () {
+        final line1 =
+            GeoSeries_fromWKT(['LINESTRING(0 0, 2 0)']); // Target line
+        final line2 = GeoSeries_fromWKT([
+          'LINESTRING(1 0, 1 1)'
+        ]); // Touches at (1,0) which is interior to line1
         final result = line1.touches(line2);
         expect(result.toList(), [true]);
       });
 
-      test('LineString touches Polygon boundary (and does not cross into interior)', () {
-        final line = GeoSeries_fromWKT([testWKTs['line_touches_poly_boundary']!]);
+      test(
+          'LineString touches Polygon boundary (and does not cross into interior)',
+          () {
+        final line =
+            GeoSeries_fromWKT([testWKTs['line_touches_poly_boundary']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = line.touches(poly);
         expect(result.toList(), [true]);
       });
 
       test('LineString endpoint touches Polygon vertex', () {
-        final line = GeoSeries_fromWKT([testWKTs['line_endpoint_touches_poly_vertex']!]);
+        final line =
+            GeoSeries_fromWKT([testWKTs['line_endpoint_touches_poly_vertex']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = line.touches(poly);
         expect(result.toList(), [true]);
@@ -1648,12 +1816,13 @@ void main() {
         expect(result.toList(), [false]);
       });
     });
-    
+
     // 3. Polygon Touches
     group('Polygon Touches scenarios', () {
       test('Polygon touches Polygon at a point', () {
         final poly1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final poly2 = GeoSeries_fromWKT([testWKTs['poly_touches_poly1_at_point']!]);
+        final poly2 =
+            GeoSeries_fromWKT([testWKTs['poly_touches_poly1_at_point']!]);
         final result = poly1.touches(poly2);
         expect(result.toList(), [true]);
       });
@@ -1680,10 +1849,11 @@ void main() {
         final result2 = polyOuter.touches(polyInner);
         expect(result2.toList(), [false]); // polyInner is within polyOuter
       });
-      
-       test('Identical Polygons (not touches)', () {
+
+      test('Identical Polygons (not touches)', () {
         final poly1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyIdentical = GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
+        final polyIdentical =
+            GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
         final result = poly1.touches(polyIdentical);
         expect(result.toList(), [false]);
       });
@@ -1692,29 +1862,37 @@ void main() {
     // 4. Multi-Geometries
     group('Multi-Geometries scenarios for touches()', () {
       test('MultiPoint touches Polygon (one point on boundary)', () {
-        final mpoint = GeoSeries_fromWKT(['MULTIPOINT((0 0.5), (2 2))']); // One point touches poly1 boundary
+        final mpoint = GeoSeries_fromWKT(
+            ['MULTIPOINT((0 0.5), (2 2))']); // One point touches poly1 boundary
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = mpoint.touches(poly);
         expect(result.toList(), [true]);
       });
-      
+
       test('MultiPoint inside Polygon (not touches)', () {
-        final mpoint = GeoSeries_fromWKT([testWKTs['mpoint_in_poly']!]); 
+        final mpoint = GeoSeries_fromWKT([testWKTs['mpoint_in_poly']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = mpoint.touches(poly);
         expect(result.toList(), [false]);
       });
 
-      test('MultiLineString touches Polygon (one line segment touches boundary)', () {
-        final mline = GeoSeries_fromWKT(['MULTILINESTRING ((0 0, 0.5 0), (2 2, 3 3))']); // First line touches poly1
+      test(
+          'MultiLineString touches Polygon (one line segment touches boundary)',
+          () {
+        final mline = GeoSeries_fromWKT([
+          'MULTILINESTRING ((0 0, 0.5 0), (2 2, 3 3))'
+        ]); // First line touches poly1
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = mline.touches(poly);
         expect(result.toList(), [true]);
       });
 
       test('MultiPolygon touches MultiPolygon (one pair touches at edge)', () {
-        final mpoly1 = GeoSeries_fromWKT(['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)))']); // This is poly1
-        final mpoly2 = GeoSeries_fromWKT(['MULTIPOLYGON (((1 0, 2 0, 2 1, 1 1, 1 0)))']); // This is poly3_touches_poly1
+        final mpoly1 = GeoSeries_fromWKT(
+            ['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)))']); // This is poly1
+        final mpoly2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((1 0, 2 0, 2 1, 1 1, 1 0)))'
+        ]); // This is poly3_touches_poly1
         final result = mpoly1.touches(mpoly2);
         expect(result.toList(), [true]);
       });
@@ -1744,7 +1922,7 @@ void main() {
         expect(result.toList(), [false]);
       });
     });
-    
+
     // 6. `other` as `GeoSeries`
     group('`other` as GeoSeries scenarios for touches()', () {
       test('Series: poly1.touches(poly3_touches_poly1)', () {
@@ -1754,36 +1932,46 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [poly1, poly1] touches [poly3_touches_poly1, poly2_overlaps_poly1]', () {
+      test(
+          'Series: [poly1, poly1] touches [poly3_touches_poly1, poly2_overlaps_poly1]',
+          () {
         // poly1 touches poly3_touches_poly1 -> true
         // poly1 does not touch poly2_overlaps_poly1 (it overlaps) -> false
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly3_touches_poly1']!, testWKTs['poly2_overlaps_poly1']!]);
+        final s2 = GeoSeries_fromWKT([
+          testWKTs['poly3_touches_poly1']!,
+          testWKTs['poly2_overlaps_poly1']!
+        ]);
         final result = s1.touches(s2);
         expect(result.toList(), [true, false]);
       });
-      
+
       test('Series with different lengths (s1 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
         final s2 = GeoSeries_fromWKT([testWKTs['poly3_touches_poly1']!]);
         final result = s1.touches(s2);
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (s2 longer)', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly3_touches_poly1']!, testWKTs['poly2_overlaps_poly1']!]);
+        final s2 = GeoSeries_fromWKT([
+          testWKTs['poly3_touches_poly1']!,
+          testWKTs['poly2_overlaps_poly1']!
+        ]);
         final result = s1.touches(s2);
-        expect(result.toList(), [true]); 
+        expect(result.toList(), [true]);
         expect(result.index.length, 1);
       });
 
       test('Series with null geometry in calling series for touches', () {
         final s1 = GeoSeries_fromWKT([testWKTs['poly1']!, null]);
-        final s2 = GeoSeries_fromWKT([testWKTs['poly3_touches_poly1']!, testWKTs['poly_disjoint']!]);
+        final s2 = GeoSeries_fromWKT(
+            [testWKTs['poly3_touches_poly1']!, testWKTs['poly_disjoint']!]);
         final result = s1.touches(s2);
-        expect(result.toList(), [true, false]); // null geom touches nothing -> false
+        expect(result.toList(),
+            [true, false]); // null geom touches nothing -> false
       });
 
       test('Series with null geometry in other series for touches', () {
@@ -1829,11 +2017,12 @@ void main() {
 
       test('Point within Point (identical)', () {
         final point1 = GeoSeries_fromWKT([testWKTs['point1']!]);
-        final point2 = GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
+        final point2 =
+            GeoSeries_fromWKT([testWKTs['point_identical_to_point1']!]);
         final result = point1.within(point2);
         expect(result.toList(), [true]);
       });
-       test('Point within Point (different)', () {
+      test('Point within Point (different)', () {
         final point1 = GeoSeries_fromWKT([testWKTs['point1']!]);
         final point2 = GeoSeries_fromWKT([testWKTs['point2']!]);
         final result = point1.within(point2);
@@ -1864,7 +2053,7 @@ void main() {
         final result = line.within(poly);
         expect(result.toList(), [true]);
       });
-       test('LineString within LineString (identical)', () {
+      test('LineString within LineString (identical)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final line2 = GeoSeries_fromWKT([testWKTs['line1']!]);
         final result = line1.within(line2);
@@ -1872,13 +2061,15 @@ void main() {
       });
       test('LineString within LineString (subset)', () {
         final subLine = GeoSeries_fromWKT(['LINESTRING(0.25 0.25, 0.75 0.75)']);
-        final superLine = GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
+        final superLine =
+            GeoSeries_fromWKT([testWKTs['line1']!]); // LINESTRING (0 0, 1 1)
         final result = subLine.within(superLine);
         expect(result.toList(), [true]);
       });
-       test('LineString not within LineString (overlap but not subset)', () {
+      test('LineString not within LineString (overlap but not subset)', () {
         final line1 = GeoSeries_fromWKT([testWKTs['line1']!]); // (0 0, 1 1)
-        final line2 = GeoSeries_fromWKT([testWKTs['line_overlaps_line1_partial']!]); // (0.5 0.5, 1.5 1.5)
+        final line2 = GeoSeries_fromWKT(
+            [testWKTs['line_overlaps_line1_partial']!]); // (0.5 0.5, 1.5 1.5)
         final result = line1.within(line2);
         expect(result.toList(), [false]); // line1 is not *within* line2
       });
@@ -1887,7 +2078,8 @@ void main() {
     // 3. Polygon within Polygon
     group('Polygon within Polygon scenarios', () {
       test('Polygon completely inside another polygon', () {
-        final polyInner = GeoSeries_fromWKT([testWKTs['poly_hole']!]); // This is smaller poly
+        final polyInner =
+            GeoSeries_fromWKT([testWKTs['poly_hole']!]); // This is smaller poly
         final polyOuter = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = polyInner.within(polyOuter);
         expect(result.toList(), [true]);
@@ -1902,18 +2094,22 @@ void main() {
 
       test('Identical polygons', () {
         final poly1 = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyIdentical = GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
+        final polyIdentical =
+            GeoSeries_fromWKT([testWKTs['poly_identical_to_poly1']!]);
         final result = poly1.within(polyIdentical);
         expect(result.toList(), [true]);
       });
-      
-      test('Polygon A within Polygon B, B shares an edge with A (A is poly_shares_edge_with_poly1_exterior, B is poly1)', () {
+
+      test(
+          'Polygon A within Polygon B, B shares an edge with A (A is poly_shares_edge_with_poly1_exterior, B is poly1)',
+          () {
         // poly_shares_edge_with_poly1_exterior is adjacent to poly1, not within.
         // Let's define polyA as truly inside polyB but sharing an edge.
         // polyB: POLYGON ((0 0, 2 0, 2 1, 0 1, 0 0))
         // polyA: POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)) -> polyA is poly1
         final polyA = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final polyB = GeoSeries_fromWKT(['POLYGON ((0 0, 2 0, 2 1, 0 1, 0 0))']);
+        final polyB =
+            GeoSeries_fromWKT(['POLYGON ((0 0, 2 0, 2 1, 0 1, 0 0))']);
         final result = polyA.within(polyB);
         expect(result.toList(), [true]);
       });
@@ -1927,22 +2123,28 @@ void main() {
         final result = mpoint.within(poly);
         expect(result.toList(), [true]);
       });
-      
-      test('MultiPoint partially within Polygon (one point inside, one outside)', () {
-        final mpoint = GeoSeries_fromWKT([testWKTs['mpoint_partially_in_poly']!]);
+
+      test(
+          'MultiPoint partially within Polygon (one point inside, one outside)',
+          () {
+        final mpoint =
+            GeoSeries_fromWKT([testWKTs['mpoint_partially_in_poly']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = mpoint.within(poly);
         expect(result.toList(), [false]);
       });
 
-      test('Polygon within MultiPolygon (poly1 within a MPoly containing poly1 and poly_disjoint)', () {
+      test(
+          'Polygon within MultiPolygon (poly1 within a MPoly containing poly1 and poly_disjoint)',
+          () {
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
-        final mpoly = GeoSeries_fromWKT(
-            ['MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))']);
+        final mpoly = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((2 0, 3 0, 3 1, 2 1, 2 0)))'
+        ]);
         final result = poly.within(mpoly);
         expect(result.toList(), [true]);
       });
-      
+
       test('MultiLineString within Polygon', () {
         final mline = GeoSeries_fromWKT([testWKTs['mline_in_poly']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
@@ -1951,11 +2153,14 @@ void main() {
       });
 
       test('MultiPolygon within MultiPolygon (subset)', () {
-        final mpoly1 = GeoSeries_fromWKT([testWKTs['mpoly_in_poly']!]); // Contains one small poly
-        final mpoly2 = GeoSeries_fromWKT(
-             ['MULTIPOLYGON (((0.1 0.1, 0.2 0.1, 0.2 0.2, 0.1 0.2, 0.1 0.1)), ((0.3 0.3, 0.4 0.3, 0.4 0.4, 0.3 0.4, 0.3 0.3)))']);
+        final mpoly1 = GeoSeries_fromWKT(
+            [testWKTs['mpoly_in_poly']!]); // Contains one small poly
+        final mpoly2 = GeoSeries_fromWKT([
+          'MULTIPOLYGON (((0.1 0.1, 0.2 0.1, 0.2 0.2, 0.1 0.2, 0.1 0.1)), ((0.3 0.3, 0.4 0.3, 0.4 0.4, 0.3 0.4, 0.3 0.3)))'
+        ]);
         final result = mpoly1.within(mpoly2);
-        expect(result.toList(), [true]); // mpoly1's single poly is one of mpoly2's
+        expect(
+            result.toList(), [true]); // mpoly1's single poly is one of mpoly2's
       });
     });
 
@@ -1966,7 +2171,7 @@ void main() {
         final emptyPoint = GeoSeries_fromWKT([testWKTs['empty_point']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = emptyPoint.within(poly);
-        expect(result.toList(), [true]); 
+        expect(result.toList(), [true]);
       });
 
       test('Point.within(EmptyPolygon)', () {
@@ -1982,11 +2187,11 @@ void main() {
         final result = emptyPoint.within(emptyPoly);
         expect(result.toList(), [true]);
       });
-       test('EmptyLineString.within(Polygon)', () {
+      test('EmptyLineString.within(Polygon)', () {
         final emptyLine = GeoSeries_fromWKT([testWKTs['empty_linestring']!]);
         final poly = GeoSeries_fromWKT([testWKTs['poly1']!]);
         final result = emptyLine.within(poly);
-        expect(result.toList(), [true]); 
+        expect(result.toList(), [true]);
       });
     });
 
@@ -1999,27 +2204,34 @@ void main() {
         expect(result.toList(), [true]);
       });
 
-      test('Series: [point_inside_poly, point_outside_poly] within [poly1, poly1]', () {
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
+      test(
+          'Series: [point_inside_poly, point_outside_poly] within [poly1, poly1]',
+          () {
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
         final result = pointSeries.within(polySeries);
         expect(result.toList(), [true, false]);
       });
-      
+
       test('Series with different lengths (pointSeries longer)', () {
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
+        final pointSeries = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point_outside_poly']!]);
         final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!]); // Shorter
         final result = pointSeries.within(polySeries);
         // Result matches length of calling series (pointSeries)
         // point_inside_poly is within poly1 -> true
         // point_outside_poly has no corresponding poly in polySeries (shorter), so treated as false
-        expect(result.toList(), [true, false]); 
+        expect(result.toList(), [true, false]);
         expect(result.index.length, 2);
       });
 
       test('Series with different lengths (polySeries longer)', () {
-        final pointSeries = GeoSeries_fromWKT([testWKTs['point_inside_poly']!]); // Shorter
-        final polySeries = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
+        final pointSeries =
+            GeoSeries_fromWKT([testWKTs['point_inside_poly']!]); // Shorter
+        final polySeries =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly_disjoint']!]);
         final result = pointSeries.within(polySeries);
         // Result matches length of calling series (pointSeries)
         expect(result.toList(), [true]);
@@ -2027,14 +2239,20 @@ void main() {
       });
 
       test('Series with null geometry in calling series for within', () {
-        final seriesA = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, null]);
-        final seriesB = GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
+        final seriesA =
+            GeoSeries_fromWKT([testWKTs['point_inside_poly']!, null]);
+        final seriesB =
+            GeoSeries_fromWKT([testWKTs['poly1']!, testWKTs['poly1']!]);
         final result = seriesA.within(seriesB);
-        expect(result.toList(), [true, false]); // null geom is not within anything in this context (predicate returns false)
+        expect(result.toList(), [
+          true,
+          false
+        ]); // null geom is not within anything in this context (predicate returns false)
       });
 
       test('Series with null geometry in other series for within', () {
-        final seriesA = GeoSeries_fromWKT([testWKTs['point_inside_poly']!, testWKTs['point1']!]);
+        final seriesA = GeoSeries_fromWKT(
+            [testWKTs['point_inside_poly']!, testWKTs['point1']!]);
         final seriesB = GeoSeries_fromWKT([testWKTs['poly1']!, null]);
         final result = seriesA.within(seriesB);
         expect(result.toList(), [true, false]); // point1 cannot be within null

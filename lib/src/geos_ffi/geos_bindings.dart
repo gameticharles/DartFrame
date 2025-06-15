@@ -7,12 +7,19 @@ import 'package:ffi/ffi.dart';
 
 // Opaque types for handles and pointers
 final class GEOSContextHandle_opaque extends ffi.Opaque {}
+
 final class GEOSGeometry_opaque extends ffi.Opaque {}
+
 final class GEOSPreparedGeometry_opaque extends ffi.Opaque {}
+
 final class GEOSWKTReader_opaque extends ffi.Opaque {}
+
 final class GEOSWKTWriter_opaque extends ffi.Opaque {}
+
 final class GEOSWKBReader_opaque extends ffi.Opaque {}
+
 final class GEOSWKBWriter_opaque extends ffi.Opaque {}
+
 final class GEOSCoordSequence_opaque extends ffi.Opaque {}
 
 // Typedefs for pointers to opaque types
@@ -30,7 +37,8 @@ typedef GEOSCoordSequence = ffi.Pointer<GEOSCoordSequence_opaque>;
 typedef GEOSMessageHandler_r_native = ffi.Void Function(
     ffi.Pointer<Utf8> message, ffi.Pointer<ffi.Void> userData);
 // Dart signature for the callback pointer
-typedef GEOSMessageHandler_r = ffi.Pointer<ffi.NativeFunction<GEOSMessageHandler_r_native>>;
+typedef GEOSMessageHandler_r
+    = ffi.Pointer<ffi.NativeFunction<GEOSMessageHandler_r_native>>;
 
 // 2. Load GEOS Library
 // This will be platform-dependent and might need configuration.
@@ -39,13 +47,16 @@ typedef GEOSMessageHandler_r = ffi.Pointer<ffi.NativeFunction<GEOSMessageHandler
 // e.g. 'libgeos_c.so.1' on Linux, 'libgeos_c.dylib' on macOS, 'geos_c.dll' on Windows.
 
 ffi.DynamicLibrary _loadGEOSLibrary() {
-  if (ffi.Abi.current() == ffi.Abi.linuxX64 || ffi.Abi.current() == ffi.Abi.linuxArm64) {
+  if (ffi.Abi.current() == ffi.Abi.linuxX64 ||
+      ffi.Abi.current() == ffi.Abi.linuxArm64) {
     return ffi.DynamicLibrary.open('libgeos_c.so.1');
   }
-  if (ffi.Abi.current() == ffi.Abi.macosX64 || ffi.Abi.current() == ffi.Abi.macosArm64) {
+  if (ffi.Abi.current() == ffi.Abi.macosX64 ||
+      ffi.Abi.current() == ffi.Abi.macosArm64) {
     return ffi.DynamicLibrary.open('libgeos_c.dylib');
   }
-  if (ffi.Abi.current() == ffi.Abi.windowsX64 || ffi.Abi.current() == ffi.Abi.windowsIA32) {
+  if (ffi.Abi.current() == ffi.Abi.windowsX64 ||
+      ffi.Abi.current() == ffi.Abi.windowsIA32) {
     return ffi.DynamicLibrary.open('geos_c.dll');
   }
   throw UnsupportedError('Unsupported platform for GEOS FFI');
@@ -68,7 +79,7 @@ class GEOSFFIBindings {
   factory GEOSFFIBindings.process() {
     return GEOSFFIBindings(ffi.DynamicLibrary.process());
   }
-  
+
   factory GEOSFFIBindings.defaultLibrary() {
     return GEOSFFIBindings(geos);
   }
@@ -77,181 +88,337 @@ class GEOSFFIBindings {
   // Context Management
   late GEOSContextHandle_t Function() GEOS_init_r;
   late void Function(GEOSContextHandle_t handle) GEOS_finish_r;
-  late void Function(GEOSContextHandle_t extHandle, GEOSMessageHandler_r ef, ffi.Pointer<ffi.Void> userData) GEOSContext_setErrorMessageHandler_r;
+  late void Function(GEOSContextHandle_t extHandle, GEOSMessageHandler_r ef,
+      ffi.Pointer<ffi.Void> userData) GEOSContext_setErrorMessageHandler_r;
 
   // WKT Reading/Writing
-  late GEOSWKTReader Function(GEOSContextHandle_t handle) GEOSWKTReader_create_r;
-  late GEOSGeometry Function(GEOSContextHandle_t handle, GEOSWKTReader reader, ffi.Pointer<Utf8> wkt) GEOSWKTReader_read_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKTReader reader) GEOSWKTReader_destroy_r;
-  late GEOSWKTWriter Function(GEOSContextHandle_t handle) GEOSWKTWriter_create_r;
-  late ffi.Pointer<Utf8> Function(GEOSContextHandle_t handle, GEOSWKTWriter writer, GEOSGeometry g) GEOSWKTWriter_write_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer) GEOSWKTWriter_destroy_r;
-  late void Function(GEOSContextHandle_t handle, ffi.Pointer<ffi.Void> buffer) GEOSFree_r;
+  late GEOSWKTReader Function(GEOSContextHandle_t handle)
+      GEOSWKTReader_create_r;
+  late GEOSGeometry Function(GEOSContextHandle_t handle, GEOSWKTReader reader,
+      ffi.Pointer<Utf8> wkt) GEOSWKTReader_read_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKTReader reader)
+      GEOSWKTReader_destroy_r;
+  late GEOSWKTWriter Function(GEOSContextHandle_t handle)
+      GEOSWKTWriter_create_r;
+  late ffi.Pointer<Utf8> Function(
+          GEOSContextHandle_t handle, GEOSWKTWriter writer, GEOSGeometry g)
+      GEOSWKTWriter_write_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer)
+      GEOSWKTWriter_destroy_r;
+  late void Function(GEOSContextHandle_t handle, ffi.Pointer<ffi.Void> buffer)
+      GEOSFree_r;
 
   // WKB Reading/Writing
-  late GEOSWKBReader Function(GEOSContextHandle_t handle) GEOSWKBReader_create_r;
-  late GEOSGeometry Function(GEOSContextHandle_t handle, GEOSWKBReader reader, ffi.Pointer<ffi.Uint8> wkb, int size) GEOSWKBReader_read_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKBReader reader) GEOSWKBReader_destroy_r;
-  late GEOSWKBWriter Function(GEOSContextHandle_t handle) GEOSWKBWriter_create_r;
-  late ffi.Pointer<ffi.Uint8> Function(GEOSContextHandle_t handle, GEOSWKBWriter writer, GEOSGeometry g, ffi.Pointer<ffi.IntPtr> size) GEOSWKBWriter_write_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKBWriter writer) GEOSWKBWriter_destroy_r;
-  
+  late GEOSWKBReader Function(GEOSContextHandle_t handle)
+      GEOSWKBReader_create_r;
+  late GEOSGeometry Function(GEOSContextHandle_t handle, GEOSWKBReader reader,
+      ffi.Pointer<ffi.Uint8> wkb, int size) GEOSWKBReader_read_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKBReader reader)
+      GEOSWKBReader_destroy_r;
+  late GEOSWKBWriter Function(GEOSContextHandle_t handle)
+      GEOSWKBWriter_create_r;
+  late ffi.Pointer<ffi.Uint8> Function(
+      GEOSContextHandle_t handle,
+      GEOSWKBWriter writer,
+      GEOSGeometry g,
+      ffi.Pointer<ffi.IntPtr> size) GEOSWKBWriter_write_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKBWriter writer)
+      GEOSWKBWriter_destroy_r;
+
   // Geometry Destruction
-  late void Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSGeom_destroy_r;
+  late void Function(GEOSContextHandle_t handle, GEOSGeometry g)
+      GEOSGeom_destroy_r;
 
   // Binary Predicates
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSContains_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSIntersects_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSWithin_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSDisjoint_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSEquals_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSTouches_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSCrosses_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSOverlaps_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSCovers_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSCoveredBy_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2, ffi.Pointer<Utf8> imPattern) GEOSRelatePattern_r;
-  late ffi.Pointer<Utf8> Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2) GEOSRelate_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2, double dist) GEOSDistanceWithin_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2, double tolerance) GEOSEqualsExact_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSContains_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSIntersects_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSWithin_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSDisjoint_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSEquals_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSTouches_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSCrosses_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSOverlaps_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSCovers_r;
+  late int Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSCoveredBy_r;
+  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1,
+      GEOSGeometry g2, ffi.Pointer<Utf8> imPattern) GEOSRelatePattern_r;
+  late ffi.Pointer<Utf8> Function(
+          GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2)
+      GEOSRelate_r;
+  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1,
+      GEOSGeometry g2, double dist) GEOSDistanceWithin_r;
+  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1,
+      GEOSGeometry g2, double tolerance) GEOSEqualsExact_r;
 
   // Other Utility Functions
   late int Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSisEmpty_r;
   late int Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSisSimple_r;
   late int Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSisValid_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSGeomTypeId_r;
-  late GEOSPreparedGeometry Function(GEOSContextHandle_t handle, GEOSGeometry g) GEOSPrepare_r;
-  late void Function(GEOSContextHandle_t handle, GEOSPreparedGeometry pg) GEOSPreparedGeom_destroy_r;
-  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1, GEOSGeometry g2, ffi.Pointer<ffi.Double> dist) GEOSDistance_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer, int trim) GEOSWKTWriter_setTrim_r;
-  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer, int dim) GEOSWKTWriter_setOutputDimension_r;
-
-
+  late int Function(GEOSContextHandle_t handle, GEOSGeometry g)
+      GEOSGeomTypeId_r;
+  late GEOSPreparedGeometry Function(GEOSContextHandle_t handle, GEOSGeometry g)
+      GEOSPrepare_r;
+  late void Function(GEOSContextHandle_t handle, GEOSPreparedGeometry pg)
+      GEOSPreparedGeom_destroy_r;
+  late int Function(GEOSContextHandle_t handle, GEOSGeometry g1,
+      GEOSGeometry g2, ffi.Pointer<ffi.Double> dist) GEOSDistance_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer, int trim)
+      GEOSWKTWriter_setTrim_r;
+  late void Function(GEOSContextHandle_t handle, GEOSWKTWriter writer, int dim)
+      GEOSWKTWriter_setOutputDimension_r;
 
   void _initialize() {
     // Context Management
     GEOS_init_r = _geos
-        .lookup<ffi.NativeFunction<GEOSContextHandle_t Function()>>('GEOS_init_r')
+        .lookup<ffi.NativeFunction<GEOSContextHandle_t Function()>>(
+            'GEOS_init_r')
         .asFunction();
     GEOS_finish_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t)>>('GEOS_finish_r')
+        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t)>>(
+            'GEOS_finish_r')
         .asFunction();
     GEOSContext_setErrorMessageHandler_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSMessageHandler_r, ffi.Pointer<ffi.Void>)>>('GEOSContext_setErrorMessageHandler_r')
+        .lookup<
+                ffi.NativeFunction<
+                    ffi.Void Function(GEOSContextHandle_t, GEOSMessageHandler_r,
+                        ffi.Pointer<ffi.Void>)>>(
+            'GEOSContext_setErrorMessageHandler_r')
         .asFunction();
 
     // WKT Reading/Writing
     GEOSWKTReader_create_r = _geos
-        .lookup<ffi.NativeFunction<GEOSWKTReader Function(GEOSContextHandle_t)>>('GEOSWKTReader_create_r')
+        .lookup<
+                ffi
+                .NativeFunction<GEOSWKTReader Function(GEOSContextHandle_t)>>(
+            'GEOSWKTReader_create_r')
         .asFunction();
     GEOSWKTReader_read_r = _geos
-        .lookup<ffi.NativeFunction<GEOSGeometry Function(GEOSContextHandle_t, GEOSWKTReader, ffi.Pointer<Utf8>)>>('GEOSWKTReader_read_r')
+        .lookup<
+            ffi.NativeFunction<
+                GEOSGeometry Function(GEOSContextHandle_t, GEOSWKTReader,
+                    ffi.Pointer<Utf8>)>>('GEOSWKTReader_read_r')
         .asFunction();
     GEOSWKTReader_destroy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSWKTReader)>>('GEOSWKTReader_destroy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t,
+                    GEOSWKTReader)>>('GEOSWKTReader_destroy_r')
         .asFunction();
     GEOSWKTWriter_create_r = _geos
-        .lookup<ffi.NativeFunction<GEOSWKTWriter Function(GEOSContextHandle_t)>>('GEOSWKTWriter_create_r')
+        .lookup<
+                ffi
+                .NativeFunction<GEOSWKTWriter Function(GEOSContextHandle_t)>>(
+            'GEOSWKTWriter_create_r')
         .asFunction();
     GEOSWKTWriter_write_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Pointer<Utf8> Function(GEOSContextHandle_t, GEOSWKTWriter, GEOSGeometry)>>('GEOSWKTWriter_write_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Pointer<Utf8> Function(GEOSContextHandle_t, GEOSWKTWriter,
+                    GEOSGeometry)>>('GEOSWKTWriter_write_r')
         .asFunction();
     GEOSWKTWriter_destroy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSWKTWriter)>>('GEOSWKTWriter_destroy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t,
+                    GEOSWKTWriter)>>('GEOSWKTWriter_destroy_r')
         .asFunction();
     // Add these missing WKT Writer configuration method lookups
     GEOSWKTWriter_setTrim_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSWKTWriter, ffi.Int)>>('GEOSWKTWriter_setTrim_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t, GEOSWKTWriter,
+                    ffi.Int)>>('GEOSWKTWriter_setTrim_r')
         .asFunction();
     GEOSWKTWriter_setOutputDimension_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSWKTWriter, ffi.Int)>>('GEOSWKTWriter_setOutputDimension_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t, GEOSWKTWriter,
+                    ffi.Int)>>('GEOSWKTWriter_setOutputDimension_r')
         .asFunction();
-        
+
     GEOSFree_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, ffi.Pointer<ffi.Void>)>>('GEOSFree_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(
+                    GEOSContextHandle_t, ffi.Pointer<ffi.Void>)>>('GEOSFree_r')
         .asFunction();
 
     // WKB Reading/Writing
     GEOSWKBReader_create_r = _geos
-        .lookup<ffi.NativeFunction<GEOSWKBReader Function(GEOSContextHandle_t)>>('GEOSWKBReader_create_r')
+        .lookup<
+                ffi
+                .NativeFunction<GEOSWKBReader Function(GEOSContextHandle_t)>>(
+            'GEOSWKBReader_create_r')
         .asFunction();
     GEOSWKBReader_read_r = _geos
-        .lookup<ffi.NativeFunction<GEOSGeometry Function(GEOSContextHandle_t, GEOSWKBReader, ffi.Pointer<ffi.Uint8>, ffi.Size)>>('GEOSWKBReader_read_r')
+        .lookup<
+            ffi.NativeFunction<
+                GEOSGeometry Function(GEOSContextHandle_t, GEOSWKBReader,
+                    ffi.Pointer<ffi.Uint8>, ffi.Size)>>('GEOSWKBReader_read_r')
         .asFunction();
     GEOSWKBReader_destroy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSWKBReader)>>('GEOSWKBReader_destroy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t,
+                    GEOSWKBReader)>>('GEOSWKBReader_destroy_r')
         .asFunction();
 
     // Geometry Destruction
     GEOSGeom_destroy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSGeom_destroy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSGeom_destroy_r')
         .asFunction();
 
     // Binary Predicates
     GEOSContains_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSContains_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSContains_r')
         .asFunction();
     GEOSIntersects_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSIntersects_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSIntersects_r')
         .asFunction();
     GEOSWithin_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSWithin_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSWithin_r')
         .asFunction();
     GEOSDisjoint_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSDisjoint_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSDisjoint_r')
         .asFunction();
     GEOSEquals_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSEquals_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSEquals_r')
         .asFunction();
     GEOSTouches_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSTouches_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSTouches_r')
         .asFunction();
     GEOSCrosses_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSCrosses_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSCrosses_r')
         .asFunction();
     GEOSOverlaps_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSOverlaps_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSOverlaps_r')
         .asFunction();
     GEOSCovers_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSCovers_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSCovers_r')
         .asFunction();
     GEOSCoveredBy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSCoveredBy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSCoveredBy_r')
         .asFunction();
     GEOSRelatePattern_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry, ffi.Pointer<Utf8>)>>('GEOSRelatePattern_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry, ffi.Pointer<Utf8>)>>('GEOSRelatePattern_r')
         .asFunction();
     GEOSRelate_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Pointer<Utf8> Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry)>>('GEOSRelate_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Pointer<Utf8> Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry)>>('GEOSRelate_r')
         .asFunction();
     GEOSDistanceWithin_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry, ffi.Double)>>('GEOSDistanceWithin_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry, ffi.Double)>>('GEOSDistanceWithin_r')
         .asFunction();
     GEOSEqualsExact_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry, ffi.Double)>>('GEOSEqualsExact_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry, ffi.Double)>>('GEOSEqualsExact_r')
         .asFunction();
-    
+
     // Other Utility Functions
     GEOSisEmpty_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSisEmpty_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSisEmpty_r')
         .asFunction();
     GEOSisSimple_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSisSimple_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSisSimple_r')
         .asFunction();
     GEOSisValid_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Char Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSisValid_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Char Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSisValid_r')
         .asFunction();
     GEOSGeomTypeId_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Int Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSGeomTypeId_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Int Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSGeomTypeId_r')
         .asFunction();
     GEOSPrepare_r = _geos
-        .lookup<ffi.NativeFunction<GEOSPreparedGeometry Function(GEOSContextHandle_t, GEOSGeometry)>>('GEOSPrepare_r')
+        .lookup<
+            ffi.NativeFunction<
+                GEOSPreparedGeometry Function(
+                    GEOSContextHandle_t, GEOSGeometry)>>('GEOSPrepare_r')
         .asFunction();
     GEOSPreparedGeom_destroy_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Void Function(GEOSContextHandle_t, GEOSPreparedGeometry)>>('GEOSPreparedGeom_destroy_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Void Function(GEOSContextHandle_t,
+                    GEOSPreparedGeometry)>>('GEOSPreparedGeom_destroy_r')
         .asFunction();
     GEOSDistance_r = _geos
-        .lookup<ffi.NativeFunction<ffi.Int Function(GEOSContextHandle_t, GEOSGeometry, GEOSGeometry, ffi.Pointer<ffi.Double>)>>('GEOSDistance_r')
+        .lookup<
+            ffi.NativeFunction<
+                ffi.Int Function(GEOSContextHandle_t, GEOSGeometry,
+                    GEOSGeometry, ffi.Pointer<ffi.Double>)>>('GEOSDistance_r')
         .asFunction();
   }
 }

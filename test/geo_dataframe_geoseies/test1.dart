@@ -241,10 +241,10 @@ void main() {
           'emptygc',
           'gc',
           'gc_nonsimple',
-          'l_nonsimple_dupcons', 
+          'l_nonsimple_dupcons',
           'l_almostring_fewpts',
           'poly_inv_hole_out',
-          'poly_inv_hole_int' 
+          'poly_inv_hole_int'
         ]);
     final numTestGeoms = 24;
 
@@ -260,9 +260,9 @@ void main() {
         false, false, // ml_nonsimple, mpoly_nonsimple
         false, false, false, // emptygc, gc, gc_nonsimple
         false, // l_nonsimple_dupcons
-        true,  // l_almostring_fewpts
+        true, // l_almostring_fewpts
         false, // poly_inv_hole_out (polygons aren't 'closed' in this sense)
-        false  // poly_inv_hole_int (polygons aren't 'closed' in this sense)
+        false // poly_inv_hole_int (polygons aren't 'closed' in this sense)
       ]);
     });
 
@@ -281,7 +281,7 @@ void main() {
         false, // l_nonsimple_dupcons
         false, // l_almostring_fewpts (true for closed, but not enough points for GEOS isRing)
         false, // poly_inv_hole_out
-        false  // poly_inv_hole_int
+        false // poly_inv_hole_int
       ]);
     });
 
@@ -299,7 +299,7 @@ void main() {
         false, // l_nonsimple_dupcons
         false, // l_almostring_fewpts (true for closed, but not enough points for GEOS isRing)
         false, // poly_inv_hole_out
-        false  // poly_inv_hole_int
+        false // poly_inv_hole_int
       ]);
     });
 
@@ -317,10 +317,10 @@ void main() {
         true, // ml_nonsimple (components valid), mpoly_nonsimple (components valid - simplified)
         false, true,
         true, // emptygc, gc (valid if components valid), gc_nonsimple (valid if components valid)
-        true,  // l_nonsimple_dupcons
-        true,  // l_almostring_fewpts
-        true, 
-        true  
+        true, // l_nonsimple_dupcons
+        true, // l_almostring_fewpts
+        true,
+        true
       ]);
     });
 
@@ -338,10 +338,10 @@ void main() {
         true, // ml_nonsimple (components simple - simplified), mpoly_nonsimple (components simple - simplified)
         false, true,
         false, // emptygc, gc (true if components simple), gc_nonsimple (false as lineSelfIntersect is not simple)
-        false,  // l_nonsimple_dupcons
-        true,  // l_almostring_fewpts
+        false, // l_nonsimple_dupcons
+        true, // l_almostring_fewpts
         true, // poly_inv_hole_out (invalid implies not simple)
-        true  // poly_inv_hole_int (invalid implies not simple)
+        true // poly_inv_hole_int (invalid implies not simple)
       ]);
     });
 
@@ -358,7 +358,7 @@ void main() {
       expect(s.data[17], "Empty geometry"); // emptygc
       expect(s.data[19], "Valid Geometry"); // gc_nonsimple
       expect(s.data[20], "Valid Geometry"); // l_nonsimple_dupcons
-     });
+    });
 
     test('hasZ', () {
       final s = series.hasZ;
@@ -374,7 +374,7 @@ void main() {
         false, // l_nonsimple_dupcons
         false, // l_almostring_fewpts
         false, // poly_inv_hole_out
-        false  // poly_inv_hole_int
+        false // poly_inv_hole_int
       ]);
     });
 
@@ -402,7 +402,6 @@ void main() {
       expect(lineCW, false);
       expect(s.data[2], false, reason: "lineClosed should be CW");
       expect(s.data[3], true, reason: "polygon should be CCW");
-      
     });
 
     // Area, bounds, etc. from previous test file, ensure they still pass with new structure
@@ -421,7 +420,7 @@ void main() {
         0.0, // l_nonsimple_dupcons
         0.0, // l_almostring_fewpts
         8.0, // poly_inv_hole_out (invalid polygon area is 0)
-        5.0  // poly_inv_hole_int (invalid polygon area is 0)
+        5.0 // poly_inv_hole_int (invalid polygon area is 0)
       ]);
     });
 
@@ -450,11 +449,26 @@ void main() {
         [0.0, 0.0, 3.0, 3.0], // mpoly_nonsimple
         [0.0, 0.0, 0.0, 0.0], // emptygc
         [5.0, 5.0, 7.0, 7.0], // gc
-        [0.0, 0.0, 5.0, 5.0], // gc_nonsimple (Point(5,5) and LineString([[0,0],[2,2],[0,2],[2,0]]))
+        [
+          0.0,
+          0.0,
+          5.0,
+          5.0
+        ], // gc_nonsimple (Point(5,5) and LineString([[0,0],[2,2],[0,2],[2,0]]))
         [0.0, 0.0, 2.0, 2.0], // l_nonsimple_dupcons
         [0.0, 0.0, 1.0, 1.0], // l_almostring_fewpts
-        [0.0, 0.0, 5.0, 5.0], // poly_inv_hole_out (bounds includes the invalid hole)
-        [0.0, 0.0, 4.0, 4.0]  // poly_inv_hole_int (bounds includes the invalid hole)
+        [
+          0.0,
+          0.0,
+          5.0,
+          5.0
+        ], // poly_inv_hole_out (bounds includes the invalid hole)
+        [
+          0.0,
+          0.0,
+          4.0,
+          4.0
+        ] // poly_inv_hole_int (bounds includes the invalid hole)
       ];
       for (int i = 0; i < series.length; i++) {
         expect(dfBounds.iloc[i].data, expectedBoundsData[i],
