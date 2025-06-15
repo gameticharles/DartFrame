@@ -1,7 +1,6 @@
 import 'package:dartframe/dartframe.dart';
 
 void main() async {
-  
   final df = DataFrame([
     [1, 2, 3.0],
     [4, 5, 6],
@@ -36,8 +35,9 @@ void main() async {
   dataframe1();
   // dataframe2();
 }
-void listEqualTest (){
-    print('=== Enhanced List Equality Function Tests ===\n');
+
+void listEqualTest() {
+  print('=== Enhanced List Equality Function Tests ===\n');
 
   // Basic usage examples
   print('=== Basic Usage Examples ===');
@@ -279,7 +279,7 @@ void dataframe1() async {
   // Data Cleaning
   df.replaceInPlace('<NA>', null); // Replace the missing values with null
   df = df.replace('<NA>', null);
-  df = df.fillna('Unknown');       // Fill missing values with 'Unknown'
+  df = df.fillna('Unknown'); // Fill missing values with 'Unknown'
 
   // Data Analysis
   var dfGrouped = df.groupBy('area');
@@ -298,7 +298,7 @@ void dataframe1() async {
   df['delivery_time_over_30'] = deliveryMinSeries > 30;
   print('\nDelivery Mins > 30:\n${df['delivery_time_over_30']}\n');
 
-  // Get only data with match the criteria 
+  // Get only data with match the criteria
   print(df[df['delivery_time_over_30']]);
 
   // Get specific column

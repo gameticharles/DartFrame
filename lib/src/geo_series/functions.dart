@@ -1651,5 +1651,4 @@ extension GeoSeriesFunctions on GeoSeries {
 
     return true;
   }
-
 }

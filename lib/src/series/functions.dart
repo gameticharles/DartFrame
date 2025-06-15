@@ -1099,12 +1099,12 @@ Series dateRange({
   } else if (periods == null) {
     // Calculate periods from start and end
     // For inclusive range, we need daysBetween + 1
-      periods = end.difference(start).inDays + 1;
+    periods = end.difference(start).inDays + 1;
 
-      // Handle case where start is after end
-      if (periods <= 0) {
-        return Series([], name: name);
-      }
+    // Handle case where start is after end
+    if (periods <= 0) {
+      return Series([], name: name);
+    }
   }
 
   // Validate parameters after calculation

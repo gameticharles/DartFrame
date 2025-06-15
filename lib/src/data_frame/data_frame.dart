@@ -627,11 +627,10 @@ class DataFrame {
   /// print(colAByIndex.data); // [1, 2]
   /// ```
   Series column(dynamic key) {
-    // The operator[] already handles String and int keys, 
+    // The operator[] already handles String and int keys,
     // and throws appropriate errors if the key is invalid or not found.
     return this[key];
   }
-
 
   /// Returns a Map representation of the row that matches the given criteria.
   ///
