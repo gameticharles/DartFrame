@@ -1,3 +1,7 @@
+# 0.4.5
+
+* **[Fix]** fix formatting and indentation in multiple files
+
 # 0.4.4
 
 * **[Fix]** Refactor(geo_series): rename snake_case methods to camelCase for consistency
