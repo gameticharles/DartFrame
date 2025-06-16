@@ -1,3 +1,8 @@
+# 0.5.1
+
+* **[IMPROVEMENT]** Updated README and improved documentation
+* **[FEATURE]** Add quantile calculation with tests for edge cases
+
 # 0.5.0
 
 * **[IMPROVEMENT]** Reorganize codebase into discrete libraries and update dependencies
