@@ -79,7 +79,7 @@ GeoSeries GeoSeries_fromWKT(List<dynamic> wkts,
     if (wkt == 'POINT EMPTY') return GeoJSONPoint([]);
     if (wkt == 'LINESTRING EMPTY') return GeoJSONLineString([]);
     if (wkt == 'POLYGON EMPTY') return GeoJSONPolygon([]);
-    return GeoJSONGeometry.fromJSON(GeoSeries.fromWKT([wkt])[0]);
+    return GeoJSONGeometry.fromMap(GeoSeries.fromWKT([wkt]).toJson()[0]);
   }).toList();
 
   return GeoSeries(geoms, name: name, index: index);

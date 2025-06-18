@@ -393,6 +393,41 @@ class GeoSeries extends Series {
   Series<String> asWkt({String fallback = 'EMPTY'}) =>
       toWkt(fallback: fallback);
 
+  /// Returns a `Series` of JSON representations of the geometries.
+  ///
+  /// Each geometry in the `GeoSeries` is converted to its JSON (Map) format
+  /// using its `toMap()` method. `null` geometries will result in `null` entries
+  /// in the output Series.
+  ///
+  /// Returns:
+  ///   A `Series<Map<String, dynamic>?>` where each element is the JSON
+  ///   representation of the corresponding geometry, or `null`.
+  ///
+  /// Example:
+  /// ```dart
+  /// import 'package:dartframe/dartframe.dart';
+  /// import 'package:geojson_vi/geojson_vi.dart';
+  ///
+  /// final series = GeoSeries([
+  ///   GeoJSONPoint([30, 10]),
+  ///   GeoJSONLineString([[10,10],[20,20]]),
+  ///   null
+  /// ], name: 'my_geoms');
+  ///
+  /// final jsonSeries = series.toJson();
+  /// print(jsonSeries.data[0]); // Output: {type: Point, coordinates: [30.0, 10.0]}
+  /// print(jsonSeries.data[1]); // Output: {type: LineString, coordinates: [[10.0, 10.0], [20.0, 20.0]]}
+  /// print(jsonSeries.data[2]); // Output: null
+  /// // Name: my_geoms_json, Length: 3, dtype: Map<String, dynamic>?
+  /// ```
+  Series toJson() {
+    final List jsonList = data.map((geom) {
+      return geom?.toMap();
+    }).toList();
+    return Series(jsonList, name: '${name}_json', index: index);
+  }
+
+
   /// Attempts to make invalid geometries valid.
   ///
   /// **Note: This is a highly simplified version of "make valid".**

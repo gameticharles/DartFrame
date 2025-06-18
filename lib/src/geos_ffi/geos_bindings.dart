@@ -1,6 +1,9 @@
 // ignore_for_file: unused_import, camel_case_types, non_constant_identifier_names
 
 import 'dart:ffi' as ffi;
+import 'dart:io' show File, Platform; // Added
+import 'dart:isolate' show Isolate; // Added
+import 'package:path/path.dart' as path; // Added
 import 'package:ffi/ffi.dart';
 
 // 1. Define Native Type Aliases
@@ -47,19 +50,91 @@ typedef GEOSMessageHandler_r
 // e.g. 'libgeos_c.so.1' on Linux, 'libgeos_c.dylib' on macOS, 'geos_c.dll' on Windows.
 
 ffi.DynamicLibrary _loadGEOSLibrary() {
-  if (ffi.Abi.current() == ffi.Abi.linuxX64 ||
-      ffi.Abi.current() == ffi.Abi.linuxArm64) {
-    return ffi.DynamicLibrary.open('libgeos_c.so.1');
+  String libName;
+  //String localLibPathSegment; // Not directly used in the final path construction
+
+  if (Platform.isLinux) {
+    libName = 'libgeos_c.so.1';
+    //localLibPathSegment = 'libgeos_c.so.1';
+  } else if (Platform.isMacOS) {
+    libName = 'libgeos_c.dylib';
+    //localLibPathSegment = 'libgeos_c.dylib';
+  } else if (Platform.isWindows) {
+    libName = 'geos_c.dll';
+    //localLibPathSegment = path.join('bin', 'geos_c.dll'); // GEOS CMake installs DLLs into bin by default
+  } else {
+    throw UnsupportedError('Unsupported platform for GEOS FFI');
   }
-  if (ffi.Abi.current() == ffi.Abi.macosX64 ||
-      ffi.Abi.current() == ffi.Abi.macosArm64) {
-    return ffi.DynamicLibrary.open('libgeos_c.dylib');
+
+  // Try loading from a path relative to the package structure first
+  // Assuming the script 'geos_bindings.dart' is at 'lib/src/geos_ffi/geos_bindings.dart'
+  // And the library is installed at 'lib/src/geos_ffi/geos_install/lib/' or 'lib/src/geos_ffi/geos_install/bin/' for Windows
+  
+  // To construct the path correctly, we need to find the root of the package.
+  // Dart's Isolate.resolvePackageUri is helpful here but can be tricky with FFI loading.
+  // A simpler approach for this specific structure, assuming 'lib/src/geos_ffi' 
+  // is the directory of 'geos_bindings.dart':
+  
+  // Get the directory of the current script. This is not straightforward in Dart executables.
+  // For a library, 'lib/src/geos_ffi/geos_bindings.dart', we go up a few levels.
+  // A common pattern is to determine path based on Platform.script, but that can be complex.
+
+  // Let's try a path relative to where the compiled library is expected from build_geos.sh
+  // build_geos.sh installs into 'geos_install' directory inside 'lib/src/geos_ffi/'
+  // So, relative to 'lib/src/geos_ffi/geos_bindings.dart', it's 'geos_install/lib/<libName>' or 'geos_install/bin/<libName>'
+
+  // This path needs to be relative to the CWD or an absolute path.
+  // Let's try to construct a path assuming the CWD is the project root.
+  // Note: Directory.current.path might not be reliable if the script is run from a different CWD.
+  // A more robust solution might involve Isolate.resolvePackageUri if possible,
+  // or finding the script's own path if this code is part of a larger application.
+  // For now, using a path relative to a potential project root or a known structure.
+  
+  var assemblyDir = path.dirname(Platform.script.toFilePath());
+   var searchPaths = [
+    // Path when script is in 'lib/src/geos_ffi' and geos_install is sibling
+    path.normalize(path.join(assemblyDir, 'geos_install', Platform.isWindows ? 'bin' : 'lib', libName)),
+    // Path assuming CWD is project root, and script is in 'lib/src/geos_ffi'
+    path.join('lib', 'src', 'geos_ffi', 'geos_install', Platform.isWindows ? 'bin' : 'lib', libName),
+    // Path for running tests, where CWD might be 'test/' or similar, look from project root
+    path.join(path.current, 'lib', 'src', 'geos_ffi', 'geos_install', Platform.isWindows ? 'bin' : 'lib', libName),
+  ];
+  
+  // If running from within the package (e.g. tests, examples)
+  // try to resolve the package root via Isolate.resolvePackageUri
+  // This is an async operation, but we need to load the library synchronously.
+  // So, this might not be directly usable here without broader changes.
+  // However, we can try to infer a relative path based on common project structures.
+
+  for (var potentialLocalPath in searchPaths) {
+    if (File(potentialLocalPath).existsSync()) {
+      try {
+        print('Attempting to load GEOS from: $potentialLocalPath');
+        return ffi.DynamicLibrary.open(potentialLocalPath);
+      } catch (e) {
+        print('Failed to load GEOS from local path: $potentialLocalPath. Error: $e. Falling back.');
+      }
+    } else {
+       print('Local GEOS library not found at $potentialLocalPath.');
+    }
   }
-  if (ffi.Abi.current() == ffi.Abi.windowsX64 ||
-      ffi.Abi.current() == ffi.Abi.windowsIA32) {
-    return ffi.DynamicLibrary.open('geos_c.dll');
+  
+  print('Falling back to system library: $libName');
+  // Fallback to loading from system paths
+  try {
+    return ffi.DynamicLibrary.open(libName);
+  } catch (e) {
+    // Attempt to load with a more generic name if the versioned one failed (e.g. libgeos_c.so instead of libgeos_c.so.1)
+    if (Platform.isLinux && libName == 'libgeos_c.so.1') {
+      try {
+        print('Trying to load libgeos_c.so (without version)');
+        return ffi.DynamicLibrary.open('libgeos_c.so');
+      } catch (e2) {
+         print('Failed to load libgeos_c.so as well. Error: $e2');
+      }
+    }
+    throw Exception('Failed to load GEOS library. Ensure GEOS is installed and accessible. Tried local paths and system name "$libName". Last error: $e');
   }
-  throw UnsupportedError('Unsupported platform for GEOS FFI');
 }
 
 final geos = _loadGEOSLibrary();
