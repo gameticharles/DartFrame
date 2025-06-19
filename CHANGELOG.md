@@ -1,3 +1,9 @@
+# 0.5.2
+
+* **[IMPROVEMENT]** Cleaned code
+* **[IMPROVEMENT]** Added documentation strings to functions and classes
+* **[FIX]** Moved all experiments to new branch
+
 # 0.5.1
 
 * **[IMPROVEMENT]** Updated README and improved documentation

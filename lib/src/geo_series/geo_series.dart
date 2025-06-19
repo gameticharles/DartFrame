@@ -1,14 +1,10 @@
 library;
 
-import 'dart:ffi';
 import 'dart:math';
 
 import '../../dartframe.dart';
-import '../geos_ffi/geos_bindings.dart';
-import '../geos_ffi/geos_utils.dart';
 
 part 'functions.dart';
-part 'geo_processes/functions.dart';
 part 'geo_processes/buffer.dart';
 
 /// A `GeoSeries` represents a Series of geometric objects.
@@ -427,7 +423,6 @@ class GeoSeries extends Series {
     return Series(jsonList, name: '${name}_json', index: index);
   }
 
-
   /// Attempts to make invalid geometries valid.
   ///
   /// **Note: This is a highly simplified version of "make valid".**
@@ -475,7 +470,7 @@ class GeoSeries extends Series {
       }
       // Use the existing isValid getter logic
       final currentGeoSeries = GeoSeries([geom], crs: crs, index: [0]);
-      if (currentGeoSeries.isValid.data[0]) {
+      if (currentGeoSeries.isValid.data[0]!) {
         // Create a copy by reconstructing the geometry with its coordinates
         if (geom is GeoJSONPoint) {
           newGeoms.add(GeoJSONPoint(List.from(geom.coordinates)));

@@ -9,7 +9,38 @@ class DataFrameILocAccessor {
 
   DataFrameILocAccessor(this._df);
 
-  // Support for df.iloc[rowIndex] syntax
+  /// Accesses rows of the DataFrame by integer position.
+  ///
+  /// Allows selection of a single row or multiple rows.
+  ///
+  /// Parameters:
+  /// - `rowSelector`: An `int` for a single row, or a `List<int>` for multiple rows.
+  ///
+  /// Returns:
+  /// - A `Series` if a single row is selected. The Series' name will be the row's original index label (or the integer position if no index exists), and its index will be the DataFrame's column labels.
+  /// - A `DataFrame` if multiple rows are selected. The new DataFrame will retain the original column labels and selected rows' index labels (or integer positions if no index exists).
+  ///
+  /// Examples:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   {'colA': 1, 'colB': 2},
+  ///   {'colA': 3, 'colB': 4},
+  /// ], columns: ['colA', 'colB'], index: ['row1', 'row2']);
+  ///
+  /// // Select a single row (returns a Series)
+  /// var row = df.iloc[0];
+  /// print(row);
+  /// // Output:
+  /// // Series(name: row1, index: [colA, colB], data: [1, 2])
+  ///
+  /// // Select multiple rows (returns a DataFrame)
+  /// var rows = df.iloc[[0, 1]];
+  /// print(rows);
+  /// // Output:
+  /// // DataFrame(columns: [colA, colB], index: [row1, row2], data:
+  /// // [[1, 2],
+  /// //  [3, 4]])
+  /// ```
   dynamic operator [](dynamic rowSelector) {
     if (rowSelector is int) {
       // Single row selection
@@ -55,7 +86,74 @@ class DataFrameILocAccessor {
     }
   }
 
-  // Support for df.iloc(rowIndex, colIndex) syntax
+  /// Accesses a selection of rows and columns from the DataFrame by integer position.
+  ///
+  /// This method allows for more complex selections, including:
+  /// - A single row (returns a `Series`).
+  /// - Multiple rows (returns a `DataFrame`).
+  /// - A single value at a specific row and column intersection.
+  /// - A `Series` representing a single row with selected columns.
+  /// - A `Series` representing a single column with selected rows.
+  /// - A `DataFrame` representing a sub-selection of rows and columns.
+  ///
+  /// Parameters:
+  /// - `rowSelector`: An `int` for a single row, or a `List<int>` for multiple rows.
+  /// - `colSelector` (optional): An `int` for a single column, a `List<int>` for multiple columns. If omitted, all columns are selected for the given `rowSelector`.
+  ///
+  /// Returns:
+  /// - A single value if `rowSelector` and `colSelector` are both single `int`s.
+  /// - A `Series` if `rowSelector` is an `int` and `colSelector` is a `List<int>` (selects multiple columns for a single row).
+  /// - A `Series` if `rowSelector` is a `List<int>` and `colSelector` is an `int` (selects a single column for multiple rows).
+  /// - A `DataFrame` if `rowSelector` and `colSelector` are both `List<int>` (selects multiple rows and columns).
+  /// - A `Series` if `rowSelector` is an `int` and `colSelector` is `null` (equivalent to `df.iloc[rowIndex]`).
+  /// - A `DataFrame` if `rowSelector` is a `List<int>` and `colSelector` is `null` (equivalent to `df.iloc[[rowIndices]]`).
+  ///
+  /// Examples:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   [1, 2, 3],
+  ///   [4, 5, 6],
+  ///   [7, 8, 9],
+  /// ], columns: ['A', 'B', 'C'], index: ['X', 'Y', 'Z']);
+  ///
+  /// // Select a single value
+  /// var value = df.iloc(0, 1); // Returns 2
+  /// print(value);
+  ///
+  /// // Select a single row (returns a Series)
+  /// var row = df.iloc(0);
+  /// print(row);
+  /// // Output:
+  /// // Series(name: X, index: [A, B, C], data: [1, 2, 3])
+  ///
+  /// // Select multiple rows for all columns (returns a DataFrame)
+  /// var rowsDf = df.iloc([0, 2]);
+  /// print(rowsDf);
+  /// // Output:
+  /// // DataFrame(columns: [A, B, C], index: [X, Z], data:
+  /// // [[1, 2, 3],
+  /// //  [7, 8, 9]])
+  ///
+  /// // Select a single row with specific columns (returns a Series)
+  /// var rowWithCols = df.iloc(0, [0, 2]);
+  /// print(rowWithCols);
+  /// // Output:
+  /// // Series(name: X, index: [A, C], data: [1, 3])
+  ///
+  /// // Select multiple rows for a single column (returns a Series)
+  /// var colForRows = df.iloc([0, 2], 1);
+  /// print(colForRows);
+  /// // Output:
+  /// // Series(name: B, index: [X, Z], data: [2, 8])
+  ///
+  /// // Select multiple rows and multiple columns (returns a DataFrame)
+  /// var subDf = df.iloc([0, 2], [0, 2]);
+  /// print(subDf);
+  /// // Output:
+  /// // DataFrame(columns: [A, C], index: [X, Z], data:
+  /// // [[1, 3],
+  /// //  [7, 9]])
+  /// ```
   dynamic call(dynamic rowSelector, [dynamic colSelector]) {
     if (colSelector == null) {
       // Just use the [] operator if no column selector
@@ -167,7 +265,41 @@ class DataFrameLocAccessor {
 
   DataFrameLocAccessor(this._df);
 
-  // Support for df.loc[rowLabel] syntax
+  /// Accesses rows of the DataFrame by label.
+  ///
+  /// Allows selection of a single row or multiple rows using their index labels.
+  ///
+  /// Parameters:
+  /// - `rowSelector`: A single row label, or a `List` of row labels.
+  ///
+  /// Returns:
+  /// - A `Series` if a single row label is provided. The Series' name will be the row label, and its index will be the DataFrame's column labels.
+  /// - A `DataFrame` if a `List` of row labels is provided. The new DataFrame will retain the original column labels and the selected rows' index labels.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any of the provided row labels are not found in the DataFrame's index.
+  ///
+  /// Examples:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   {'colA': 1, 'colB': 2},
+  ///   {'colA': 3, 'colB': 4},
+  /// ], columns: ['colA', 'colB'], index: ['row1', 'row2']);
+  ///
+  /// // Select a single row by label (returns a Series)
+  /// var row = df.loc['row1'];
+  /// print(row);
+  /// // Output:
+  /// // Series(name: row1, index: [colA, colB], data: [1, 2])
+  ///
+  /// // Select multiple rows by label (returns a DataFrame)
+  /// var rows = df.loc[['row1', 'row2']];
+  /// print(rows);
+  /// // Output:
+  /// // DataFrame(columns: [colA, colB], index: [row1, row2], data:
+  /// // [[1, 2],
+  /// //  [3, 4]])
+  /// ```
   dynamic operator [](dynamic rowSelector) {
     if (rowSelector is List) {
       // Handle list of row labels
@@ -202,7 +334,77 @@ class DataFrameLocAccessor {
     }
   }
 
-  // Support for df.loc(rowLabel, colLabel) syntax
+  /// Accesses a selection of rows and columns from the DataFrame by label.
+  ///
+  /// This method allows for more complex selections based on row and column labels, including:
+  /// - A single row (returns a `Series`).
+  /// - Multiple rows (returns a `DataFrame`).
+  /// - A single value at a specific row and column label intersection.
+  /// - A `Series` representing a single row with selected column labels.
+  /// - A `Series` representing a single column with selected row labels.
+  /// - A `DataFrame` representing a sub-selection of rows and columns by their labels.
+  ///
+  /// Parameters:
+  /// - `rowSelector`: A single row label, or a `List` of row labels.
+  /// - `colSelector` (optional): A single column label, or a `List` of column labels. If omitted, all columns are selected for the given `rowSelector`.
+  ///
+  /// Returns:
+  /// - A single value if `rowSelector` and `colSelector` are both single labels.
+  /// - A `Series` if `rowSelector` is a single label and `colSelector` is a `List` of labels (selects multiple columns for a single row).
+  /// - A `Series` if `rowSelector` is a `List` of labels and `colSelector` is a single label (selects a single column for multiple rows).
+  /// - A `DataFrame` if `rowSelector` and `colSelector` are both `List`s of labels (selects multiple rows and columns).
+  /// - A `Series` if `rowSelector` is a single label and `colSelector` is `null` (equivalent to `df.loc[rowLabel]`).
+  /// - A `DataFrame` if `rowSelector` is a `List` of labels and `colSelector` is `null` (equivalent to `df.loc[[rowLabels]]`).
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any of the provided row or column labels are not found.
+  ///
+  /// Examples:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   [1, 2, 3],
+  ///   [4, 5, 6],
+  ///   [7, 8, 9],
+  /// ], columns: ['A', 'B', 'C'], index: ['X', 'Y', 'Z']);
+  ///
+  /// // Select a single value by labels
+  /// var value = df.loc('X', 'B'); // Returns 2
+  /// print(value);
+  ///
+  /// // Select a single row by label (returns a Series)
+  /// var row = df.loc('X');
+  /// print(row);
+  /// // Output:
+  /// // Series(name: X, index: [A, B, C], data: [1, 2, 3])
+  ///
+  /// // Select multiple rows for all columns by labels (returns a DataFrame)
+  /// var rowsDf = df.loc(['X', 'Z']);
+  /// print(rowsDf);
+  /// // Output:
+  /// // DataFrame(columns: [A, B, C], index: [X, Z], data:
+  /// // [[1, 2, 3],
+  /// //  [7, 8, 9]])
+  ///
+  /// // Select a single row with specific column labels (returns a Series)
+  /// var rowWithCols = df.loc('X', ['A', 'C']);
+  /// print(rowWithCols);
+  /// // Output:
+  /// // Series(name: X, index: [A, C], data: [1, 3])
+  ///
+  /// // Select multiple rows for a single column label (returns a Series)
+  /// var colForRows = df.loc(['X', 'Z'], 'B');
+  /// print(colForRows);
+  /// // Output:
+  /// // Series(name: B, index: [X, Z], data: [2, 8])
+  ///
+  /// // Select multiple rows and multiple column labels (returns a DataFrame)
+  /// var subDf = df.loc(['X', 'Z'], ['A', 'C']);
+  /// print(subDf);
+  /// // Output:
+  /// // DataFrame(columns: [A, C], index: [X, Z], data:
+  /// // [[1, 3],
+  /// //  [7, 9]])
+  /// ```
   dynamic call(dynamic rowSelector, [dynamic colSelector]) {
     if (colSelector == null) {
       // Just use the [] operator if no column selector
@@ -286,7 +488,22 @@ class DataFrameLocAccessor {
     }
   }
 
-  // Helper to convert single label or list of labels to integer indices
+  /// Converts a single row label or a list of row labels into their corresponding integer indices.
+  ///
+  /// This helper method is used internally by `loc` to translate human-readable labels
+  /// into the integer-based indices required for accessing data within the DataFrame's
+  /// underlying storage.
+  ///
+  /// Parameters:
+  /// - `selector`: A single row label (e.g., a `String`, `int`, or any other type used in the DataFrame's index)
+  ///   or a `List` of such labels.
+  ///
+  /// Returns:
+  /// - A `List<int>` containing the integer indices corresponding to the provided `selector`.
+  ///   If `selector` is a single label, the list will contain one index.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any of the provided labels are not found in the DataFrame's index.
   List<int> _getIntRowIndices(dynamic selector) {
     if (selector is List) {
       return selector.map((label) {
@@ -301,6 +518,22 @@ class DataFrameLocAccessor {
     }
   }
 
+  /// Converts a single column label or a list of column labels into their corresponding integer indices.
+  ///
+  /// This helper method is used internally by `loc` to translate human-readable column labels
+  /// into the integer-based indices required for accessing data within the DataFrame's
+  /// underlying storage.
+  ///
+  /// Parameters:
+  /// - `selector`: A single column label (e.g., a `String` or any other type used in the DataFrame's columns)
+  ///   or a `List` of such labels.
+  ///
+  /// Returns:
+  /// - A `List<int>` containing the integer indices corresponding to the provided `selector`.
+  ///   If `selector` is a single label, the list will contain one index.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any of the provided labels are not found in the DataFrame's columns.
   List<int> _getIntColIndices(dynamic selector) {
     if (selector is List) {
       return selector.map((label) {

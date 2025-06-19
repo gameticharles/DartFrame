@@ -1,27 +1,71 @@
 part of '../geo_series.dart';
 
 extension BufferGeoProcess on GeoSeries {
-  /// Creates a buffer around each geometry in the GeoSeries.
+  /// Creates a `GeoSeries` containing the buffer of each geometry in the input GeoSeries.
   ///
-  /// Returns a GeoSeries of geometries representing all points within a given distance
-  /// of each geometric object.
+  /// A buffer is a zone around a geometry that extends outwards (or inwards for negative distances
+  /// on polygons) to a specified `distance`. The resulting geometries represent all points
+  /// within that distance from the original geometry.
   ///
   /// Parameters:
-  ///   - `distance`: The radius of the buffer. Can be a single value or a list of values
-  ///     with the same length as the GeoSeries.
-  ///   - `resolution`: The number of segments used to approximate a quarter circle (default: 16).
-  ///   - `capStyle`: The style of the buffer at the ends of lines. Options are:
-  ///     * 'round': Rounded ends (default)
-  ///     * 'flat': Flat ends at the original vertices
-  ///     * 'square': Square ends that extend beyond the original vertices
-  ///   - `joinStyle`: The style of the buffer at line joints. Options are:
-  ///     * 'round': Rounded joins (default)
-  ///     * 'mitre': Sharp pointed joins
-  ///     * 'bevel': Beveled joins
-  ///   - `mitreLimit`: Limit on the mitre ratio used for very sharp corners (default: 5.0).
-  ///   - `singleSided`: Whether to buffer only one side of the geometry (default: false).
+  ///   - `distance`: (dynamic, default: `1.0`)
+  ///     The distance to buffer the geometries.
+  ///     - If a `num` (double or int), all geometries are buffered by this value.
+  ///     - If a `List<double>`, each geometry is buffered by the corresponding distance in the list.
+  ///       The list must have the same length as the GeoSeries.
+  ///     - If a `Series<double>`, each geometry is buffered by the corresponding distance in the Series.
+  ///       The Series must have the same length and index as the GeoSeries (though index alignment is not strictly enforced currently).
+  ///     A positive distance creates an outward buffer. A negative distance can create an inward buffer
+  ///     (primarily for Polygons, current implementation for other types with negative distance might return empty polygons).
+  ///   - `resolution`: (int, default: `16`)
+  ///     The number of segments used to approximate a quarter circle in round caps and joins, and for buffering points.
+  ///     Higher values result in smoother curves but more complex geometries.
+  ///   - `capStyle`: (String, default: `'round'`)
+  ///     Determines the shape of the buffer at the ends of LineStrings. Options are:
+  ///     - `'round'`: Ends are rounded (circular arcs).
+  ///     - `'flat'`: Ends are flat and terminate at the original start/end vertices of the line.
+  ///     - `'square'`: Ends are flat but extend squarely by the buffer distance beyond the original vertices.
+  ///     (Note: Current implementation of cap styles is simplified).
+  ///   - `joinStyle`: (String, default: `'round'`)
+  ///     Determines the shape of the buffer at the joins (vertices) of LineStrings and Polygons. Options are:
+  ///     - `'round'`: Joins are rounded (circular arcs).
+  ///     - `'mitre'`: Joins are extended to a sharp point, up to the `mitreLimit`.
+  ///     - `'bevel'`: Joins are cut off with a straight line segment.
+  ///     (Note: Current implementation of join styles is simplified).
+  ///   - `mitreLimit`: (double, default: `5.0`)
+  ///     The maximum ratio of the mitre length to the buffer distance when `joinStyle` is `'mitre'`.
+  ///     If the limit is exceeded, a bevel join is used instead to prevent excessively long spikes.
+  ///     Must be positive.
+  ///   - `singleSided`: (bool, default: `false`)
+  ///     If true, attempts to create a buffer on only one side of a LineString (e.g., left or right).
+  ///     (Note: Current implementation for single-sided buffers is highly simplified and may not produce accurate results).
   ///
-  /// Returns a new GeoSeries with buffered geometries.
+  /// Returns:
+  ///   (GeoSeries): A new GeoSeries containing the buffered geometries. The CRS of the input
+  ///   GeoSeries is preserved. The name of the new series will be `original_name_buffer`.
+  ///
+  /// Examples:
+  /// ```dart
+  /// final points = GeoSeries([GeoJSONPoint([0,0]), GeoJSONPoint([10,10])], name: 'points');
+  ///
+  /// // Buffer all points by a distance of 1.0
+  /// final bufferedPoints = points.buffer(distance: 1.0);
+  /// print(bufferedPoints.geomType.data); // [Polygon, Polygon]
+  ///
+  /// // Buffer with a list of distances
+  /// final bufferedVary = points.buffer(distance: [0.5, 1.5]);
+  ///
+  /// final line = GeoSeries([GeoJSONLineString([[0,0],[5,0]])], name: 'line');
+  ///
+  /// // Buffer line with flat caps
+  /// final flatBuffer = line.buffer(distance: 0.5, capStyle: 'flat');
+  ///
+  /// // Buffer line with square caps
+  /// final squareBuffer = line.buffer(distance: 0.5, capStyle: 'square');
+  ///
+  /// // Buffer line with mitre joins (example, effect more visible with multiple segments)
+  /// final mitreBuffer = line.buffer(distance: 0.5, joinStyle: 'mitre', mitreLimit: 2.0);
+  /// ```
   GeoSeries buffer({
     dynamic distance = 1.0,
     int resolution = 16,
@@ -90,7 +134,19 @@ extension BufferGeoProcess on GeoSeries {
     return GeoSeries(bufferedGeometries, crs: crs, name: '${name}_buffer');
   }
 
-  /// Creates a buffer around a single geometry.
+  /// Internal helper to dispatch buffering to the correct geometry-specific function.
+  ///
+  /// Parameters:
+  ///   - `geometry`: The `GeoJSONGeometry` to buffer.
+  ///   - `distance`: The buffer distance.
+  ///   - `resolution`: Segments for approximating curves.
+  ///   - `capStyle`: Style for line endings.
+  ///   - `joinStyle`: Style for line joins.
+  ///   - `mitreLimit`: Limit for mitre joins.
+  ///   - `singleSided`: Whether to buffer one side.
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): The buffered geometry. Returns an empty Polygon or original geometry for certain edge cases or unsupported types.
   GeoJSONGeometry _bufferGeometry(
     GeoJSONGeometry geometry,
     double distance,
@@ -136,10 +192,22 @@ extension BufferGeoProcess on GeoSeries {
     }
 
     // Default case - return the original geometry
+    // Default case - return the original geometry if not handled by specific types
     return geometry;
   }
 
-  /// Buffer a point geometry
+  /// Buffers a single `GeoJSONPoint` geometry.
+  ///
+  /// Creates a circular polygon around the point with the given `distance` as radius.
+  /// The circle is approximated by `resolution` * 4 segments.
+  ///
+  /// Parameters:
+  ///   - `point`: The `GeoJSONPoint` to buffer.
+  ///   - `distance`: The buffer radius. If non-positive, an empty polygon is returned.
+  ///   - `resolution`: The number of segments per quarter circle for approximation.
+  ///
+  /// Returns:
+  ///   (GeoJSONPolygon): A polygon representing the buffer.
   GeoJSONPolygon _bufferPoint(
       GeoJSONPoint point, double distance, int resolution) {
     if (distance <= 0) {
@@ -173,7 +241,22 @@ extension BufferGeoProcess on GeoSeries {
     return GeoJSONPolygon([ring]);
   }
 
-  /// Buffer a linestring geometry
+  /// Buffers a single `GeoJSONLineString` geometry.
+  ///
+  /// Creates a polygon around the line. This implementation is simplified and primarily offsets
+  /// segments and applies basic cap styles. Join styles are not fully implemented.
+  ///
+  /// Parameters:
+  ///   - `line`: The `GeoJSONLineString` to buffer.
+  ///   - `distance`: The buffer distance. If non-positive, an empty polygon is returned.
+  ///   - `resolution`: Segments for approximating curves in round caps.
+  ///   - `capStyle`: Style for line endings ('round', 'flat', 'square').
+  ///   - `joinStyle`: Style for line joins (simplified handling).
+  ///   - `mitreLimit`: Limit for mitre joins (simplified handling).
+  ///   - `singleSided`: Whether to buffer one side (simplified handling).
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): A polygon representing the buffer, or an empty polygon if input is invalid or distance is non-positive.
   GeoJSONGeometry _bufferLineString(
       GeoJSONLineString line,
       double distance,
@@ -269,7 +352,19 @@ extension BufferGeoProcess on GeoSeries {
     return GeoJSONPolygon([ring]);
   }
 
-  /// Add a round cap to a line end
+  /// Internal helper to add a round cap to one end of a line segment during buffering.
+  ///
+  /// Modifies `leftSide` and `rightSide` lists by adding points forming a semicircle.
+  /// Note: This is a simplified implementation for cap handling.
+  ///
+  /// Parameters:
+  ///   - `endPoint`: The endpoint of the line where the cap is added.
+  ///   - `adjacentPoint`: The point on the line adjacent to `endPoint`, used for direction.
+  ///   - `distance`: The buffer radius.
+  ///   - `resolution`: Segments per quarter circle for the round cap.
+  ///   - `isStart`: True if capping the start of the line, false for the end.
+  ///   - `leftSide`: List of coordinates for the left side of the buffer, modified in place.
+  ///   - `rightSide`: List of coordinates for the right side of the buffer, modified in place.
   void _addRoundCap(
       List<double> endPoint,
       List<double> adjacentPoint,
@@ -350,7 +445,17 @@ extension BufferGeoProcess on GeoSeries {
     }
   }
 
-  /// Add a square cap to a line end
+  /// Internal helper to add a square cap to one end of a line segment during buffering.
+  ///
+  /// Modifies `leftSide` and `rightSide` lists by adding points forming a square end.
+  /// Note: This is a simplified implementation for cap handling.
+  ///
+  /// Parameters:
+  ///   - `endPoint`: The endpoint of the line where the cap is added.
+  ///   - `adjacentPoint`: The point on the line adjacent to `endPoint`, used for direction.
+  ///   - `distance`: The buffer radius (determines the extension of the square).
+  ///   - `leftSide`: List of coordinates for the left side of the buffer, modified in place.
+  ///   - `rightSide`: List of coordinates for the right side of the buffer, modified in place.
   void _addSquareCap(
       List<double> endPoint,
       List<double> adjacentPoint,
@@ -405,7 +510,21 @@ extension BufferGeoProcess on GeoSeries {
     }
   }
 
-  /// Buffer a polygon geometry
+  /// Buffers a single `GeoJSONPolygon` geometry.
+  ///
+  /// For positive distance, it expands the polygon. For negative distance, it attempts to shrink it
+  /// (current implementation is simplified and might just return the original polygon for negative distances).
+  /// Join styles are considered for the exterior ring. Holes are not fully handled in this simplified version.
+  ///
+  /// Parameters:
+  ///   - `polygon`: The `GeoJSONPolygon` to buffer.
+  ///   - `distance`: The buffer distance.
+  ///   - `resolution`: Segments for approximating curves in round joins.
+  ///   - `joinStyle`: Style for ring joins.
+  ///   - `mitreLimit`: Limit for mitre joins.
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): A polygon representing the buffer.
   GeoJSONGeometry _bufferPolygon(GeoJSONPolygon polygon, double distance,
       int resolution, String joinStyle, double mitreLimit) {
     if (distance == 0) {
@@ -445,31 +564,62 @@ extension BufferGeoProcess on GeoSeries {
     return GeoJSONPolygon([bufferedOuterRing]);
   }
 
-  /// Buffer a ring (polygon boundary)
+  /// Internal helper to buffer a single ring (list of coordinates forming a closed line).
+  ///
+  /// This is used for buffering the rings of a polygon. It treats the ring as a LineString
+  /// and applies buffering. `isHole` determines the direction of the buffer distance.
+  /// Cap style is implicitly 'round' as rings are closed.
+  /// Note: This is a simplified approach.
+  ///
+  /// Parameters:
+  ///   - `ring`: The list of coordinates forming the ring.
+  ///   - `distance`: The buffer distance.
+  ///   - `resolution`: Segments for approximating curves.
+  ///   - `joinStyle`: Style for joins.
+  ///   - `mitreLimit`: Limit for mitre joins.
+  ///   - `isHole`: True if the ring is an interior hole (buffers inwards), false otherwise.
+  ///
+  /// Returns:
+  ///   `(List<List<double>>)`: The coordinates of the buffered ring. Returns original if buffering fails.
   List<List<double>> _bufferRing(List<List<double>> ring, double distance,
       int resolution, String joinStyle, double mitreLimit, bool isHole) {
-    // Create a LineString from the ring and buffer it
-    // For a proper implementation, we would need to handle the fact that rings are closed
+    // Create a LineString from the ring and buffer it.
+    // A more robust implementation would directly handle ring buffering topology.
     final lineString = GeoJSONLineString(ring);
     final bufferedLine = _bufferLineString(
         lineString,
-        isHole ? -distance : distance,
+        isHole
+            ? -distance
+            : distance, // Negative distance for holes (shrinking)
         resolution,
-        'round', // Cap style doesn't matter for closed rings
+        'round', // Cap style is effectively irrelevant for closed rings
         joinStyle,
         mitreLimit,
-        false);
+        false); // SingleSided is false for rings
 
-    // Extract the coordinates from the buffered line
-    if (bufferedLine is GeoJSONPolygon) {
-      return bufferedLine.coordinates[0];
+    // Extract the coordinates from the resulting polygon buffer
+    if (bufferedLine is GeoJSONPolygon && bufferedLine.coordinates.isNotEmpty) {
+      return bufferedLine
+          .coordinates[0]; // Return the exterior ring of the buffer
     }
 
-    // Fallback to original ring if buffering failed
+    // Fallback to original ring if buffering failed or returned unexpected type
     return ring;
   }
 
-  /// Buffer a multipoint geometry
+  /// Buffers a `GeoJSONMultiPoint` geometry.
+  ///
+  /// Each point in the MultiPoint is buffered individually.
+  /// Note: This simplified version returns the buffer of the first point only,
+  /// a full implementation would union the buffers of all points.
+  ///
+  /// Parameters:
+  ///   - `multiPoint`: The `GeoJSONMultiPoint` to buffer.
+  ///   - `distance`: Buffer radius. If non-positive, an empty polygon is returned.
+  ///   - `resolution`: Segments per quarter circle for point buffers.
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): A polygon representing the buffer (currently of the first point).
   GeoJSONGeometry _bufferMultiPoint(
       GeoJSONMultiPoint multiPoint, double distance, int resolution) {
     if (distance <= 0) {
@@ -516,10 +666,26 @@ extension BufferGeoProcess on GeoSeries {
         [0, 0],
         [0, 0]
       ]
-    ]); // Empty polygon
+    ]); // Empty polygon if no points or non-positive distance
   }
 
-  /// Buffer a multilinestring geometry
+  /// Buffers a `GeoJSONMultiLineString` geometry.
+  ///
+  /// Each LineString in the MultiLineString is buffered individually.
+  /// Note: This simplified version returns the buffer of the first LineString only,
+  /// a full implementation would union the buffers of all LineStrings.
+  ///
+  /// Parameters:
+  ///   - `multiLineString`: The `GeoJSONMultiLineString` to buffer.
+  ///   - `distance`: Buffer distance. If non-positive, an empty polygon is returned.
+  ///   - `resolution`: Segments for approximating curves.
+  ///   - `capStyle`: Style for line endings.
+  ///   - `joinStyle`: Style for line joins.
+  ///   - `mitreLimit`: Limit for mitre joins.
+  ///   - `singleSided`: Whether to buffer one side.
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): A polygon representing the buffer (currently of the first line).
   GeoJSONGeometry _bufferMultiLineString(
       GeoJSONMultiLineString multiLineString,
       double distance,
@@ -572,10 +738,24 @@ extension BufferGeoProcess on GeoSeries {
         [0, 0],
         [0, 0]
       ]
-    ]); // Empty polygon
+    ]); // Empty polygon if no lines or non-positive distance
   }
 
-  /// Buffer a multipolygon geometry
+  /// Buffers a `GeoJSONMultiPolygon` geometry.
+  ///
+  /// Each Polygon in the MultiPolygon is buffered individually.
+  /// Note: This simplified version returns the buffer of the first Polygon only,
+  /// a full implementation would union the buffers of all Polygons.
+  ///
+  /// Parameters:
+  ///   - `multiPolygon`: The `GeoJSONMultiPolygon` to buffer.
+  ///   - `distance`: Buffer distance. If zero, returns original.
+  ///   - `resolution`: Segments for approximating curves.
+  ///   - `joinStyle`: Style for polygon joins.
+  ///   - `mitreLimit`: Limit for mitre joins.
+  ///
+  /// Returns:
+  ///   (GeoJSONGeometry): A polygon representing the buffer (currently of the first polygon).
   GeoJSONGeometry _bufferMultiPolygon(GeoJSONMultiPolygon multiPolygon,
       double distance, int resolution, String joinStyle, double mitreLimit) {
     if (distance == 0) {

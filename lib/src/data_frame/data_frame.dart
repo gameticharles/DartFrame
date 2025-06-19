@@ -27,8 +27,56 @@ bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
   return true;
 }
 
-/// A class representing a DataFrame, which is a 2-dimensional labeled data structure
-/// with columns of potentially different types.
+/// A `DataFrame` is a two-dimensional, size-mutable, potentially heterogeneous
+/// tabular data structure with labeled axes (rows and columns).
+///
+/// It is similar to a spreadsheet or SQL table, or a dictionary of Series objects.
+/// DataFrames are generally the most commonly used pandas-like objects.
+///
+/// ## Key Features:
+/// - **Tabular Data:** Organizes data in rows and columns.
+/// - **Labeled Axes:** Both rows (index) and columns have labels.
+/// - **Heterogeneous Data:** Columns can hold data of different types (e.g., integers, strings, booleans).
+/// - **Mutability:** DataFrames can be modified (e.g., adding or removing columns, updating values).
+/// - **Missing Data Handling:** Provides mechanisms to represent and handle missing data.
+/// - **Powerful Operations:** Supports a wide range of operations for data manipulation, cleaning, analysis, and exploration.
+///
+/// ## Construction:
+/// DataFrames can be created from various sources, including:
+/// - Lists of lists or lists of maps.
+/// - CSV files.
+/// - JSON data.
+/// - Maps of lists.
+///
+/// ## Accessing Data:
+/// - **`iloc`:** Access data by integer-based position.
+/// - **`loc`:** Access data by labels.
+/// - **`[]` operator:** Select columns by name or boolean Series for filtering.
+///
+/// ## Example:
+/// ```dart
+/// // Creating a DataFrame from a list of maps
+/// var df = DataFrame.fromRows([
+///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
+///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
+/// ]);
+///
+/// print(df);
+/// // Output:
+/// //        Name  Age         City
+/// // 0    Alice   30     New York
+/// // 1      Bob   25  Los Angeles
+///
+/// // Accessing a column
+/// print(df['Age']);
+/// // Output:
+/// // Series(name: Age, index: [0, 1], data: [30, 25])
+///
+/// // Accessing a row by integer position
+/// print(df.iloc[0]);
+/// // Output:
+/// // Series(name: 0, index: [Name, Age, City], data: [Alice, 30, New York])
+/// ```
 class DataFrame {
   List<dynamic> _columns = List.empty(growable: true);
   List<dynamic> index = List.empty(growable: true);
@@ -37,10 +85,31 @@ class DataFrame {
   dynamic replaceMissingValueWith;
   List<dynamic> _missingDataIndicator = List.empty(growable: true);
 
-  /// Constructs a DataFrame with provided column names and data.
+  /// Internal constructor for creating a DataFrame.
   ///
-  /// Throws an ArgumentError if the number of column names does not match the number
-  /// of data columns or if any data column has a different length.
+  /// This constructor is used by other factory constructors and internal methods.
+  /// It assumes that the provided data is already in the correct format or controlled by `formatData`.
+  ///
+  /// Parameters:
+  /// - `_columns`: A `List<dynamic>` of column labels.
+  /// - `_data`: A `List<dynamic>` (representing `List<List<dynamic>>`) of data rows.
+  /// - `index`: An optional `List<dynamic>` of row labels. If empty or not provided,
+  ///   a default integer index (0, 1, 2, ...) is generated based on the number of rows in `_data`.
+  /// - `allowFlexibleColumns`: A `bool` indicating whether the number of columns can change
+  ///   dynamically (e.g., when assigning new columns). Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to replace missing data indicators found during
+  ///   data cleaning (if `formatData` is true) or used as a fill value in certain operations.
+  /// - `formatData`: A `bool` indicating whether to apply the `cleanData` method to each cell
+  ///   in `_data`. Defaults to `false`.
+  /// - `missingDataIndicator`: A `List<dynamic>` of values that should be treated as missing
+  ///   when `formatData` is true.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `_data` is not empty and its rows have inconsistent lengths.
+  /// - `ArgumentError` if `_data` is not empty, `_columns` is not empty, and their lengths
+  ///   (number of columns vs. length of a data row) do not match.
+  /// - `Exception` if a provided `index` is not empty and its length does not match the
+  ///   number of rows in `_data`.
   DataFrame._(
     this._columns,
     this._data, {
@@ -50,15 +119,20 @@ class DataFrame {
     bool formatData = false,
     List<dynamic> missingDataIndicator = const [],
   }) : _missingDataIndicator = missingDataIndicator {
-    // Validate data structure (e.g., all columns have the same length)
-    // if (_columns.length != _data[0].length) {
-    //   throw ArgumentError(
-    //       'Number of column names must match number of data columns.');
-    // }
-    for (var i = 1; i < _data.length; i++) {
-      if (_data[i].length != _data[0].length) {
-        throw ArgumentError('All data columns must have the same length.');
+    if (_data.isNotEmpty) {
+      final firstRowLength = _data[0].length;
+      for (var i = 1; i < _data.length; i++) {
+        if (_data[i].length != firstRowLength) {
+          throw ArgumentError(
+              'All data rows must have the same length. Row $i has length ${_data[i].length}, expected $firstRowLength.');
+        }
       }
+      if (_columns.isNotEmpty && _columns.length != firstRowLength) {
+        throw ArgumentError(
+            'Number of column names (${_columns.length}) must match number of data columns ($firstRowLength).');
+      }
+    } else if (_columns.isNotEmpty) {
+      // If data is empty but columns are provided, this is valid (empty DF with columns).
     }
 
     if (formatData) {
@@ -66,73 +140,116 @@ class DataFrame {
       _data = _data.map((row) => row.map(cleanData).toList()).toList();
     }
 
-    // If index was entered, check that it's given for all rows or throw error (pd)
+    // If index was entered, check that it's given for all rows or throw error
     if (index.isNotEmpty) {
       if (index.length != _data.length) {
-        throw Exception('Index must match number of rows entered');
+        throw Exception(
+            'Index length (${index.length}) must match number of data rows (${_data.length}).');
       }
-    }
-    // 3.b. If index was not entered, auto-generate
-    if (index.isEmpty) {
+    } else {
+      // If index was not entered or was empty, auto-generate
       index = List.generate(_data.length, (i) => i);
     }
   }
 
   /// Creates an empty DataFrame.
   ///
-  /// This constructor is provided for convenience to create an empty DataFrame
-  /// without having to pass any arguments.
+  /// Optionally, column labels can be specified.
+  ///
+  /// Parameters:
+  /// - `columns`: An optional `List<dynamic>` of column labels for the empty DataFrame.
+  ///   If `null` or empty, the DataFrame will have no columns defined initially.
+  /// - `allowFlexibleColumns`: A `bool` indicating whether columns can be added later
+  ///   (e.g., by assignment). Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to use for missing entries if data is added
+  ///   or when operations might introduce missing values.
+  /// - `missingDataIndicator`: A `List<dynamic>` of values to consider as missing if data
+  ///   cleaning is performed.
+  ///
+  /// Returns:
+  /// A new, empty `DataFrame`.
   ///
   /// Example:
   /// ```dart
-  /// final df = DataFrame.empty();
+  /// // Create a completely empty DataFrame
+  /// final dfEmpty = DataFrame.empty();
+  /// print(dfEmpty.shape); // Output: (rows: 0, columns: 0)
+  ///
+  /// // Create an empty DataFrame with specified columns
+  /// final dfWithCols = DataFrame.empty(columns: ['Name', 'Age']);
+  /// print(dfWithCols.columns); // Output: [Name, Age]
+  /// print(dfWithCols.shape);   // Output: (rows: 0, columns: 2)
   /// ```
   DataFrame.empty({
     List<dynamic>? columns,
     this.allowFlexibleColumns = false,
     this.replaceMissingValueWith,
     List<dynamic> missingDataIndicator = const [],
+    this.index = const [],
   })  : _missingDataIndicator = missingDataIndicator,
         _data = [],
-        _columns = columns ?? [],
-        index = [];
+        _columns = columns ?? [];
 
-  /// Constructs a DataFrame with the provided column names and data.
+  /// Constructs a DataFrame from a list of lists (rows).
   ///
-  /// - The [columns] parameter specifies the names of the columns in the DataFrame.
+  /// Parameters:
+  /// - `data`: A `List<List<dynamic>>?` where each inner list represents a row.
+  ///   If `null` or empty, an empty DataFrame is created (or one with only columns if `columns` is provided).
+  /// - `columns`: An optional `List<dynamic>` of column labels. Defaults to an empty list.
+  ///   If `data` is provided and not empty, and `columns` is empty, default column names
+  ///   (e.g., "Column1", "Column2") are generated based on the length of the first data row.
+  /// - `index`: An optional `List<dynamic>` of row labels. Defaults to an empty list.
+  ///   If `data` is provided and not empty, and `index` is empty, a default integer index
+  ///   (0, 1, 2, ...) is generated based on the number of data rows.
+  /// - `allowFlexibleColumns`: A `bool` indicating whether the number of columns can be changed
+  ///   dynamically. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to replace missing data indicators or for padding.
+  /// - `missingDataIndicator`: A `List<dynamic>` of values that should be treated as missing
+  ///   if `formatData` is true.
+  /// - `formatData`: A `bool` indicating whether to apply `cleanData` to each cell in `data`.
+  ///   Defaults to `false`.
   ///
-  /// - The [data] parameter specifies the actual data in the DataFrame, organized as a
-  /// list of rows, where each row is represented as a list of values corresponding to
-  /// the columns.
+  /// Returns:
+  /// A new `DataFrame`.
   ///
-  /// - The [index]: Optional list to use as index for the DataFrame
+  /// Throws:
+  /// - `ArgumentError` if `data` is not empty and its rows have inconsistent lengths.
+  /// - `ArgumentError` if `data` is not empty, `columns` is not empty, and their lengths
+  ///   (number of columns vs. length of a data row) do not match.
+  /// - `Exception` if `index` is not empty and its length does not match the number of rows in `data`.
   ///
   /// Example:
   /// ```dart
-  /// // Initialize with positional data parameter and named parameters
-  /// final df = DataFrame(data:[
-  ///   [1, 2, 3.0],
-  ///   [4, 5, 6],
-  ///   [7, 'hi', 9]
-  /// ], rowHeader: [
-  ///   'Dog',
-  ///   'Dog',
-  ///   'Catty'
-  /// ], columns: [
-  ///   'a',
-  ///   'b',
-  ///   'c'
-  /// ]);
+  /// // DataFrame with data and specified columns and index
+  /// final df1 = DataFrame(
+  ///   [
+  ///     [1, 'Alice', 100.0],
+  ///     [2, 'Bob', 200.0],
+  ///   ],
+  ///   columns: ['ID', 'Name', 'Score'],
+  ///   index: ['rowA', 'rowB'],
+  /// );
+  /// print(df1);
+  /// // Output:
+  /// //       ID   Name  Score
+  /// // rowA   1  Alice  100.0
+  /// // rowB   2    Bob  200.0
   ///
-  /// // Initialize with only data
-  /// final df2 = DataFrame(data: [
-  ///   [1, 2, 3.0],
-  ///   [4, 5, 6],
-  ///   [7, 'hi', 9]
+  /// // DataFrame with data only (default columns and index)
+  /// final df2 = DataFrame([
+  ///   [10, 20],
+  ///   [30, 40],
   /// ]);
+  /// print(df2);
+  /// // Output:
+  /// //   Column1  Column2
+  /// // 0       10       20
+  /// // 1       30       40
   ///
-  /// // Initialize empty DataFrame
-  /// final df3 = DataFrame([]);
+  /// // Empty DataFrame by passing null or empty list for data
+  /// final df3 = DataFrame(null, columns: ['X', 'Y']); // or DataFrame([], columns: ['X', 'Y'])
+  /// print(df3.columns); // Output: [X, Y]
+  /// print(df3.rowCount);  // Output: 0
   /// ```
   DataFrame(List<List<dynamic>>? data,
       {List<dynamic> columns = const [],
@@ -164,39 +281,48 @@ class DataFrame {
   /// Cleans and converts data values based on their content.
   ///
   /// This method performs several operations:
-  /// 1. Handles missing data by checking if the value:
-  ///    - Is in the list of missing data indicators
-  ///    - Is null
-  ///    - Is an empty string
-  ///    If any of these conditions are met, returns [replaceMissingValueWith].
+  /// Cleans and converts a single data value based on its content and type.
   ///
-  /// 2. Attempts type conversion in the following order:
-  ///    - Numeric conversion: Tries to parse strings as numbers
-  ///    - Boolean conversion: Converts "true"/"false" strings to boolean values
-  ///    - Date/time parsing: Attempts to parse strings as dates using common formats
-  ///    - List conversion: Tries to parse strings that look like lists
+  /// This method is typically used internally when `formatData` is enabled in constructors
+  /// or when data is being processed.
   ///
-  /// 3. Returns the original value if no conversion is applicable.
+  /// **Processing Steps:**
+  /// 1. **Missing Data Check:**
+  ///    - If `value` is `null`.
+  ///    - If `value` is an empty string (`''`).
+  ///    - If `value` is present in the DataFrame's `_missingDataIndicator` list.
+  ///    If any of these conditions are true, `replaceMissingValueWith` (a DataFrame property) is returned.
   ///
-  /// Example:
+  /// 2. **Type Conversion (if `value` is a `String` and not missing):**
+  ///    - **Numeric:** Tries to parse the string into a `num` (integer or double) using `num.tryParse()`.
+  ///    - **Boolean:** Converts "true" or "false" (case-insensitive) into a `bool`.
+  ///    - **Date/Time:** Attempts to parse the string as a `DateTime` object using a predefined list
+  ///      of common formats (`yyyy-MM-dd`, `MM/dd/yyyy`, `dd-MMM-yyyy`). `DateFormat.parseStrict()` is used.
+  ///    - **List:** If the string starts with `[` and ends with `]`:
+  ///        - Tries to decode it as a JSON list using `jsonDecode()`.
+  ///        - As a fallback, removes the brackets and splits by comma.
+  ///
+  /// 3. **Default:** If none of the above apply, the original `value` is returned.
+  ///
+  /// Parameters:
+  /// - `value`: The `dynamic` data value to clean and potentially convert.
+  ///
+  /// Returns:
+  /// The cleaned or converted value. If `value` is identified as missing,
+  /// `replaceMissingValueWith` is returned. Otherwise, it could be a `num`, `bool`,
+  /// `DateTime`, `List`, or the original `String` or other type.
+  ///
+  /// Example (assuming `replaceMissingValueWith` is `null` and `_missingDataIndicator` includes 'N/A'):
   /// ```dart
-  /// // Numeric conversion
-  /// cleanData("123") // Returns 123 (as num)
-  ///
-  /// // Boolean conversion
-  /// cleanData("true") // Returns true (as bool)
-  ///
-  /// // Missing value handling
-  /// cleanData(null) // Returns replaceMissingValueWith
-  /// cleanData("") // Returns replaceMissingValueWith
-  /// cleanData("NA") // Returns replaceMissingValueWith if "NA" is in missingDataIndicator
-  ///
-  /// // No conversion applicable
-  /// cleanData("hello") // Returns "hello" (unchanged)
+  /// // For a DataFrame instance `df`:
+  /// print(df.cleanData('123'));        // Output: 123 (num)
+  /// print(df.cleanData('true'));       // Output: true (bool)
+  /// print(df.cleanData('2024-03-15'));  // Output: DateTime object for March 15, 2024
+  /// print(df.cleanData('[1, "a"]'));    // Output: [1, a] (List)
+  /// print(df.cleanData(''));            // Output: null (if replaceMissingValueWith is null)
+  /// print(df.cleanData('N/A'));        // Output: null (if replaceMissingValueWith is null)
+  /// print(df.cleanData('Text'));       // Output: "Text" (String)
   /// ```
-  ///
-  /// @param value The value to clean and potentially convert
-  /// @return The cleaned/converted value, or [replaceMissingValueWith] if the value is missing
   dynamic cleanData(dynamic value) {
     List<String> commonDateFormats = [
       'yyyy-MM-dd',
@@ -269,15 +395,56 @@ class DataFrame {
     return value;
   }
 
-  /// Constructs a DataFrame from a CSV string.
+  /// Constructs a DataFrame from a CSV (Comma Separated Values) string or file.
   ///
-  /// The CSV string can be provided directly or by specifying an input file path.
-  /// The delimiter can be customized, and it's assumed that the CSV has a header row.
+  /// Parameters:
+  /// - `csv`: An optional `String` containing the CSV data. If `null`, `inputFilePath` must be provided.
+  /// - `delimiter`: The `String` used to separate values in each row. Defaults to `,`.
+  /// - `inputFilePath`: An optional `String` path to a CSV file. If `csv` is `null`, this path is used to read the data.
+  /// - `hasHeader`: A `bool` indicating if the first row of the CSV is a header row containing column names. Defaults to `true`.
+  ///   If `false`, generic column names (e.g., "Column 0", "Column 1") are generated.
+  /// - `hasRowIndex`: A `bool` indicating if the first column of the CSV should be used as the DataFrame's index.
+  ///   Defaults to `false`. (Currently, if `true`, the first column name from the header becomes 'Row Index', and data is shifted).
+  ///   *Note: Full implementation of using a CSV column as a primary index is pending.*
+  /// - `allowFlexibleColumns`: A `bool` controlling if columns can be added/removed later. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to use for missing entries identified during parsing or formatting.
+  /// - `formatData`: A `bool` that, if `true`, applies `cleanData` to each parsed value. Defaults to `false`.
+  /// - `missingDataIndicator`: A `List` of strings/values to be treated as missing during parsing if `formatData` is true.
+  ///
+  /// Returns:
+  /// A `Future<DataFrame>` that completes with the newly created DataFrame.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if both `csv` and `inputFilePath` are `null`.
+  /// - File I/O errors if `inputFilePath` is provided but cannot be read.
   ///
   /// Example:
   /// ```dart
-  /// var csvData = 'Name,Age,City\nAlice,30,New York\nBob,25,Los Angeles\nCharlie,35,Chicago';
-  /// var df = await DataFrame.fromCSV(csv: csvData, delimiter: ',', hasHeader: true);
+  /// // From a CSV string with a header
+  /// String csvData = "Name,Age,City\nAlice,30,New York\nBob,24,San Francisco";
+  /// DataFrame df1 = await DataFrame.fromCSV(csv: csvData);
+  /// print(df1);
+  /// // Output:
+  /// //       Name  Age          City
+  /// // 0    Alice   30      New York
+  /// // 1      Bob   24 San Francisco
+  ///
+  /// // From a CSV string without a header
+  /// String csvDataNoHeader = "apple,1.0\nbanana,0.5";
+  /// DataFrame df2 = await DataFrame.fromCSV(csv: csvDataNoHeader, hasHeader: false);
+  /// print(df2);
+  /// // Output:
+  /// //   Column 0  Column 1
+  /// // 0    apple       1.0
+  /// // 1   banana       0.5
+  ///
+  /// // Reading from a file (conceptual - requires actual file 'data.csv')
+  /// // File 'data.csv':
+  /// // ID,Product,Price
+  /// // 1,Laptop,1200
+  /// // 2,Mouse,25
+  /// // DataFrame dfFromFile = await DataFrame.fromCSV(inputFilePath: 'data.csv');
+  /// // print(dfFromFile);
   /// ```
   static Future<DataFrame> fromCSV({
     String? csv,
@@ -327,17 +494,50 @@ class DataFrame {
     );
   }
 
-  /// Constructs a DataFrame from a JSON string.
+  /// Constructs a DataFrame from a JSON string or file.
   ///
-  /// The JSON string can be provided directly or by specifying an input file path.
-  /// The JSON object is expected to be a list of objects with consistent keys.
+  /// The JSON structure is expected to be a list of objects (maps), where each object
+  /// represents a row, and object keys represent column names.
+  /// All objects in the list should ideally have a consistent set of keys;
+  /// the column names are derived from the keys of the first object in the list.
+  ///
+  /// Parameters:
+  /// - `jsonString`: An optional `String` containing the JSON data. If `null`, `inputFilePath` must be provided.
+  /// - `inputFilePath`: An optional `String` path to a JSON file. If `jsonString` is `null`, this path is used.
+  /// - `allowFlexibleColumns`: A `bool` controlling if columns can be added/removed later. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value for missing entries.
+  /// - `formatData`: A `bool` that, if `true`, applies `cleanData` to each parsed value. Defaults to `false`.
+  /// - `missingDataIndicator`: A `List` of values to treat as missing if `formatData` is true.
+  ///
+  /// Returns:
+  /// A `Future<DataFrame>` that completes with the newly created DataFrame.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if both `jsonString` and `inputFilePath` are `null`.
+  /// - `FormatException` if the JSON content is invalid or not a list of maps.
+  /// - File I/O errors if `inputFilePath` is provided but cannot be read.
   ///
   /// Example:
   /// ```dart
-  /// var jsonData = '[{"Name": "Alice", "Age": 30, "City": "New York"}, '
-  ///                '{"Name": "Bob", "Age": 25, "City": "Los Angeles"}, '
-  ///                '{"Name": "Charlie", "Age": 35, "City": "Chicago"}]';
-  /// var df = await DataFrame.fromJson(jsonString: jsonData);
+  /// // From a JSON string
+  /// String jsonData = '''
+  /// [
+  ///   {"id": 1, "product": "Laptop", "price": 1200.00},
+  ///   {"id": 2, "product": "Mouse", "price": 25.50, "inStock": true},
+  ///   {"id": 3, "product": "Keyboard", "price": 75.00}
+  /// ]
+  /// ''';
+  /// DataFrame df1 = await DataFrame.fromJson(jsonString: jsonData);
+  /// print(df1);
+  /// // Output (note: 'inStock' column might have nulls for rows where it's not present):
+  /// //   id  product   price  inStock
+  /// // 0   1   Laptop  1200.0     null
+  /// // 1   2    Mouse   25.50     true
+  /// // 2   3 Keyboard   75.00     null
+  ///
+  /// // Reading from a file (conceptual - requires actual file 'data.json')
+  /// // DataFrame dfFromFile = await DataFrame.fromJson(inputFilePath: 'data.json');
+  /// // print(dfFromFile);
   /// ```
   static Future<DataFrame> fromJson({
     String? jsonString,
@@ -378,15 +578,36 @@ class DataFrame {
     );
   }
 
-  /// Creates an empty DataFrame with the specified column names.
+  /// Creates an empty DataFrame with specified column names.
   ///
-  /// This factory constructor creates a DataFrame with no rows but with the specified columns.
-  /// Useful for creating template DataFrames that will be populated later.
+  /// This constructor is useful for initializing a DataFrame structure before populating it with data.
+  /// No data rows are created.
+  ///
+  /// Parameters:
+  /// - `columns`: A `List<dynamic>` of column labels.
+  /// - `allowFlexibleColumns`: A `bool` indicating if columns can be added/removed later. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to use for missing entries if data is added.
+  /// - `missingDataIndicator`: A `List<dynamic>` of values to consider as missing if data cleaning is performed.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with the specified columns and zero rows.
   ///
   /// Example:
   /// ```dart
-  /// var df = DataFrame.fromNames(['Name', 'Age', 'City']);
-  /// // Creates an empty DataFrame with columns 'Name', 'Age', and 'City'
+  /// var df = DataFrame.fromNames(['ID', 'Name', 'Category']);
+  /// print(df.columns); // Output: [ID, Name, Category]
+  /// print(df.rowCount);  // Output: 0
+  ///
+  /// // You can then add data, for example, by assigning Series to columns:
+  /// // df['ID'] = Series([1, 2, 3]);
+  /// // df['Name'] = Series(['Apple', 'Banana', 'Cherry']);
+  /// // df['Category'] = Series(['Fruit', 'Fruit', 'Fruit']);
+  /// // print(df);
+  /// // Output:
+  /// //   ID    Name Category
+  /// // 0  1   Apple    Fruit
+  /// // 1  2  Banana    Fruit
+  /// // 2  3  Cherry    Fruit
   /// ```
   factory DataFrame.fromNames(
     List<dynamic> columns, {
@@ -403,26 +624,48 @@ class DataFrame {
     );
   }
 
-  /// Constructs a DataFrame from a map where keys are column names and values
-  /// are lists representing column data.
+  /// Constructs a DataFrame from a `Map` where keys are column names (as `String`)
+  /// and values are `List<dynamic>` representing the data for each column.
   ///
-  /// The [map] parameter is a map where keys represent column names and values
-  /// represent column data as lists. All lists in the map must have the same
-  /// length.
+  /// All lists in the map must have the same length, as this length determines
+  /// the number of rows in the DataFrame.
   ///
-  /// Throws an [ArgumentError] if the lists in the map have different lengths.
+  /// Parameters:
+  /// - `map`: A `Map<String, List<dynamic>>` where keys are column names and values are lists of column data.
+  ///   If the map is empty, an empty DataFrame is created.
+  /// - `allowFlexibleColumns`: A `bool` controlling column flexibility. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value for missing data.
+  /// - `missingDataIndicator`: A `List` of values to treat as missing if `formatData` is true.
+  /// - `index`: An optional `List<dynamic>` for row labels. If not provided or empty,
+  ///   a default integer index (0, 1, 2, ...) is generated based on the length of the column lists.
+  /// - `formatData`: A `bool` to trigger `cleanData` on values. Defaults to `false`.
+  ///
+  /// Returns:
+  /// A new `DataFrame`.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if the lists in the `map` have different lengths.
+  /// - `Exception` if `index` is provided and its length does not match the length of the column lists.
   ///
   /// Example:
   /// ```dart
-  /// Map<String, List<dynamic>> map = {
-  ///   'A': [1, 2, 3],
-  ///   'B': ['a', 'b', 'c'],
-  ///   'C': [true, false, true],
+  /// Map<String, List<dynamic>> dataMap = {
+  ///   'ColA': [1, 2, 3, 4],
+  ///   'ColB': ['P', 'Q', 'R', 'S'],
+  ///   'ColC': [true, false, true, false]
   /// };
-  ///
-  /// // Create a DataFrame from the map
-  /// DataFrame df = DataFrame.fromMap(map);
+  /// DataFrame df = DataFrame.fromMap(dataMap, index: ['r1', 'r2', 'r3', 'r4']);
   /// print(df);
+  /// // Output:
+  /// //    ColA ColB  ColC
+  /// // r1    1    P  true
+  /// // r2    2    Q false
+  /// // r3    3    R  true
+  /// // r4    4    S false
+  ///
+  /// // Example with empty map:
+  /// DataFrame emptyDf = DataFrame.fromMap({});
+  /// print(emptyDf.shape); // Output: (rows: 0, columns: 0)
   /// ```
   factory DataFrame.fromMap(
     Map<String, List<dynamic>> map, {
@@ -432,25 +675,38 @@ class DataFrame {
     List index = const [],
     bool formatData = false,
   }) {
-    // Extract column names and data from the map
+    if (map.isEmpty) {
+      return DataFrame.empty(
+          columns: [], // No columns from an empty map
+          index:
+              index, // Keep provided index if any, though it might be for 0 rows
+          allowFlexibleColumns: allowFlexibleColumns,
+          replaceMissingValueWith: replaceMissingValueWith,
+          missingDataIndicator: missingDataIndicator);
+    }
+
     List<String> columns = map.keys.toList();
     List<List<dynamic>> data = [];
 
-    // Check if all lists have the same length
-    int length = -1;
-    for (var columnData in map.values) {
-      if (length == -1) {
+    int? length; // Use nullable int for length, determined by the first column
+    for (var columnName in columns) {
+      var columnData = map[columnName]!; // map[columnName] is List<dynamic>?
+      if (length == null) {
         length = columnData.length;
       } else if (columnData.length != length) {
-        throw ArgumentError('All lists must have the same length');
+        throw ArgumentError(
+            'All lists in the map must have the same length. Column "$columnName" has length ${columnData.length}, expected $length.');
       }
     }
+    // If map was not empty but all lists were (e.g. {'A': [], 'B': []}), length is 0.
+    // If map was {'A': [1,2], 'B': [3,4]}, length is 2.
+    length ??= 0;
 
-    // Populate the DataFrame with the provided data
+    // Populate the DataFrame data by transposing the map structure
     for (int i = 0; i < length; i++) {
       List<dynamic> rowData = [];
-      for (var columnData in map.values) {
-        rowData.add(columnData[i]);
+      for (var columnName in columns) {
+        rowData.add(map[columnName]![i]);
       }
       data.add(rowData);
     }
@@ -458,7 +714,7 @@ class DataFrame {
     return DataFrame(
       data,
       columns: columns,
-      index: index,
+      index: index, // Pass the original index list
       replaceMissingValueWith: replaceMissingValueWith,
       missingDataIndicator: missingDataIndicator,
       formatData: formatData,
@@ -467,16 +723,58 @@ class DataFrame {
 
   /// Constructs a DataFrame from a list of maps, where each map represents a row.
   ///
-  /// The keys of the maps are used as column names, and the values are used as cell values.
-  /// All maps should have the same keys, or at least contain all the keys that will be used as columns.
+  /// The keys of the maps are used as column names.
+  /// - If `columns` parameter is provided, only those keys will be included as columns, in the specified order.
+  ///   Keys in the maps not listed in `columns` will be ignored. Columns specified but not in any map
+  ///   will result in `replaceMissingValueWith` for those cells.
+  /// - If `columns` parameter is `null` (default), all unique keys found across all maps in `rows`
+  ///   will be used as column names. The order of these inferred columns is not guaranteed.
+  ///
+  /// Parameters:
+  /// - `rows`: A `List<Map<dynamic, dynamic>>` where each map represents a row.
+  ///   Map keys are typically `String` for column names.
+  /// - `columns`: An optional `List<dynamic>` to specify column names and their order.
+  ///   If `null`, column names are inferred from all unique keys in `rows`.
+  /// - `index`: An optional `List<dynamic>` for row labels. Defaults to a default integer index (0, 1, 2, ...).
+  /// - `allowFlexibleColumns`: A `bool` controlling column flexibility. Defaults to `false`.
+  /// - `replaceMissingValueWith`: A `dynamic` value to use for missing entries (e.g., if a map lacks a key
+  ///   that's part of the `finalColumns`).
+  /// - `missingDataIndicator`: A `List` of values to treat as missing if `formatData` is true.
+  /// - `formatData`: A `bool` to trigger `cleanData` on values. Defaults to `false`.
+  ///
+  /// Returns:
+  /// A new `DataFrame`.
   ///
   /// Example:
   /// ```dart
-  /// final df = DataFrame.fromRows([
-  ///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
-  ///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
-  ///   {'Name': 'Charlie', 'Age': 35, 'City': 'Chicago'},
-  /// ]);
+  /// List<Map<dynamic, dynamic>> rowData = [
+  ///   {'ID': 1, 'Name': 'Alice', 'Score': 95.5},
+  ///   {'ID': 2, 'Name': 'Bob', 'Age': 28}, // 'Score' is missing, 'Age' is extra here
+  ///   {'ID': 3, 'Name': 'Charlie', 'Score': 88.0, 'City': 'Paris'},
+  /// ];
+  ///
+  /// // Infer columns from data (order might vary)
+  /// DataFrame df1 = DataFrame.fromRows(rowData);
+  /// print(df1);
+  /// // Example Output (actual column order for inferred columns can vary):
+  /// //   ID    Name  Score  Age   City
+  /// // 0   1   Alice   95.5 null   null
+  /// // 1   2     Bob   null   28   null
+  /// // 2   3 Charlie   88.0 null  Paris
+  ///
+  /// // Specify columns to ensure order and selection
+  /// DataFrame df2 = DataFrame.fromRows(rowData, columns: ['Name', 'ID', 'Score']);
+  /// print(df2);
+  /// // Output:
+  /// //       Name  ID  Score
+  /// // 0    Alice   1   95.5
+  /// // 1      Bob   2   null  // Score is null as it was missing for Bob
+  /// // 2  Charlie   3   88.0
+  ///
+  /// // Example with empty rows list:
+  /// DataFrame emptyDf = DataFrame.fromRows([], columns: ['A', 'B']);
+  /// print(emptyDf.columns); // Output: [A, B]
+  /// print(emptyDf.rowCount);  // Output: 0
   /// ```
   factory DataFrame.fromRows(
     List<Map<dynamic, dynamic>> rows, {
@@ -489,27 +787,36 @@ class DataFrame {
   }) {
     if (rows.isEmpty) {
       return DataFrame.empty(
-        columns: columns,
+        columns:
+            columns, // Use provided columns if any, otherwise it's an empty list
+        index: index,
         allowFlexibleColumns: allowFlexibleColumns,
         replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: missingDataIndicator, // Pass this along
       );
     }
 
-    // Extract all unique keys from all maps to use as columns
-    Set<dynamic> allKeys = {};
-    for (var row in rows) {
-      allKeys.addAll(row.keys);
+    List<dynamic> finalColumns;
+    if (columns != null) {
+      finalColumns = List<dynamic>.from(columns);
+    } else {
+      // Infer columns from all unique keys in the rows.
+      // Using a Set preserves insertion order for unique keys if Dart version supports it,
+      // otherwise, order is not guaranteed. For strict order, consider LinkedHashSet.
+      var columnSet = <dynamic>{};
+      for (var rowMap in rows) {
+        columnSet.addAll(rowMap.keys);
+      }
+      finalColumns = columnSet.toList();
     }
 
-    // Use provided columns or all keys from the maps
-    List<dynamic> finalColumns = columns ?? allKeys.toList();
-
-    // Create data rows
     List<List<dynamic>> data = [];
-    for (var row in rows) {
+    for (var rowMap in rows) {
       List<dynamic> rowData = [];
-      for (var col in finalColumns) {
-        rowData.add(row.containsKey(col) ? row[col] : replaceMissingValueWith);
+      for (var colName in finalColumns) {
+        rowData.add(rowMap.containsKey(colName)
+            ? rowMap[colName]
+            : replaceMissingValueWith);
       }
       data.add(rowData);
     }
@@ -517,7 +824,7 @@ class DataFrame {
     return DataFrame(
       data,
       columns: finalColumns,
-      index: index,
+      index: index, // Pass the original index list
       allowFlexibleColumns: allowFlexibleColumns,
       replaceMissingValueWith: replaceMissingValueWith,
       missingDataIndicator: missingDataIndicator,
@@ -525,12 +832,32 @@ class DataFrame {
     );
   }
 
-  // Export the data as JSON
+  /// Converts the DataFrame to a list of maps (JSON-like structure).
   ///
-  /// Example usage:
-  ///```dart
-  /// String jsonString = jsonEncode(df.toJSON());
+  /// Each map in the list represents a row, with column names (as `String`) as keys.
+  ///
+  /// Returns:
+  /// A `List<Map<String, dynamic>>` representing the DataFrame.
+  /// This format is directly compatible with `jsonEncode()` from `dart:convert`.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   ['Alice', 30],
+  ///   ['Bob', 25],
+  /// ], columns: ['Name', 'Age']);
+  ///
+  /// List<Map<String, dynamic>> jsonList = df.toJSON();
+  /// print(jsonList);
+  /// // Output:
+  /// // [
+  /// //   {'Name': 'Alice', 'Age': 30},
+  /// //   {'Name': 'Bob', 'Age': 25}
+  /// // ]
+  ///
+  /// String jsonString = jsonEncode(jsonList); // To get the actual JSON string
   /// print(jsonString);
+  /// // Output: [{"Name":"Alice","Age":30},{"Name":"Bob","Age":25}]
   /// ```
   List<Map<String, dynamic>> toJSON() {
     return rows.map<Map<String, dynamic>>((row) {
@@ -565,83 +892,203 @@ class DataFrame {
   //Matrix toMatrix() => Matrix(rows);
 
   /// Returns the number of rows in the DataFrame.
+  ///
+  /// Returns:
+  /// An `int` representing the count of rows.
   int get rowCount => _data.length;
 
   /// Returns the number of columns in the DataFrame.
+  ///
+  /// Returns:
+  /// An `int` representing the count of columns.
   int get columnCount => _columns.length;
 
-  /// Returns the shape/dimension of the DataFrame as a list `[rows, columns]`.
+  /// Returns the dimensions of the DataFrame as a list `[rowCount, columnCount]`.
+  ///
+  /// Returns:
+  /// A `List<int>` where the first element is the number of rows and the second is the number of columns.
   List<int> get dimension => [rowCount, columnCount];
 
-  /// Returns the column names of the DataFrame.
-  List<dynamic> get columns => _columns;
+  /// Returns the list of column labels of the DataFrame.
+  ///
+  /// Returns:
+  /// A `List<dynamic>` containing the column labels. The list is a copy, so
+  /// modifying it will not affect the DataFrame's columns. To modify columns,
+  /// use the `columns` setter.
+  List<dynamic> get columns => List<dynamic>.from(_columns);
 
-  /// Set the columns names
-  set columns(List<dynamic> columns) {
-    if (columns.length != _columns.length) {
-      if (allowFlexibleColumns == true) {
-        // Handling mismatched lengths:
-        if (columns.length > _columns.length) {
-          // More columns provided: Replace old columns
-          _columns = columns;
+  /// Sets the column labels of the DataFrame.
+  ///
+  /// Parameters:
+  /// - `newColumns`: A `List<dynamic>` of new column labels.
+  ///
+  /// Behavior:
+  /// - If `allowFlexibleColumns` is `true`:
+  ///   - If `newColumns` has more labels than current columns:
+  ///     The DataFrame's columns are replaced with `newColumns`.
+  ///     Data rows are extended with `replaceMissingValueWith` for the new columns.
+  ///   - If `newColumns` has fewer labels than current columns:
+  ///     Only the initial set of column labels are replaced by `newColumns`.
+  ///     The remaining original column labels (and their data) are kept.
+  ///     The DataFrame's data effectively determines the number of columns if it's wider
+  ///     than `newColumns`. Consider explicitly selecting or dropping columns for truncation.
+  /// - If `allowFlexibleColumns` is `false`:
+  ///   - `newColumns` must have the same length as the current number of columns.
+  ///     The existing column labels are replaced by `newColumns`.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `allowFlexibleColumns` is `false` and the length of `newColumns`
+  ///   does not match the current number of columns in `_data` (if data exists) or `_columns`.
+  set columns(List<dynamic> newColumns) {
+    int currentDataColumnCount =
+        _data.isNotEmpty ? _data[0].length : _columns.length;
+
+    if (newColumns.length != currentDataColumnCount && !allowFlexibleColumns) {
+      throw ArgumentError(
+          'Number of new column names (${newColumns.length}) must match existing number of data columns ($currentDataColumnCount) when allowFlexibleColumns is false.');
+    }
+
+    if (allowFlexibleColumns) {
+      if (newColumns.length > currentDataColumnCount) {
+        // More new columns than existing data columns
+        _columns = List.from(newColumns);
+        // Extend data rows if data exists
+        if (_data.isNotEmpty) {
           for (var row in _data) {
-            // Add nulls or a default value for newly added columns
-            row.addAll(List.generate((columns.length - row.length).toInt(),
+            row.addAll(List.generate(newColumns.length - currentDataColumnCount,
                 (_) => replaceMissingValueWith));
           }
-        } else if (columns.length < _columns.length) {
-          // Fewer columns provided: Consider these options:
-          _columns = columns
-              .followedBy(_columns.getRange(columns.length, _columns.length))
-              .toList();
         }
+      } else if (newColumns.length < currentDataColumnCount) {
+        // Fewer new columns than existing data columns: replace initial, keep rest of data columns
+        _columns = List.from(newColumns);
+        // Add back the names for the data columns that were not replaced
+        if (currentDataColumnCount > newColumns.length) {
+          _columns.addAll(List.generate(
+              currentDataColumnCount - newColumns.length,
+              (i) => 'Column${newColumns.length + i + 1}'));
+        }
+        // Data itself is not truncated here, only column labels are adjusted.
+        // Effective columns are determined by data width if wider than newColumns.
       } else {
-        // Option 2: Throw an error if flexible columns are not allowed
-        throw ArgumentError('Number of columns must match existing data.');
+        // Same number of columns
+        _columns = List.from(newColumns);
       }
     } else {
-      _columns = columns;
+      // Not allowFlexibleColumns, lengths must match (already checked)
+      _columns = List.from(newColumns);
     }
   }
 
-  /// Returns the data of the DataFrame.
+  /// Returns the data of the DataFrame as a list of lists (rows).
+  ///
+  /// Each inner list represents a row. This is a direct view of the internal data.
+  /// Modifying the returned list or its inner lists will modify the DataFrame.
+  ///
+  /// Returns:
+  /// A `List<dynamic>` (effectively `List<List<dynamic>>`) representing the rows of the DataFrame.
   List<dynamic> get rows => _data;
 
-  /// Returns the shape of the DataFrame as a tuple (number of rows, number of columns).
+  /// Returns the shape of the DataFrame as a record `(rows: int, columns: int)`.
+  ///
+  /// This provides a named tuple for easy access to row and column counts.
+  ///
+  /// Returns:
+  /// A record `({int rows, int columns})`.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([[1,2],[3,4]]);
+  /// print(df.shape.rows);    // Output: 2
+  /// print(df.shape.columns); // Output: 2
+  /// ```
   ({int rows, int columns}) get shape =>
       (rows: _data.length, columns: _columns.length);
 
-  /// Returns a Series object for the specified column name or index.
+  /// Returns a `Series` representing the column specified by `key`.
   ///
-  /// This method provides a convenient way to access a column as a Series.
+  /// This method is a convenience wrapper around the `operator []` for column access.
+  ///
+  /// Parameters:
+  /// - `key`: An `int` (column index) or `String` (column name).
+  ///
+  /// Returns:
+  /// A `Series` containing the data of the specified column. The Series' index
+  /// will be the same as the DataFrame's index.
+  ///
+  /// Throws:
+  /// - `IndexError` if `key` is an integer index out of bounds.
+  /// - `ArgumentError` if `key` is a String name not found in columns, or if `key` is of an invalid type.
   ///
   /// Example:
   /// ```dart
   /// var df = DataFrame.fromRows([
-  ///   {'A': 1, 'B': 'x'},
-  ///   {'A': 2, 'B': 'y'},
+  ///   {'A': 10, 'B': 'x'},
+  ///   {'A': 20, 'B': 'y'},
   /// ]);
-  /// var colAByName = df.column('A');
-  /// print(colAByName.data); // [1, 2]
-  /// var colAByIndex = df.column(0);
-  /// print(colAByIndex.data); // [1, 2]
+  /// Series colA = df.column('A');
+  /// print(colA);
+  /// // Output: Series(name: A, index: [0, 1], data: [10, 20])
+  ///
+  /// Series colBByIndex = df.column(1); // Accesses column 'B'
+  /// print(colBByIndex);
+  /// // Output: Series(name: B, index: [0, 1], data: [x, y])
   /// ```
   Series column(dynamic key) {
-    // The operator[] already handles String and int keys,
+    // The operator[] already handles String and int keys for column access,
     // and throws appropriate errors if the key is invalid or not found.
-    return this[key];
+    // It will also correctly return a Series.
+    if (key is int || key is String) {
+      return this[key]
+          as Series; // Cast is safe due to operator[] behavior for these types
+    } else {
+      throw ArgumentError(
+          'Column key must be an int (index) or String (name). Invalid key: $key');
+    }
   }
 
-  /// Returns a Map representation of the row that matches the given criteria.
+  /// Retrieves a single row from the DataFrame that matches all specified criteria.
+  ///
+  /// The criteria are provided as a map where keys are column names (String)
+  /// and values are the exact values to match in those columns.
   ///
   /// Parameters:
-  ///   - `criteria`: A Map where keys are column names and values are the values to match.
+  /// - `criteria`: A `Map<String, dynamic>` specifying the column-value pairs for matching.
   ///
   /// Returns:
-  ///   A Map with column names as keys and row values as values.
+  /// A `Map<String, dynamic>` representing the first row that matches all criteria.
+  /// Keys in the returned map are column names, and values are the corresponding
+  /// cell values from the matched row.
   ///
   /// Throws:
-  ///   - `StateError` if no row matches the criteria or if multiple rows match.
+  /// - `ArgumentError` if a column name provided in `criteria` does not exist in the DataFrame.
+  /// - `StateError` if no row matches all the given criteria.
+  ///   (Note: The current implementation returns the *first* matching row if multiple exist;
+  ///   it does not throw an error for multiple matches.)
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'ID': 1, 'Name': 'Alice', 'Age': 30},
+  ///   {'ID': 2, 'Name': 'Bob',   'Age': 25},
+  ///   {'ID': 3, 'Name': 'Alice', 'Age': 35}, // Another Alice
+  /// ]);
+  ///
+  /// // Get the row where Name is 'Bob'
+  /// Map<String, dynamic> bobRow = df.row({'Name': 'Bob'});
+  /// print(bobRow); // Output: {ID: 2, Name: Bob, Age: 25}
+  ///
+  /// // Get the row where Name is 'Alice' and Age is 35
+  /// Map<String, dynamic> alice35Row = df.row({'Name': 'Alice', 'Age': 35});
+  /// print(alice35Row); // Output: {ID: 3, Name: Alice, Age: 35}
+  ///
+  /// // Attempt to find a non-existent row
+  /// try {
+  ///   df.row({'Name': 'Charlie'});
+  /// } catch (e) {
+  ///   print(e); // Output: StateError: No row matches the given criteria
+  /// }
+  /// ```
   Map<String, dynamic> row(Map<String, dynamic> criteria) {
     // Find rows that match all criteria
     List<int> matchingIndices = [];
@@ -654,7 +1101,8 @@ class DataFrame {
         final value = entry.value;
 
         if (!_columns.contains(colName)) {
-          throw ArgumentError('Column "$colName" not found in DataFrame');
+          throw ArgumentError(
+              'Column "$colName" not found in DataFrame. Available columns: $_columns');
         }
 
         final colIndex = _columns.indexOf(colName);
@@ -670,7 +1118,7 @@ class DataFrame {
     }
 
     if (matchingIndices.isEmpty) {
-      throw StateError('No row matches the given criteria');
+      throw StateError('No row matches the given criteria: $criteria');
     }
 
     // Create a Map representation of the first matching row
@@ -678,30 +1126,86 @@ class DataFrame {
     Map<String, dynamic> result = {};
 
     for (int i = 0; i < _columns.length; i++) {
-      result[_columns[i]] = _data[rowIndex][i];
+      result[_columns[i].toString()] =
+          _data[rowIndex][i]; // Ensure key is String
     }
 
     return result;
   }
 
-  // Operator [] overridden to access column by index or name
-  // Modified operator[] to return a Series
-  /// Returns a [Series] for the specified column,
-  /// accessed by index or name.
+  /// Accesses DataFrame content by column key or boolean Series filter.
   ///
-  /// If [key] is an integer, returns the Series for the column at that index.
-  /// If [key] is a String, returns the Series for the column with that name.
+  /// This operator has two main modes:
+  /// 1. **Column Selection:**
+  ///    - If `key` is an `int` (column index) or `String` (column name),
+  ///      it returns the corresponding column as a `Series`.
+  ///      The Series will have the DataFrame's index as its index.
   ///
-  /// Throws an [IndexError] if the index is out of range.
-  /// Throws an [ArgumentError] if the name does not match a column.
-  /// Returns a [Series] for the specified column,
-  /// accessed by index or name.
+  /// 2. **Boolean Filtering (Row Selection):**
+  ///    - If `key` is a `Series` of boolean values, it filters the DataFrame rows.
+  ///      - The boolean Series (`key`) is aligned with the DataFrame's index.
+  ///        - If `key` has a default integer index and the DataFrame has a non-default index,
+  ///          their lengths must match. `key` is applied row-wise.
+  ///        - If `key`'s index matches the DataFrame's index, it's used directly.
+  ///        - If both have default integer indices but different lengths, an `ArgumentError` is thrown.
+  ///        - Otherwise, `key` is reindexed to match the DataFrame's index, with non-matching
+  ///          indices resulting in `false` for filtering (or `replaceMissingValueWith` if it's a boolean).
+  ///      - Rows where the aligned boolean Series value is `true` are included in the result.
+  ///      - Returns a new `DataFrame` containing the filtered rows.
   ///
-  /// If [key] is an integer, returns the Series for the column at that index.
-  /// If [key] is a String, returns the Series for the column with that name.
+  /// Parameters:
+  /// - `key`:
+  ///   - An `int` for column selection by index.
+  ///   - A `String` for column selection by name.
+  ///   - A `Series` of booleans for row filtering.
   ///
-  /// Throws an [IndexError] if the index is out of range.
-  /// Throws an [ArgumentError] if the name does not match a column.
+  /// Returns:
+  /// - A `Series` if selecting a column by name or integer index.
+  /// - A `DataFrame` if filtering with a boolean Series.
+  ///
+  /// Throws:
+  /// - `IndexError` if `key` is an integer index out of bounds for column selection.
+  /// - `ArgumentError`:
+  ///   - If `key` is a String name not found in columns.
+  ///   - If a boolean `Series` used for filtering has mismatched length/index under certain conditions
+  ///     (e.g., both default indexed but different lengths).
+  ///   - If `key` is not an `int`, `String`, or boolean `Series`.
+  ///
+  /// Examples:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': 10, 'C': true},
+  ///   {'A': 2, 'B': 20, 'C': false},
+  ///   {'A': 3, 'B': 30, 'C': true},
+  /// ], index: ['x', 'y', 'z']);
+  ///
+  /// // Column selection by name
+  /// Series colA = df['A'];
+  /// print(colA);
+  /// // Output: Series(name: A, index: [x, y, z], data: [1, 2, 3])
+  ///
+  /// // Column selection by index
+  /// Series colB_byIndex = df[1]; // Accesses column 'B'
+  /// print(colB_byIndex);
+  /// // Output: Series(name: B, index: [x, y, z], data: [10, 20, 30])
+  ///
+  /// // Boolean filtering with an aligned boolean Series
+  /// Series filterCondition = Series([true, false, true], index: ['x', 'y', 'z']);
+  /// DataFrame filteredDf = df[filterCondition];
+  /// print(filteredDf);
+  /// // Output:
+  /// //   A   B     C
+  /// // x  1  10  true
+  /// // z  3  30  true
+  ///
+  /// // Boolean filtering with a condition derived from a column
+  /// DataFrame filteredByB = df[df['B'] > 15]; // df['B'] > 15 returns a boolean Series
+  /// print(filteredByB);
+  /// // Output:
+  /// //   A   B      C
+  /// // y  2  20  false
+  /// // z  3  30   true
+  /// ```
   dynamic operator [](dynamic key) {
     // Handle boolean Series for filtering (pandas-like indexing)
     if (key is Series &&
@@ -806,7 +1310,41 @@ class DataFrame {
     }
   }
 
-  /// Updates a single cell in the DataFrame
+  /// Updates the value of a single cell in the DataFrame, identified by column name and row position (integer index).
+  ///
+  /// Parameters:
+  /// - `columnName`: The `String` name of the column where the cell is located.
+  /// - `rowIndex`: The integer-based positional index of the row (0 to `rowCount - 1`).
+  ///   This refers to the actual position in the underlying data, not the label-based `index` of the DataFrame.
+  /// - `value`: The `dynamic` new value to set for the cell.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `columnName` does not exist in the DataFrame.
+  /// - `RangeError` if `rowIndex` is out of bounds (less than 0 or greater than or equal to `rowCount`).
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   ['Alice', 30],
+  ///   ['Bob', 25],
+  /// ], columns: ['Name', 'Age']);
+  ///
+  /// print("Before update:\n$df");
+  /// // Output:
+  /// // Before update:
+  /// //        Name  Age
+  /// // 0    Alice   30
+  /// // 1      Bob   25
+  ///
+  /// df.updateCell('Age', 0, 31); // Update Alice's age (row at index 0)
+  /// df.updateCell('Name', 1, 'Robert'); // Update Bob's name (row at index 1)
+  /// print("\nAfter update:\n$df");
+  /// // Output:
+  /// // After update:
+  /// //         Name  Age
+  /// // 0     Alice   31
+  /// // 1    Robert   25
+  /// ```
   void updateCell(String columnName, int rowIndex, dynamic value) {
     int columnIndex = _columns.indexOf(columnName);
     if (columnIndex == -1) {
@@ -820,15 +1358,84 @@ class DataFrame {
     _data[rowIndex][columnIndex] = value;
   }
 
-  /// Overrides the index assignment operator `[]` to allow updating a row or column in the DataFrame.
+  /// Updates or adds a column, or updates a row in the DataFrame using index assignment.
   ///
-  /// If the key is an integer, it updates the row at the specified index. The length of the data must match the number of columns.
+  /// **Column Assignment (if `key` is a `String` representing the column name):**
+  /// - **With a `Series` (`newData`):**
+  ///   - If `newData.index` is non-default numeric (i.e., label-based), values from `newData` are aligned
+  ///     with the DataFrame's `index`. Rows in the DataFrame whose index labels are not found in
+  ///     `newData.index` will receive `replaceMissingValueWith` in the target column.
+  ///   - If `newData.index` is default numeric (0, 1, 2, ...), or if `newData` is a `List`,
+  ///     values are assigned row by row based on position.
+  ///     - If `newData` is shorter than the DataFrame's row count, remaining cells in the column get `replaceMissingValueWith`.
+  ///     - If `newData` is longer, its values are effectively truncated to fit the DataFrame's row count.
+  /// - **With a `List` (`newData`):** Values are assigned row by row, similar to a default-indexed Series.
+  /// - **With a single `dynamic` value (`newData`):** The entire target column is filled with this value.
+  /// - **New Column Creation:** If the column `key` does not exist:
+  ///   - It's added to the DataFrame.
+  ///   - If the DataFrame was empty:
+  ///     - Its `index` might be derived from `newData.index` if `newData` is a Series with a non-default index.
+  ///     - Otherwise, new rows are created with a default integer index matching the length of `newData`.
+  ///   - Existing rows are padded with `replaceMissingValueWith` for this new column before assignment (if applicable).
   ///
-  /// If the key is a string, it updates the column with the specified name. If the column already exists, it updates the existing column. If the column does not exist, it adds a new column. The length of the data must match the number of rows.
+  /// **Row Assignment (if `key` is an `int` representing the row's positional index):**
+  /// - `newData` must be a `List` or a `Series`.
+  /// - The length of `newData` (or `newData.data` if it's a Series) must exactly match the number of columns
+  ///   in the DataFrame.
+  /// - The row at the specified integer position `key` (0 to `rowCount - 1`) is replaced with the values from `newData`.
   ///
-  /// Throws a `RangeError` if the index is out of range.
-  /// Throws an `ArgumentError` if the length of the data does not match the number of columns or rows.
-  /// Throws an `ArgumentError` if the key is not an integer or string.
+  /// Parameters:
+  /// - `key`: A `String` (column name) or an `int` (row position).
+  /// - `newData`: The data to assign, which can be a `Series`, `List`, or a single `dynamic` value.
+  ///
+  /// Throws:
+  /// - `ArgumentError`:
+  ///   - If `key` is not a `String` or `int`.
+  ///   - For row assignment, if `newData`'s length doesn't match the DataFrame's column count.
+  ///   - For column assignment with a new, empty DataFrame and `newData` being a single value (length ambiguity).
+  /// - `RangeError`: For row assignment, if `key` (integer) is out of bounds.
+  ///
+  /// Example (Column Assignment):
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': 10},
+  ///   {'A': 2, 'B': 20},
+  /// ], index: ['x', 'y']);
+  ///
+  /// // Assign a List to an existing column 'B'
+  /// df['B'] = [100, 200];
+  ///
+  /// // Assign a Series to a new column 'C' (aligned by DataFrame's index 'x', 'y')
+  /// df['C'] = Series([true, false], index: ['y', 'x']); // Note index order for alignment
+  ///
+  /// // Assign a single value to a new column 'D'
+  /// df['D'] = 99;
+  /// print(df);
+  /// // Output:
+  /// //   A    B      C   D
+  /// // x  1  200  false  99  // B[x]=200, C[x] used false from Series index 'x'
+  /// // y  2  100   true  99  // B[y]=100, C[y] used true from Series index 'y'
+  ///
+  /// // Add a new column 'E' to an empty DataFrame
+  /// var emptyDf = DataFrame.empty(columns: ['Existing']);
+  /// emptyDf['E'] = [10, 20, 30]; // Creates rows and sets 'E'
+  /// print(emptyDf);
+  /// // Output:
+  /// //   Existing   E
+  /// // 0     null  10
+  /// // 1     null  20
+  /// // 2     null  30
+  /// ```
+  /// Example (Row Assignment):
+  /// ```dart
+  /// var df = DataFrame([[1,2],[3,4]], columns: ['X', 'Y']);
+  /// df[0] = [10, 20]; // Update first row (at position 0)
+  /// print(df);
+  /// // Output:
+  /// //    X   Y
+  /// // 0  10  20
+  /// // 1   3   4
+  /// ```
   void operator []=(dynamic key, dynamic newData) {
     if (key is String) {
       List<dynamic> valuesToSet;
@@ -926,8 +1533,17 @@ class DataFrame {
     }
   } // Helper method to check if an index is the default numeric index
 
+  /// Helper method to check if a given list `idx` represents a default numeric index
+  /// (i.e., 0, 1, 2, ... up to `idx.length - 1`).
+  ///
+  /// Parameters:
+  /// - `idx`: The `List<dynamic>` to check.
+  ///
+  /// Returns:
+  /// `true` if `idx` is a default numeric index, `false` otherwise.
+  /// An empty list is considered a default numeric index.
   bool _isDefaultNumericIndex(List<dynamic> idx) {
-    if (idx.isEmpty) return true;
+    if (idx.isEmpty) return true; // An empty index can be considered default
 
     for (int i = 0; i < idx.length; i++) {
       if (idx[i] != i) return false;
@@ -935,71 +1551,177 @@ class DataFrame {
     return true;
   }
 
+  /// Handles invocations of methods or properties not explicitly defined for the DataFrame.
+  ///
+  /// This is primarily used to allow accessing columns as if they were properties of the DataFrame,
+  /// e.g., `df.myColumnName` can be used as a shorthand for `df['myColumnName']` to retrieve a column Series.
+  ///
+  /// Parameters:
+  /// - `invocation`: The `Invocation` object representing the method call or property access.
+  ///
+  /// Returns:
+  /// - A `Series` if `invocation.memberName` corresponds to an existing column name and
+  ///   it's accessed as a getter (property-like access).
+  /// - Otherwise, it calls `super.noSuchMethod(invocation)` which typically throws a `NoSuchMethodError`.
+  ///
+  /// Note:
+  /// If a column name conflicts with an actual DataFrame method or property name,
+  /// the explicit method/property will take precedence.
   @override
   noSuchMethod(Invocation invocation) {
-    if (invocation.memberName != Symbol('[]') &&
-        _columns.contains(invocation.memberName.toString())) {
-      return this[invocation.memberName.toString()];
+    // Convert symbol to string, removing 'Symbol("' and '")'
+    String memberNameStr = invocation.memberName.toString();
+    memberNameStr = memberNameStr.substring(8, memberNameStr.length - 2);
+
+    // Check if it's a getter for a column name
+    if (invocation.isGetter && _columns.contains(memberNameStr)) {
+      return this[memberNameStr];
+    }
+    // To maintain some backward compatibility or catch accidental method calls on column names:
+    // This part is debatable. If a column name is 'sort', df.sort() would be ambiguous.
+    // Current dartframe behavior seems to allow df.columnName even if it's not a getter.
+    if (!invocation.isAccessor && _columns.contains(memberNameStr)) {
+      // This could be an attempt to call a column as a function.
+      // For now, assume it means to access the column as a Series.
+      return this[memberNameStr];
     }
     super.noSuchMethod(invocation);
   }
 
+  /// Returns a string representation of the DataFrame, formatted as a table.
+  ///
+  /// The output includes row indices and column headers, with cell values aligned.
+  ///
+  /// Parameters:
+  /// - `columnSpacing`: The number of spaces to put between columns. Defaults to `2`.
+  ///
+  /// Returns:
+  /// A `String` representing the formatted DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   ['Alice', 30, 'New York'],
+  ///   ['Bob', 25, 'Los Angeles'],
+  ///   ['Charlie', 35, 'Chicago'],
+  /// ], columns: ['Name', 'Age', 'City'], index: ['P1', 'P2', 'P3']);
+  /// print(df.toString());
+  /// // Output:
+  /// //     Name     Age          City
+  /// // P1  Alice    30      New York
+  /// // P2    Bob    25   Los Angeles
+  /// // P3  Charlie  35       Chicago
+  ///
+  /// var emptyDf = DataFrame.empty(columns: ['A', 'B']);
+  /// print(emptyDf);
+  /// // Output:
+  /// //        A  B
+  /// // ... (0 rows) ...
+  ///
+  /// var completelyEmptyDf = DataFrame.empty();
+  /// print(completelyEmptyDf);
+  /// // Output:
+  /// // Empty DataFrame
+  /// // Dimensions: [0, 0]
+  /// // Index: []
+  /// // Columns: []
+  /// ```
   @override
   String toString({int columnSpacing = 2}) {
-    // Calculate column widths
-    List<int> columnWidths = [];
+    if (_data.isEmpty && _columns.isEmpty) {
+      return "Empty DataFrame\nDimensions: [0, 0]\nIndex: []\nColumns: []";
+    }
+    if (_data.isEmpty && _columns.isNotEmpty) {
+      StringBuffer buffer = StringBuffer();
+      // Determine a nominal width for the index column header for alignment
+      int rowIndexHeaderWidth = index.fold(
+          0,
+          (max, val) =>
+              val.toString().length > max ? val.toString().length : max);
+      rowIndexHeaderWidth = max(rowIndexHeaderWidth,
+          " ".length); // Minimum width for the index column header itself
 
+      buffer.write(' '.padRight(rowIndexHeaderWidth +
+          columnSpacing)); // Space for index column name (blank for empty data)
+
+      for (var colName in _columns) {
+        buffer.write(colName
+            .toString()
+            .padRight(colName.toString().length + columnSpacing));
+      }
+      buffer.writeln();
+      buffer.writeln("... (0 rows) ...");
+      return buffer.toString();
+    }
+
+    // Calculate column widths based on data and column headers
+    List<int> columnWidths = [];
     for (var i = 0; i < _columns.length; i++) {
       int maxColumnWidth = _columns[i].toString().length;
       for (var row in _data) {
-        int cellWidth = row[i].toString().length;
-        if (cellWidth > maxColumnWidth) {
-          maxColumnWidth = cellWidth;
+        if (i < row.length) {
+          // Ensure row has this column
+          int cellWidth = (row[i]?.toString() ?? 'null').length;
+          if (cellWidth > maxColumnWidth) {
+            maxColumnWidth = cellWidth;
+          }
+        } else {
+          // Row is shorter than columns list (can happen with flexible columns)
+          int nullWidth = 'null'.length;
+          if (nullWidth > maxColumnWidth) maxColumnWidth = nullWidth;
         }
       }
       columnWidths.add(maxColumnWidth);
     }
 
-    // Calculate the maximum width needed for row headers
-    int rowHeaderWidth = 0;
-    for (var header in index) {
-      int headerWidth = header.toString().length;
-      if (headerWidth > rowHeaderWidth) {
-        rowHeaderWidth = headerWidth;
+    // Calculate the maximum width needed for row index labels
+    int rowIndexLabelWidth = 0;
+    if (index.isNotEmpty) {
+      for (var label in index) {
+        int labelWidth = (label?.toString() ?? 'null').length;
+        if (labelWidth > rowIndexLabelWidth) {
+          rowIndexLabelWidth = labelWidth;
+        }
       }
+    } else if (_data.isNotEmpty) {
+      // Default integer index "0", "1", ...
+      rowIndexLabelWidth = (_data.length - 1).toString().length;
     }
+    rowIndexLabelWidth =
+        max(rowIndexLabelWidth, " ".length); // Min width for index col header
 
-    // Ensure row header width is at least as wide as the row index
-    rowHeaderWidth = max(rowHeaderWidth, _data.length.toString().length);
-
-    // Add spacing to row header width
-    rowHeaderWidth += columnSpacing;
-
-    // Construct the table string
     StringBuffer buffer = StringBuffer();
 
-    // Add index header (empty space for row header column)
-    buffer.write(' '.padRight(rowHeaderWidth));
-
-    // Add column headers
+    // Add column headers: Index column header (blank) + data column headers
+    buffer.write(' '.padRight(rowIndexLabelWidth + columnSpacing));
     for (var i = 0; i < _columns.length; i++) {
       buffer.write(
           _columns[i].toString().padRight(columnWidths[i] + columnSpacing));
     }
-
     buffer.writeln();
 
     // Add data rows
-    for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
-      var row = _data[rowIndex];
+    for (int r = 0; r < _data.length; r++) {
+      var row = _data[r];
 
-      // Add row header with proper padding
-      buffer.write(index[rowIndex].toString().padRight(rowHeaderWidth));
+      // Add row index label
+      var indexLabelStr = (r < index.length)
+          ? (index[r]?.toString() ?? 'null')
+          : r.toString(); // Fallback if index list is somehow shorter
+      buffer.write(indexLabelStr.padRight(rowIndexLabelWidth + columnSpacing));
 
-      // Add row data
-      for (var i = 0; i < row.length; i++) {
-        buffer
-            .write(row[i].toString().padRight(columnWidths[i] + columnSpacing));
+      // Add cell data for the row
+      for (var c = 0; c < _columns.length; c++) {
+        String cellValueStr;
+        if (c < row.length && row[c] != null) {
+          cellValueStr = row[c].toString();
+        } else if (c < row.length && row[c] == null) {
+          cellValueStr = 'null';
+        } else {
+          // Cell doesn't exist (row shorter than _columns list)
+          cellValueStr = 'null';
+        }
+        buffer.write(cellValueStr.padRight(columnWidths[c] + columnSpacing));
       }
       buffer.writeln();
     }
@@ -1007,9 +1729,60 @@ class DataFrame {
     return buffer.toString();
   }
 
-  /// Access parts of the DataFrame by integer position.
+  /// Provides access to DataFrame selection by integer position (like `iloc` in pandas).
+  ///
+  /// See [DataFrameILocAccessor] for detailed documentation on how to use `.iloc`.
+  /// It allows selection of rows, columns, and individual cells by their integer positions.
+  ///
+  /// Returns:
+  /// A `DataFrameILocAccessor` instance associated with this DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([[1,2],[3,4]], columns: ['A', 'B']);
+  ///
+  /// // Select the first row as a Series
+  /// print(df.iloc[0]);
+  /// // Output: Series(name: 0, index: [A, B], data: [1, 2])
+  ///
+  /// // Select the value at the first row, second column
+  /// print(df.iloc(0, 1));
+  /// // Output: 2
+  ///
+  /// // Select a sub-DataFrame
+  /// print(df.iloc([0], [1]));
+  /// // Output:
+  /// //    B
+  /// // 0  2
+  /// ```
   DataFrameILocAccessor get iloc => DataFrameILocAccessor(this);
 
-  /// Access parts of the DataFrame by label.
+  /// Provides access to DataFrame selection by labels (like `loc` in pandas).
+  ///
+  /// See [DataFrameLocAccessor] for detailed documentation on how to use `.loc`.
+  /// It allows selection of rows, columns, and individual cells using their labels
+  /// (from the DataFrame's `index` and `columns` lists).
+  ///
+  /// Returns:
+  /// A `DataFrameLocAccessor` instance associated with this DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([[1,2],[3,4]], columns: ['A', 'B'], index: ['r1', 'r2']);
+  ///
+  /// // Select row 'r1' as a Series
+  /// print(df.loc['r1']);
+  /// // Output: Series(name: r1, index: [A, B], data: [1, 2])
+  ///
+  /// // Select the value at row 'r1', column 'B'
+  /// print(df.loc('r1', 'B'));
+  /// // Output: 2
+  ///
+  /// // Select a sub-DataFrame using labels
+  /// print(df.loc(['r1'], ['B']));
+  /// // Output:
+  /// //     B
+  /// // r1  2
+  /// ```
   DataFrameLocAccessor get loc => DataFrameLocAccessor(this);
 }

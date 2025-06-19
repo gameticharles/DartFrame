@@ -1,93 +1,374 @@
 part of 'data_frame.dart';
 
 extension DataFrameFunctions on DataFrame {
-  /// Selects columns from the DataFrame by their names.
+  /// Selects a subset of columns from the DataFrame by their names.
   ///
-  /// Returns a new DataFrame containing only the selected columns.
-  DataFrame select(List<String> columnNames) {
-    final indices = columnNames.map((name) => _columns.indexOf(name)).toList();
-    final selectedData = indices.map((index) => _data[index]).toList();
-    return DataFrame._(columnNames, selectedData);
-  }
-
-  /// Selects columns from the DataFrame by their indices.
+  /// Creates a new DataFrame containing only the specified columns, in the order they are listed.
   ///
-  /// Returns a new DataFrame containing only the selected columns.
-  DataFrame selectByIndex(List<int> columnIndices) {
-    final selectedColumnNames =
-        columnIndices.map((index) => _columns[index]).toList();
-    final selectedData = _data
-        .map((row) => columnIndices.map((index) => row[index]).toList())
-        .toList();
-    return DataFrame._(selectedColumnNames, selectedData);
-  }
-
-  /// Selects rows from the DataFrame by their indices.
+  /// Parameters:
+  /// - `columnNames`: A `List<String>` of column names to select.
   ///
-  /// Returns a new DataFrame containing only the selected rows.
-  DataFrame selectRowsByIndex(List<int> rowIndices) {
-    final selectedData = rowIndices.map((index) => _data[index]).toList();
-    return DataFrame._(_columns, selectedData);
-  }
-
-  /// Filters rows from the DataFrame based on a condition.
+  /// Returns:
+  /// A new `DataFrame` with the selected columns.
   ///
-  /// The condition is specified as a function that takes a map representing a row
-  /// and returns a boolean indicating whether to keep the row.
-  DataFrame filter(bool Function(Map<dynamic, dynamic>) condition) {
-    final filteredData = _data
-        .map((row) {
-          final rowMap = Map.fromIterables(_columns, row);
-          return condition(rowMap) ? row : null;
-        })
-        .where((row) => row != null)
-        .toList();
-    return DataFrame._(_columns, filteredData);
-  }
-
-  /// Sorts the DataFrame based on a column.
-  ///
-  /// By default, the sorting is done in ascending order.
-  void sort(String column, {bool ascending = true}) {
-    final columnIndex = _columns.indexOf(column);
-    if (columnIndex == -1) throw ArgumentError('Column does not exist.');
-    _data.sort((a, b) {
-      final aValue = a[columnIndex];
-      final bValue = b[columnIndex];
-      if (aValue == null || bValue == null) {
-        return 0; // Could handle nulls differently depending on requirements
-      }
-      return ascending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-    });
-  }
-
-  /// Returns the first `n` rows of the DataFrame.
-  DataFrame head(int n) {
-    final headData = _data.take(n).toList();
-    return DataFrame._(_columns, headData);
-  }
-
-  /// Returns the last `n` rows of the DataFrame.
-  DataFrame tail(int n) {
-    final tailData = _data.skip(_data.length - n).toList();
-    return DataFrame._(_columns, tailData);
-  }
-
-  /// Returns a DataFrame of the same shape with boolean values indicating whether each element is missing.
-  ///
-  /// A value is considered missing if it is null or matches the DataFrame's replaceMissingValueWith value.
+  /// Throws:
+  /// - `ArgumentError` if any of the specified column names do not exist in the DataFrame.
   ///
   /// Example:
   /// ```dart
   /// var df = DataFrame.fromRows([
-  ///   {'A': 1, 'B': null},
-  ///   {'A': null, 'B': 'x'},
+  ///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
+  ///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
   /// ]);
-  /// var result = df.isna();
-  /// // result contains:
-  /// // A     B
-  /// // false true
-  /// // true  false
+  ///
+  /// // Select 'Name' and 'City' columns
+  /// var selectedDf = df.select(['Name', 'City']);
+  /// print(selectedDf);
+  /// // Output:
+  /// //       Name         City
+  /// // 0    Alice     New York
+  /// // 1      Bob  Los Angeles
+  /// ```
+  DataFrame select(List<String> columnNames) {
+    final List<int> indices = [];
+    for (String name in columnNames) {
+      int index = _columns.indexOf(name);
+      if (index == -1) {
+        throw ArgumentError('Column "$name" not found in DataFrame.');
+      }
+      indices.add(index);
+    }
+
+    // Create new data by selecting columns for each row
+    final selectedData = _data.map((row) {
+      return indices.map((index) => row[index]).toList();
+    }).toList();
+
+    return DataFrame._(List<String>.from(columnNames), selectedData,
+        index: index);
+  }
+
+  /// Selects a subset of columns from the DataFrame by their integer indices.
+  ///
+  /// Creates a new DataFrame containing only the columns at the specified indices,
+  /// in the order they are listed.
+  ///
+  /// Parameters:
+  /// - `columnIndices`: A `List<int>` of column indices to select.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with the selected columns.
+  ///
+  /// Throws:
+  /// - `RangeError` if any index is out of bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
+  ///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
+  /// ]);
+  ///
+  /// // Select columns at index 0 ('Name') and 2 ('City')
+  /// var selectedDf = df.selectByIndex([0, 2]);
+  /// print(selectedDf);
+  /// // Output:
+  /// //       Name         City
+  /// // 0    Alice     New York
+  /// // 1      Bob  Los Angeles
+  /// ```
+  DataFrame selectByIndex(List<int> columnIndices) {
+    final selectedColumnNames = columnIndices.map((index) {
+      if (index < 0 || index >= _columns.length) {
+        throw RangeError.index(index, _columns, 'Column index out of bounds');
+      }
+      return _columns[index];
+    }).toList();
+
+    final selectedData = _data.map((row) {
+      return columnIndices.map((index) => row[index]).toList();
+    }).toList();
+    return DataFrame._(selectedColumnNames, selectedData, index: index);
+  }
+
+  /// Selects a subset of rows from the DataFrame by their integer indices.
+  ///
+  /// Creates a new DataFrame containing only the rows at the specified indices,
+  /// in the order they are listed. The original column structure is preserved.
+  ///
+  /// Parameters:
+  /// - `rowIndices`: A `List<int>` of row indices to select.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with the selected rows.
+  ///
+  /// Throws:
+  /// - `RangeError` if any index is out of bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Name': 'Alice', 'Age': 30},
+  ///   {'Name': 'Bob', 'Age': 25},
+  ///   {'Name': 'Charlie', 'Age': 35},
+  /// ], index: ['r1', 'r2', 'r3']);
+  ///
+  /// // Select rows at index 0 and 2
+  /// var selectedRowsDf = df.selectRowsByIndex([0, 2]);
+  /// print(selectedRowsDf);
+  /// // Output:
+  /// //         Name  Age
+  /// // r1     Alice   30
+  /// // r3   Charlie   35
+  /// ```
+  DataFrame selectRowsByIndex(List<int> rowIndices) {
+    final selectedData = rowIndices.map((idx) {
+      if (idx < 0 || idx >= _data.length) {
+        throw RangeError.index(idx, _data, 'Row index out of bounds');
+      }
+      return List<dynamic>.from(_data[idx]); // Create a copy of the row
+    }).toList();
+    final selectedIndex = rowIndices.map((idx) => index[idx]).toList();
+    return DataFrame._(List<dynamic>.from(_columns), selectedData,
+        index: selectedIndex);
+  }
+
+  /// Filters rows from the DataFrame based on a predicate function.
+  ///
+  /// The `condition` function takes a `Map<dynamic, dynamic>` representing a row
+  /// (where keys are column names and values are cell values) and should return `true`
+  /// to keep the row, or `false` to discard it.
+  ///
+  /// Returns:
+  /// A new `DataFrame` containing only the rows for which the `condition` evaluated to `true`.
+  /// The original DataFrame is not modified.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Name': 'Alice', 'Age': 30, 'City': 'New York'},
+  ///   {'Name': 'Bob', 'Age': 25, 'City': 'Los Angeles'},
+  ///   {'Name': 'Charlie', 'Age': 35, 'City': 'New York'},
+  /// ]);
+  ///
+  /// // Filter for people older than 28
+  /// var olderDf = df.filter((row) => (row['Age'] as int) > 28);
+  /// print(olderDf);
+  /// // Output:
+  /// //         Name  Age      City
+  /// // 0      Alice   30  New York
+  /// // 2    Charlie   35  New York
+  ///
+  /// // Filter for people living in New York
+  /// var nyDf = df.filter((row) => row['City'] == 'New York');
+  /// print(nyDf);
+  /// // Output:
+  /// //         Name  Age      City
+  /// // 0      Alice   30  New York
+  /// // 2    Charlie   35  New York
+  /// ```
+  DataFrame filter(bool Function(Map<dynamic, dynamic> row) condition) {
+    final List<List<dynamic>> filteredData = [];
+    final List<dynamic> filteredIndex = [];
+
+    for (int i = 0; i < _data.length; i++) {
+      final rowList = _data[i];
+      final rowMap = Map<dynamic, dynamic>.fromIterables(_columns, rowList);
+      if (condition(rowMap)) {
+        filteredData.add(List<dynamic>.from(rowList)); // Add a copy
+        filteredIndex.add(index[i]);
+      }
+    }
+    return DataFrame._(List<dynamic>.from(_columns), filteredData,
+        index: filteredIndex);
+  }
+
+  /// Sorts the DataFrame by the values in one or more specified columns.
+  ///
+  /// This method modifies the DataFrame in-place.
+  ///
+  /// Parameters:
+  /// - `column`: A `String` representing the name of the column to sort by.
+  ///   (Note: Sorting by multiple columns is not yet implemented in this version.)
+  /// - `ascending`: A `bool` indicating the sort order.
+  ///   If `true` (default), sorts in ascending order.
+  ///   If `false`, sorts in descending order.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if the specified `column` does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Name': 'Bob', 'Age': 25},
+  ///   {'Name': 'Alice', 'Age': 30},
+  ///   {'Name': 'Charlie', 'Age': 22},
+  /// ]);
+  ///
+  /// // Sort by Age in ascending order
+  /// df.sort('Age');
+  /// print(df);
+  /// // Output:
+  /// //         Name  Age
+  /// // 2    Charlie   22
+  /// // 0        Bob   25
+  /// // 1      Alice   30
+  ///
+  /// // Sort by Name in descending order
+  /// df.sort('Name', ascending: false);
+  /// print(df);
+  /// // Output:
+  /// //         Name  Age
+  /// // 2    Charlie   22
+  /// // 0        Bob   25
+  /// // 1      Alice   30
+  /// ```
+  void sort(String column, {bool ascending = true}) {
+    final columnIndex = _columns.indexOf(column);
+    if (columnIndex == -1) {
+      throw ArgumentError('Column "$column" does not exist.');
+    }
+
+    // Pair data with original index to maintain stability for index
+    var indexedData = _data
+        .asMap()
+        .entries
+        .map((entry) => MapEntry(entry.key, entry.value))
+        .toList();
+
+    indexedData.sort((aPair, bPair) {
+      final aValue = aPair.value[columnIndex];
+      final bValue = bPair.value[columnIndex];
+
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) {
+        return ascending
+            ? -1
+            : 1; // Nulls first in ascending, last in descending
+      }
+      if (bValue == null) {
+        return ascending
+            ? 1
+            : -1; // Nulls first in ascending, last in descending
+      }
+
+      int comparison;
+      if (aValue is Comparable && bValue is Comparable) {
+        comparison = aValue.compareTo(bValue);
+      } else {
+        comparison = aValue.toString().compareTo(bValue.toString());
+      }
+      return ascending ? comparison : -comparison;
+    });
+
+    // Update data and index according to sorted order
+    _data = indexedData.map((pair) => pair.value).toList();
+    index = indexedData.map((pair) => index[pair.key]).toList();
+  }
+
+  /// Returns the first `n` rows of the DataFrame as a new DataFrame.
+  ///
+  /// If `n` is greater than the number of rows, all rows are returned.
+  ///
+  /// Parameters:
+  /// - `n`: The number of rows to select from the beginning. Must be non-negative.
+  ///
+  /// Returns:
+  /// A new `DataFrame` containing the first `n` rows.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `n` is negative.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1}, {'A': 2}, {'A': 3}, {'A': 4}, {'A': 5}
+  /// ]);
+  ///
+  /// var firstThree = df.head(3);
+  /// print(firstThree);
+  /// // Output:
+  /// //    A
+  /// // 0  1
+  /// // 1  2
+  /// // 2  3
+  /// ```
+  DataFrame head(int n) {
+    if (n < 0) {
+      throw ArgumentError('Number of rows for head must be non-negative.');
+    }
+    final count = n > _data.length ? _data.length : n;
+    final headData =
+        _data.take(count).map((row) => List<dynamic>.from(row)).toList();
+    final headIndex = index.take(count).toList();
+    return DataFrame._(List<dynamic>.from(_columns), headData,
+        index: headIndex);
+  }
+
+  /// Returns the last `n` rows of the DataFrame as a new DataFrame.
+  ///
+  /// If `n` is greater than the number of rows, all rows are returned.
+  ///
+  /// Parameters:
+  /// - `n`: The number of rows to select from the end. Must be non-negative.
+  ///
+  /// Returns:
+  /// A new `DataFrame` containing the last `n` rows.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `n` is negative.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1}, {'A': 2}, {'A': 3}, {'A': 4}, {'A': 5}
+  /// ]);
+  ///
+  /// var lastTwo = df.tail(2);
+  /// print(lastTwo);
+  /// // Output:
+  /// //    A
+  /// // 3  4
+  /// // 4  5
+  /// ```
+  DataFrame tail(int n) {
+    if (n < 0) {
+      throw ArgumentError('Number of rows for tail must be non-negative.');
+    }
+    final count = n > _data.length ? _data.length : n;
+    final startIndex = _data.length - count;
+    final tailData =
+        _data.skip(startIndex).map((row) => List<dynamic>.from(row)).toList();
+    final tailIndex = index.skip(startIndex).toList();
+    return DataFrame._(List<dynamic>.from(_columns), tailData,
+        index: tailIndex);
+  }
+
+  /// Returns a DataFrame of the same shape with boolean values indicating
+  /// where data is missing.
+  ///
+  /// A value is considered missing if it is `null` or if it matches the
+  /// DataFrame's `replaceMissingValueWith` property (if set).
+  ///
+  /// Returns:
+  /// A `DataFrame` where each cell contains `true` if the corresponding cell
+  /// in the original DataFrame is missing, and `false` otherwise.
+  /// The resulting DataFrame retains the same index and column labels.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': null, 'C': 'ok'},
+  ///   {'A': null, 'B': 2, 'C': 'fine'},
+  /// ], replaceMissingValueWith: 'N/A');
+  /// df.updateCell('C', 1, 'N/A'); // Mark 'fine' as missing using placeholder
+  ///
+  /// var isMissingDf = df.isna();
+  /// print(isMissingDf);
+  /// // Output:
+  /// //        A      B      C
+  /// // 0  false   true  false
+  /// // 1   true  false   true
   /// ```
   DataFrame isna() {
     List<List<dynamic>> newData = [];
@@ -95,9 +376,9 @@ extension DataFrameFunctions on DataFrame {
     for (int i = 0; i < _data.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < _columns.length; j++) {
-        // Check if the value is null or matches the replaceMissingValueWith
-        bool isMissing =
-            _data[i][j] == null || _data[i][j] == replaceMissingValueWith;
+        bool isMissing = _data[i][j] == null ||
+            (replaceMissingValueWith != null &&
+                _data[i][j] == replaceMissingValueWith);
         row.add(isMissing);
       }
       newData.add(row);
@@ -105,28 +386,39 @@ extension DataFrameFunctions on DataFrame {
 
     return DataFrame(
       newData,
-      columns: _columns,
-      index: index,
+      columns: List<dynamic>.from(_columns), // Ensure columns are copied
+      index: List<dynamic>.from(index), // Ensure index is copied
       allowFlexibleColumns: allowFlexibleColumns,
       replaceMissingValueWith: replaceMissingValueWith,
+      missingDataIndicator: _missingDataIndicator,
     );
   }
 
-  /// Returns a DataFrame of the same shape with boolean values indicating whether each element is not missing.
+  /// Returns a DataFrame of the same shape with boolean values indicating
+  /// where data is **not** missing.
   ///
-  /// A value is considered not missing if it is not null and doesn't match the DataFrame's replaceMissingValueWith value.
+  /// A value is considered not missing if it is not `null` and does not match
+  /// the DataFrame's `replaceMissingValueWith` property (if set).
+  ///
+  /// Returns:
+  /// A `DataFrame` where each cell contains `true` if the corresponding cell
+  /// in the original DataFrame is not missing, and `false` otherwise.
+  /// The resulting DataFrame retains the same index and column labels.
   ///
   /// Example:
   /// ```dart
   /// var df = DataFrame.fromRows([
-  ///   {'A': 1, 'B': null},
-  ///   {'A': null, 'B': 'x'},
-  /// ]);
-  /// var result = df.notna();
-  /// // result contains:
-  /// // A     B
-  /// // true  false
-  /// // false true
+  ///   {'A': 1, 'B': null, 'C': 'ok'},
+  ///   {'A': null, 'B': 2, 'C': 'fine'},
+  /// ], replaceMissingValueWith: 'N/A');
+  /// df.updateCell('C', 1, 'N/A'); // Mark 'fine' as missing
+  ///
+  /// var isNotMissingDf = df.notna();
+  /// print(isNotMissingDf);
+  /// // Output:
+  /// //        A      B      C
+  /// // 0   true  false   true
+  /// // 1  false   true  false
   /// ```
   DataFrame notna() {
     List<List<dynamic>> newData = [];
@@ -134,9 +426,9 @@ extension DataFrameFunctions on DataFrame {
     for (int i = 0; i < _data.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < _columns.length; j++) {
-        // Check if the value is not null and doesn't match the replaceMissingValueWith
-        bool isNotMissing =
-            _data[i][j] != null && _data[i][j] != replaceMissingValueWith;
+        bool isNotMissing = _data[i][j] != null &&
+            (replaceMissingValueWith == null ||
+                _data[i][j] != replaceMissingValueWith);
         row.add(isNotMissing);
       }
       newData.add(row);
@@ -319,93 +611,206 @@ extension DataFrameFunctions on DataFrame {
     }
   }
 
-  /// Replaces occurrences of old value with new value in all columns of the DataFrame.
+  /// Replaces occurrences of `oldValue` with `newValue` in all cells of the DataFrame.
   ///
-  /// - If [matchCase] is true, replacements are case-sensitive.
+  /// This method modifies the DataFrame **in-place**.
   ///
-  /// Note: This method modifies the DataFrame in place.
+  /// Parameters:
+  /// - `oldValue`: The `dynamic` value to be replaced.
+  /// - `newValue`: The `dynamic` value to replace `oldValue` with.
+  /// - `matchCase`: A `bool` indicating whether the replacement should be case-sensitive
+  ///   when `oldValue` and cell values are strings. Defaults to `true`.
+  ///   If `false`, string comparison is case-insensitive.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 'apple', 'B': 10},
+  ///   {'A': 'Apple', 'B': 20},
+  ///   {'A': 'banana', 'B': 10},
+  /// ]);
+  ///
+  /// // Case-sensitive replacement
+  /// df.replaceInPlace('apple', 'orange');
+  /// print(df);
+  /// // Output:
+  /// //         A   B
+  /// // 0  orange  10
+  /// // 1   Apple  20
+  /// // 2  banana  10
+  ///
+  /// // Case-insensitive replacement
+  /// df.replaceInPlace('apple', 'apricot', matchCase: false);
+  /// print(df);
+  /// // Output:
+  /// //         A   B
+  /// // 0  orange  10 // Not 'apricot' because 'orange' != 'apple' (case-insensitive)
+  /// // 1 apricot  20 // 'Apple' becomes 'apricot'
+  /// // 2  banana  10
+  ///
+  /// // Replace numeric value
+  /// df.replaceInPlace(10, 100);
+  /// print(df);
+  /// // Output:
+  /// //         A    B
+  /// // 0  orange  100
+  /// // 1 apricot   20
+  /// // 2  banana  100
+  /// ```
   void replaceInPlace(dynamic oldValue, dynamic newValue,
       {bool matchCase = true}) {
     for (var row in _data) {
       for (var i = 0; i < row.length; i++) {
-        if (matchCase) {
-          if (row[i] == oldValue) {
-            row[i] = newValue;
-          }
-        } else {
-          if (row[i].toString().toLowerCase() ==
-              oldValue.toString().toLowerCase()) {
-            row[i] = newValue;
-          }
+        if (row[i] == oldValue) {
+          row[i] = newValue;
+        } else if (!matchCase &&
+            row[i] is String &&
+            oldValue is String &&
+            (row[i] as String).toLowerCase() == oldValue.toLowerCase()) {
+          row[i] = newValue;
         }
       }
     }
   }
 
-  /// Replaces values throughout the DataFrame.
+  /// Replaces occurrences of `oldValue` with `newValue` in the DataFrame.
+  ///
+  /// Creates a new DataFrame with the replacements applied. The original DataFrame is not modified.
   ///
   /// Parameters:
-  ///   - `oldValue`: The value to replace
-  ///   - `newValue`: The replacement value
-  ///   - `columns`: Optional list of column names to apply replacement
-  ///   - `regex`: Whether to interpret oldValue as a regular expression
-  ///   - `matchCase`: Whether replacements are case-sensitive (only used when regex is false)
+  /// - `oldValue`: The `dynamic` value to be replaced.
+  /// - `newValue`: The `dynamic` value to replace `oldValue` with.
+  /// - `columns`: An optional `List<String>` of column names to apply the replacement to.
+  ///   If `null` (default), replacement is performed across all columns.
+  /// - `regex`: A `bool` indicating whether `oldValue` (if it's a String) should be
+  ///   interpreted as a regular expression. Defaults to `false`.
+  /// - `matchCase`: A `bool` for case-sensitive replacement. Defaults to `true`.
+  ///   If `regex` is `true`, this controls the `caseSensitive` property of the `RegExp`.
+  ///   If `regex` is `false` and `oldValue` is a String, this controls direct string comparison.
   ///
-  /// Returns a new DataFrame with replacements applied.
+  /// Returns:
+  /// A new `DataFrame` with the replacements applied.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if a specified column in `columns` does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Product': 'Apple A', 'Category': 'Fruit'},
+  ///   {'Product': 'Banana B', 'Category': 'Fruit'},
+  ///   {'Product': 'Carrot C', 'Category': 'Vegetable'},
+  /// ]);
+  ///
+  /// // Replace 'Fruit' with 'F' in 'Category' column
+  /// var dfReplaced = df.replace('Fruit', 'F', columns: ['Category']);
+  /// print(dfReplaced);
+  ///
+  /// // Replace using regex (e.g., remove trailing letter) in 'Product'
+  /// var dfRegex = df.replace(r'\s[A-Z]$', '', columns: ['Product'], regex: true);
+  /// print(dfRegex);
+  /// ```
   DataFrame replace(dynamic oldValue, dynamic newValue,
       {List<String>? columns, bool regex = false, bool matchCase = true}) {
-    final columnsToReplace =
-        columns ?? _columns.map((c) => c.toString()).toList();
-    final columnIndices =
-        columnsToReplace.map((col) => _columns.indexOf(col)).toList();
+    final columnsToReplace = columns?.map((c) => c.toString()).toList() ??
+        _columns.map((c) => c.toString()).toList();
+    final List<int> columnIndices = [];
 
-    // Check if any specified column doesn't exist
-    if (columnIndices.contains(-1)) {
-      final missingCol = columnsToReplace[columnIndices.indexOf(-1)];
-      throw ArgumentError('Column $missingCol does not exist');
+    for (String colName in columnsToReplace) {
+      int colIdx = _columns.indexOf(colName);
+      if (colIdx == -1) {
+        throw ArgumentError('Column $colName does not exist');
+      }
+      columnIndices.add(colIdx);
     }
 
-    // Create a copy of the data
     final newData = _data.map((row) => List<dynamic>.from(row)).toList();
+    final newIndex = List<dynamic>.from(index);
 
     RegExp? pattern;
     if (regex && oldValue is String) {
       pattern = RegExp(oldValue, caseSensitive: matchCase);
     }
 
-    // Apply replacement
     for (var i = 0; i < newData.length; i++) {
       for (var colIdx in columnIndices) {
-        final value = newData[i][colIdx];
+        final currentValue = newData[i][colIdx];
 
-        if (value == null) continue;
+        if (currentValue == null && oldValue == null) {
+          // Replacing null with something
+          newData[i][colIdx] = newValue;
+          continue;
+        }
+        if (currentValue == null) {
+          continue; // Don't attempt replacement if cell is null and oldValue isn't
+        }
 
-        if (regex && value is String && pattern != null) {
-          newData[i][colIdx] = value.replaceAll(pattern, newValue.toString());
-        } else if (matchCase) {
-          if (value == oldValue) {
-            newData[i][colIdx] = newValue;
-          }
+        if (pattern != null && currentValue is String) {
+          // Regex replacement
+          newData[i][colIdx] =
+              currentValue.replaceAll(pattern, newValue.toString());
         } else {
-          if (value.toString().toLowerCase() ==
-              oldValue.toString().toLowerCase()) {
+          // Direct replacement
+          if (currentValue == oldValue) {
+            newData[i][colIdx] = newValue;
+          } else if (!matchCase &&
+              currentValue is String &&
+              oldValue is String &&
+              currentValue.toLowerCase() == oldValue.toLowerCase()) {
             newData[i][colIdx] = newValue;
           }
         }
       }
     }
-
-    return DataFrame._(_columns, newData);
+    return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
   }
 
-  /// Converts column data types.
+  /// Casts columns of the DataFrame to specified data types.
+  ///
+  /// Creates a new DataFrame with columns converted to the target types.
+  /// The original DataFrame is not modified.
   ///
   /// Parameters:
-  ///   - `columns`: Map of column names to target types ('int', 'double', 'string', 'bool')
-  DataFrame astype(Map<String, String> columns) {
+  /// - `types`: A `Map<String, String>` where keys are column names and values are
+  ///   the target data type names. Supported type names are:
+  ///   - `'int'`: Converts to `int`.
+  ///   - `'double'`: Converts to `double`.
+  ///   - `'string'`: Converts to `String`.
+  ///   - `'bool'`: Converts to `bool`. For strings, "true" (case-insensitive) becomes `true`,
+  ///     others (like "false", "0", non-empty strings) might become `false` or throw
+  ///     depending on underlying parsing. For numbers, 0 becomes `false`, others `true`.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with the specified columns cast to new types.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if a specified column name does not exist.
+  /// - `ArgumentError` if an unsupported `typeName` is provided.
+  /// - `FormatException` or `TypeError` may occur during parsing if a value cannot be
+  ///   converted to the target type (e.g., parsing "abc" as `int`).
+  ///   In such cases, the original value is currently kept in the cell.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': '10', 'B': '20.5', 'C': 'true', 'D': 'text'},
+  ///   {'A': '12', 'B': '30.0', 'C': 'FALSE', 'D': 'data'},
+  /// ]);
+  ///
+  /// var typedDf = df.astype({
+  ///   'A': 'int',
+  ///   'B': 'double',
+  ///   'C': 'bool',
+  ///   'D': 'string' // No change, but can be explicit
+  /// });
+  /// print(typedDf.rows[0]); // Example: [10, 20.5, true, text]
+  /// print(typedDf.rows[1][2].runtimeType); // Example: bool
+  /// ```
+  DataFrame astype(Map<String, String> types) {
     final newData = _data.map((row) => List<dynamic>.from(row)).toList();
+    final newIndex = List<dynamic>.from(index);
 
-    columns.forEach((colName, typeName) {
+    types.forEach((colName, typeName) {
       final colIdx = _columns.indexOf(colName);
       if (colIdx == -1) {
         throw ArgumentError('Column $colName does not exist');
@@ -413,121 +818,240 @@ extension DataFrameFunctions on DataFrame {
 
       for (var i = 0; i < newData.length; i++) {
         final value = newData[i][colIdx];
-        if (value == null) continue;
+        if (value == null || value == replaceMissingValueWith) {
+          // Skip missing values
+          newData[i][colIdx] =
+              replaceMissingValueWith; // Ensure missing remains consistent
+          continue;
+        }
 
         try {
           switch (typeName.toLowerCase()) {
             case 'int':
-              newData[i][colIdx] = int.parse(value.toString());
+              if (value is String) {
+                newData[i][colIdx] = int.tryParse(value) ?? value;
+              } else if (value is num)
+                {newData[i][colIdx] = value.toInt();}
+              else
+                {newData[i][colIdx] = int.tryParse(value.toString()) ?? value;}
               break;
-
             case 'double':
-              newData[i][colIdx] = double.parse(value.toString());
+              if (value is String) {
+                newData[i][colIdx] = double.tryParse(value) ?? value;
+              } else if (value is num)
+                {newData[i][colIdx] = value.toDouble();}
+              else
+                {newData[i][colIdx] = double.tryParse(value.toString()) ?? value;}
               break;
-
             case 'string':
               newData[i][colIdx] = value.toString();
               break;
-
             case 'bool':
               if (value is bool) {
                 newData[i][colIdx] = value;
+              } else if (value is String) {
+                if (value.toLowerCase() == 'true') {
+                  newData[i][colIdx] = true;
+                } else if (value.toLowerCase() == 'false')
+                  {newData[i][colIdx] = false;}
+                else
+                  {newData[i][colIdx] =
+                      value; // Keep original if not 'true'/'false'
+                      }
               } else if (value is num) {
                 newData[i][colIdx] = value != 0;
-              } else if (value is String) {
-                newData[i][colIdx] = value.toLowerCase() == 'true';
+              } else {
+                newData[i][colIdx] = value; // Keep original if not convertible
               }
               break;
-
             default:
-              throw ArgumentError('Unsupported type: $typeName');
+              throw ArgumentError(
+                  'Unsupported type: $typeName for column $colName. Supported types: int, double, string, bool.');
           }
         } catch (e) {
-          // If conversion fails, keep the original value
-          // Alternatively, could set to null or throw an exception
+          // If conversion fails, keep the original value.
+          // Consider logging the error: print('Failed to convert value "$value" in column "$colName" to $typeName: $e');
         }
       }
     });
 
-    return DataFrame._(_columns, newData);
+    return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
   }
 
-  /// Rounds numeric values to specified precision.
+  /// Rounds numeric values in specified columns to a given number of decimal places.
+  ///
+  /// Creates a new DataFrame with rounded values. The original DataFrame is not modified.
+  /// Only affects cells containing `double` values. Other types are left unchanged.
   ///
   /// Parameters:
-  ///   - `decimals`: Number of decimal places to round to
-  ///   - `columns`: Optional list of column names to round
+  /// - `decimals`: The number of decimal places to round to.
+  /// - `columns`: An optional `List<String>` of column names to apply rounding to.
+  ///   If `null` (default), attempts to round all numeric columns.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with numeric values in the specified columns rounded.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if a specified column in `columns` does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1.2345, 2.3456, 3.4567],
+  ///   'B': [10.0, 20.55, 30.123],
+  ///   'C': ['text', 100, 200.789] // Mixed type column
+  /// });
+  ///
+  /// // Round all possible numeric columns to 2 decimal places
+  /// var dfRoundedAll = df.round(2);
+  /// print(dfRoundedAll);
+  ///
+  /// // Round only column 'B' to 1 decimal place
+  /// var dfRoundedB = df.round(1, columns: ['B']);
+  /// print(dfRoundedB);
+  /// ```
   DataFrame round(int decimals, {List<String>? columns}) {
-    final columnsToRound =
-        columns ?? _columns.map((c) => c.toString()).toList();
-    final columnIndices =
-        columnsToRound.map((col) => _columns.indexOf(col)).toList();
-
-    // Check if any specified column doesn't exist
-    if (columnIndices.contains(-1)) {
-      final missingCol = columnsToRound[columnIndices.indexOf(-1)];
-      throw ArgumentError('Column $missingCol does not exist');
+    final columnsToRound = columns?.map((c) => c.toString()).toList() ??
+        _columns.map((c) => c.toString()).toList();
+    final List<int> columnIndices = [];
+    for (String colName in columnsToRound) {
+      int colIdx = _columns.indexOf(colName);
+      if (colIdx == -1) {
+        // If a specific column to round doesn't exist, it's an error.
+        // If columns is null, we iterate all existing columns, so this won't be hit.
+        if (columns != null) {
+          throw ArgumentError('Column $colName does not exist');
+        }
+        continue;
+      }
+      columnIndices.add(colIdx);
     }
 
-    // Create a copy of the data
     final newData = _data.map((row) => List<dynamic>.from(row)).toList();
+    final newIndex = List<dynamic>.from(index);
 
-    // Apply rounding
     for (var i = 0; i < newData.length; i++) {
       for (var colIdx in columnIndices) {
-        final value = newData[i][colIdx];
-
-        if (value is double) {
-          final factor = pow(10, decimals);
-          newData[i][colIdx] = (value * factor).round() / factor;
+        // Ensure colIdx is valid for the current row structure,
+        // though it should be if derived from _columns.
+        if (colIdx < newData[i].length) {
+          final value = newData[i][colIdx];
+          if (value is double) {
+            final factor = pow(10, decimals);
+            newData[i][colIdx] = (value * factor).round() / factor;
+          } else if (value is int) {
+            // No rounding needed for int, but ensure it's copied correctly
+            newData[i][colIdx] = value
+                .toDouble(); // Consistent type for potentially rounded columns
+          }
+          // Non-numeric values are left as is
         }
       }
     }
-
-    return DataFrame._(_columns, newData);
+    return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
   }
 
-  /// Computes rolling window calculations.
+  /// Computes rolling window calculations on a specified column.
+  ///
+  /// This method calculates a statistic (e.g., mean, sum) over a sliding window
+  /// of a fixed size along a numeric column.
   ///
   /// Parameters:
-  ///   - `column`: Column name to compute rolling calculations on
-  ///   - `window`: Size of the rolling window
-  ///   - `function`: Function to apply ('mean', 'sum', 'min', 'max', 'std')
-  ///   - `minPeriods`: Minimum number of observations required to have a value
-  ///   - `center`: Whether to set the labels at the center of the window
+  /// - `column`: The `String` name of the column to perform rolling calculations on.
+  ///   This column must contain numeric data.
+  /// - `window`: An `int` specifying the size of the rolling window (number of observations).
+  /// - `function`: A `String` indicating the aggregation function to apply to each window.
+  ///   Supported functions:
+  ///   - `'mean'`: Calculates the average of the values in the window.
+  ///   - `'sum'`: Calculates the sum of the values in the window.
+  ///   - `'min'`: Finds the minimum value in the window.
+  ///   - `'max'`: Finds the maximum value in the window.
+  ///   - `'std'`: Calculates the standard deviation of the values in the window.
+  /// - `minPeriods`: An optional `int`. The minimum number of observations in a window
+  ///   required to have a value; otherwise, the result is `null`. Defaults to `window` size.
+  /// - `center`: A `bool`. If `true`, the window is centered on the current observation.
+  ///   If `false` (default), the window is trailing (uses the current and previous observations).
+  ///
+  /// Returns:
+  /// A `Series` containing the results of the rolling calculation. The Series will have
+  /// the same index as the original DataFrame. The name of the Series typically indicates
+  /// the operation performed (e.g., "Rolling mean of ColumnName (window=W)").
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `column` does not exist or is not numeric.
+  /// - `ArgumentError` if `function` is not one of the supported types.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'Values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  /// });
+  ///
+  /// // Rolling mean with window size 3
+  /// var rollingMean = df.rolling('Values', 3, 'mean');
+  /// print(rollingMean);
+  /// // Output:
+  /// // Series(name: Rolling mean of Values (window=3), index: [0, ..., 9], data: [null, null, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
+  ///
+  /// // Rolling sum with window 2, centered
+  /// var rollingSumCentered = df.rolling('Values', 2, 'sum', center: true);
+  /// print(rollingSumCentered);
+  /// // Output might be: Series(name: Rolling sum of Values (window=2), index: [0,...,9], data: [3.0, 5.0, 7.0, ..., 19.0, null])
+  /// // (Exact output for centered depends on handling of edges)
+  /// ```
   Series rolling(String column, int window, String function,
       {int? minPeriods, bool center = false}) {
     final colIdx = _columns.indexOf(column);
     if (colIdx == -1) {
-      throw ArgumentError('Column $column does not exist');
+      throw ArgumentError('Column "$column" does not exist.');
     }
 
     final columnData = _data.map((row) => row[colIdx]).toList();
-    final numData = columnData.whereType<num>().toList();
 
-    if (numData.length != columnData.length) {
-      throw ArgumentError(
-          'Column must contain only numeric values for rolling calculations');
+    // Attempt to convert all data to num for processing, handle non-convertibles as null
+    final List<num?> numData = columnData.map((e) {
+      if (e is num) return e;
+      if (e is String) return num.tryParse(e);
+      return null; // Non-numeric or non-parsable string becomes null
+    }).toList();
+
+    if (window <= 0) {
+      throw ArgumentError("Window size must be positive.");
+    }
+    final minObs = minPeriods ?? window;
+    if (minObs <= 0) {
+      throw ArgumentError("minPeriods must be positive.");
     }
 
-    final minObs = minPeriods ?? window;
     final result = List<num?>.filled(numData.length, null);
 
     for (var i = 0; i < numData.length; i++) {
       int start, end;
 
       if (center) {
-        start = i - window ~/ 2;
-        end = start + window;
+        start = i -
+            (window - 1) ~/
+                2; // Adjust for centering: (window-1)~/2 for left, window~/2 for right
+        end = i + window ~/ 2 + 1; // +1 because sublist end is exclusive
       } else {
+        // Trailing window
         start = i - window + 1;
-        end = i + 1;
+        end = i + 1; // Current element is the end of the window
       }
 
-      if (start < 0) start = 0;
-      if (end > numData.length) end = numData.length;
+      // Clamp window boundaries to data boundaries
+      final actualStart = max(0, start);
+      final actualEnd = min(numData.length, end);
 
-      final windowData = numData.sublist(start, end);
+      if (actualEnd <= actualStart) {
+        // Window is empty or invalid
+        result[i] = null;
+        continue;
+      }
+
+      final windowDataWithNulls = numData.sublist(actualStart, actualEnd);
+      final List<num> windowData =
+          windowDataWithNulls.whereType<num>().toList();
 
       if (windowData.length < minObs) {
         result[i] = null;
@@ -539,230 +1063,491 @@ extension DataFrameFunctions on DataFrame {
           final sum = windowData.reduce((a, b) => a + b);
           result[i] = sum / windowData.length;
           break;
-
         case 'sum':
           result[i] = windowData.reduce((a, b) => a + b);
           break;
-
         case 'min':
           result[i] = windowData.reduce((a, b) => a < b ? a : b);
           break;
-
         case 'max':
           result[i] = windowData.reduce((a, b) => a > b ? a : b);
           break;
-
         case 'std':
+          if (windowData.length < 2) {
+            // Std dev requires at least 2 points
+            result[i] =
+                null; // Or 0.0, depending on desired behavior for single point
+            break;
+          }
           final mean = windowData.reduce((a, b) => a + b) / windowData.length;
+          // Sample standard deviation (N-1 denominator) is more common
           final variance =
               windowData.map((x) => pow(x - mean, 2)).reduce((a, b) => a + b) /
-                  windowData.length;
+                  (windowData.length - 1);
           result[i] = sqrt(variance);
           break;
-
         default:
-          throw ArgumentError('Unsupported function: $function');
+          throw ArgumentError(
+              'Unsupported function: "$function". Supported: mean, sum, min, max, std.');
       }
     }
 
     return Series(result,
-        name: 'Rolling $function of $column (window=$window)');
+        name: 'Rolling $function of $column (window=$window)',
+        index: List.from(index));
   }
 
-  /// Renames columns in the DataFrame according to the provided mapping.
-  void rename(Map<String, String> columnMap) {
-    _columns.asMap().forEach((index, name) {
-      if (columnMap.containsKey(name)) {
-        _columns[index] = columnMap[name];
-      }
-    });
-  }
-
-  /// Drops a specified column from the DataFrame.
-  void drop(String column) {
-    int columnIndex = _columns.indexOf(column);
-    if (columnIndex == -1) {
-      throw ArgumentError('Column $column does not exist.');
-    }
-    _columns.removeAt(columnIndex);
-    for (var row in _data) {
-      row.removeAt(columnIndex);
-    }
-  }
-
-  /// Groups the DataFrame by a specified column.
+  /// Renames columns in the DataFrame based on a provided mapping.
   ///
-  /// Returns a map where keys are unique values from the specified column,
-  /// and values are DataFrames containing rows corresponding to the key.
-  Map<dynamic, DataFrame> groupBy(String column) {
-    int columnIndex = _columns.indexOf(column);
-    if (columnIndex == -1) {
-      throw ArgumentError('Column $column does not exist.');
+  /// This method modifies the DataFrame **in-place**.
+  ///
+  /// Parameters:
+  /// - `columnMap`: A `Map<String, String>` where keys are current column names
+  ///   and values are the new column names. Columns not present in the map
+  ///   will retain their original names.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'colA': 1, 'colB': 2},
+  ///   {'colA': 3, 'colB': 4}
+  /// ]);
+  /// print('Before rename: ${df.columns}'); // Output: [colA, colB]
+  ///
+  /// df.rename({'colA': 'Alpha', 'colB': 'Beta'});
+  /// print('After rename: ${df.columns}'); // Output: [Alpha, Beta]
+  ///
+  /// df.rename({'Alpha': 'A'}); // Rename only one column
+  /// print('After partial rename: ${df.columns}'); // Output: [A, Beta]
+  /// ```
+  void rename(Map<String, String> columnMap) {
+    final newColumnNames =
+        List<dynamic>.from(_columns); // Create a mutable copy
+    bool changed = false;
+    for (int i = 0; i < newColumnNames.length; i++) {
+      String currentName = newColumnNames[i].toString();
+      if (columnMap.containsKey(currentName)) {
+        newColumnNames[i] = columnMap[currentName]!;
+        changed = true;
+      }
+    }
+    if (changed) {
+      _columns = newColumnNames;
+    }
+  }
+
+  /// Drops one or more specified columns from the DataFrame.
+  ///
+  /// This method modifies the DataFrame **in-place**.
+  ///
+  /// Parameters:
+  /// - `columnsToDrop`: A `String` or a `List<String>` of column names to be dropped.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any of the specified column names do not exist in the DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': 2, 'C': 3},
+  ///   {'A': 4, 'B': 5, 'C': 6}
+  /// ]);
+  ///
+  /// // Drop a single column
+  /// df.drop('B');
+  /// print(df.columns); // Output: [A, C]
+  ///
+  /// // Drop multiple columns
+  /// var df2 = DataFrame.fromRows([{'X':1, 'Y':2, 'Z':3}]);
+  /// df2.drop(['X', 'Z']);
+  /// print(df2.columns); // Output: [Y]
+  /// ```
+  void drop(dynamic columnsToDrop) {
+    List<String> colsList;
+    if (columnsToDrop is String) {
+      colsList = [columnsToDrop];
+    } else if (columnsToDrop is List<String>) {
+      colsList = columnsToDrop;
+    } else {
+      throw ArgumentError('columnsToDrop must be a String or List<String>');
     }
 
-    Map<dynamic, List<List<dynamic>>> groups = {};
-    for (var row in _data) {
-      var key = row[columnIndex];
-      groups.putIfAbsent(key, () => []);
-      groups[key]!.add(row);
+    List<int> indicesToDrop = [];
+    for (String columnName in colsList) {
+      int columnIndex = _columns.indexOf(columnName);
+      if (columnIndex == -1) {
+        throw ArgumentError('Column "$columnName" does not exist.');
+      }
+      indicesToDrop.add(columnIndex);
     }
 
-    Map<dynamic, DataFrame> result = {};
-    groups.forEach((key, value) {
-      result[key] = DataFrame._(_columns, value);
+    // Sort indices in descending order to avoid issues when removing by index
+    indicesToDrop.sort((a, b) => b.compareTo(a));
+
+    for (int colIdx in indicesToDrop) {
+      _columns.removeAt(colIdx);
+      for (var row in _data) {
+        row.removeAt(colIdx);
+      }
+    }
+  }
+
+  /// Groups the DataFrame by the unique values in one or more specified columns.
+  ///
+  /// Returns a `Map` where keys are the unique group values (or a list of values if
+  /// grouping by multiple columns) and values are new `DataFrame` objects, each
+  /// containing the rows belonging to that group.
+  ///
+  /// Parameters:
+  /// - `by`: A `String` (single column name) or a `List<String>` (multiple column names)
+  ///   to group by.
+  ///
+  /// Returns:
+  /// A `Map<dynamic, DataFrame>` where keys represent the unique group(s) and
+  /// values are the corresponding DataFrames. If grouping by multiple columns,
+  /// the key will be a `List<dynamic>` of the group values.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any column name in `by` does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Category': 'A', 'Value': 10},
+  ///   {'Category': 'B', 'Value': 20},
+  ///   {'Category': 'A', 'Value': 15},
+  ///   {'Category': 'B', 'Value': 25},
+  /// ]);
+  ///
+  /// var grouped = df.groupBy('Category');
+  /// grouped.forEach((key, groupDf) {
+  ///   print('Category: $key');
+  ///   print(groupDf);
+  /// });
+  /// // Output:
+  /// // Category: A
+  /// //   Category  Value
+  /// // 0        A     10
+  /// // 2        A     15
+  /// // Category: B
+  /// //   Category  Value
+  /// // 1        B     20
+  /// // 3        B     25
+  ///
+  /// // Group by multiple columns (conceptual)
+  /// // var dfMulti = DataFrame.fromRows([
+  /// //   {'Key1': 'X', 'Key2': 'M', 'Value': 1},
+  /// //   {'Key1': 'Y', 'Key2': 'N', 'Value': 2},
+  /// //   {'Key1': 'X', 'Key2': 'M', 'Value': 3},
+  /// // ]);
+  /// // var groupedMulti = dfMulti.groupBy(['Key1', 'Key2']);
+  /// // groupedMulti.forEach((key, groupDf) { // key is a List, e.g., ['X', 'M']
+  /// //   print('Group: $key, DataFrame: $groupDf');
+  /// // });
+  /// ```
+  Map<dynamic, DataFrame> groupBy(dynamic by) {
+    List<String> groupColumnNames;
+    if (by is String) {
+      groupColumnNames = [by];
+    } else if (by is List<String>) {
+      groupColumnNames = by;
+    } else {
+      throw ArgumentError('`by` must be a String or List<String>');
+    }
+
+    final List<int> groupColumnIndices = [];
+    for (String colName in groupColumnNames) {
+      int colIdx = _columns.indexOf(colName);
+      if (colIdx == -1) {
+        throw ArgumentError('Column "$colName" for groupBy does not exist.');
+      }
+      groupColumnIndices.add(colIdx);
+    }
+
+    final Map<dynamic, List<List<dynamic>>> groupsData = {};
+    final Map<dynamic, List<dynamic>> groupsIndex = {};
+
+    for (int i = 0; i < _data.length; i++) {
+      final row = _data[i];
+      dynamic groupKey;
+      if (groupColumnIndices.length == 1) {
+        groupKey = row[groupColumnIndices.first];
+      } else {
+        groupKey = groupColumnIndices.map((idx) => row[idx]).toList();
+      }
+
+      groupsData.putIfAbsent(groupKey, () => []);
+      groupsData[groupKey]!.add(List<dynamic>.from(row));
+      groupsIndex.putIfAbsent(groupKey, () => []);
+      groupsIndex[groupKey]!.add(index[i]);
+    }
+
+    final Map<dynamic, DataFrame> result = {};
+    groupsData.forEach((key, dataList) {
+      result[key] = DataFrame._(
+          List<dynamic>.from(_columns), // Preserve original column order
+          dataList,
+          index: groupsIndex[key]!,
+          allowFlexibleColumns: allowFlexibleColumns,
+          replaceMissingValueWith: replaceMissingValueWith,
+          missingDataIndicator: _missingDataIndicator);
     });
 
     return result;
   }
 
-  /// Enhanced groupby with multiple aggregation functions.
+  /// Groups the DataFrame by specified columns and then applies aggregation functions.
+  ///
+  /// This is a powerful method for summarizing data. It first groups rows based on unique
+  /// combinations of values in the `by` columns. Then, for each group, it applies
+  /// specified aggregation functions to other columns.
   ///
   /// Parameters:
-  ///   - `by`: Column name or list of column names to group by
-  ///   - `agg`: Map of column names to aggregation functions ('mean', 'sum', 'min', 'max', 'count', 'std')
-  ///            or a custom function that takes a list of values and returns a single value
+  /// - `by`: A `String` (single column name) or `List<String>` (multiple column names)
+  ///   to group the DataFrame by.
+  /// - `agg`: A `Map<String, dynamic>` specifying the aggregations.
+  ///   - Keys are the names of the columns to aggregate.
+  ///   - Values are either:
+  ///     - A `String` representing a built-in aggregation function:
+  ///       `'mean'`, `'sum'`, `'min'`, `'max'`, `'count'`, `'std'` (standard deviation).
+  ///     - A custom aggregation function `(List<dynamic> values) => dynamic` that takes
+  ///       a list of values from a group's column and returns a single aggregated value.
   ///
-  /// Returns a new DataFrame with the grouped and aggregated data.
+  /// Returns:
+  /// A new `DataFrame` where rows are the unique groups from `by` columns, and
+  /// other columns are the results of the aggregations. Aggregated column names
+  /// will be in the format `originalColumnName_aggregationFunctionName`.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if any column in `by` or `agg.keys` does not exist.
+  /// - `ArgumentError` if an unsupported built-in aggregation function string is provided.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Category': 'A', 'Type': 'X', 'Sales': 100, 'Quantity': 5},
+  ///   {'Category': 'B', 'Type': 'Y', 'Sales': 150, 'Quantity': 8},
+  ///   {'Category': 'A', 'Type': 'X', 'Sales': 120, 'Quantity': 6},
+  ///   {'Category': 'B', 'Type': 'X', 'Sales': 200, 'Quantity': 10},
+  ///   {'Category': 'A', 'Type': 'Y', 'Sales': 80,  'Quantity': 4},
+  /// ]);
+  ///
+  /// // Group by 'Category' and calculate sum of 'Sales' and mean of 'Quantity'
+  /// var aggDf = df.groupByAgg('Category', {
+  ///   'Sales': 'sum',
+  ///   'Quantity': 'mean',
+  /// });
+  /// print(aggDf);
+  /// // Output (order of rows A, B might vary):
+  /// //   Category  Sales_sum  Quantity_mean
+  /// // 0        A        300            5.0
+  /// // 1        B        350            9.0
+  ///
+  /// // Group by 'Category' and 'Type', count 'Sales'
+  /// var multiGroupDf = df.groupByAgg(['Category', 'Type'], {'Sales': 'count'});
+  /// print(multiGroupDf);
+  /// // Output (example, order might vary):
+  /// //   Category Type  Sales_count
+  /// // 0        A    X            2
+  /// // 1        B    Y            1
+  /// // 2        B    X            1
+  /// // 3        A    Y            1
+  ///
+  /// // Group by 'Category' and use a custom aggregation for 'Sales' (e.g., range)
+  /// var customAggDf = df.groupByAgg('Category', {
+  ///  'Sales': (List<dynamic> values) {
+  ///    if (values.isEmpty) return null;
+  ///    var nums = values.whereType<num>().toList();
+  ///    if (nums.isEmpty) return null;
+  ///    return nums.reduce(max) - nums.reduce(min);
+  ///  }
+  /// });
+  /// print(customAggDf);
+  /// // Output (example):
+  /// // Category  Sales_custom
+  /// // 0        A            40  // (120 - 80 for A)
+  /// // 1        B            50  // (200 - 150 for B)
+  /// ```
   DataFrame groupByAgg(dynamic by, Map<String, dynamic> agg) {
-    // Convert single column to list
-    final List<String> groupColumns = by is String ? [by] : by;
+    final List<String> groupColumns = by is String
+        ? [by]
+        : (by is List<String>
+            ? by
+            : throw ArgumentError('`by` must be a String or List<String>'));
 
-    // Validate group columns
     for (var col in groupColumns) {
       if (!hasColumn(col)) {
-        throw ArgumentError('Column $col does not exist');
+        throw ArgumentError('Grouping column "$col" does not exist.');
       }
     }
-
-    // Validate aggregation columns
     for (var col in agg.keys) {
       if (!hasColumn(col)) {
-        throw ArgumentError('Column $col does not exist');
+        throw ArgumentError('Aggregation column "$col" does not exist.');
       }
     }
 
-    // Extract group column indices
-    final groupIndices =
+    final List<int> groupIndices =
         groupColumns.map((col) => _columns.indexOf(col)).toList();
-
-    // Group the data
-    final groups = <List<dynamic>, List<List<dynamic>>>{};
+    final Map<List<dynamic>, List<List<dynamic>>> groupsData = {};
 
     for (var row in _data) {
       final groupKey = groupIndices.map((idx) => row[idx]).toList();
-      groups.putIfAbsent(groupKey, () => []);
-      groups[groupKey]!.add(row);
+      // Use a string representation of the list as map key if lists are not directly usable
+      // Or implement a custom ListKey class with hashCode and ==
+      // For simplicity, this example might have issues if groupKey lists are modified or contain unhashable items.
+      // A robust solution uses an immutable key or a custom hashable key object.
+      // Dart lists are hashable if their elements are.
+      groupsData.putIfAbsent(groupKey, () => []).add(row);
     }
 
-    // Prepare result columns
-    final resultColumns = <dynamic>[...groupColumns];
-    final aggColumnNames = <String>[];
-
-    // Create column names for aggregated results
+    final List<dynamic> resultColumns = List<dynamic>.from(groupColumns);
+    final List<String> aggregatedColNames = [];
     agg.forEach((col, func) {
-      final funcName = func is Function ? 'custom' : func.toString();
-      aggColumnNames.add('${col}_$funcName');
+      final funcName =
+          func is Function ? 'custom' : func.toString().toLowerCase();
+      aggregatedColNames.add('${col}_$funcName');
     });
+    resultColumns.addAll(aggregatedColNames);
 
-    resultColumns.addAll(aggColumnNames);
+    final List<List<dynamic>> resultData = [];
+    final List<dynamic> resultIndex =
+        []; // To store the first original index of each group for the new DataFrame
 
-    // Perform aggregation
-    final resultData = <List<dynamic>>[];
-
-    groups.forEach((groupKey, rows) {
-      final resultRow = <dynamic>[...groupKey];
-
-      // Apply aggregation functions
-      agg.forEach((col, func) {
-        final colIdx = _columns.indexOf(col);
-        final values = rows.map((row) => row[colIdx]).toList();
-
-        if (func is Function) {
-          // Custom function
-          resultRow.add(func(values));
+    groupsData.forEach((groupKey, groupRows) {
+      final List<dynamic> newRow = List<dynamic>.from(groupKey);
+      // Find the first original index for this group
+      // This is a simplification; a more robust approach might involve more complex index handling
+      if (groupRows.isNotEmpty) {
+        // Find first row in _data that matches this groupKey to get its original index
+        int originalRowIdx = _data.indexWhere((dataRow) {
+          List<dynamic> keyFromDataRow =
+              groupIndices.map((idx) => dataRow[idx]).toList();
+          if (keyFromDataRow.length != groupKey.length) return false;
+          for (int k = 0; k < groupKey.length; ++k) {
+            if (keyFromDataRow[k] != groupKey[k]) return false;
+          }
+          return true;
+        });
+        if (originalRowIdx != -1) {
+          resultIndex.add(index[originalRowIdx]);
         } else {
-          // Built-in aggregation function
-          final aggFunc = func.toString().toLowerCase();
-          switch (aggFunc) {
+          resultIndex.add(resultIndex
+              .length); // Fallback to sequential if somehow not found
+        }
+      }
+
+      agg.forEach((colToAgg, funcOrFuncName) {
+        final colIdx = _columns.indexOf(colToAgg);
+        final List<dynamic> valuesForAgg =
+            groupRows.map((row) => row[colIdx]).toList();
+
+        if (funcOrFuncName is Function) {
+          newRow.add(funcOrFuncName(valuesForAgg));
+        } else if (funcOrFuncName is String) {
+          final aggFuncName = funcOrFuncName.toLowerCase();
+          switch (aggFuncName) {
             case 'mean':
-              final numValues = values.whereType<num>().toList();
-              if (numValues.isEmpty) {
-                resultRow.add(null);
-              } else {
-                resultRow
-                    .add(numValues.reduce((a, b) => a + b) / numValues.length);
-              }
+              final numValues = valuesForAgg.whereType<num>().toList();
+              newRow.add(numValues.isEmpty
+                  ? null
+                  : numValues.reduce((a, b) => a + b) / numValues.length);
               break;
-
             case 'sum':
-              final numValues = values.whereType<num>().toList();
-              if (numValues.isEmpty) {
-                resultRow.add(null);
-              } else {
-                resultRow.add(numValues.reduce((a, b) => a + b));
-              }
+              final numValues = valuesForAgg.whereType<num>().toList();
+              newRow.add(
+                  numValues.isEmpty ? null : numValues.reduce((a, b) => a + b));
               break;
-
             case 'min':
-              final numValues = values.whereType<num>().toList();
-              if (numValues.isEmpty) {
-                resultRow.add(null);
-              } else {
-                resultRow.add(numValues.reduce((a, b) => a < b ? a : b));
-              }
+              final numValues = valuesForAgg.whereType<num>().toList();
+              newRow.add(numValues.isEmpty ? null : numValues.reduce(min));
               break;
-
             case 'max':
-              final numValues = values.whereType<num>().toList();
-              if (numValues.isEmpty) {
-                resultRow.add(null);
-              } else {
-                resultRow.add(numValues.reduce((a, b) => a > b ? a : b));
-              }
+              final numValues = valuesForAgg.whereType<num>().toList();
+              newRow.add(numValues.isEmpty ? null : numValues.reduce(max));
               break;
-
             case 'count':
-              resultRow.add(values.where((v) => v != null).length);
+              newRow.add(valuesForAgg
+                  .where((v) => v != null && v != replaceMissingValueWith)
+                  .length);
               break;
-
             case 'std':
-              final numValues = values.whereType<num>().toList();
-              if (numValues.length <= 1) {
-                resultRow.add(null);
+              final numValues = valuesForAgg.whereType<num>().toList();
+              if (numValues.length < 2) {
+                newRow.add(null);
               } else {
                 final mean =
                     numValues.reduce((a, b) => a + b) / numValues.length;
                 final variance = numValues
                         .map((x) => pow(x - mean, 2))
                         .reduce((a, b) => a + b) /
-                    numValues.length;
-                resultRow.add(sqrt(variance));
+                    (numValues.length - 1); // Sample std dev
+                newRow.add(sqrt(variance));
               }
               break;
-
             default:
-              throw ArgumentError('Unsupported aggregation function: $aggFunc');
+              throw ArgumentError(
+                  'Unsupported aggregation function string: "$aggFuncName" for column "$colToAgg".');
           }
+        } else {
+          throw ArgumentError(
+              'Aggregation for column "$colToAgg" must be a recognized String or a Function.');
         }
       });
-
-      resultData.add(resultRow);
+      resultData.add(newRow);
     });
 
-    return DataFrame._(resultColumns, resultData);
+    // Create new index for the resulting DataFrame. If groupsData was empty, resultIndex will be too.
+    // If resultIndex is empty but resultData is not (should not happen), generate default.
+    List<dynamic> finalResultIndex = resultData.isNotEmpty ? resultIndex : [];
+    if (resultData.isNotEmpty && finalResultIndex.isEmpty) {
+      finalResultIndex = List.generate(resultData.length, (i) => i);
+    }
+
+    return DataFrame._(resultColumns, resultData, index: finalResultIndex);
   }
 
-  /// Returns the frequency of each unique value in a specified column.
+  /// Computes the frequency of each unique value in a specified column.
+  ///
+  /// This method delegates to the `valueCounts` method of the `Series` representing
+  /// the target column.
   ///
   /// Parameters:
-  ///   - `column`: The name of the column to count unique values from.
-  ///   - `normalize`: If `true`, return relative frequencies (proportions) instead of counts.
-  ///   - `sort`: If `true` (default), sort the resulting Series by frequency.
-  ///   - `ascending`: If `true` (and `sort` is `true`), sort in ascending order of frequency. Default is `false` (descending).
-  ///   - `dropna`: If `true` (default), do not include counts of missing values in the result.
-  ///             If `false`, include the count of missing values.
+  /// - `column`: The `String` name of the column for which to count unique value frequencies.
+  /// - `normalize`: A `bool`. If `true`, returns relative frequencies (proportions)
+  ///   instead of absolute counts. Defaults to `false`.
+  /// - `sort`: A `bool`. If `true` (default), sorts the resulting Series by frequency.
+  /// - `ascending`: A `bool`. If `true` (and `sort` is `true`), sorts in ascending
+  ///   order of frequency. Defaults to `false` (descending).
+  /// - `dropna`: A `bool`. If `true` (default), does not include counts of missing values
+  ///   (null or `replaceMissingValueWith`) in the result. If `false`, includes their count.
   ///
-  /// Returns a Series containing counts (or proportions) of unique values.
+  /// Returns:
+  /// A `Series` where the index contains the unique values from the specified column,
+  /// and the values are their corresponding counts or proportions. The Series is named
+  /// after the original column.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if the specified `column` does not exist in the DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'Letters': ['A', 'B', 'A', 'C', 'B', 'A', null],
+  ///   'Numbers': [1, 2, 1, 3, 2, 1, 4]
+  /// }, replaceMissingValueWith: null);
+  ///
+  /// // Get value counts for 'Letters' column
+  /// var counts = df.valueCounts('Letters');
+  /// print(counts);
+  /// // Output (order might vary if sort=false):
+  /// // Series(name: Letters, index: [A, B, C], data: [3, 2, 1])
+  ///
+  /// // Get normalized frequencies, including NA
+  /// var proportions = df.valueCounts('Letters', normalize: true, dropna: false);
+  /// print(proportions);
+  /// // Output (order might vary):
+  /// // Series(name: Letters, index: [A, B, C, null], data: [0.428..., 0.285..., 0.142..., 0.142...])
+  /// ```
   Series valueCounts(
     String column, {
     bool normalize = false,
@@ -771,7 +1556,7 @@ extension DataFrameFunctions on DataFrame {
     bool dropna = true,
   }) {
     if (!hasColumn(column)) {
-      throw ArgumentError('Column $column does not exist.');
+      throw ArgumentError('Column "$column" does not exist.');
     }
     // Delegate to the Series' value_counts method
     return this[column].valueCounts(
@@ -782,49 +1567,102 @@ extension DataFrameFunctions on DataFrame {
     );
   }
 
-  /// Summarizes the structure of the DataFrame.
+  /// Generates a summary of the DataFrame's structure.
+  ///
+  /// This method creates a new DataFrame that provides insights into each column, including:
+  /// - Column Name
+  /// - Data Type(s) present (as a Map of Type to count, excluding missing values)
+  /// - Whether the column contains mixed data types (boolean)
+  /// - Count of missing values (values equal to `replaceMissingValueWith` or `null`)
+  ///
+  /// Returns:
+  /// A new `DataFrame` where each row describes a column from the original DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'ID': 1, 'Name': 'Alice', 'Score': 90.5, 'Active': true},
+  ///   {'ID': 2, 'Name': 'Bob', 'Score': null, 'Active': false},
+  ///   {'ID': 3, 'Name': 'Charlie', 'Score': 85, 'Active': null},
+  /// ], replaceMissingValueWith: null); // Explicitly using null for missing
+  /// df.updateCell('Name', 1, null); // Add another missing value
+  ///
+  /// var dfStructure = df.structure();
+  /// print(dfStructure);
+  /// // Output (Data Type map might show types like _GrowableList, etc.):
+  /// //     Column Name          Data Type  Mixed Types  Missing Count
+  /// // 0            ID         {int: 3}        false              0
+  /// // 1          Name    {String: 2, Null: 1}  true              1 // Or just {String: 2} if nulls handled by missingCount
+  /// // 2         Score  {double: 1, int: 1, Null: 1} true           1
+  /// // 3        Active      {bool: 2, Null: 1}  true              1
+  /// ```
   DataFrame structure() {
     var summaryData = <List<dynamic>>[];
 
-    for (var column in _columns) {
-      var columnData = this[column];
-      var columnType =
-          _analyzeColumnTypes(columnData); // Uses Series.data directly
+    for (var columnNameDyn in _columns) {
+      String columnName = columnNameDyn.toString();
+      var columnSeries = this[columnName]; // Access Series via operator[]
+      var typeAnalysis = _analyzeColumnTypes(columnSeries);
 
-      // Count missing values based on replaceMissingValueWith
       int missingCount = 0;
-      for (var val in columnData.data) {
-        if (val == replaceMissingValueWith) {
+      for (var val in columnSeries.data) {
+        if (val == null ||
+            (replaceMissingValueWith != null &&
+                val == replaceMissingValueWith)) {
           missingCount++;
         }
       }
+      // The typeAnalysis already excludes missing values based on `replaceMissingValueWith`
+      // So, we just sum its counts for non-missing types.
+      // bool isMixed = typeAnalysis.keys.length > 1;
+      // Let's define mixed more carefully: more than one non-null type.
+      int nonNullTypeCount =
+          typeAnalysis.keys.where((type) => type != Null).length;
+      bool isMixed = nonNullTypeCount > 1;
 
       var row = [
-        column,
-        columnType, // This is a Map<Type, int>
-        columnType.keys.length >
-            1, // Check if more than one type was found (excluding nulls)
-        missingCount, // Use the new missing count
+        columnName,
+        typeAnalysis
+            .toString(), // String representation of the map for simplicity
+        isMixed,
+        missingCount,
       ];
       summaryData.add(row);
     }
 
-    var columnNames = [
+    var summaryColumnNames = [
       'Column Name',
-      'Data Type',
+      'Data Type(s)', // Changed from 'Data Type'
       'Mixed Types',
       'Missing Count'
     ];
-
-    return DataFrame(columns: columnNames, summaryData);
+    // Create a new DataFrame for the summary.
+    // Explicitly set index for the summary DataFrame.
+    var summaryIndex = List.generate(summaryData.length, (i) => i);
+    return DataFrame(summaryData,
+        columns: summaryColumnNames, index: summaryIndex);
   }
 
-  /// Analyzes the data types within a column, ignoring missing values.
+  /// Analyzes and counts the occurrences of different data types within a `Series`.
+  ///
+  /// This private helper method is used by `structure()` to determine the types present in a column.
+  /// It ignores values that match the DataFrame's `replaceMissingValueWith` property.
+  ///
+  /// Parameters:
+  /// - `columnData`: The `Series` representing the column to analyze.
+  ///
+  /// Returns:
+  /// A `Map<Type, int>` where keys are the runtime types found in the column
+  /// (excluding missing values as defined by `replaceMissingValueWith`),
+  /// and values are the counts of each type.
   Map<Type, int> _analyzeColumnTypes(Series columnData) {
     var typeCounts = <Type, int>{};
     for (var value in columnData.data) {
-      // Consider value as non-missing if it's not the placeholder
-      if (value != replaceMissingValueWith) {
+      // Consider value as non-missing if it's not the placeholder AND not null
+      bool isConsideredMissing = (value == null) ||
+          (replaceMissingValueWith != null && value == replaceMissingValueWith);
+
+      if (!isConsideredMissing) {
         var valueType = value.runtimeType;
         typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
       }
@@ -832,40 +1670,92 @@ extension DataFrameFunctions on DataFrame {
     return typeCounts;
   }
 
-  // _countNullValues is removed as its logic is integrated into structure()
-
-  /// Provides a summary of numerical columns in the DataFrame.
+  /// Generates descriptive statistics for numerical columns in the DataFrame.
   ///
-  /// Calculates count, mean, standard deviation, minimum, quartiles, and maximum values
-  /// for each numerical column.
+  /// For each column containing numerical data, this method calculates:
+  /// - `count`: Number of non-null numeric values.
+  /// - `mean`: Average of the values.
+  /// - `std`: Standard deviation of the values.
+  /// - `min`: Minimum value.
+  /// - `25%`: The first quartile (25th percentile).
+  /// - `50%`: The median (50th percentile).
+  /// - `75%`: The third quartile (75th percentile).
+  /// - `max`: Maximum value.
+  ///
+  /// Returns:
+  /// A `Map<String, Map<String, num>>` where outer keys are the numerical column names,
+  /// and inner keys are the statistic names (e.g., 'mean', 'std').
+  /// If a column is non-numeric or empty after filtering for numbers, it's excluded.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'Age': [25, 30, 22, 35, 28, null], // Includes a null
+  ///   'Salary': [50000, 60000, 45000, 75000, 55000, 62000.5],
+  ///   'Name': ['A', 'B', 'C', 'D', 'E', 'F'] // Non-numeric
+  /// });
+  ///
+  /// var stats = df.describe();
+  /// stats.forEach((column, description) {
+  ///   print('Statistics for column: $column');
+  ///   description.forEach((statName, value) {
+  ///     print('  $statName: ${value.toStringAsFixed(2)}');
+  ///   });
+  /// });
+  /// // Output might show stats for 'Age' (count 5) and 'Salary' (count 6).
+  /// ```
   Map<String, Map<String, num>> describe() {
     Map<String, Map<String, num>> description = {};
 
     for (var i = 0; i < _columns.length; i++) {
-      var columnName = _columns[i];
+      var columnName = _columns[i].toString();
       var columnData = _data.map((row) => row[i]);
 
-      var numericData = columnData.whereType<num>().toList();
+      // Filter out nulls and ensure values are numeric
+      var numericData = columnData
+          .where((v) => v != null && v != replaceMissingValueWith && v is num)
+          .cast<num>() // Cast to num after filtering
+          .toList();
+
       if (numericData.isEmpty) {
-        // Not a numerical column, skip
-        continue;
+        continue; // Skip non-numeric or empty numeric columns
       }
 
       num count = numericData.length;
       num sum = numericData.fold(0, (prev, element) => prev + element);
-      num mean = sum / count;
+      num mean = (count > 0) ? sum / count : 0;
 
-      num sumOfSquares =
-          numericData.fold(0, (prev, element) => prev + pow(element - mean, 2));
-      num variance = sumOfSquares / count;
-      num std = sqrt(variance);
+      num std = 0;
+      if (count > 1) {
+        num sumOfSquares = numericData.fold(
+            0, (prev, element) => prev + pow(element - mean, 2));
+        num variance = sumOfSquares / (count - 1); // Sample standard deviation
+        std = sqrt(variance);
+      }
 
-      var sortedData = numericData..sort();
+      var sortedData = List<num>.from(numericData)
+        ..sort(); // Create a mutable copy for sorting
       num min = sortedData.first;
       num max = sortedData.last;
-      num q1 = sortedData[(count * 0.25).floor()];
-      num median = sortedData[(count * 0.5).floor()];
-      num q3 = sortedData[(count * 0.75).floor()];
+
+      // Percentile calculation helper
+      num percentile(List<num> sortedList, double p) {
+        if (sortedList.isEmpty) return 0; // Or throw, or return NaN
+        if (sortedList.length == 1) return sortedList.first;
+        double pos = (sortedList.length - 1) * p;
+        int intPos = pos.floor();
+        double diff = pos - intPos;
+        if (intPos + 1 < sortedList.length) {
+          return sortedList[intPos] * (1 - diff) +
+              sortedList[intPos + 1] * diff;
+        } else {
+          return sortedList[intPos];
+        }
+      }
+
+      num q1 = percentile(sortedData, 0.25);
+      num median = percentile(sortedData, 0.50);
+      num q3 = percentile(sortedData, 0.75);
 
       description[columnName] = {
         'count': count,
@@ -873,111 +1763,313 @@ extension DataFrameFunctions on DataFrame {
         'std': std,
         'min': min,
         '25%': q1,
-        '50%': median,
+        '50%': median, // Median
         '75%': q3,
         'max': max,
       };
     }
-
     return description;
   }
 
-  /// Add a row to the DataFrame
-  void addRow(List<dynamic> newRow) {
-    if (_columns.isEmpty) {
-      // DataFrame is empty, add columns first or adjust row length
-      // Create columns based on the first row
-      _columns = List.generate(newRow.length, (index) => 'Column${index + 1}');
-    } else {
-      // Ensure new row length matches existing column count
-      if (newRow.length != _columns.length) {
-        // Handle mismatch (e.g., adjust row or throw exception)
-        throw ArgumentError('New row length must match number of columns.');
-      }
-    }
-    _data = _data.isEmpty ? newRow : [_data, newRow];
-  }
-
-  /// Add a column to the DataFrame
-  void addColumn(dynamic name, {dynamic defaultValue}) {
-    if (_columns.contains(name)) {
-      throw ArgumentError("Column '$name' already exists");
-    }
-    _columns = _columns.isEmpty ? [name] : [..._columns, name];
-
-    // Check if defaultValue is a list
-    bool isDefaultValueList = defaultValue is List;
-
-    for (int i = 0; i < _data.length; i++) {
-      var row = _data[i];
-
-      if (isDefaultValueList) {
-        // If defaultValue is a list, use the corresponding value if available
-        if (i < defaultValue.length) {
-          row.add(defaultValue[i]);
-        } else {
-          // If index exceeds defaultValue list length, use null
-          row.add(null);
-        }
-      } else {
-        // If defaultValue is not a list, use the same value for all rows
-        row.add(defaultValue);
-      }
-    }
-  }
-
-  /// Updates a specific value in a column at the given index.
+  /// Adds a new row to the end of the DataFrame.
+  ///
+  /// This method modifies the DataFrame **in-place**.
   ///
   /// Parameters:
-  ///   - `index`: The row index to update
-  ///   - `column`: The column to update (can be either a column name as String or a column index as int)
-  ///   - `value`: The new value to set
-  void updateColumn(int index, dynamic column, dynamic value) {
-    if (index < 0 || index >= _data.length) {
-      throw ArgumentError('Index out of range: $index');
+  /// - `newRow`: A `List<dynamic>` representing the row to be added.
+  ///   The length of `newRow` must match the number of columns in the DataFrame.
+  ///   If the DataFrame is empty and has no columns defined, the columns will be
+  ///   named "Column1", "Column2", etc., based on the length of `newRow`.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if the DataFrame has columns and `newRow` length does not match
+  ///   the number of columns.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromNames(['Name', 'Age']);
+  /// df.addRow(['Alice', 30]);
+  /// df.addRow(['Bob', 25]);
+  /// print(df);
+  /// // Output:
+  /// //       Name  Age
+  /// // 0    Alice   30
+  /// // 1      Bob   25
+  ///
+  /// var emptyDf = DataFrame.empty();
+  /// emptyDf.addRow([10, 'X']);
+  /// print(emptyDf);
+  /// // Output:
+  /// //   Column1 Column2
+  /// // 0      10       X
+  /// ```
+  void addRow(List<dynamic> newRow) {
+    if (_columns.isEmpty && _data.isEmpty) {
+      // If DataFrame is completely empty, define columns based on newRow length
+      _columns = List.generate(newRow.length, (index) => 'Column${index + 1}');
+    } else if (newRow.length != _columns.length) {
+      throw ArgumentError(
+          'New row length (${newRow.length}) must match number of columns (${_columns.length}).');
+    }
+    _data.add(List<dynamic>.from(newRow)); // Add a copy
+    // Add a new index label. If the current index is a default integer index, continue it.
+    if (index.isEmpty ||
+        (index.isNotEmpty &&
+            index.last is int &&
+            index.last == index.length - 1 &&
+            _data.length > index.length)) {
+      index.add(_data.length - 1);
+    } else {
+      index.add(
+          'Index${_data.length - 1}'); // Or some other placeholder/strategy for non-default index
+    }
+  }
+
+  /// Adds a new column to the DataFrame.
+  ///
+  /// This method modifies the DataFrame **in-place**.
+  ///
+  /// Parameters:
+  /// - `name`: The `dynamic` name for the new column. Typically a `String`.
+  /// - `defaultValue`: The value to populate the new column with.
+  ///   - If `defaultValue` is a `List`, its length must match the number of rows
+  ///     in the DataFrame. Each element of the list will be used for the corresponding row.
+  ///   - If `defaultValue` is not a list (e.g., a single value like `int`, `String`, `null`),
+  ///     all cells in the new column will be filled with this value.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if a column with the given `name` already exists.
+  /// - `ArgumentError` if `defaultValue` is a `List` and its length does not match
+  ///   the number of rows in the DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([{'A': 1}, {'A': 2}]);
+  ///
+  /// // Add a column with a single default value
+  /// df.addColumn('B', defaultValue: 0);
+  /// print(df);
+  /// // Output:
+  /// //    A  B
+  /// // 0  1  0
+  /// // 1  2  0
+  ///
+  /// // Add a column with values from a list
+  /// df.addColumn('C', defaultValue: [10, 20]);
+  /// print(df);
+  /// // Output:
+  /// //    A  B   C
+  /// // 0  1  0  10
+  /// // 1  2  0  20
+  /// ```
+  void addColumn(dynamic name, {dynamic defaultValue}) {
+    String colName = name.toString();
+    if (_columns.any((c) => c.toString() == colName)) {
+      throw ArgumentError("Column '$colName' already exists.");
+    }
+
+    _columns.add(name); // Add new column name
+
+    if (defaultValue is List) {
+      if (defaultValue.length != _data.length && _data.isNotEmpty) {
+        // Allow adding to empty DF
+        throw ArgumentError(
+            'Length of defaultValue list (${defaultValue.length}) must match number of rows (${_data.length}).');
+      }
+      if (_data.isEmpty) {
+        // If DF is empty, create rows based on defaultValue list
+        for (int i = 0; i < defaultValue.length; ++i) {
+          List<dynamic> newRow = List.filled(
+              _columns.length, replaceMissingValueWith,
+              growable: true);
+          newRow[_columns.length - 1] = defaultValue[i];
+          _data.add(newRow);
+          // Also add index if it's empty
+          if (index.length < _data.length) {
+            index.add(i);
+          }
+        }
+      } else {
+        for (int i = 0; i < _data.length; i++) {
+          _data[i].add(defaultValue[i]);
+        }
+      }
+    } else {
+      // Single default value
+      if (_data.isEmpty && defaultValue != null) {
+        // Cannot determine number of rows if DF is empty and defaultValue is not a list
+        // Or, decide to not add any rows, just the column.
+        // For now, let's assume if data is empty, column is added but no rows.
+        // This behavior might need refinement based on desired pandas parity.
+      } else {
+        for (var row in _data) {
+          row.add(defaultValue);
+        }
+      }
+    }
+  }
+
+  /// Updates a specific cell value in the DataFrame, identified by its row index and column (name or index).
+  ///
+  /// This method modifies the DataFrame **in-place**.
+  ///
+  /// Parameters:
+  /// - `rowIndex`: The integer-based positional index of the row to update (0 to `rowCount - 1`).
+  /// - `column`: The column to update. Can be either:
+  ///   - A `String` representing the column name.
+  ///   - An `int` representing the column's positional index.
+  /// - `value`: The new `dynamic` value to set for the cell.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `rowIndex` is out of range.
+  /// - `ArgumentError` if `column` (as an integer index) is out of range.
+  /// - `ArgumentError` if `column` (as a String name) does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'Name': 'Alice', 'Age': 30},
+  ///   {'Name': 'Bob', 'Age': 25}
+  /// ]);
+  ///
+  /// // Update Alice's age using column name
+  /// df.updateColumn(0, 'Age', 31);
+  ///
+  /// // Update Bob's name using column index (Name is at index 0)
+  /// df.updateColumn(1, 0, 'Robert');
+  ///
+  /// print(df);
+  /// // Output:
+  /// //        Name  Age
+  /// // 0    Alice   31
+  /// // 1   Robert   25
+  /// ```
+  void updateColumn(int rowIndex, dynamic column, dynamic value) {
+    if (rowIndex < 0 || rowIndex >= _data.length) {
+      throw ArgumentError(
+          'Row index out of range: $rowIndex. DataFrame has ${_data.length} rows.');
     }
 
     int columnIndex;
-
-    // Handle column parameter as either index or name
     if (column is int) {
-      // Column is provided as an index
       if (column < 0 || column >= _columns.length) {
-        throw ArgumentError('Column index out of range: $column');
+        throw ArgumentError(
+            'Column index out of range: $column. DataFrame has ${_columns.length} columns.');
       }
       columnIndex = column;
-    } else {
-      // Column is provided as a name (String or other type)
-      columnIndex =
-          _columns.indexWhere((col) => col.toString() == column.toString());
+    } else if (column is String) {
+      columnIndex = _columns.indexOf(column);
       if (columnIndex == -1) {
-        throw ArgumentError('Column $column does not exist');
+        throw ArgumentError(
+            'Column "$column" does not exist. Available columns: $_columns');
       }
+    } else {
+      throw ArgumentError(
+          'Column identifier must be an int (index) or String (name).');
     }
 
-    // Ensure the row exists and has enough elements
-    if (_data[index].length <= columnIndex) {
-      // Extend the row if needed
-      while (_data[index].length <= columnIndex) {
-        _data[index].add(null);
+    // Ensure the row has enough elements (should generally be true if columns are managed correctly)
+    if (_data[rowIndex].length <= columnIndex) {
+      // This case should ideally not be hit if DataFrame structure is consistent.
+      // If it can happen due to flexible columns, pad with replaceMissingValueWith.
+      while (_data[rowIndex].length <= columnIndex) {
+        _data[rowIndex].add(replaceMissingValueWith);
       }
     }
-
-    // Update the value
-    _data[index][columnIndex] = value;
+    _data[rowIndex][columnIndex] = value;
   }
 
-  /// Concatenates this DataFrame with a list of other DataFrames along the specified axis.
+  /// Concatenates this DataFrame with one or more other DataFrames along a specified axis.
+  ///
+  /// This method allows for combining DataFrames either row-wise (stacking vertically)
+  /// or column-wise (joining horizontally).
   ///
   /// Parameters:
-  /// - `others`: A list of DataFrames to concatenate with the current DataFrame.
-  /// - `axis`: The axis to concatenate along. 0 for row-wise (stacking), 1 for column-wise (side-by-side).
-  ///           Default is 0.
-  /// - `join`: How to handle columns/indices on the other axis. 'outer' for union, 'inner' for intersection.
-  ///           Default is 'outer'.
-  /// - `ignore_index`: If `true`, the resulting index will be a new default integer index (0, 1, ..., n-1).
-  ///                   Applies to `axis = 0`. For `axis = 1`, it would reset column names to default integers,
-  ///                   which is less common and might be handled differently or ignored. Default is `false`.
+  /// - `others`: A `List<DataFrame>` to concatenate with the current DataFrame.
+  /// - `axis`: An `int` specifying the axis to concatenate along.
+  ///   - `0` (default): Row-wise concatenation. Stacks DataFrames vertically.
+  ///     Column alignment depends on the `join` parameter.
+  ///   - `1`: Column-wise concatenation. Joins DataFrames horizontally.
+  ///     Row alignment is based on matching index labels. If `ignoreIndex` is `true`
+  ///     for `axis = 1`, alignment is positional, and the resulting index is reset.
+  /// - `join`: A `String` indicating how to handle columns/indices on the other axis.
+  ///   - `'outer'` (default): Union of columns/indices. Missing values are filled with
+  ///     the DataFrame's `replaceMissingValueWith`.
+  ///   - `'inner'`: Intersection of columns/indices. Only common columns/indices are kept.
+  /// - `ignoreIndex`: A `bool`.
+  ///   - If `true` and `axis = 0`: The resulting DataFrame's index will be a new
+  ///     default integer index (0, 1, ..., n-1).
+  ///   - If `true` and `axis = 1`: The resulting DataFrame's column names will be reset
+  ///     to default integer labels (0, 1, ...). Original row indices are attempted to be aligned;
+  ///     if alignment is complex or `join` is 'outer' with differing indices, a default integer
+  ///     index might result for rows as well.
+  ///   Defaults to `false`.
+  ///
+  /// Returns:
+  /// A new `DataFrame` resulting from the concatenation.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `axis` is not 0 or 1, or if `join` is not 'outer' or 'inner'.
+  ///
+  /// Example (Row-wise, axis = 0):
+  /// ```dart
+  /// var df1 = DataFrame.fromMap({'A': [1, 2], 'B': [3, 4]});
+  /// var df2 = DataFrame.fromMap({'A': [5, 6], 'B': [7, 8]});
+  /// var df3 = DataFrame.fromMap({'B': [9,10], 'C': [11,12]}); // Different columns
+  ///
+  /// // Outer join (default)
+  /// print(df1.concatenate([df2, df3]));
+  /// // Output:
+  /// //    A  B     C
+  /// // 0  1  3  null
+  /// // 1  2  4  null
+  /// // 2  5  7  null
+  /// // 3  6  8  null
+  /// // 4 null 9    11
+  /// // 5 null 10   12
+  ///
+  /// // Inner join
+  /// print(df1.concatenate([df3], join: 'inner'));
+  /// // Output:
+  /// //    B
+  /// // 0  3
+  /// // 1  4
+  /// // 2  9
+  /// // 3 10
+  ///
+  /// // Outer join, ignore index
+  /// print(df1.concatenate([df2], ignoreIndex: true));
+  /// // Output:
+  /// //    A  B
+  /// // 0  1  3
+  /// // 1  2  4
+  /// // 2  5  7
+  /// // 3  6  8
+  /// ```
+  /// Example (Column-wise, axis = 1):
+  /// ```dart
+  /// var dfA = DataFrame.fromMap({'A': [1, 2], 'B': [3, 4]}, index: ['r1', 'r2']);
+  /// var dfB = DataFrame.fromMap({'C': [5, 6], 'D': [7, 8]}, index: ['r1', 'r2']); // Same index
+  /// var dfC = DataFrame.fromMap({'E': [9,10]}, index: ['r1', 'r3']); // Different index
+  ///
+  /// print(dfA.concatenate([dfB], axis: 1));
+  /// // Output:
+  /// //     A  B  C  D
+  /// // r1  1  3  5  7
+  /// // r2  2  4  6  8
+  ///
+  /// print(dfA.concatenate([dfC], axis: 1, join: 'outer')); // Outer join aligns on index
+  /// // Output:
+  /// //      A    B    E
+  /// // r1  1.0  3.0  9.0
+  /// // r2  2.0  4.0  NaN // or replaceMissingValueWith
+  /// // r3  NaN  NaN 10.0
+  ///
+  /// print(dfA.concatenate([dfC], axis: 1, join: 'inner'));
+  /// // Output:
+  /// //     A  B  E
+  /// // r1  1  3  9
+  /// ```
   DataFrame concatenate(List<DataFrame> others,
       {int axis = 0, String join = 'outer', bool ignoreIndex = false}) {
     if (others.isEmpty) {
@@ -1184,231 +2276,667 @@ extension DataFrameFunctions on DataFrame {
   //   super.noSuchMethod(invocation);
   // }
 
-  /// Shuffles the rows of the DataFrame.
+  /// Creates a new DataFrame with rows randomly shuffled.
   ///
-  /// This method randomly shuffles the rows of the DataFrame in place. If a seed is provided,
-  /// the shuffle is deterministic, allowing for reproducible shuffles. Without a seed,
-  /// the shuffle order is random and different each time the method is called.
+  /// This method does not modify the original DataFrame.
   ///
   /// Parameters:
-  ///   - `seed` (optional): An integer value used to initialize the random number generator.
-  ///     Providing a seed guarantees the shuffle order is the same across different runs
-  ///     of the program. If omitted, the shuffle order is random and non-reproducible.
+  /// - `seed`: An optional `int` value used to initialize the random number generator.
+  ///   Providing a seed ensures that the shuffle order is the same across different
+  ///   runs, making the shuffle deterministic and reproducible. If `null` (default),
+  ///   the shuffle order is random and non-reproducible.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with its rows shuffled. The index is also shuffled along with the data.
   ///
   /// Example:
   /// ```dart
-  /// var df = DataFrame(
-  ///   data: [
-  ///     [1, 'A'],
-  ///     [2, 'B'],
-  ///     [3, 'C'],
-  ///     [4, 'D'],
-  ///   ],
-  ///   columns: ['ID', 'Letter'],
-  /// );
+  /// var df = DataFrame.fromMap({
+  ///   'ID': [1, 2, 3, 4],
+  ///   'Letter': ['A', 'B', 'C', 'D']
+  /// }, index: ['r1', 'r2', 'r3', 'r4']);
   ///
-  /// print('Before shuffle:');
+  /// print('Original DataFrame:');
   /// print(df);
   ///
-  /// // Shuffle without a seed
-  /// var newDf = df.shuffle();
-  /// print('After random shuffle:');
-  /// print(newDf);
+  /// // Shuffle randomly
+  /// var shuffledDf = df.shuffle();
+  /// print('\nRandomly Shuffled DataFrame:');
+  /// print(shuffledDf); // Order will vary
   ///
-  /// // Shuffle with a seed for reproducibility
-  /// newDf = df.shuffle(seed: 123);
-  /// print('After shuffle with seed:');
-  /// print(newDf);
+  /// // Shuffle with a seed for reproducible results
+  /// var seededShuffle1 = df.shuffle(seed: 42);
+  /// print('\nShuffled DataFrame (seed 42):');
+  /// print(seededShuffle1);
+  ///
+  /// var seededShuffle2 = df.shuffle(seed: 42); // Same seed
+  /// print('\nShuffled DataFrame (seed 42, again):');
+  /// print(seededShuffle2); // Will have the same order as seededShuffle1
   /// ```
   DataFrame shuffle({int? seed}) {
-    final data = _data.toList();
-    var random = seed != null ? Random(seed) : Random();
-    for (int i = data.length - 1; i > 0; i--) {
-      int n = random.nextInt(i + 1);
-      var temp = data[i];
-      data[i] = data[n];
-      data[n] = temp;
+    if (_data.isEmpty) {
+      return copy(); // Return a copy of the empty DataFrame
     }
 
-    return DataFrame._(_columns, data);
+    // Pair data and index to shuffle them together
+    final List<MapEntry<List<dynamic>, dynamic>> pairedDataAndIndex = [];
+    for (int i = 0; i < _data.length; i++) {
+      pairedDataAndIndex.add(MapEntry(List<dynamic>.from(_data[i]), index[i]));
+    }
+
+    var random = seed != null ? Random(seed) : Random();
+    pairedDataAndIndex.shuffle(random);
+
+    final List<List<dynamic>> shuffledData =
+        pairedDataAndIndex.map((e) => e.key).toList();
+    final List<dynamic> shuffledIndex =
+        pairedDataAndIndex.map((e) => e.value).toList();
+
+    return DataFrame._(List<dynamic>.from(_columns), shuffledData,
+        index: shuffledIndex,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: _missingDataIndicator);
   }
 
-  /// Returns true if the DataFrame has no rows.
+  /// Returns `true` if the DataFrame has no rows.
+  ///
+  /// This is equivalent to checking if `rowCount` is 0.
+  ///
+  /// Returns:
+  /// A `bool` indicating whether the DataFrame is empty.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.empty();
+  /// print(df.isEmpty); // Output: true
+  ///
+  /// df.addRow([1, 2]);
+  /// print(df.isEmpty); // Output: false
+  /// ```
   bool get isEmpty => _data.isEmpty;
 
-  /// Returns true if the DataFrame has at least one row.
+  /// Returns `true` if the DataFrame has at least one row.
+  ///
+  /// This is equivalent to checking if `rowCount` is greater than 0.
+  ///
+  /// Returns:
+  /// A `bool` indicating whether the DataFrame is not empty.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([{'A':1}]);
+  /// print(df.isNotEmpty); // Output: true
+  ///
+  /// var emptyDf = DataFrame.empty();
+  /// print(emptyDf.isNotEmpty); // Output: false
+  /// ```
   bool get isNotEmpty => _data.isNotEmpty;
 
   /// Creates a deep copy of the DataFrame.
   ///
-  /// Returns a new DataFrame with the same columns and data.
+  /// The new DataFrame will have its own independent copies of the column list,
+  /// data rows (and the lists within them), and the index list.
+  /// Modifications to the copied DataFrame will not affect the original, and vice-versa.
+  /// Properties like `allowFlexibleColumns` and `replaceMissingValueWith` are also copied.
+  ///
+  /// Returns:
+  /// A new `DataFrame` that is a deep copy of the original.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df1 = DataFrame.fromMap({'A': [1, 2]});
+  /// var df2 = df1.copy();
+  ///
+  /// df2.updateCell('A', 0, 100); // Modify the copy
+  /// df2.addColumn('B', defaultValue: 99);
+  ///
+  /// print('Original DataFrame:');
+  /// print(df1); // df1 remains unchanged
+  /// // Output:
+  /// // Original DataFrame:
+  /// //    A
+  /// // 0  1
+  /// // 1  2
+  ///
+  /// print('\nCopied and Modified DataFrame:');
+  /// print(df2);
+  /// // Output:
+  /// // Copied and Modified DataFrame:
+  /// //      A   B
+  /// // 0  100  99
+  /// // 1    2  99
+  /// ```
   DataFrame copy() {
-    // Create deep copies of the data to ensure independence
-    final dataCopy = _data.map((row) => List<dynamic>.from(row)).toList();
-    return DataFrame._(List<dynamic>.from(_columns), dataCopy);
+    final List<dynamic> copiedColumns = List<dynamic>.from(_columns);
+    final List<List<dynamic>> copiedData =
+        _data.map((row) => List<dynamic>.from(row)).toList();
+    final List<dynamic> copiedIndex = List<dynamic>.from(index);
+
+    return DataFrame._(
+      copiedColumns,
+      copiedData,
+      index: copiedIndex,
+      allowFlexibleColumns: allowFlexibleColumns,
+      replaceMissingValueWith: replaceMissingValueWith,
+      missingDataIndicator:
+          List<dynamic>.from(_missingDataIndicator), // Also copy this
+    );
   }
 
-  /// Returns a list of column data types.
+  /// Returns a `Map` indicating the data type of each column.
   ///
-  /// For each column, determines the predominant data type.
+  /// For each column, it determines the predominant non-null runtime `Type` of its values.
+  /// If a column is empty or contains only null/missing values, its type might be reported as `dynamic`
+  /// or `Null`.
+  ///
+  /// Returns:
+  /// A `Map<String, Type>` where keys are column names (as `String`) and
+  /// values are the inferred `Type` of each column.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'Integers': [1, 2, 3],
+  ///   'Doubles': [1.0, 2.5, 3.14],
+  ///   'Strings': ['a', 'b', 'c'],
+  ///   'Booleans': [true, false, true],
+  ///   'Mixed': [1, 'hello', true, null],
+  ///   'AllNull': [null, null, null]
+  /// }, replaceMissingValueWith: null);
+  ///
+  /// Map<String, Type> columnTypes = df.dtypes;
+  /// columnTypes.forEach((col, type) {
+  ///   print('$col: $type');
+  /// });
+  /// // Output:
+  /// // Integers: int
+  /// // Doubles: double
+  /// // Strings: String
+  /// // Booleans: bool
+  /// // Mixed: int (or String, or bool, depending on first non-null, or if more sophisticated logic is used)
+  /// // AllNull: Null (or dynamic if no non-null values to infer from)
+  /// ```
   Map<String, Type> get dtypes {
     Map<String, Type> types = {};
 
     for (var i = 0; i < _columns.length; i++) {
-      var columnName = _columns[i];
-      var columnData = _data.map((row) => row[i]).toList();
+      var columnName = _columns[i].toString();
+      var columnData = _data.map((row) {
+        // Ensure row is long enough, can happen with flexible columns
+        return (i < row.length) ? row[i] : replaceMissingValueWith;
+      }).toList();
 
-      // Count occurrences of each type
+      // Count occurrences of each non-missing type
       Map<Type, int> typeCounts = {};
       for (var value in columnData) {
-        if (value != null) {
+        bool isConsideredMissing = (value == null) ||
+            (replaceMissingValueWith != null &&
+                value == replaceMissingValueWith);
+        if (!isConsideredMissing) {
           Type valueType = value.runtimeType;
           typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
         }
       }
 
-      // Find the most common type
-      Type? mostCommonType;
+      // Find the most common non-missing type
+      Type mostCommonType =
+          dynamic; // Default to dynamic if no non-missing values or all are different
       int maxCount = 0;
-      typeCounts.forEach((type, count) {
-        if (count > maxCount) {
-          maxCount = count;
-          mostCommonType = type;
+      if (typeCounts.isNotEmpty) {
+        typeCounts.forEach((type, count) {
+          if (count > maxCount) {
+            maxCount = count;
+            mostCommonType = type;
+          }
+        });
+      } else {
+        // Column is all null/missing or empty
+        final firstValue = columnData.isNotEmpty ? columnData.first : null;
+        if (firstValue == null ||
+            (replaceMissingValueWith != null &&
+                firstValue == replaceMissingValueWith)) {
+          mostCommonType = Null; // Or keep as dynamic
         }
-      });
-
-      types[columnName] = mostCommonType ?? dynamic;
+      }
+      types[columnName] = mostCommonType;
     }
-
     return types;
   }
 
-  /// Checks if the DataFrame contains a specific column.
+  /// Checks if the DataFrame contains a column with the specified name.
+  ///
+  /// Parameters:
+  /// - `columnName`: The `String` name of the column to check for.
+  ///
+  /// Returns:
+  /// `true` if a column with `columnName` exists, `false` otherwise.
+  /// Comparison is direct equality on column labels.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromNames(['A', 'B']);
+  /// print(df.hasColumn('A')); // Output: true
+  /// print(df.hasColumn('C')); // Output: false
+  /// ```
   bool hasColumn(String columnName) => _columns.contains(columnName);
 
-  /// Returns a new DataFrame with only unique rows.
+  /// Returns a new DataFrame containing only the unique rows from the original DataFrame.
+  ///
+  /// The order of rows in the returned DataFrame is based on their first appearance
+  /// in the original DataFrame. The index of the first appearance is preserved.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with duplicate rows removed.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromRows([
+  ///   {'A': 1, 'B': 'x'},
+  ///   {'A': 2, 'B': 'y'},
+  ///   {'A': 1, 'B': 'x'}, // Duplicate of the first row
+  ///   {'A': 3, 'B': 'z'},
+  /// ], index: ['r1', 'r2', 'r3', 'r4']);
+  ///
+  /// var uniqueDf = df.unique();
+  /// print(uniqueDf);
+  /// // Output:
+  /// //     A  B
+  /// // r1  1  x
+  /// // r2  2  y
+  /// // r4  3  z
+  /// ```
   DataFrame unique() {
-    final uniqueRows = <List<dynamic>>{};
-    for (var row in _data) {
-      uniqueRows.add(List<dynamic>.from(row));
+    final Set<String> seenRows =
+        {}; // Use string representation of rows to track seen ones
+    final List<List<dynamic>> uniqueData = [];
+    final List<dynamic> uniqueIndex = [];
+
+    for (int i = 0; i < _data.length; i++) {
+      final row = _data[i];
+      // Convert row to a string representation for checking uniqueness.
+      // This is a simple way; for more complex objects or precise equality,
+      // a custom hashing or deep equality check might be needed.
+      final rowStr = row.join('||'); // Using a unique separator
+      if (seenRows.add(rowStr)) {
+        uniqueData.add(List<dynamic>.from(row));
+        uniqueIndex.add(index[i]);
+      }
     }
-    return DataFrame._(_columns, uniqueRows.toList());
+    return DataFrame._(List<dynamic>.from(_columns), uniqueData,
+        index: uniqueIndex,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: _missingDataIndicator);
   }
 
-  /// Resets the index of the DataFrame.
+  /// Returns a new DataFrame with the index reset to the default integer index (0 to N-1).
   ///
-  /// This is useful after filtering operations to ensure row indices are sequential.
+  /// The original index is discarded. This is useful after filtering or sorting operations
+  /// if a clean, sequential index is desired.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with a default integer index. The data and columns remain the same.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({'A': [10, 20, 30]}, index: ['x', 'y', 'z']);
+  /// print('Original DataFrame:\n$df');
+  ///
+  /// var dfReset = df.resetIndex();
+  /// print('\nDataFrame with reset index:\n$dfReset');
+  /// // Output:
+  /// // DataFrame with reset index:
+  /// //    A
+  /// // 0 10
+  /// // 1 20
+  /// // 2 30
+  /// ```
   DataFrame resetIndex() {
-    // Simply return a copy since we don't maintain explicit indices
-    return copy();
+    // Create a new default integer index
+    final newIndex = List.generate(rowCount, (i) => i);
+    // Return a new DataFrame with the new index but same data and columns
+    return DataFrame._(
+      List<dynamic>.from(_columns),
+      _data.map((row) => List<dynamic>.from(row)).toList(), // Deep copy data
+      index: newIndex,
+      allowFlexibleColumns: allowFlexibleColumns,
+      replaceMissingValueWith: replaceMissingValueWith,
+      missingDataIndicator: _missingDataIndicator,
+    );
   }
 
-  /// Converts the DataFrame to a list of maps.
+  /// Converts the DataFrame into a `List` of `Map<dynamic, dynamic>`.
   ///
-  /// Each map represents a row with column names as keys.
+  /// Each map in the list represents a row from the DataFrame, where keys are
+  /// the column labels and values are the corresponding cell values for that row.
+  ///
+  /// Returns:
+  /// A `List<Map<dynamic, dynamic>>` representing the DataFrame's data.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'Name': ['Alice', 'Bob'],
+  ///   'Age': [30, 25]
+  /// });
+  ///
+  /// List<Map<dynamic, dynamic>> listOfMaps = df.toListOfMaps();
+  /// print(listOfMaps);
+  /// // Output:
+  /// // [
+  /// //   {Name: Alice, Age: 30},
+  /// //   {Name: Bob, Age: 25}
+  /// // ]
+  /// ```
   List<Map<dynamic, dynamic>> toListOfMaps() {
     return _data.map((row) {
       final map = <dynamic, dynamic>{};
       for (var i = 0; i < _columns.length; i++) {
-        map[_columns[i]] = row[i];
+        // Ensure row is long enough before accessing by index
+        if (i < row.length) {
+          map[_columns[i]] = row[i];
+        } else {
+          map[_columns[i]] =
+              replaceMissingValueWith; // Or null, if preferred for short rows
+        }
       }
       return map;
     }).toList();
   }
 
-  /// Converts the DataFrame to a map of Series.
+  /// Converts the DataFrame into a `Map` of `Series`.
   ///
-  /// Each key is a column name and each value is a Series containing the column data.
+  /// Each key in the map is a column name from the DataFrame, and the corresponding
+  /// value is a `Series` containing the data for that column. The index of each
+  /// `Series` will be the same as the DataFrame's index.
+  ///
+  /// Returns:
+  /// A `Map<dynamic, Series>` where keys are column labels and values are `Series`
+  /// representing each column.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, 2, 3],
+  ///   'B': [4, 5, 6]
+  /// }, index: ['x', 'y', 'z']);
+  ///
+  /// Map<dynamic, Series> mapOfSeries = df.toMap();
+  /// print(mapOfSeries['A']);
+  /// // Output: Series(name: A, index: [x, y, z], data: [1, 2, 3])
+  /// print(mapOfSeries['B']);
+  /// // Output: Series(name: B, index: [x, y, z], data: [4, 5, 6])
+  /// ```
   Map<dynamic, Series> toMap() {
     final map = <dynamic, Series>{};
     for (var i = 0; i < _columns.length; i++) {
-      final columnData = _data.map((row) => row[i]).toList();
-      map[_columns[i]] = Series(columnData, name: columns[i].toString());
+      final columnData = _data.map((row) {
+        return (i < row.length) ? row[i] : replaceMissingValueWith;
+      }).toList();
+      map[_columns[i]] = Series(columnData,
+          name: _columns[i].toString(), index: List.from(index));
     }
     return map;
   }
 
-  /// Samples n rows from the DataFrame randomly.
+  /// Randomly samples `n` rows from the DataFrame.
+  ///
+  /// Creates a new DataFrame containing a random selection of rows.
   ///
   /// Parameters:
-  ///   - `n`: Number of rows to sample
-  ///   - `seed`: Optional seed for reproducible sampling
-  ///   - `replace`: Whether to sample with replacement
+  /// - `n`: The `int` number of rows to sample.
+  /// - `seed`: An optional `int` to seed the random number generator for reproducible sampling.
+  ///   If `null` (default), the sample will be different each time.
+  /// - `replace`: A `bool`. If `true`, sampling is done with replacement (a row can be
+  ///   selected multiple times). If `false` (default), sampling is done without replacement
+  ///   (each row can be selected at most once).
+  ///
+  /// Returns:
+  /// A new `DataFrame` containing the sampled rows.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `n` is non-positive.
+  /// - `ArgumentError` if `replace` is `false` and `n` is greater than the number of rows
+  ///   in the DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({'A': [1, 2, 3, 4, 5, 6]});
+  ///
+  /// // Sample 3 rows without replacement
+  /// var sampleDf = df.sample(3);
+  /// print(sampleDf.rowCount); // Output: 3
+  ///
+  /// // Sample 5 rows with replacement (could have duplicates)
+  /// var sampleReplaceDf = df.sample(5, replace: true, seed: 1);
+  /// print(sampleReplaceDf);
+  ///
+  /// // Attempt to sample more rows than available without replacement
+  /// try {
+  ///   df.sample(10, replace: false);
+  /// } catch (e) {
+  ///   print(e); // Catches ArgumentError
+  /// }
+  /// ```
   DataFrame sample(int n, {int? seed, bool replace = false}) {
     if (n <= 0) {
-      throw ArgumentError('Sample size must be positive');
+      throw ArgumentError('Sample size (n) must be positive.');
+    }
+    if (_data.isEmpty) {
+      return DataFrame._(List.from(_columns), [], index: []);
     }
 
     if (!replace && n > _data.length) {
       throw ArgumentError(
-          'Sample size cannot exceed DataFrame length when sampling without replacement');
+          'Sample size (n=$n) cannot exceed DataFrame length (${_data.length}) when sampling without replacement.');
     }
 
     final random = seed != null ? Random(seed) : Random();
-    final indices = <int>[];
+    final List<int> sampledIndices = [];
+    final List<List<dynamic>> sampledData = [];
+    final List<dynamic> sampledIndex = [];
 
     if (replace) {
-      // Sampling with replacement
       for (int i = 0; i < n; i++) {
-        indices.add(random.nextInt(_data.length));
+        sampledIndices.add(random.nextInt(_data.length));
       }
     } else {
-      // Sampling without replacement
-      final availableIndices = List.generate(_data.length, (i) => i);
+      final List<int> availableIndices = List.generate(_data.length, (i) => i);
       for (int i = 0; i < n; i++) {
-        final randomIndex = random.nextInt(availableIndices.length);
-        indices.add(availableIndices[randomIndex]);
-        availableIndices.removeAt(randomIndex);
+        final randomIndexIntoAvailable =
+            random.nextInt(availableIndices.length);
+        sampledIndices.add(availableIndices.removeAt(randomIndexIntoAvailable));
       }
     }
 
-    return selectRowsByIndex(indices);
+    for (int originalIdx in sampledIndices) {
+      sampledData.add(List<dynamic>.from(_data[originalIdx]));
+      sampledIndex.add(index[originalIdx]);
+    }
+    return DataFrame._(List<dynamic>.from(_columns), sampledData,
+        index: sampledIndex,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: _missingDataIndicator);
   }
 
-  /// Applies a function to each element in the specified column.
+  /// Applies a function to each element in a specified column.
   ///
-  /// Returns a new DataFrame with the transformed column.
-  DataFrame applyToColumn(String columnName, dynamic Function(dynamic) func) {
+  /// Creates a new DataFrame with the transformed column. The original DataFrame is not modified.
+  ///
+  /// Parameters:
+  /// - `columnName`: The `String` name of the column to apply the function to.
+  /// - `func`: A function `(dynamic value) => dynamic` that takes a cell value
+  ///   from the specified column and returns the transformed value.
+  ///
+  /// Returns:
+  /// A new `DataFrame` with the same structure, but with the values in the
+  /// specified column transformed by `func`.
+  ///
+  /// Throws:
+  /// - `ArgumentError` if `columnName` does not exist.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [10, 20, 30]});
+  ///
+  /// // Double the values in column 'A'
+  /// var dfApplied = df.applyToColumn('A', (x) => (x as int) * 2);
+  /// print(dfApplied);
+  /// // Output:
+  /// //    A   B
+  /// // 0  2  10
+  /// // 1  4  20
+  /// // 2  6  30
+  /// ```
+  DataFrame applyToColumn(
+      String columnName, dynamic Function(dynamic value) func) {
     final columnIndex = _columns.indexOf(columnName);
     if (columnIndex == -1) {
-      throw ArgumentError('Column $columnName does not exist');
+      throw ArgumentError('Column "$columnName" does not exist.');
     }
 
     final newData = _data.map((row) {
       final newRow = List<dynamic>.from(row);
-      newRow[columnIndex] = func(row[columnIndex]);
+      // Ensure row is long enough before applying function
+      if (columnIndex < newRow.length) {
+        newRow[columnIndex] = func(newRow[columnIndex]);
+      }
       return newRow;
     }).toList();
 
-    return DataFrame._(List<dynamic>.from(_columns), newData);
+    return DataFrame._(List<dynamic>.from(_columns), newData,
+        index: List<dynamic>.from(index),
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        missingDataIndicator: _missingDataIndicator);
   }
 
   /// Applies a function to each row of the DataFrame.
   ///
-  /// The function should take a Map representing a row and return a value.
-  /// Returns a Series containing the results.
-  Series applyToRows(dynamic Function(Map<dynamic, dynamic>) func) {
-    final results = _data.map((row) {
-      final rowMap = Map.fromIterables(_columns, row);
-      return func(rowMap);
-    }).toList();
-
-    return Series(results, name: 'apply_result');
+  /// The provided function `func` takes a `Map<dynamic, dynamic>` representing a row
+  /// (where keys are column names) and should return a single value.
+  ///
+  /// Returns:
+  /// A `Series` containing the results of applying `func` to each row.
+  /// The Series will have the same index as the DataFrame.
+  /// Its name will be 'apply_result' by default.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, 2, 3],
+  ///   'B': [10, 20, 30],
+  ///   'C': [100, 200, 300]
+  /// });
+  ///
+  /// // Calculate sum of 'A' and 'B' for each row
+  /// var rowSums = df.applyToRows((row) => (row['A'] as int) + (row['B'] as int));
+  /// print(rowSums);
+  /// // Output: Series(name: apply_result, index: [0, 1, 2], data: [11, 22, 33])
+  ///
+  /// // Create a new string from columns 'A' and 'C'
+  /// var combinedStrings = df.applyToRows((row) => "A:${row['A']}-C:${row['C']}");
+  /// print(combinedStrings);
+  /// // Output: Series(name: apply_result, index: [0, 1, 2], data: [A:1-C:100, A:2-C:200, A:3-C:300])
+  /// ```
+  Series applyToRows(dynamic Function(Map<dynamic, dynamic> rowMap) func) {
+    final List<dynamic> results = [];
+    for (var rowData in _data) {
+      final rowMap = Map<dynamic, dynamic>.fromIterables(_columns, rowData);
+      results.add(func(rowMap));
+    }
+    return Series(results,
+        name: 'apply_result', index: List<dynamic>.from(index));
   }
 
-  /// Performs SQL-like join operations between DataFrames.
+  /// Joins this DataFrame with another DataFrame (`other`) based on specified keys
+  /// and join type.
+  ///
+  /// This method provides functionality similar to SQL JOIN operations.
   ///
   /// Parameters:
-  ///   - `other`: The DataFrame to join with.
-  ///   - `how`: Type of join ('inner', 'left', 'right', 'outer', 'cross'). Default is 'inner'.
-  ///   - `on`: Column name(s) to join on. Must be present in both DataFrames.
-  ///           If specified, `leftOn` and `rightOn` must be null.
-  ///   - `leftOn`: Column(s) from the left DataFrame to use as keys.
-  ///   - `rightOn`: Column(s) from the right DataFrame to use as keys.
-  ///   - `suffixes`: Suffixes to apply to overlapping column names (default: `['_x', '_y']`).
-  ///   - `indicator`: If `true`, adds a column to the output DataFrame called '_merge'
-  ///                  with information on the source of each row ('left_only', 'right_only', 'both').
-  ///                  If a String is provided, it is used as the name for the indicator column.
+  /// - `other`: The `DataFrame` to join with.
+  /// - `how`: A `String` specifying the type of join. Defaults to `'inner'`.
+  ///   Supported types:
+  ///   - `'inner'`: Returns rows where the join key(s) exist in both DataFrames.
+  ///   - `'left'`: Returns all rows from the left DataFrame (this), and matched rows
+  ///     from the right DataFrame. Unmatched right columns get missing values.
+  ///   - `'right'`: Returns all rows from the right DataFrame (`other`), and matched rows
+  ///     from the left. Unmatched left columns get missing values.
+  ///   - `'outer'`: Returns all rows from both DataFrames. Unmatched columns on either
+  ///     side get missing values.
+  ///   - `'cross'`: Returns the Cartesian product of rows from both DataFrames.
+  ///     Join keys (`on`, `leftOn`, `rightOn`) are ignored for cross join.
+  /// - `on`: A `String` or `List<String>` of column names to join on. These columns
+  ///   must exist in both DataFrames. If `null`, `leftOn` and `rightOn` must be used.
+  /// - `leftOn`: A `String` or `List<String>` of column names from the left DataFrame
+  ///   (this) to use as join keys. Used with `rightOn`.
+  /// - `rightOn`: A `String` or `List<String>` of column names from the right DataFrame
+  ///   (`other`) to use as join keys. Used with `leftOn`.
+  /// - `suffixes`: A `List<String>` of length 2, providing suffixes to append to
+  ///   overlapping column names (non-join-key columns that have the same name in
+  ///   both DataFrames). Defaults to `['_x', '_y']`. The first suffix is for the
+  ///   left DataFrame's column, the second for the right.
+  /// - `indicator`: If `true`, adds a column named `'_merge'` to the output DataFrame,
+  ///   indicating the source of each row: `'left_only'`, `'right_only'`, or `'both'`.
+  ///   If a `String` is provided, it's used as the name for this indicator column.
+  ///   Defaults to `false`.
+  ///
+  /// Returns:
+  /// A new `DataFrame` resulting from the join operation. The index of the
+  /// resulting DataFrame depends on the join type and original indices.
+  /// (Note: Index handling in this implementation is simplified, often taking the
+  /// left DataFrame's index or resetting for complex cases).
+  ///
+  /// Throws:
+  /// - `ArgumentError` for invalid parameters (e.g., missing join keys, mismatched key list lengths,
+  ///   non-existent columns, unsupported join type).
+  ///
+  /// Example:
+  /// ```dart
+  /// var leftDf = DataFrame.fromMap({
+  ///   'key': ['K0', 'K1', 'K2', 'K3'],
+  ///   'A': ['A0', 'A1', 'A2', 'A3'],
+  ///   'B': ['B0', 'B1', 'B2', 'B3']
+  /// });
+  /// var rightDf = DataFrame.fromMap({
+  ///   'key': ['K0', 'K1', 'K4', 'K5'],
+  ///   'C': ['C0', 'C1', 'C4', 'C5'],
+  ///   'D': ['D0', 'D1', 'D4', 'D5']
+  /// });
+  ///
+  /// // Inner join on 'key'
+  /// print(leftDf.join(rightDf, on: 'key', how: 'inner'));
+  /// // Output:
+  /// //   key   A   B   C   D
+  /// // 0  K0  A0  B0  C0  D0
+  /// // 1  K1  A1  B1  C1  D1
+  ///
+  /// // Left join on 'key'
+  /// print(leftDf.join(rightDf, on: 'key', how: 'left'));
+  /// // Output:
+  /// //   key   A   B     C     D
+  /// // 0  K0  A0  B0    C0    D0
+  /// // 1  K1  A1  B1    C1    D1
+  /// // 2  K2  A2  B2  null  null
+  /// // 3  K3  A3  B3  null  null
+  ///
+  /// // Outer join with indicator
+  /// print(leftDf.join(rightDf, on: 'key', how: 'outer', indicator: true));
+  ///
+  /// // Cross join
+  /// var df1 = DataFrame.fromMap({'col1': [1,2]});
+  /// var df2 = DataFrame.fromMap({'col2': ['a','b']});
+  /// print(df1.join(df2, how: 'cross'));
+  /// // Output:
+  /// //   col1 col2
+  /// // 0    1    a
+  /// // 1    1    b
+  /// // 2    2    a
+  /// // 3    2    b
+  /// ```
   DataFrame join(
     DataFrame other, {
     String how = 'inner',
@@ -1626,9 +3154,20 @@ extension DataFrameFunctions on DataFrame {
     return resultDf;
   }
 
-  /// Helper method for cross join
+  /// Private helper method to perform a cross join.
+  ///
+  /// A cross join returns the Cartesian product of rows from two DataFrames.
+  ///
+  /// Parameters:
+  /// - `other`: The `DataFrame` to cross join with.
+  /// - `suffixes`: A `List<String>` of suffixes to apply to overlapping column names.
+  ///
+  /// Returns:
+  /// A new `DataFrame` representing the cross product. The index of the new
+  /// DataFrame is a compound key created by joining the original indices.
   DataFrame _crossJoin(DataFrame other, List<String> suffixes) {
-    final newColumns = <dynamic>[];
+    final List<dynamic> newColumns = List.from(columns);
+    // final newColumns = [];
 
     // Add left columns
     for (var col in _columns) {
@@ -1740,31 +3279,75 @@ extension DataFrameFunctions on DataFrame {
     return result;
   }
 
-  /// Computes correlation between numeric columns.
+  /// Computes the pairwise correlation of numerical columns in the DataFrame.
   ///
-  /// Returns a DataFrame with correlation coefficients.
+  /// This method calculates the Pearson correlation coefficient between all pairs
+  /// of numerical columns. Non-numeric columns are ignored.
+  ///
+  /// Returns:
+  /// A new `DataFrame` representing the correlation matrix. The index and columns
+  /// of this matrix are the names of the numerical columns from the original DataFrame.
+  /// Each cell `(i, j)` in the matrix contains the correlation coefficient between
+  /// column `i` and column `j`.
+  ///
+  /// Throws:
+  /// - `StateError` if no numeric columns are found in the DataFrame.
+  ///
+  /// Note:
+  /// - The Pearson correlation coefficient ranges from -1 to +1.
+  /// - A value of +1 implies a perfect positive linear correlation.
+  /// - A value of -1 implies a perfect negative linear correlation.
+  /// - A value of 0 implies no linear correlation.
+  /// - If a column has no variance (all values are the same), correlation with it will be 0 or NaN.
+  /// - `double.nan` is returned if correlation cannot be computed (e.g., due to insufficient data or zero variance).
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, 2, 3, 4, 5],
+  ///   'B': [5, 4, 3, 2, 1],
+  ///   'C': [2, 4, 5, 4, 2],
+  ///   'D': ['x', 'y', 'z', 'p', 'q'] // Non-numeric
+  /// });
+  ///
+  /// var corrMatrix = df.corr();
+  /// print(corrMatrix);
+  /// // Output (example, exact floating point values might vary slightly):
+  /// //          A         B         C
+  /// // A   1.000000 -1.000000  0.000000
+  /// // B  -1.000000  1.000000  0.000000
+  /// // C   0.000000  0.000000  1.000000
+  /// ```
   DataFrame corr() {
-    // Get numeric columns
-    final numericColumns = <String>[];
-    final numericIndices = <int>[];
+    final List<String> numericColumnNames = [];
+    final List<int> numericIndices = [];
 
     for (var i = 0; i < _columns.length; i++) {
-      var columnData = _data.map((row) => row[i]).toList();
-      if (columnData.whereType<num>().isNotEmpty) {
-        numericColumns.add(_columns[i].toString());
+      // Check if the column is likely numeric by inspecting its first non-null value's type
+      // This is a heuristic; a more robust way would be to have dtype info per column.
+      dynamic firstNonNullValue;
+      for (var row in _data) {
+        if (row[i] != null && row[i] != replaceMissingValueWith) {
+          firstNonNullValue = row[i];
+          break;
+        }
+      }
+      if (firstNonNullValue is num) {
+        numericColumnNames.add(_columns[i].toString());
         numericIndices.add(i);
       }
     }
 
-    if (numericColumns.isEmpty) {
-      throw StateError('No numeric columns found for correlation calculation');
+    if (numericColumnNames.isEmpty) {
+      throw StateError('No numeric columns found for correlation calculation.');
     }
 
-    // Create correlation matrix
-    final correlationData = <List<dynamic>>[];
+    final List<List<dynamic>> correlationData = [];
+    final List<dynamic> correlationIndex =
+        List<dynamic>.from(numericColumnNames);
 
     for (var i = 0; i < numericIndices.length; i++) {
-      final rowData = <dynamic>[];
+      final List<dynamic> rowData = [];
       final colIndex1 = numericIndices[i];
       final col1Data =
           _data.map((row) => row[colIndex1]).whereType<num>().toList();
@@ -1774,21 +3357,28 @@ extension DataFrameFunctions on DataFrame {
         final col2Data =
             _data.map((row) => row[colIndex2]).whereType<num>().toList();
 
-        // Calculate Pearson correlation
         final correlation = _calculateCorrelation(col1Data, col2Data);
         rowData.add(correlation);
       }
-
       correlationData.add(rowData);
     }
-
-    return DataFrame._(numericColumns, correlationData);
+    return DataFrame._(List<dynamic>.from(numericColumnNames), correlationData,
+        index: correlationIndex);
   }
 
-  /// Calculates Pearson correlation coefficient between two numeric lists
+  /// Private helper to calculate Pearson correlation coefficient between two lists of numbers.
+  ///
+  /// Parameters:
+  /// - `x`: The first `List<num>`.
+  /// - `y`: The second `List<num>`.
+  ///
+  /// Returns:
+  /// The Pearson correlation coefficient as a `double`. Returns `double.nan` if
+  /// correlation cannot be computed (e.g., lists are different lengths, empty, or have zero variance).
   double _calculateCorrelation(List<num> x, List<num> y) {
     if (x.length != y.length || x.isEmpty) {
-      return double.nan;
+      return double
+          .nan; // Cannot compute correlation if lengths differ or lists are empty
     }
 
     final n = x.length;

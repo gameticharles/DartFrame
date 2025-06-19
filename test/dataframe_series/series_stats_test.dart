@@ -156,22 +156,28 @@ void main() {
   group('Series.quantile()', () {
     test('quantile on empty series throws Exception', () {
       var s = Series<double>([], name: 'empty_double');
-      expect(() => s.quantile(0.5), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Cannot calculate quantile of an empty series or series with all missing values'),
-      )));
+      expect(
+          () => s.quantile(0.5),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains(
+                'Cannot calculate quantile of an empty series or series with all missing values'),
+          )));
     });
 
     test('quantile on series with non-numeric data throws Exception', () {
       var s = Series(['a', 'b', 'c'], name: 'string_series');
       // This case also throws "Cannot calculate quantile of an empty series or series with all missing values"
       // because non-numeric values are treated as missing/invalid for quantile.
-      expect(() => s.quantile(0.5), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Cannot calculate quantile of an empty series or series with all missing values'),
-      )));
+      expect(
+          () => s.quantile(0.5),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains(
+                'Cannot calculate quantile of an empty series or series with all missing values'),
+          )));
       var sMix = Series([1, 'b', 3.0], name: 'mixed_series');
       // If non-numeric values are converted to null, data becomes [1, null, 3.0]
       // Quantile of [1.0, 3.0] at 0.5 is 1.0 + (3.0-1.0)*0.5 = 2.0
@@ -179,22 +185,32 @@ void main() {
     });
 
     test('quantile on series with nulls (ignores them)', () {
-      var s = Series([1.0, null, 2.0, null, 3.0, 4.0, null, 5.0], name: 'with_nulls');
+      var s = Series([1.0, null, 2.0, null, 3.0, 4.0, null, 5.0],
+          name: 'with_nulls');
       // Effective data: [1.0, 2.0, 3.0, 4.0, 5.0]
       expect(s.quantile(0.5), equals(3.0)); // Median
       expect(s.quantile(0), equals(1.0));
       expect(s.quantile(1), equals(5.0));
-      expect(s.quantile(0.25), equals(2.0)); // (1*0.25 + 2*0.75) if we consider positions. Interpolation: 1 + (5-1)*0.25 = 2.0. Let's verify.
-                                           // Sorted: [1,2,3,4,5]. n=5. (n-1)*q = 4*0.25 = 1. Index 1 is 2.0
-      expect(s.quantile(0.75), equals(4.0)); // Sorted: [1,2,3,4,5]. (n-1)*q = 4*0.75 = 3. Index 3 is 4.0
+      expect(
+          s.quantile(0.25),
+          equals(
+              2.0)); // (1*0.25 + 2*0.75) if we consider positions. Interpolation: 1 + (5-1)*0.25 = 2.0. Let's verify.
+      // Sorted: [1,2,3,4,5]. n=5. (n-1)*q = 4*0.25 = 1. Index 1 is 2.0
+      expect(
+          s.quantile(0.75),
+          equals(
+              4.0)); // Sorted: [1,2,3,4,5]. (n-1)*q = 4*0.75 = 3. Index 3 is 4.0
     });
 
     test('quantile with different percentile inputs', () {
       var s = Series([1.0, 2.0, 3.0, 4.0, 5.0], name: 'numeric');
       expect(s.quantile(0), equals(1.0));
-      expect(s.quantile(0.25), equals(2.0)); // (5-1)*0.25 = 1. Element at index 1.
-      expect(s.quantile(0.5), equals(3.0));  // (5-1)*0.5 = 2. Element at index 2.
-      expect(s.quantile(0.75), equals(4.0)); // (5-1)*0.75 = 3. Element at index 3.
+      expect(
+          s.quantile(0.25), equals(2.0)); // (5-1)*0.25 = 1. Element at index 1.
+      expect(
+          s.quantile(0.5), equals(3.0)); // (5-1)*0.5 = 2. Element at index 2.
+      expect(
+          s.quantile(0.75), equals(4.0)); // (5-1)*0.75 = 3. Element at index 3.
       expect(s.quantile(1), equals(5.0));
 
       var sEven = Series([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], name: 'numeric_even');
@@ -213,16 +229,20 @@ void main() {
 
     test('quantile with percentile input outside 0-1 throws Exception', () {
       var s = Series([1.0, 2.0, 3.0], name: 'bounds_test');
-      expect(() => s.quantile(-0.1), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Percentile must be between 0 and 1'),
-      )));
-      expect(() => s.quantile(1.1), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Percentile must be between 0 and 1'),
-      )));
+      expect(
+          () => s.quantile(-0.1),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains('Percentile must be between 0 and 1'),
+          )));
+      expect(
+          () => s.quantile(1.1),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains('Percentile must be between 0 and 1'),
+          )));
     });
 
     test('quantile on series where all values are the same', () {
@@ -261,7 +281,8 @@ void main() {
 
     test('quantile with specific missing value placeholder (ignores them)', () {
       var df = DataFrame.empty(replaceMissingValueWith: -999.0);
-      var s = Series([10.0, -999.0, 20.0, -999.0, 30.0, 40.0, -999.0, 50.0], name: 'specific_missing');
+      var s = Series([10.0, -999.0, 20.0, -999.0, 30.0, 40.0, -999.0, 50.0],
+          name: 'specific_missing');
       s.setParent(df, 'specific_missing');
       // Effective data: [10.0, 20.0, 30.0, 40.0, 50.0]
       expect(s.quantile(0.5), equals(30.0));
@@ -271,22 +292,29 @@ void main() {
       expect(s.quantile(0.75), equals(40.0));
     });
 
-    test('quantile on series with only nulls/missing values throws Exception', () {
+    test('quantile on series with only nulls/missing values throws Exception',
+        () {
       var sNull = Series<double>([null, null, null], name: 'all_nulls_double');
-      expect(() => sNull.quantile(0.5), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Cannot calculate quantile of an empty series or series with all missing values'),
-      )));
+      expect(
+          () => sNull.quantile(0.5),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains(
+                'Cannot calculate quantile of an empty series or series with all missing values'),
+          )));
 
       var df = DataFrame.empty(replaceMissingValueWith: -1.0);
       var sMissing = Series<double>([-1.0, -1.0], name: 'all_missing_double');
       sMissing.setParent(df, 'all_missing_double');
-      expect(() => sMissing.quantile(0.5), throwsA(isA<Exception>().having(
-        (e) => e.toString(),
-        'toString()',
-        contains('Cannot calculate quantile of an empty series or series with all missing values'),
-      )));
+      expect(
+          () => sMissing.quantile(0.5),
+          throwsA(isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains(
+                'Cannot calculate quantile of an empty series or series with all missing values'),
+          )));
     });
 
     test('quantile calculation precision for interpolated values', () {
