@@ -830,18 +830,20 @@ extension DataFrameFunctions on DataFrame {
             case 'int':
               if (value is String) {
                 newData[i][colIdx] = int.tryParse(value) ?? value;
-              } else if (value is num)
-                {newData[i][colIdx] = value.toInt();}
-              else
-                {newData[i][colIdx] = int.tryParse(value.toString()) ?? value;}
+              } else if (value is num) {
+                newData[i][colIdx] = value.toInt();
+              } else {
+                newData[i][colIdx] = int.tryParse(value.toString()) ?? value;
+              }
               break;
             case 'double':
               if (value is String) {
                 newData[i][colIdx] = double.tryParse(value) ?? value;
-              } else if (value is num)
-                {newData[i][colIdx] = value.toDouble();}
-              else
-                {newData[i][colIdx] = double.tryParse(value.toString()) ?? value;}
+              } else if (value is num) {
+                newData[i][colIdx] = value.toDouble();
+              } else {
+                newData[i][colIdx] = double.tryParse(value.toString()) ?? value;
+              }
               break;
             case 'string':
               newData[i][colIdx] = value.toString();
@@ -852,12 +854,12 @@ extension DataFrameFunctions on DataFrame {
               } else if (value is String) {
                 if (value.toLowerCase() == 'true') {
                   newData[i][colIdx] = true;
-                } else if (value.toLowerCase() == 'false')
-                  {newData[i][colIdx] = false;}
-                else
-                  {newData[i][colIdx] =
+                } else if (value.toLowerCase() == 'false') {
+                  newData[i][colIdx] = false;
+                } else {
+                  newData[i][colIdx] =
                       value; // Keep original if not 'true'/'false'
-                      }
+                }
               } else if (value is num) {
                 newData[i][colIdx] = value != 0;
               } else {

@@ -2444,8 +2444,9 @@ extension GeoSeriesFunctions on GeoSeries {
         // If coords[0] == coords[1] (A=B), then it's A-A-A, which is not simple.
         if (coords.length == 3 && _arePointsEqual(coords[0], coords[2])) {
           // A-B-A form
-          if (_arePointsEqual(coords[0], coords[1]))
-            {return false;} // A-A-A is not simple
+          if (_arePointsEqual(coords[0], coords[1])) {
+            return false;
+          } // A-A-A is not simple
         } else {
           return false; // Any other consecutive duplicate makes it non-simple (e.g., A-A-B or A-B-B-C)
         }
