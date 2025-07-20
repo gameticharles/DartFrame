@@ -1,3 +1,7 @@
+# 0.5.2
+
+* **[FIX]** Fixed FileIO not exported
+
 # 0.5.1
 
 * **[IMPROVEMENT]** Cleaned code
