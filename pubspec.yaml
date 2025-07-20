@@ -1,6 +1,6 @@
 name: dartframe
 description: DartFrame is a Dart library inspired by Geo-(Pandas), simplifying structured data handling (tables, CSVs, JSON) with function tools for filtering, transforming, and analysis.
-version: 0.5.3
+version: 0.5.4
 repository: https://github.com/gameticharles/DartFrame
 
 environment:
@@ -15,7 +15,6 @@ dependencies:
   geoxml: ^2.6.2
   web: ^1.1.1
   r_tree: ^3.0.1
-  ffi: ^2.1.4
 
 dev_dependencies:
   benchmark_harness: ^2.3.1

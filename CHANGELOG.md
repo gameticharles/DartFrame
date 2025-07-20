@@ -1,3 +1,7 @@
+# 0.5.4
+
+* **[IMPROVEMENT]** Cleaned code
+
 # 0.5.3
 
 * **[IMPROVEMENT]** Cleaned code
