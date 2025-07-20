@@ -1,3 +1,7 @@
+# 0.5.5
+
+* **[FEATURE]** Changed to MIT License
+
 # 0.5.4
 
 * **[IMPROVEMENT]** Cleaned code
