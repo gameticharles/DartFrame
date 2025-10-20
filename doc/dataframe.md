@@ -1725,6 +1725,439 @@ List<Map<dynamic, dynamic>> rows = df.toRows();
 // rows is [{'A': 1, 'B': 'x'}, {'A': 2, 'B': 'y'}]
 ```
 
+## Advanced Statistical Operations
+
+DartFrame now includes comprehensive statistical operations that provide pandas-like functionality for advanced data analysis.
+
+### 1. Enhanced Statistical Methods
+
+The DataFrame now supports advanced statistical operations including median, mode, quantile, standard deviation, variance, skewness, and kurtosis calculations.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10, 'C': 100},
+  {'A': 2, 'B': 20, 'C': 200},
+  {'A': 3, 'B': 30, 'C': 300},
+  {'A': 4, 'B': 40, 'C': 400},
+]);
+
+// Calculate median for all numeric columns
+DataFrame medians = df.median();
+// medians contains median values for columns A, B, C
+
+// Calculate mode (most frequent value)
+DataFrame modes = df.mode();
+
+// Calculate quantiles
+DataFrame q25 = df.quantile(0.25); // 25th percentile
+DataFrame q75 = df.quantile(0.75); // 75th percentile
+
+// Calculate standard deviation and variance
+DataFrame stdDev = df.std();
+DataFrame variance = df.var();
+
+// Calculate skewness and kurtosis for distribution analysis
+DataFrame skewness = df.skew();
+DataFrame kurtosis = df.kurtosis();
+```
+
+### 2. Correlation and Covariance Analysis
+
+Perform correlation and covariance analysis between DataFrame columns.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10, 'C': 100},
+  {'A': 2, 'B': 20, 'C': 50},
+  {'A': 3, 'B': 30, 'C': 0},
+]);
+
+// Calculate correlation matrix
+DataFrame corrMatrix = df.corr();
+// corrMatrix shows correlation coefficients between all numeric columns
+
+// Calculate covariance matrix
+DataFrame covMatrix = df.cov();
+// covMatrix shows covariance values between all numeric columns
+
+// Calculate correlation between specific columns
+double corrAB = df.corrBetween('A', 'B');
+```
+
+### 3. Rolling Window Operations
+
+Perform rolling window calculations for time series analysis and moving statistics.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'Date': DateTime(2023, 1, 1), 'Value': 10},
+  {'Date': DateTime(2023, 1, 2), 'Value': 20},
+  {'Date': DateTime(2023, 1, 3), 'Value': 30},
+  {'Date': DateTime(2023, 1, 4), 'Value': 40},
+  {'Date': DateTime(2023, 1, 5), 'Value': 50},
+]);
+
+// Create rolling window operations
+RollingDataFrame rolling = df.rolling(window: 3);
+
+// Calculate rolling statistics
+DataFrame rollingMean = rolling.mean();
+DataFrame rollingSum = rolling.sum();
+DataFrame rollingStd = rolling.std();
+DataFrame rollingMin = rolling.min();
+DataFrame rollingMax = rolling.max();
+
+// Rolling correlation and covariance
+DataFrame rollingCorr = rolling.corr();
+DataFrame rollingCov = rolling.cov();
+```
+
+## Data Reshaping and Manipulation
+
+### 1. Melt Operations
+
+Transform DataFrame from wide to long format using melt operations.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'ID': 1, 'A': 10, 'B': 20},
+  {'ID': 2, 'A': 30, 'B': 40},
+]);
+
+// Melt DataFrame to long format
+DataFrame melted = df.melt(
+  idVars: ['ID'],
+  valueVars: ['A', 'B'],
+  varName: 'Variable',
+  valueName: 'Value'
+);
+// Result:
+// ID | Variable | Value
+// 1  | A        | 10
+// 1  | B        | 20
+// 2  | A        | 30
+// 2  | B        | 40
+```
+
+### 2. Stack and Unstack Operations
+
+Reshape data using stack and unstack operations for hierarchical indexing.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 2},
+  {'A': 3, 'B': 4},
+]);
+
+// Stack columns to create hierarchical structure
+DataFrame stacked = df.stack();
+
+// Unstack to reverse the operation
+DataFrame unstacked = stacked.unstack();
+```
+
+### 3. Enhanced Pivot Operations
+
+Create more sophisticated pivot tables with multiple aggregation functions.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'Category': 'A', 'Type': 'X', 'Value': 10, 'Count': 1},
+  {'Category': 'A', 'Type': 'Y', 'Value': 20, 'Count': 2},
+  {'Category': 'B', 'Type': 'X', 'Value': 30, 'Count': 3},
+]);
+
+// Enhanced pivot table with multiple aggregations
+DataFrame pivotTable = df.pivotTable(
+  index: 'Category',
+  columns: 'Type',
+  values: ['Value', 'Count'],
+  aggFunc: {'Value': 'sum', 'Count': 'mean'}
+);
+```
+
+## Advanced Missing Data Handling
+
+### 1. Interpolation Methods
+
+Fill missing values using various interpolation techniques.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10},
+  {'A': null, 'B': null},
+  {'A': null, 'B': null},
+  {'A': 4, 'B': 40},
+]);
+
+// Linear interpolation
+DataFrame linearInterp = df.interpolate(method: 'linear');
+
+// Polynomial interpolation
+DataFrame polyInterp = df.interpolate(method: 'polynomial', order: 2);
+
+// Spline interpolation
+DataFrame splineInterp = df.interpolate(method: 'spline');
+
+// Interpolation with limits
+DataFrame limitedInterp = df.interpolate(
+  method: 'linear',
+  limit: 1,
+  limitDirection: 'forward'
+);
+```
+
+### 2. Advanced Fill Operations
+
+Enhanced fill operations with more control over missing data handling.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': null},
+  {'A': null, 'B': 20},
+  {'A': 3, 'B': null},
+]);
+
+// Forward fill with limit
+DataFrame ffilled = df.fillna(method: 'ffill', limit: 1);
+
+// Backward fill with limit
+DataFrame bfilled = df.fillna(method: 'bfill', limit: 1);
+
+// Fill with different values per column
+DataFrame customFilled = df.fillna({
+  'A': -1,
+  'B': 0
+});
+```
+
+### 3. Missing Data Pattern Analysis
+
+Analyze patterns in missing data for better understanding of data quality.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10, 'C': null},
+  {'A': null, 'B': 20, 'C': 300},
+  {'A': 3, 'B': null, 'C': null},
+]);
+
+// Get missing data summary
+DataFrame missingInfo = df.missingDataSummary();
+// Shows count and percentage of missing values per column
+
+// Visualize missing data patterns
+DataFrame missingPattern = df.missingDataPattern();
+// Shows patterns of missing data across rows
+```
+
+## Performance Optimizations
+
+### 1. Memory Management
+
+Optimize memory usage for large datasets.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10.0, 'C': 'text'},
+  {'A': 2, 'B': 20.0, 'C': 'more text'},
+]);
+
+// Optimize data types for memory efficiency
+DataFrame optimized = df.optimizeMemory();
+
+// Downcast numeric types
+DataFrame downcasted = df.downcastNumeric();
+
+// Monitor memory usage
+Map<String, dynamic> memoryInfo = df.memoryUsage();
+```
+
+### 2. Vectorized Operations
+
+Perform vectorized operations for improved performance.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10},
+  {'A': 2, 'B': 20},
+  {'A': 3, 'B': 30},
+]);
+
+// Vectorized apply operations
+DataFrame result = df.vectorizedApply((row) => row['A'] * row['B']);
+
+// Parallel processing for CPU-intensive tasks
+DataFrame parallelResult = df.parallelApply(
+  (row) => complexCalculation(row),
+  numThreads: 4
+);
+```
+
+### 3. Caching Mechanisms
+
+Implement caching for expensive operations.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'A': 1, 'B': 10},
+  {'A': 2, 'B': 20},
+]);
+
+// Enable caching for repeated operations
+df.enableCache();
+
+// Expensive operation - result will be cached
+DataFrame result1 = df.expensiveOperation();
+DataFrame result2 = df.expensiveOperation(); // Retrieved from cache
+
+// Clear cache when needed
+df.clearCache();
+```
+
+## Categorical Data Support
+
+### 1. Categorical Data Type
+
+Work with categorical data for memory efficiency and specialized operations.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'Category': 'A', 'Value': 10},
+  {'Category': 'B', 'Value': 20},
+  {'Category': 'A', 'Value': 30},
+  {'Category': 'C', 'Value': 40},
+]);
+
+// Convert column to categorical
+df['Category'] = df['Category'].asCategorical();
+
+// Categorical operations
+Series categoryCounts = df['Category'].valueCounts();
+List<dynamic> categories = df['Category'].categories;
+
+// Ordered categorical data
+df['Grade'] = df['Grade'].asCategorical(
+  categories: ['F', 'D', 'C', 'B', 'A'],
+  ordered: true
+);
+```
+
+## Time Series Enhancements
+
+### 1. Time Series Resampling
+
+Resample time series data at different frequencies.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'Date': DateTime(2023, 1, 1), 'Value': 10},
+  {'Date': DateTime(2023, 1, 2), 'Value': 20},
+  {'Date': DateTime(2023, 1, 3), 'Value': 30},
+]);
+
+// Resample to different frequencies
+DataFrame daily = df.resample('D', dateColumn: 'Date').mean();
+DataFrame weekly = df.resample('W', dateColumn: 'Date').sum();
+DataFrame monthly = df.resample('M', dateColumn: 'Date').mean();
+
+// Upsampling and downsampling
+DataFrame upsampled = df.resample('H', dateColumn: 'Date').interpolate();
+DataFrame downsampled = df.resample('W', dateColumn: 'Date').agg('mean');
+```
+
+### 2. Frequency Conversion
+
+Convert between different time frequencies.
+
+**Example:**
+```dart
+final df = DataFrame.fromRows([
+  {'Date': DateTime(2023, 1, 1), 'Value': 10},
+  {'Date': DateTime(2023, 1, 8), 'Value': 20},
+]);
+
+// Convert frequency
+DataFrame converted = df.convertFrequency(
+  from: 'W',
+  to: 'D',
+  dateColumn: 'Date',
+  method: 'interpolate'
+);
+```
+
+## Enhanced I/O Capabilities
+
+### 1. Additional File Formats
+
+Support for more file formats including Parquet, Excel, and HDF5.
+
+**Example:**
+```dart
+// Read Parquet files
+DataFrame dfParquet = await DataFrame.readParquet('data.parquet');
+
+// Read Excel files
+DataFrame dfExcel = await DataFrame.readExcel('data.xlsx', sheet: 'Sheet1');
+
+// Read HDF5 files
+DataFrame dfHdf5 = await DataFrame.readHDF5('data.h5', key: '/data');
+
+// Write to different formats
+await df.toParquet('output.parquet');
+await df.toExcel('output.xlsx');
+await df.toHDF5('output.h5', key: '/data');
+```
+
+### 2. Database Connectivity
+
+Connect to databases for data import and export.
+
+**Example:**
+```dart
+// Connect to database
+DatabaseConnection conn = DatabaseConnection('sqlite:///data.db');
+
+// Read from database
+DataFrame df = await DataFrame.readSQL(
+  'SELECT * FROM table_name',
+  connection: conn
+);
+
+// Write to database
+await df.toSQL('new_table', connection: conn, ifExists: 'replace');
+```
+
+### 3. Chunked Reading
+
+Handle large files with chunked reading for memory efficiency.
+
+**Example:**
+```dart
+// Read large files in chunks
+ChunkedReader reader = ChunkedReader('large_file.csv', chunkSize: 10000);
+
+await for (DataFrame chunk in reader.readChunks()) {
+  // Process each chunk
+  DataFrame processed = chunk.processData();
+  await processed.toSQL('processed_table', connection: conn, ifExists: 'append');
+}
+```
+
 ## Advanced Features
 
 ### 1. Filtering Data

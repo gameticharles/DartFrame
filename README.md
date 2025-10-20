@@ -20,70 +20,105 @@
 
 ## Key Features
 
-### 1. **DataFrame Operations**
+### 🚀 **Enhanced Statistical Operations**
 
-- **Creation**: Create DataFrames from various sources such as CSV strings, JSON strings, or directly from lists and maps.
-- **Data Exploration**:
-  - `head(n)`: View the first `n` rows.
-  - `tail(n)`: View the last `n` rows.
-  - `limit(n,index)`: View the first `n` rows starting from a specified index.
-  - `describe()`: Generate summary statistics.
-  - `structure()`: Display the structure and data types of the DataFrame.
-  - `shape`: Get the dimensions of the DataFrame.
-  - `columns`: Access or modify column names.
-  - `rows`: Access or modify row labels.
-  - `valueCounts(column)`: Get the frequency of each unique value in a column.
-- **Data Cleaning**:
-  - Handle missing values using `fillna()`, `replace()`, and missing data indicators.
-  - Rename columns with `rename()`.
-  - Drop unwanted columns with `drop()`.
-  - Filter rows based on condition functions with `filter()`.
+- **Advanced Statistics**: Calculate median, mode, quantile, standard deviation, variance, skewness, and kurtosis
+- **Correlation Analysis**: Compute correlation and covariance matrices between DataFrame columns
+- **Rolling Window Operations**: Perform rolling statistics with customizable window sizes
+- **Cumulative Operations**: Calculate cumulative sums, products, minimums, and maximums
 
-### 2. **Data Transformation**
+### 📊 **Data Manipulation & Reshaping**
 
-- Add calculated columns directly: `df['new_column'] = df['existing_column'] > 30`.
-- Group data with `groupBy()` for aggregated insights.
-- Concatenate DataFrames vertically or horizontally.
-- Add row labels with `addRow()`.
-- Add column labels with `addColumn()`.
-- Shuffle rows with `shuffle()`.
+- **Melt Operations**: Transform DataFrames from wide to long format
+- **Stack/Unstack**: Reshape data with hierarchical indexing
+- **Enhanced Pivot Tables**: Create sophisticated pivot tables with multiple aggregation functions
+- **Advanced Merging**: Support for complex join operations with multiple keys and join types
 
-### 3. **Analysis Tools**
+### 🔧 **Missing Data Handling**
 
-- Frequency counts of column values using `valueCounts()`.
-- Count the number of zeros in a column using `countZeros()`.
-- Count the number of null values in a column using `countNulls()`.
-- Calculate mean, median, and other statistics directly on columns or grouped data.
+- **Interpolation Methods**: Fill missing values using linear, polynomial, and spline interpolation
+- **Advanced Fill Operations**: Forward fill and backward fill with limits and direction control
+- **Missing Data Analysis**: Analyze patterns in missing data for better data quality insights
 
-### 4. **Series Operations**
+### 🗺️ **Geospatial Capabilities**
 
-- `Series` objects for 1D data manipulation.
-- Perform element-wise operations, conditional updates, and concatenation.
+- **Spatial Joins**: Perform spatial joins based on geometric relationships
+- **Overlay Operations**: Execute intersection, union, and difference operations between geometries
+- **Coordinate Transformations**: Transform between different coordinate reference systems
+- **Spatial Indexing**: Build spatial indexes for efficient spatial queries and operations
+- **Buffer & Dissolve**: Create buffer zones and dissolve geometries based on attributes
 
-### 5. **Data I/O**
+### ⚡ **Performance Optimizations**
 
-- Import data from CSV or JSON formats:
-  - `DataFrame.fromCSV()`
-  - `DataFrame.fromJson()`
-- Export data to JSON or CSV formats:
-  - `toJSON()`
+- **Memory Management**: Optimize data types and memory usage for large datasets
+- **Vectorized Operations**: Perform element-wise operations with improved performance
+- **Caching Mechanisms**: Cache results of expensive operations for faster repeated access
+- **Parallel Processing**: Support for multi-threaded operations on CPU-intensive tasks
 
-### 6. **Customizable and Flexible**
+### 📈 **Enhanced I/O Capabilities**
 
-- Handle mixed data types with ease.
-- Optionally format and clean data on import.
-- Support for flexible column structures.
+- **Multiple Formats**: Support for Parquet, Excel, HDF5, and additional file formats
+- **Database Connectivity**: Connect to SQL databases for data import and export
+- **Chunked Reading**: Handle large files with memory-efficient chunked reading
+- **Streaming Processing**: Process data streams for real-time analysis
+
+### 🎨 **Plotting & Visualization**
+
+- **Integrated Plotting**: Create visualizations directly from DataFrames and Series
+- **Multiple Chart Types**: Line plots, bar charts, scatter plots, histograms, and box plots
+- **Time Series Plotting**: Specialized plotting for time series data with seasonal decomposition
+- **Statistical Plots**: Regression plots, correlation heatmaps, and distribution visualizations
+- **Geospatial Plotting**: Map visualizations and choropleth maps for spatial data
+
+### 📊 **Categorical Data Support**
+
+- **Categorical Data Type**: Memory-efficient categorical data with ordered and unordered categories
+- **Category Operations**: Specialized operations for categorical data analysis
+- **Memory Optimization**: Reduce memory usage with categorical encoding
+
+### ⏰ **Time Series Enhancements**
+
+- **Resampling**: Resample time series data at different frequencies
+- **Frequency Conversion**: Convert between different time frequencies with interpolation
+- **Time-based Indexing**: Enhanced datetime indexing and time-based operations
+
+### 🔄 **Core DataFrame Operations**
+
+- **Creation**: Create DataFrames from various sources (CSV, JSON, lists, maps, databases)
+- **Data Exploration**: `head()`, `tail()`, `describe()`, `info()`, `shape`, `columns`
+- **Data Cleaning**: Handle missing values, rename columns, drop unwanted data
+- **Data Transformation**: Add calculated columns, group operations, concatenation
+- **Series Operations**: 1D data manipulation with element-wise operations
+
+### 🛠️ **Flexible & Customizable**
+
+- **Mixed Data Types**: Handle heterogeneous data with ease
+- **Extensible Architecture**: Plugin-based architecture for custom operations
+- **Memory Efficient**: Optimized for both small and large datasets
 
 ## Documentation
 
 For comprehensive documentation on specific classes and their functionalities, please refer to the following:
 
-- **[DataFrame](./doc/dataframe.md)**: Detailed guide on creating and manipulating DataFrames, including data loading, cleaning, transformation, and analysis.
-- **[Series](./doc/series.md)**: In-depth information on Series objects, covering creation, operations, statistical methods, and more.
-- **[GeoDataFrame](./doc/geodataframe.md)**: Documentation for working with geospatial data using GeoDataFrames.
-- **[GeoSeries](./doc/geoseries.md)**: Details on GeoSeries, the geometry-aware counterpart to Series.
+### Core Documentation
+- **[DataFrame](./doc/dataframe.md)**: Comprehensive guide covering all DataFrame operations, from basic data manipulation to advanced statistical analysis
+- **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
 
-You can also find runnable examples in the `example` directory of the repository.
+### Geospatial Documentation
+- **[GeoDataFrame](./doc/geodataframe.md)**: Working with geospatial data, spatial operations, and coordinate transformations
+- **[GeoSeries](./doc/geoseries.md)**: Geometry-aware Series operations and spatial analysis methods
+- **[Spatial Operations](./doc/spatial_operations.md)**: Advanced spatial analysis including joins, overlays, and spatial indexing
+
+### Visualization Documentation
+- **[Plotting & Visualization](./doc/plotting.md)**: Complete guide to creating charts, plots, and visualizations directly from your data
+
+### Examples
+Explore practical examples in the `example` directory:
+- **[Statistical Operations](./example/statistical_operations_example.dart)**: Advanced statistical analysis and operations
+- **[Geospatial Analysis](./example/geospatial_analysis_example.dart)**: Comprehensive spatial data analysis workflows
+- **[Plotting & Visualization](./example/plotting_visualization_example.dart)**: Creating various types of plots and visualizations
+
+You can also find additional runnable examples in the `example` directory of the repository.
 
 ---
 
@@ -97,6 +132,62 @@ dependencies:
 ```
 
 Then, run:
+
+```bash
+dart pub get
+```
+
+## What's New in Latest Version
+
+### 🎉 **Pandas Feature Parity Update**
+
+This major update brings DartFrame closer to pandas functionality with comprehensive enhancements:
+
+#### **Advanced Statistical Operations**
+- Added `median()`, `mode()`, `quantile()`, `skew()`, `kurtosis()` methods
+- Implemented correlation and covariance analysis with `corr()` and `cov()`
+- Rolling window operations with `rolling()` for time series analysis
+
+#### **Enhanced Data Manipulation**
+- `melt()` operations for wide-to-long data transformation
+- `stack()` and `unstack()` for hierarchical data reshaping
+- Advanced pivot tables with multiple aggregation functions
+- Improved merge operations with multiple join types
+
+#### **Missing Data Handling**
+- Interpolation methods: linear, polynomial, and spline
+- Advanced fill operations with `ffill()` and `bfill()` with limits
+- Missing data pattern analysis tools
+
+#### **Geospatial Enhancements**
+- Spatial joins based on geometric relationships
+- Overlay operations (intersection, union, difference)
+- Coordinate reference system transformations
+- Spatial indexing for efficient queries
+- Buffer, dissolve, and simplify operations
+
+#### **Performance & I/O Improvements**
+- Memory optimization utilities
+- Vectorized operations for better performance
+- Support for Parquet, Excel, and HDF5 formats
+- Database connectivity for SQL operations
+- Chunked reading for large files
+
+#### **Visualization Integration**
+- Built-in plotting with `.plot` accessor
+- Multiple chart types: line, bar, scatter, histogram, box plots
+- Time series and statistical plotting
+- Geospatial map visualizations
+- Interactive plotting capabilities
+
+#### **Time Series & Categorical Data**
+- Time series resampling and frequency conversion
+- Categorical data type with memory optimization
+- Enhanced datetime operations and indexing
+
+See the [examples](./example/) directory for comprehensive demonstrations of these new features.
+
+---
 
 ```bash
 dart pub get

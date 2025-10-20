@@ -736,6 +736,125 @@ final rEmptyNum = sEmptyNum.toNumeric();
 // rNumWithMarker.data: [1, missingMarker, 2.5]
 ```
 
+## Advanced Statistical Operations
+
+DartFrame Series now includes comprehensive statistical operations that provide pandas-like functionality for advanced data analysis.
+
+### Enhanced Statistical Methods
+
+Series now supports advanced statistical operations including skewness, kurtosis, and more sophisticated quantile calculations.
+
+**Example:**
+```dart
+final s = Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], name: 'data');
+
+// Advanced statistics
+double skewness = s.skew(); // Measure of asymmetry
+double kurtosis = s.kurtosis(); // Measure of tail heaviness
+
+// Multiple quantiles at once
+Map<double, double> quantiles = s.quantiles([0.25, 0.5, 0.75]);
+
+// Rolling statistics
+RollingSeries rolling = s.rolling(window: 3);
+Series rollingMean = rolling.mean();
+Series rollingStd = rolling.std();
+```
+
+### Interpolation Methods
+
+Fill missing values using various interpolation techniques.
+
+**Example:**
+```dart
+final s = Series([1.0, null, null, 4.0, 5.0], name: 'data');
+
+// Linear interpolation
+Series linearInterp = s.interpolate(method: 'linear');
+// Result: [1.0, 2.0, 3.0, 4.0, 5.0]
+
+// Polynomial interpolation
+Series polyInterp = s.interpolate(method: 'polynomial', order: 2);
+
+// Spline interpolation
+Series splineInterp = s.interpolate(method: 'spline');
+
+// Interpolation with limits
+Series limitedInterp = s.interpolate(
+  method: 'linear',
+  limit: 1,
+  limitDirection: 'forward'
+);
+```
+
+### Categorical Data Operations
+
+Work with categorical data for memory efficiency and specialized operations.
+
+**Example:**
+```dart
+final s = Series(['A', 'B', 'A', 'C', 'B', 'A'], name: 'categories');
+
+// Convert to categorical
+Categorical categorical = s.asCategorical();
+
+// Categorical with custom categories and ordering
+Categorical orderedCat = s.asCategorical(
+  categories: ['C', 'B', 'A'],
+  ordered: true
+);
+
+// Categorical operations
+Series counts = categorical.valueCounts();
+List<dynamic> categories = categorical.categories;
+bool isOrdered = categorical.ordered;
+```
+
+### String Accessor Enhancements
+
+Enhanced string operations with more pandas-like functionality.
+
+**Example:**
+```dart
+final s = Series(['Hello World', 'Python Programming', 'Data Science'], name: 'text');
+
+// Advanced string operations
+Series extracted = s.str.extract(r'(\w+)\s+(\w+)'); // Extract patterns
+Series replaced = s.str.replaceAll('o', '0'); // Replace all occurrences
+Series padded = s.str.pad(20, side: 'both', fillchar: '*'); // Pad strings
+Series sliced = s.str.slice(0, 5); // Slice strings
+
+// String splitting with expand
+DataFrame split = s.str.split(' ', expand: true);
+```
+
+### DateTime Accessor Enhancements
+
+Enhanced datetime operations for time series analysis.
+
+**Example:**
+```dart
+final dates = Series([
+  DateTime(2023, 1, 15, 10, 30),
+  DateTime(2023, 2, 20, 14, 45),
+  DateTime(2023, 3, 25, 18, 15),
+], name: 'timestamps');
+
+// Enhanced datetime properties
+Series quarter = dates.dt.quarter; // Quarter of year
+Series weekOfYear = dates.dt.weekOfYear; // Week number
+Series dayName = dates.dt.dayName; // Day name (Monday, Tuesday, etc.)
+Series monthName = dates.dt.monthName; // Month name
+
+// Time zone operations
+Series utc = dates.dt.tz_convert('UTC');
+Series localized = dates.dt.tz_localize('US/Eastern');
+
+// Date arithmetic
+Series plusDays = dates.dt.addDays(30);
+Series minusHours = dates.dt.subtractHours(2);
+```
+
 ## Statistical Methods
 
 ### 1. `nunique()`

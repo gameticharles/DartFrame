@@ -265,10 +265,9 @@ void main() {
           result.columns,
           equals([
             'key',
-            'val',
             'val_x',
             'val_y'
-          ])); // Suffixes apply if join keys are same as value cols
+          ])); // Suffixes apply to conflicting column names
     });
 
     test('inner join on multiple columns resulting in an empty DataFrame', () {

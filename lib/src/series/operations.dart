@@ -167,6 +167,7 @@ extension SeriesOperations on Series {
   /// Adds the corresponding elements of this Series and another Series or a numeric value.
   /// - If other is a Series, handles index alignment.
   /// - If other is a num, adds that value to each element in the Series.
+  /// - For categorical Series, the result will be converted to object dtype.
   Series operator +(dynamic other) {
     if (other is num) {
       List<dynamic> resultData = [];
@@ -182,9 +183,16 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "$name + $other", index: index.toList());
+      var result =
+          Series(resultData, name: "$name + $other", index: index.toList());
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     } else if (other is Series) {
-      return _performArithmeticOperation(other, (a, b) => a + b, '+');
+      var result = _performArithmeticOperation(other, (a, b) => a + b, '+');
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     }
     throw Exception("Can only add Series to Series or num.");
   }
@@ -194,6 +202,7 @@ extension SeriesOperations on Series {
   /// Subtracts a numeric value or another Series from this Series.
   /// - If other is a Series, handles index alignment.
   /// - If other is a num, subtracts that value from each element in the Series.
+  /// - For categorical Series, the result will be converted to object dtype.
   Series operator -(dynamic other) {
     if (other is num) {
       List<dynamic> resultData = [];
@@ -209,9 +218,16 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "$name - $other", index: index.toList());
+      var result =
+          Series(resultData, name: "$name - $other", index: index.toList());
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     } else if (other is Series) {
-      return _performArithmeticOperation(other, (a, b) => a - b, '-');
+      var result = _performArithmeticOperation(other, (a, b) => a - b, '-');
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     }
     throw Exception("Can only subtract Series or num from Series.");
   }
@@ -221,6 +237,7 @@ extension SeriesOperations on Series {
   /// Multiplies the elements of this Series by a numeric value or another Series.
   /// - If other is a Series, handles index alignment.
   /// - If other is a num, multiplies each element in the Series by that value.
+  /// - For categorical Series, the result will be converted to object dtype.
   Series operator *(dynamic other) {
     if (other is num) {
       List<dynamic> resultData = [];
@@ -236,9 +253,16 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "$name * $other", index: index.toList());
+      var result =
+          Series(resultData, name: "$name * $other", index: index.toList());
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     } else if (other is Series) {
-      return _performArithmeticOperation(other, (a, b) => a * b, '*');
+      var result = _performArithmeticOperation(other, (a, b) => a * b, '*');
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     }
     throw Exception("Can only multiply Series by Series or num.");
   }
@@ -248,12 +272,17 @@ extension SeriesOperations on Series {
   /// Divides the elements of this Series by a numeric value or another Series.
   /// - If other is a Series, handles index alignment and division by zero.
   /// - If other is a num, divides each element in the Series by that value.
+  /// - For categorical Series, the result will be converted to object dtype.
   Series operator /(dynamic other) {
     if (other is num) {
       if (other == 0) {
         // Return a Series filled with missing values for division by zero
-        return Series(List.filled(length, _getMissingRepresentation(this)),
-            name: "$name / $other", index: index.toList());
+        var result = Series(
+            List.filled(length, _getMissingRepresentation(this)),
+            name: "$name / $other",
+            index: index.toList());
+        result._dtype = 'object';
+        return result;
       }
 
       List<dynamic> resultData = [];
@@ -269,15 +298,22 @@ extension SeriesOperations on Series {
           }
         }
       }
-      return Series(resultData, name: "$name / $other", index: index.toList());
+      var result =
+          Series(resultData, name: "$name / $other", index: index.toList());
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     } else if (other is Series) {
-      return _performArithmeticOperation(other, (a, b) {
+      var result = _performArithmeticOperation(other, (a, b) {
         if (b == 0) {
           // According to requirements, return missingRep for errors like division by zero
           return _getMissingRepresentation(this);
         }
         return a / b;
       }, '/');
+      // Arithmetic operations on categorical data should result in non-categorical Series
+      result._dtype = 'object';
+      return result;
     }
     throw Exception("Can only divide Series by Series or num.");
   }
@@ -572,6 +608,9 @@ extension SeriesOperations on Series {
   /// If [other] is not a Series, it compares each element of this series with
   /// the single value [other].
   ///
+  /// For categorical Series, this can be more efficient as it can compare codes
+  /// when both Series have the same categories.
+  ///
   /// Returns a new Series with boolean values indicating the equality of each
   /// element with the corresponding element in [other] or with the single value.
   ///
@@ -579,6 +618,7 @@ extension SeriesOperations on Series {
   Series isEqual(Object other) {
     if (other is! Series) {
       // Compare each element with the single value 'other'
+      // For categorical Series, this works on the actual values
       return Series(
         data.map((element) => element == other).toList(),
         name: "$name == $other",
@@ -590,13 +630,37 @@ extension SeriesOperations on Series {
       throw Exception("Series must have the same length for comparison.");
     }
 
-    // Compare each element with the corresponding element in 'other'
+    // Optimization for categorical Series with identical categories
+    if (isCategorical && other.isCategorical) {
+      final thisCat = _categorical!;
+      final otherCat = other._categorical!;
+
+      // If categories are identical, we can compare codes directly (much faster)
+      if (_categoriesAreIdentical(thisCat.categories, otherCat.categories)) {
+        List<bool> resultData = [];
+        for (int i = 0; i < length; i++) {
+          resultData.add(thisCat.codes[i] == otherCat.codes[i]);
+        }
+        return Series(resultData, name: "$name == ${other.name}");
+      }
+    }
+
+    // Default comparison using actual values
     List<bool> resultData = [];
     for (int i = 0; i < length; i++) {
       resultData.add(data[i] == other.data[i]);
     }
 
     return Series(resultData, name: "$name == ${other.name}");
+  }
+
+  /// Helper method to check if two category lists are identical
+  bool _categoriesAreIdentical(List<dynamic> cats1, List<dynamic> cats2) {
+    if (cats1.length != cats2.length) return false;
+    for (int i = 0; i < cats1.length; i++) {
+      if (cats1[i] != cats2[i]) return false;
+    }
+    return true;
   }
 
   // /// Override hashCode to be consistent with the overridden '==' operator

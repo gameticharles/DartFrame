@@ -9,6 +9,9 @@ part 'date_time_accessor.dart';
 part 'string_accessor.dart';
 part 'operations.dart';
 part 'functions.dart';
+part 'statistics.dart';
+part 'interpolation.dart';
+part 'categorical.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///
@@ -49,6 +52,12 @@ class Series<T> {
   /// Get the index/names of the rows in the series
   List<dynamic> index;
 
+  /// Internal categorical data storage
+  _Categorical? _categorical;
+
+  /// The data type of the series (similar to pandas dtype)
+  String _dtype = 'object';
+
   /// Constructs a `Series` object with the given [data] and [name].
   ///
   /// The [data] parameter is a list containing the data points of the series,
@@ -82,6 +91,99 @@ class Series<T> {
       return value == null || value == missingRep;
     }
     return value == null;
+  }
+
+  /// Whether this Series is categorical
+  bool get isCategorical => _categorical != null;
+
+  /// The data type of the series (similar to pandas dtype)
+  String get seriesDtype => _dtype;
+
+  /// Categorical accessor (similar to pandas .cat)
+  CategoricalAccessor? get cat => isCategorical ? CategoricalAccessor(this) : null;
+
+  /// Converts the Series to a specific data type.
+  ///
+  /// Parameters:
+  ///   - `dtype`: The target data type ('category', 'int', 'float', 'string', 'datetime')
+  ///   - `categories`: For categorical conversion, optional explicit categories
+  ///   - `ordered`: For categorical conversion, whether categories are ordered
+  ///
+  /// Returns:
+  ///   The Series with converted data type (modifies in place)
+  Series astype(String dtype, {List<dynamic>? categories, bool ordered = false}) {
+    switch (dtype.toLowerCase()) {
+      case 'category':
+        _categorical = _Categorical(data, categories: categories, ordered: ordered);
+        _dtype = 'category';
+        _syncDataFromCategorical();
+        break;
+      case 'object':
+        _categorical = null;
+        _dtype = 'object';
+        break;
+      case 'int':
+        _categorical = null;
+        _dtype = 'int64';
+        // Convert data to int
+        data = data.map((value) {
+          if (_isMissing(value)) return null;
+          if (value is num) return value.toInt();
+          if (value is String) return int.tryParse(value);
+          return null;
+        }).toList() as List<T?>;
+        break;
+      case 'float':
+        _categorical = null;
+        _dtype = 'float64';
+        // Convert data to double
+        data = data.map((value) {
+          if (_isMissing(value)) return null;
+          if (value is num) return value.toDouble();
+          if (value is String) return double.tryParse(value);
+          return null;
+        }).toList() as List<T?>;
+        break;
+      case 'string':
+        _categorical = null;
+        _dtype = 'object';
+        // Convert data to string
+        data = data.map((value) {
+          if (_isMissing(value)) return null;
+          return value.toString();
+        }).toList() as List<T?>;
+        break;
+      default:
+        throw ArgumentError('Unsupported dtype: $dtype');
+    }
+    return this;
+  }
+
+  /// Synchronizes the Series data with the categorical values
+  void _syncDataFromCategorical() {
+    if (_categorical != null) {
+      data = _categorical!.values.cast<T?>();
+    }
+  }
+
+  /// Checks if the Series contains categorical-like data.
+  ///
+  /// Returns true if the Series has a relatively small number of unique values
+  /// compared to its total length, suggesting it might be suitable for categorical conversion.
+  ///
+  /// Parameters:
+  ///   - `threshold`: The ratio threshold (unique values / total length) below which
+  ///     the Series is considered categorical-like (default: 0.5)
+  ///
+  /// Returns:
+  ///   True if the Series appears to contain categorical data
+  bool isCategoricalLike({double threshold = 0.5}) {
+    if (data.isEmpty) return false;
+    
+    final uniqueCount = nunique();
+    final ratio = uniqueCount / data.length;
+    
+    return ratio <= threshold;
   }
 
   /// Returns a string representation of the series.
@@ -156,6 +258,7 @@ class Series<T> {
   ///
   /// This getter determines the most common type among non-missing values in the Series.
   /// If the Series is empty or contains only missing values, it returns `dynamic`.
+  /// If the Series is categorical, it returns a special categorical type indicator.
   ///
   /// Example:
   /// ```dart
@@ -164,8 +267,20 @@ class Series<T> {
   ///
   /// var mixed = Series([1, 'a', true], name: 'mixed');
   /// print(mixed.dtype); // Outputs the most common type or dynamic
+  ///
+  /// var cat = Series(['A', 'B', 'A'], name: 'categories');
+  /// cat.astype('category');
+  /// print(s.dtype); // Outputs: String (but s.seriesDtype would be 'category')
   /// ```
   Type get dtype {
+    // If categorical, return the type of the category values
+    if (isCategorical) {
+      final categories = _categorical!.categories;
+      if (categories.isNotEmpty) {
+        return categories.first.runtimeType;
+      }
+    }
+
     if (data.isEmpty) return dynamic;
 
     // Count occurrences of each type
@@ -1174,26 +1289,115 @@ class Series<T> {
   /// // Length: 5
   /// // Type: double
   /// ```
+  /// Fills missing values in the Series with enhanced control options.
+  ///
+  /// Missing values are identified if they are equal to
+  /// `_parentDataFrame?.replaceMissingValueWith` or if they are `null`.
+  ///
+  /// Parameters:
+  ///   - `value` (dynamic, optional): The value to use for filling missing entries.
+  ///   - `method` (String?, optional): The method to use for filling holes in reindexed Series.
+  ///     Can be 'ffill' (propagate last valid observation forward) or
+  ///     'bfill' (use next valid observation to fill gap).
+  ///   - `limit` (int?, optional): Maximum number of consecutive missing values to fill.
+  ///     If null, fills all missing values.
+  ///   - `limitDirection` (String, default 'forward'): Direction to apply the limit:
+  ///     - 'forward': Apply limit in forward direction
+  ///     - 'backward': Apply limit in backward direction
+  ///     - 'both': Apply limit in both directions
+  ///
+  /// Returns:
+  ///   A new `Series` with missing values filled. The original `Series` is not modified.
+  ///   If both `value` and `method` are provided, `method` takes precedence.
+  ///   If neither `value` nor `method` is provided, a new `Series` identical to the
+  ///   original is returned.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([1.0, null, null, null, 5.0], name: 'data');
+  /// 
+  /// // Fill with value
+  /// print(s.fillna(value: 0.0));
+  /// // Output: [1.0, 0.0, 0.0, 0.0, 5.0]
+  ///
+  /// // Forward fill with limit
+  /// print(s.fillna(method: 'ffill', limit: 2));
+  /// // Output: [1.0, 1.0, 1.0, null, 5.0]
+  ///
+  /// // Backward fill with limit
+  /// print(s.fillna(method: 'bfill', limit: 1));
+  /// // Output: [1.0, null, null, 5.0, 5.0]
+  /// ```
   Series fillna({
     dynamic value,
     String? method,
+    int? limit,
+    String limitDirection = 'forward',
   }) {
-    List<dynamic> newData = List.from(data);
-
-    // final dynamic missingIndicator = _parentDataFrame?.replaceMissingValueWith; // Replaced by _isMissing
-
-    // bool isMissing(dynamic val) { // Replaced by _isMissing helper
-    //   if (missingIndicator != null) {
-    //     return val == missingIndicator || val == null;
-    //   }
-    //   return val == null;
-    // }
+    if (!['forward', 'backward', 'both'].contains(limitDirection)) {
+      throw ArgumentError(
+          "limitDirection must be one of 'forward', 'backward', 'both'");
+    }
 
     if (method != null && method != 'ffill' && method != 'bfill') {
       throw ArgumentError("method must be either 'ffill' or 'bfill'");
     }
 
+    List<dynamic> newData = List.from(data);
+
     if (method == 'ffill') {
+      return _forwardFill(newData, limit, limitDirection);
+    } else if (method == 'bfill') {
+      return _backwardFill(newData, limit, limitDirection);
+    } else if (value != null) {
+      return _fillWithValue(newData, value, limit, limitDirection);
+    }
+    
+    return Series(newData, name: name, index: List.from(index));
+  }
+
+  /// Forward fill (propagate last valid observation forward).
+  ///
+  /// Parameters:
+  ///   - `limit`: Maximum number of consecutive missing values to fill.
+  ///   - `limitDirection`: Direction to apply the limit.
+  ///
+  /// Returns:
+  ///   A new Series with forward-filled values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([1.0, null, null, 4.0, null], name: 'data');
+  /// print(s.ffill(limit: 1));
+  /// // Output: [1.0, 1.0, null, 4.0, 4.0]
+  /// ```
+  Series ffill({int? limit, String limitDirection = 'forward'}) {
+    return fillna(method: 'ffill', limit: limit, limitDirection: limitDirection);
+  }
+
+  /// Backward fill (use next valid observation to fill gap).
+  ///
+  /// Parameters:
+  ///   - `limit`: Maximum number of consecutive missing values to fill.
+  ///   - `limitDirection`: Direction to apply the limit.
+  ///
+  /// Returns:
+  ///   A new Series with backward-filled values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([null, null, 3.0, null, 5.0], name: 'data');
+  /// print(s.bfill(limit: 1));
+  /// // Output: [null, 3.0, 3.0, 5.0, 5.0]
+  /// ```
+  Series bfill({int? limit, String limitDirection = 'forward'}) {
+    return fillna(method: 'bfill', limit: limit, limitDirection: limitDirection);
+  }
+
+  /// Helper method for forward filling with limit control.
+  Series _forwardFill(List<dynamic> newData, int? limit, String limitDirection) {
+    if (limit == null) {
+      // No limit - fill all missing values
       dynamic lastValidObservation = const Object();
       for (int i = 0; i < newData.length; i++) {
         if (!_isMissing(newData[i])) {
@@ -1204,7 +1408,36 @@ class Series<T> {
           }
         }
       }
-    } else if (method == 'bfill') {
+    } else {
+      // Apply limit
+      List<int> missingIndices = [];
+      for (int i = 0; i < newData.length; i++) {
+        if (_isMissing(newData[i])) {
+          missingIndices.add(i);
+        }
+      }
+
+      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
+      
+      dynamic lastValidObservation = const Object();
+      for (int i = 0; i < newData.length; i++) {
+        if (!_isMissing(newData[i])) {
+          lastValidObservation = newData[i];
+        } else if (indicesToFill.contains(i)) {
+          if (lastValidObservation != const Object()) {
+            newData[i] = lastValidObservation;
+          }
+        }
+      }
+    }
+    
+    return Series(newData, name: name, index: List.from(index));
+  }
+
+  /// Helper method for backward filling with limit control.
+  Series _backwardFill(List<dynamic> newData, int? limit, String limitDirection) {
+    if (limit == null) {
+      // No limit - fill all missing values
       dynamic nextValidObservation = const Object();
       for (int i = newData.length - 1; i >= 0; i--) {
         if (!_isMissing(newData[i])) {
@@ -1215,15 +1448,103 @@ class Series<T> {
           }
         }
       }
-    } else if (value != null) {
-      // `value` is the fill value, not the element from series
+    } else {
+      // Apply limit
+      List<int> missingIndices = [];
+      for (int i = 0; i < newData.length; i++) {
+        if (_isMissing(newData[i])) {
+          missingIndices.add(i);
+        }
+      }
+
+      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
+      
+      dynamic nextValidObservation = const Object();
+      for (int i = newData.length - 1; i >= 0; i--) {
+        if (!_isMissing(newData[i])) {
+          nextValidObservation = newData[i];
+        } else if (indicesToFill.contains(i)) {
+          if (nextValidObservation != const Object()) {
+            newData[i] = nextValidObservation;
+          }
+        }
+      }
+    }
+    
+    return Series(newData, name: name, index: List.from(index));
+  }
+
+  /// Helper method for filling with a specific value and limit control.
+  Series _fillWithValue(List<dynamic> newData, dynamic value, int? limit, String limitDirection) {
+    if (limit == null) {
+      // No limit - fill all missing values
       for (int i = 0; i < newData.length; i++) {
         if (_isMissing(newData[i])) {
           newData[i] = value;
         }
       }
+    } else {
+      // Apply limit
+      List<int> missingIndices = [];
+      for (int i = 0; i < newData.length; i++) {
+        if (_isMissing(newData[i])) {
+          missingIndices.add(i);
+        }
+      }
+
+      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
+      
+      for (int i in indicesToFill) {
+        newData[i] = value;
+      }
     }
+    
     return Series(newData, name: name, index: List.from(index));
+  }
+
+  /// Applies limit constraints to the list of missing indices for fill operations.
+  List<int> _applyFillLimit(List<int> missingIndices, int limit, String limitDirection) {
+    List<int> result = [];
+    
+    if (limitDirection == 'forward' || limitDirection == 'both') {
+      int consecutiveCount = 0;
+      for (int i = 0; i < missingIndices.length; i++) {
+        if (i == 0 || missingIndices[i] == missingIndices[i - 1] + 1) {
+          consecutiveCount++;
+        } else {
+          consecutiveCount = 1;
+        }
+        
+        if (consecutiveCount <= limit) {
+          result.add(missingIndices[i]);
+        }
+      }
+    }
+
+    if (limitDirection == 'backward' || limitDirection == 'both') {
+      List<int> backwardResult = [];
+      int consecutiveCount = 0;
+      for (int i = missingIndices.length - 1; i >= 0; i--) {
+        if (i == missingIndices.length - 1 || missingIndices[i] == missingIndices[i + 1] - 1) {
+          consecutiveCount++;
+        } else {
+          consecutiveCount = 1;
+        }
+        
+        if (consecutiveCount <= limit) {
+          backwardResult.add(missingIndices[i]);
+        }
+      }
+      
+      if (limitDirection == 'backward') {
+        result = backwardResult;
+      } else {
+        // For 'both', take intersection
+        result = result.where((idx) => backwardResult.contains(idx)).toList();
+      }
+    }
+
+    return result;
   }
 
   /// Applies a function to each element in the Series.

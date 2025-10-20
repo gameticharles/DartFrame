@@ -293,7 +293,7 @@ extension DataFrameFunctions on DataFrame {
   /// // 1  2
   /// // 2  3
   /// ```
-  DataFrame head(int n) {
+  DataFrame head([int n=5]) {
     if (n < 0) {
       throw ArgumentError('Number of rows for head must be non-negative.');
     }
@@ -953,10 +953,31 @@ extension DataFrameFunctions on DataFrame {
     return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
   }
 
-  /// Computes rolling window calculations on a specified column.
+  /// **DEPRECATED**: Computes rolling window calculations on a specified column.
+  ///
+  /// **⚠️ DEPRECATION NOTICE**: This method is deprecated and will be removed in a future version.
+  /// Use `rollingWindow()` instead for more comprehensive rolling operations that work across
+  /// all columns simultaneously and provide a richer API.
+  ///
+  /// **Migration Guide**:
+  /// ```dart
+  /// // OLD (deprecated):
+  /// var result = df.rolling('column', 3, 'mean');
+  ///
+  /// // NEW (recommended):
+  /// var result = df.rollingWindow(3).mean()['column'];
+  /// // or for all columns:
+  /// var resultDf = df.rollingWindow(3).mean();
+  /// ```
   ///
   /// This method calculates a statistic (e.g., mean, sum) over a sliding window
   /// of a fixed size along a numeric column.
+  ///
+  /// **Limitations compared to `rollingWindow()`**:
+  /// - Only works on a single column at a time
+  /// - Limited set of statistical functions
+  /// - No support for correlation, covariance, or custom functions
+  /// - Less efficient for multiple operations
   ///
   /// Parameters:
   /// - `column`: The `String` name of the column to perform rolling calculations on.
@@ -989,18 +1010,19 @@ extension DataFrameFunctions on DataFrame {
   ///   'Values': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   /// });
   ///
-  /// // Rolling mean with window size 3
+  /// // DEPRECATED: Rolling mean with window size 3
   /// var rollingMean = df.rolling('Values', 3, 'mean');
   /// print(rollingMean);
   /// // Output:
   /// // Series(name: Rolling mean of Values (window=3), index: [0, ..., 9], data: [null, null, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
   ///
-  /// // Rolling sum with window 2, centered
-  /// var rollingSumCentered = df.rolling('Values', 2, 'sum', center: true);
-  /// print(rollingSumCentered);
-  /// // Output might be: Series(name: Rolling sum of Values (window=2), index: [0,...,9], data: [3.0, 5.0, 7.0, ..., 19.0, null])
-  /// // (Exact output for centered depends on handling of edges)
+  /// // RECOMMENDED: Use rollingWindow() instead
+  /// var rollingMeanNew = df.rollingWindow(3).mean()['Values'];
+  /// print(rollingMeanNew);
   /// ```
+  @Deprecated(
+      'Use rollingWindow() instead for comprehensive rolling operations. '
+      'This method will be removed in a future version.')
   Series rolling(String column, int window, String function,
       {int? minPeriods, bool center = false}) {
     final colIdx = _columns.indexOf(column);
@@ -1981,225 +2003,6 @@ extension DataFrameFunctions on DataFrame {
     _data[rowIndex][columnIndex] = value;
   }
 
-  /// Concatenates this DataFrame with one or more other DataFrames along a specified axis.
-  ///
-  /// This method allows for combining DataFrames either row-wise (stacking vertically)
-  /// or column-wise (joining horizontally).
-  ///
-  /// Parameters:
-  /// - `others`: A `List<DataFrame>` to concatenate with the current DataFrame.
-  /// - `axis`: An `int` specifying the axis to concatenate along.
-  ///   - `0` (default): Row-wise concatenation. Stacks DataFrames vertically.
-  ///     Column alignment depends on the `join` parameter.
-  ///   - `1`: Column-wise concatenation. Joins DataFrames horizontally.
-  ///     Row alignment is based on matching index labels. If `ignoreIndex` is `true`
-  ///     for `axis = 1`, alignment is positional, and the resulting index is reset.
-  /// - `join`: A `String` indicating how to handle columns/indices on the other axis.
-  ///   - `'outer'` (default): Union of columns/indices. Missing values are filled with
-  ///     the DataFrame's `replaceMissingValueWith`.
-  ///   - `'inner'`: Intersection of columns/indices. Only common columns/indices are kept.
-  /// - `ignoreIndex`: A `bool`.
-  ///   - If `true` and `axis = 0`: The resulting DataFrame's index will be a new
-  ///     default integer index (0, 1, ..., n-1).
-  ///   - If `true` and `axis = 1`: The resulting DataFrame's column names will be reset
-  ///     to default integer labels (0, 1, ...). Original row indices are attempted to be aligned;
-  ///     if alignment is complex or `join` is 'outer' with differing indices, a default integer
-  ///     index might result for rows as well.
-  ///   Defaults to `false`.
-  ///
-  /// Returns:
-  /// A new `DataFrame` resulting from the concatenation.
-  ///
-  /// Throws:
-  /// - `ArgumentError` if `axis` is not 0 or 1, or if `join` is not 'outer' or 'inner'.
-  ///
-  /// Example (Row-wise, axis = 0):
-  /// ```dart
-  /// var df1 = DataFrame.fromMap({'A': [1, 2], 'B': [3, 4]});
-  /// var df2 = DataFrame.fromMap({'A': [5, 6], 'B': [7, 8]});
-  /// var df3 = DataFrame.fromMap({'B': [9,10], 'C': [11,12]}); // Different columns
-  ///
-  /// // Outer join (default)
-  /// print(df1.concatenate([df2, df3]));
-  /// // Output:
-  /// //    A  B     C
-  /// // 0  1  3  null
-  /// // 1  2  4  null
-  /// // 2  5  7  null
-  /// // 3  6  8  null
-  /// // 4 null 9    11
-  /// // 5 null 10   12
-  ///
-  /// // Inner join
-  /// print(df1.concatenate([df3], join: 'inner'));
-  /// // Output:
-  /// //    B
-  /// // 0  3
-  /// // 1  4
-  /// // 2  9
-  /// // 3 10
-  ///
-  /// // Outer join, ignore index
-  /// print(df1.concatenate([df2], ignoreIndex: true));
-  /// // Output:
-  /// //    A  B
-  /// // 0  1  3
-  /// // 1  2  4
-  /// // 2  5  7
-  /// // 3  6  8
-  /// ```
-  /// Example (Column-wise, axis = 1):
-  /// ```dart
-  /// var dfA = DataFrame.fromMap({'A': [1, 2], 'B': [3, 4]}, index: ['r1', 'r2']);
-  /// var dfB = DataFrame.fromMap({'C': [5, 6], 'D': [7, 8]}, index: ['r1', 'r2']); // Same index
-  /// var dfC = DataFrame.fromMap({'E': [9,10]}, index: ['r1', 'r3']); // Different index
-  ///
-  /// print(dfA.concatenate([dfB], axis: 1));
-  /// // Output:
-  /// //     A  B  C  D
-  /// // r1  1  3  5  7
-  /// // r2  2  4  6  8
-  ///
-  /// print(dfA.concatenate([dfC], axis: 1, join: 'outer')); // Outer join aligns on index
-  /// // Output:
-  /// //      A    B    E
-  /// // r1  1.0  3.0  9.0
-  /// // r2  2.0  4.0  NaN // or replaceMissingValueWith
-  /// // r3  NaN  NaN 10.0
-  ///
-  /// print(dfA.concatenate([dfC], axis: 1, join: 'inner'));
-  /// // Output:
-  /// //     A  B  E
-  /// // r1  1  3  9
-  /// ```
-  DataFrame concatenate(List<DataFrame> others,
-      {int axis = 0, String join = 'outer', bool ignoreIndex = false}) {
-    if (others.isEmpty) {
-      return copy(); // Concatenating with nothing returns a copy of itself.
-    }
-
-    List<DataFrame> allDfs = [this, ...others];
-
-    if (axis == 0) {
-      // Row-wise concatenation
-      List<dynamic> finalColumns;
-      List<List<dynamic>> finalData = [];
-
-      if (join == 'outer') {
-        final Set<dynamic> allColumnSet = {};
-        for (var df in allDfs) {
-          allColumnSet.addAll(df.columns);
-        }
-        // Maintain order of first appearance for columns
-        finalColumns = <dynamic>[];
-        for (var df in allDfs) {
-          for (var col in df.columns) {
-            if (!finalColumns.contains(col)) {
-              finalColumns.add(col);
-            }
-          }
-        }
-
-        for (var df in allDfs) {
-          for (var row in df.rows) {
-            final newRow = <dynamic>[];
-            final dfRowMap = Map.fromIterables(df.columns, row);
-            for (var colName in finalColumns) {
-              newRow.add(dfRowMap[colName] ?? replaceMissingValueWith);
-            }
-            finalData.add(newRow);
-          }
-        }
-      } else if (join == 'inner') {
-        if (allDfs.isEmpty) return DataFrame([]);
-        Set<dynamic> commonColumns = Set.from(allDfs.first.columns);
-        for (int i = 1; i < allDfs.length; i++) {
-          commonColumns =
-              commonColumns.intersection(Set.from(allDfs[i].columns));
-        }
-        if (commonColumns.isEmpty &&
-            allDfs.any((df) => df.columns.isNotEmpty)) {
-          // If intersection is empty but some DFs had columns, result is empty columns
-          finalColumns = [];
-        } else {
-          finalColumns = commonColumns.toList();
-        }
-
-        for (var df in allDfs) {
-          final colIndicesToKeep =
-              finalColumns.map((col) => df.columns.indexOf(col)).toList();
-          for (var row in df.rows) {
-            final newRow = colIndicesToKeep.map((idx) => row[idx]).toList();
-            finalData.add(newRow);
-          }
-        }
-      } else {
-        throw ArgumentError("join must be 'outer' or 'inner'.");
-      }
-
-      // ignore_index for axis 0 resets the row index, which is implicit in our current list-of-lists data model.
-      // If a dedicated index object existed, it would be reset here if ignore_index is true.
-      // For now, the data is simply concatenated, and default integer indexing applies.
-      return DataFrame._(finalColumns, finalData);
-    } else if (axis == 1) {
-      // Column-wise concatenation
-      // This implementation for axis=1 is basic and assumes row alignment by index position.
-      // A more robust implementation would require a proper Index object for alignment.
-
-      List<dynamic> finalCombinedColumns = [];
-      for (var df in allDfs) {
-        finalCombinedColumns
-            .addAll(df.columns); // Simple concatenation of column names
-      }
-      // Handle duplicate column names if not ignoring index for columns
-      if (!ignoreIndex) {
-        final Map<dynamic, int> colCounts = {};
-        List<dynamic> tempCols = List.from(finalCombinedColumns);
-        finalCombinedColumns.clear();
-        for (var colName in tempCols) {
-          int count = colCounts.putIfAbsent(colName, () => 0);
-          colCounts[colName] = count + 1;
-          if (count > 0) {
-            finalCombinedColumns.add("${colName}_$count");
-          } else {
-            finalCombinedColumns.add(colName);
-          }
-        }
-      }
-
-      List<List<dynamic>> finalData = [];
-      int maxRows = 0;
-      for (var df in allDfs) {
-        if (df.rowCount > maxRows) {
-          maxRows = df.rowCount;
-        }
-      }
-
-      for (int i = 0; i < maxRows; i++) {
-        List<dynamic> newRow = [];
-        for (var df in allDfs) {
-          if (i < df.rowCount) {
-            newRow.addAll(df.rows[i]);
-          } else {
-            // Fill with missing values for columns of this df
-            newRow.addAll(List.filled(df.columnCount, replaceMissingValueWith));
-          }
-        }
-        finalData.add(newRow);
-      }
-
-      if (ignoreIndex) {
-        // Reset column names to default integer sequence
-        var finalColumns = List.generate(finalCombinedColumns.length, (i) => i);
-        return DataFrame._(finalColumns, finalData);
-      } else {
-        return DataFrame._(finalCombinedColumns, finalData);
-      }
-    } else {
-      throw ArgumentError('axis must be 0 (row-wise) or 1 (column-wise).');
-    }
-  }
-
   /// Remove the first row from the DataFrame
   void removeFirstRow() {
     if (_data.isNotEmpty) {
@@ -2853,6 +2656,133 @@ extension DataFrameFunctions on DataFrame {
         name: 'apply_result', index: List<dynamic>.from(index));
   }
 
+  /// Private helper method to perform a cross join.
+  ///
+  /// A cross join returns the Cartesian product of rows from two DataFrames.
+  ///
+  /// Parameters:
+  /// - `other`: The `DataFrame` to cross join with.
+  /// - `suffixes`: A `List<String>` of suffixes to apply to overlapping column names.
+  ///
+  /// Returns:
+  /// A new `DataFrame` representing the cross product. The index of the new
+  /// DataFrame is a compound key created by joining the original indices.
+  DataFrame _crossJoin(DataFrame other, List<String> suffixes) {
+    final List<dynamic> newColumns = List.from(columns);
+    // final newColumns = [];
+
+    // Add left columns
+    for (var col in _columns) {
+      newColumns.add(col);
+    }
+
+    // Add right columns (with suffixes for duplicates)
+    for (var col in other._columns) {
+      if (_columns.contains(col)) {
+        newColumns.add('$col${suffixes[1]}');
+      } else {
+        newColumns.add(col);
+      }
+    }
+
+    final newData = <List<dynamic>>[];
+
+    // Cartesian product of rows
+    for (var leftRow in _data) {
+      for (var rightRow in other._data) {
+        final newRow = <dynamic>[...leftRow];
+
+        // Add right columns (handling duplicates)
+        for (var i = 0; i < other._columns.length; i++) {
+          newRow.add(rightRow[i]);
+        }
+
+        newData.add(newRow);
+      }
+    }
+
+    return DataFrame._(newColumns, newData);
+  }
+
+  /// Helper method to join two rows
+  List<dynamic> _joinRows(
+      DataFrame other,
+      List<dynamic> leftRow,
+      List<dynamic> rightRow,
+      List<String> leftCols,
+      List<String> rightCols,
+      List<String> suffixes) {
+    final result = <dynamic>[...leftRow];
+
+    // Add right columns (skipping join columns if they have the same name)
+    for (var i = 0; i < rightRow.length; i++) {
+      final colName = other.columns[i];
+      // Skip join columns that have the same name in both DataFrames
+      if (rightCols.contains(colName) && leftCols.contains(colName)) {
+        continue;
+      }
+
+      result.add(rightRow[i]);
+    }
+
+    return result;
+  }
+
+  /// Helper method to join a row with nulls for the other side
+  List<dynamic> _joinRowsWithNull(
+      List<dynamic> row,
+      bool isLeft,
+      List<String> leftCols,
+      List<String> rightCols,
+      List<dynamic> otherColumns,
+      List<String> suffixes) {
+    final result = <dynamic>[];
+
+    if (isLeft) {
+      // Left row with nulls for right
+      result.addAll(row);
+
+      // Add nulls for right columns (skipping join columns if they have the same name)
+      for (var i = 0; i < otherColumns.length; i++) {
+        final colName = otherColumns[i];
+        // Skip join columns that have the same name in both DataFrames
+        if (rightCols.contains(colName) && leftCols.contains(colName)) {
+          continue;
+        }
+
+        result.add(null);
+      }
+    } else {
+      // Right row with nulls for left
+      // Add nulls for left columns
+      for (var i = 0; i < _columns.length; i++) {
+        result.add(null);
+      }
+
+      // Replace nulls with values for join columns
+      for (var i = 0; i < rightCols.length; i++) {
+        final rightIdx = otherColumns.indexOf(rightCols[i]);
+        final leftIdx = _columns.indexOf(leftCols[i]);
+        if (rightIdx != -1 && leftIdx != -1) {
+          result[leftIdx] = row[rightIdx];
+        }
+      }
+
+      // Add right columns (skipping join columns if they have the same name)
+      for (var i = 0; i < otherColumns.length; i++) {
+        final colName = otherColumns[i];
+        // Skip join columns that have the same name in both DataFrames
+        if (rightCols.contains(colName) && leftCols.contains(colName)) {
+          continue;
+        }
+
+        result.add(row[i]);
+      }
+    }
+
+    return result;
+  }
+
   /// Joins this DataFrame with another DataFrame (`other`) based on specified keys
   /// and join type.
   ///
@@ -3005,28 +2935,43 @@ extension DataFrameFunctions on DataFrame {
     // Create new column names (avoiding duplicates)
     final newColumns = <dynamic>[];
 
-    // Add left columns
+    // Add left columns (with suffixes for conflicting non-join columns)
     for (var col in _columns) {
-      newColumns.add(col);
-    }
-
-    // Add right columns (with suffixes for duplicates)
-    for (var col in other._columns) {
-      if (!rightCols.contains(col) || leftCols != rightCols) {
-        if (_columns.contains(col) && !leftCols.contains(col)) {
-          newColumns.add('$col${suffixes[1]}');
-        } else {
-          newColumns.add(col);
-        }
+      if (other._columns.contains(col) && 
+          !(rightCols.contains(col) && leftCols.contains(col))) {
+        // Add suffix for duplicate non-join columns
+        newColumns.add('$col${suffixes[0]}');
+      } else {
+        newColumns.add(col);
       }
     }
 
-    // Build maps for faster lookups
-    final rightMap = <List<dynamic>, List<List<dynamic>>>{};
+    // Add right columns (with suffixes for duplicates, skip join columns if same name)
+    for (var col in other._columns) {
+      // Skip join columns that have the same name in both DataFrames
+      if (rightCols.contains(col) && leftCols.contains(col)) {
+        continue;
+      }
+      
+      if (_columns.contains(col)) {
+        // Add suffix for duplicate non-join columns
+        newColumns.add('$col${suffixes[1]}');
+      } else {
+        newColumns.add(col);
+      }
+    }
+
+    // Build maps for faster lookups using string keys for proper equality comparison
+    final rightMap = <String, List<List<dynamic>>>{};
     for (var rightRow in other._data) {
-      final key = rightIndices.map((idx) => rightRow[idx]).toList();
-      rightMap.putIfAbsent(key, () => []);
-      rightMap[key]!.add(rightRow);
+      final keyValues = rightIndices.map((idx) => rightRow[idx]).toList();
+      // Skip rows with null values in join keys (nulls don't match in joins)
+      if (keyValues.any((v) => v == null)) {
+        continue;
+      }
+      final keyString = keyValues.map((v) => v.toString()).join('|');
+      rightMap.putIfAbsent(keyString, () => []);
+      rightMap[keyString]!.add(rightRow);
     }
 
     final newData = <List<dynamic>>[];
@@ -3037,9 +2982,14 @@ extension DataFrameFunctions on DataFrame {
     switch (how) {
       case 'inner':
         for (var leftRow in _data) {
-          final key = leftIndices.map((idx) => leftRow[idx]).toList();
-          if (rightMap.containsKey(key)) {
-            for (var rightRow in rightMap[key]!) {
+          final keyValues = leftIndices.map((idx) => leftRow[idx]).toList();
+          // Skip rows with null values in join keys (nulls don't match in joins)
+          if (keyValues.any((v) => v == null)) {
+            continue;
+          }
+          final keyString = keyValues.map((v) => v.toString()).join('|');
+          if (rightMap.containsKey(keyString)) {
+            for (var rightRow in rightMap[keyString]!) {
               newData.add(_joinRows(
                   other, leftRow, rightRow, leftCols, rightCols, suffixes));
               if (indicator != false) mergeIndicatorValues.add('both');
@@ -3050,9 +3000,18 @@ extension DataFrameFunctions on DataFrame {
 
       case 'left':
         for (var leftRow in _data) {
-          final key = leftIndices.map((idx) => leftRow[idx]).toList();
-          if (rightMap.containsKey(key)) {
-            for (var rightRow in rightMap[key]!) {
+          final keyValues = leftIndices.map((idx) => leftRow[idx]).toList();
+          // Handle null values in join keys
+          if (keyValues.any((v) => v == null)) {
+            // Left rows with null keys are kept but don't match anything
+            newData.add(_joinRowsWithNull(
+                leftRow, true, leftCols, rightCols, other._columns, suffixes));
+            if (indicator != false) mergeIndicatorValues.add('left_only');
+            continue;
+          }
+          final keyString = keyValues.map((v) => v.toString()).join('|');
+          if (rightMap.containsKey(keyString)) {
+            for (var rightRow in rightMap[keyString]!) {
               newData.add(_joinRows(
                   other, leftRow, rightRow, leftCols, rightCols, suffixes));
               if (indicator != false) mergeIndicatorValues.add('both');
@@ -3066,17 +3025,31 @@ extension DataFrameFunctions on DataFrame {
         break;
 
       case 'right':
-        final leftMap = <List<dynamic>, List<List<dynamic>>>{};
+        final leftMap = <String, List<List<dynamic>>>{};
         for (var leftRow in _data) {
-          final key = leftIndices.map((idx) => leftRow[idx]).toList();
-          leftMap.putIfAbsent(key, () => []);
-          leftMap[key]!.add(leftRow);
+          final keyValues = leftIndices.map((idx) => leftRow[idx]).toList();
+          // Skip rows with null values in join keys
+          if (keyValues.any((v) => v == null)) {
+            continue;
+          }
+          final keyString = keyValues.map((v) => v.toString()).join('|');
+          leftMap.putIfAbsent(keyString, () => []);
+          leftMap[keyString]!.add(leftRow);
         }
 
         for (var rightRow in other._data) {
-          final key = rightIndices.map((idx) => rightRow[idx]).toList();
-          if (leftMap.containsKey(key)) {
-            for (var leftRow in leftMap[key]!) {
+          final keyValues = rightIndices.map((idx) => rightRow[idx]).toList();
+          // Handle null values in join keys
+          if (keyValues.any((v) => v == null)) {
+            // Right rows with null keys are kept but don't match anything
+            newData.add(_joinRowsWithNull(
+                rightRow, false, leftCols, rightCols, _columns, suffixes));
+            if (indicator != false) mergeIndicatorValues.add('right_only');
+            continue;
+          }
+          final keyString = keyValues.map((v) => v.toString()).join('|');
+          if (leftMap.containsKey(keyString)) {
+            for (var leftRow in leftMap[keyString]!) {
               newData.add(_joinRows(
                   other, leftRow, rightRow, leftCols, rightCols, suffixes));
               if (indicator != false) mergeIndicatorValues.add('both');
@@ -3090,20 +3063,29 @@ extension DataFrameFunctions on DataFrame {
         break;
 
       case 'outer':
-        final Set<List<dynamic>> processedRightKeys =
+        final Set<String> processedRightKeys =
             {}; // To track right keys already matched
 
         for (var leftRow in _data) {
-          final key = leftIndices.map((idx) => leftRow[idx]).toList();
+          final keyValues = leftIndices.map((idx) => leftRow[idx]).toList();
+          // Handle null values in join keys
+          if (keyValues.any((v) => v == null)) {
+            // Left rows with null keys are kept but don't match anything
+            newData.add(_joinRowsWithNull(
+                leftRow, true, leftCols, rightCols, other._columns, suffixes));
+            if (indicator != false) mergeIndicatorValues.add('left_only');
+            continue;
+          }
+          final keyString = keyValues.map((v) => v.toString()).join('|');
           bool matched = false;
-          if (rightMap.containsKey(key)) {
-            for (var rightRow in rightMap[key]!) {
+          if (rightMap.containsKey(keyString)) {
+            for (var rightRow in rightMap[keyString]!) {
               newData.add(_joinRows(
                   other, leftRow, rightRow, leftCols, rightCols, suffixes));
               if (indicator != false) mergeIndicatorValues.add('both');
               matched = true;
             }
-            processedRightKeys.add(key);
+            processedRightKeys.add(keyString);
           }
           if (!matched) {
             newData.add(_joinRowsWithNull(
@@ -3112,17 +3094,20 @@ extension DataFrameFunctions on DataFrame {
           }
         }
 
-        // Add remaining right-only rows
-        rightMap.forEach((key, rightRows) {
-          bool keyAlreadyProcessed = processedRightKeys.any((prk) {
-            if (prk.length != key.length) return false;
-            for (int i = 0; i < prk.length; ++i) {
-              if (prk[i] != key[i]) return false;
-            }
-            return true;
-          });
-
-          if (!keyAlreadyProcessed) {
+        // Add remaining right-only rows (including those with null keys)
+        for (var rightRow in other._data) {
+          final keyValues = rightIndices.map((idx) => rightRow[idx]).toList();
+          if (keyValues.any((v) => v == null)) {
+            // Right rows with null keys are kept but don't match anything
+            newData.add(_joinRowsWithNull(
+                rightRow, false, leftCols, rightCols, _columns, suffixes));
+            if (indicator != false) mergeIndicatorValues.add('right_only');
+          }
+        }
+        
+        // Add remaining right-only rows with valid keys
+        rightMap.forEach((keyString, rightRows) {
+          if (!processedRightKeys.contains(keyString)) {
             for (var rightRow in rightRows) {
               newData.add(_joinRowsWithNull(
                   rightRow, false, leftCols, rightCols, _columns, suffixes));
@@ -3154,131 +3139,6 @@ extension DataFrameFunctions on DataFrame {
     }
 
     return resultDf;
-  }
-
-  /// Private helper method to perform a cross join.
-  ///
-  /// A cross join returns the Cartesian product of rows from two DataFrames.
-  ///
-  /// Parameters:
-  /// - `other`: The `DataFrame` to cross join with.
-  /// - `suffixes`: A `List<String>` of suffixes to apply to overlapping column names.
-  ///
-  /// Returns:
-  /// A new `DataFrame` representing the cross product. The index of the new
-  /// DataFrame is a compound key created by joining the original indices.
-  DataFrame _crossJoin(DataFrame other, List<String> suffixes) {
-    final List<dynamic> newColumns = List.from(columns);
-    // final newColumns = [];
-
-    // Add left columns
-    for (var col in _columns) {
-      newColumns.add(col);
-    }
-
-    // Add right columns (with suffixes for duplicates)
-    for (var col in other._columns) {
-      if (_columns.contains(col)) {
-        newColumns.add('$col${suffixes[1]}');
-      } else {
-        newColumns.add(col);
-      }
-    }
-
-    final newData = <List<dynamic>>[];
-
-    // Cartesian product of rows
-    for (var leftRow in _data) {
-      for (var rightRow in other._data) {
-        final newRow = <dynamic>[...leftRow];
-
-        // Add right columns (handling duplicates)
-        for (var i = 0; i < other._columns.length; i++) {
-          newRow.add(rightRow[i]);
-        }
-
-        newData.add(newRow);
-      }
-    }
-
-    return DataFrame._(newColumns, newData);
-  }
-
-  /// Helper method to join two rows
-  List<dynamic> _joinRows(
-      DataFrame other,
-      List<dynamic> leftRow,
-      List<dynamic> rightRow,
-      List<String> leftCols,
-      List<String> rightCols,
-      List<String> suffixes) {
-    final result = <dynamic>[...leftRow];
-
-    // Add right columns (skipping join columns if they have the same name)
-    for (var i = 0; i < rightRow.length; i++) {
-      final colName = other.columns[i];
-      if (rightCols.contains(colName) && leftCols == rightCols) {
-        // Skip join columns with the same name
-        continue;
-      }
-
-      result.add(rightRow[i]);
-    }
-
-    return result;
-  }
-
-  /// Helper method to join a row with nulls for the other side
-  List<dynamic> _joinRowsWithNull(
-      List<dynamic> row,
-      bool isLeft,
-      List<String> leftCols,
-      List<String> rightCols,
-      List<dynamic> otherColumns,
-      List<String> suffixes) {
-    final result = <dynamic>[];
-
-    if (isLeft) {
-      // Left row with nulls for right
-      result.addAll(row);
-
-      // Add nulls for right columns (skipping join columns if they have the same name)
-      for (var i = 0; i < otherColumns.length; i++) {
-        final colName = otherColumns[i];
-        if (rightCols.contains(colName) && leftCols == rightCols) {
-          // Skip join columns with the same name
-          continue;
-        }
-
-        result.add(null);
-      }
-    } else {
-      // Right row with nulls for left
-      // Add nulls for left columns
-      for (var i = 0; i < _columns.length; i++) {
-        result.add(null);
-      }
-
-      // Replace nulls with values for join columns
-      for (var i = 0; i < rightCols.length; i++) {
-        final rightIdx = otherColumns.indexOf(rightCols[i]);
-        final leftIdx = _columns.indexOf(leftCols[i]);
-        result[leftIdx] = row[rightIdx];
-      }
-
-      // Add right columns (skipping join columns if they have the same name)
-      for (var i = 0; i < otherColumns.length; i++) {
-        final colName = otherColumns[i];
-        if (rightCols.contains(colName) && leftCols == rightCols) {
-          // Skip join columns with the same name
-          continue;
-        }
-
-        result.add(row[i]);
-      }
-    }
-
-    return result;
   }
 
   /// Computes the pairwise correlation of numerical columns in the DataFrame.
@@ -3611,280 +3471,6 @@ extension DataFrameFunctions on DataFrame {
     return buffer.toString();
   }
 
-  /// Creates a pivot table from the DataFrame, allowing aggregation.
-  ///
-  /// Parameters:
-  ///   - `index`: Column name to use for the new DataFrame's index.
-  ///   - `columns`: Column name to use for the new DataFrame's columns.
-  ///   - `values`: Column name to aggregate.
-  ///   - `aggFunc`: Aggregation function to apply. Supported: 'mean', 'sum', 'count', 'min', 'max'. Default is 'mean'.
-  ///   - `fill_value`: Value to replace missing cells in the pivot table after aggregation.
-  DataFrame pivotTable(
-      {required String index,
-      required String columns,
-      required String values,
-      String aggFunc = 'mean',
-      dynamic fillValue}) {
-    if (!hasColumn(index) || !hasColumn(columns) || !hasColumn(values)) {
-      throw ArgumentError(
-          'Index, columns, or values column not found in DataFrame');
-    }
-
-    // Get unique values for index and columns
-    final indexValues = this[index].unique();
-    final columnValues = this[columns].unique();
-
-    // Create new column names
-    final newColumns = <dynamic>[index, ...columnValues];
-
-    // Group data by index and columns
-    final grouped = <dynamic, Map<dynamic, List<dynamic>>>{};
-
-    final indexIdx = _columns.indexOf(index);
-    final columnsIdx = _columns.indexOf(columns);
-    final valuesIdx = _columns.indexOf(values);
-
-    for (var row in _data) {
-      final indexVal = row[indexIdx];
-      final columnVal = row[columnsIdx];
-      final value = row[valuesIdx];
-
-      if (value == null) continue;
-
-      grouped.putIfAbsent(indexVal, () => {});
-      grouped[indexVal]!.putIfAbsent(columnVal, () => []);
-      grouped[indexVal]![columnVal]!.add(value);
-    }
-
-    // Apply aggregation function and create pivot table
-    final pivotData = <List<dynamic>>[];
-
-    for (var indexVal in indexValues) {
-      final rowData = <dynamic>[indexVal];
-
-      for (var columnVal in columnValues) {
-        final values = grouped[indexVal]?[columnVal] ?? [];
-
-        dynamic aggResult;
-        if (values.isEmpty) {
-          aggResult = null;
-        } else {
-          // Apply aggregation function
-          switch (aggFunc.toLowerCase()) {
-            case 'mean':
-              if (values.every((v) => v is num)) {
-                final sum =
-                    values.fold<num>(0, (prev, val) => prev + (val as num));
-                aggResult = sum / values.length;
-              } else {
-                aggResult = null;
-              }
-              break;
-            case 'sum':
-              if (values.every((v) => v is num)) {
-                final sum =
-                    values.fold<num>(0, (prev, val) => prev + (val as num));
-                aggResult = sum;
-              } else {
-                aggResult = null;
-              }
-              break;
-            case 'count':
-              aggResult = values.length;
-              break;
-            case 'min':
-              if (values.every((v) => v is num)) {
-                aggResult = values.cast<num>().reduce(min);
-              } else {
-                // Attempt to find min for non-numeric comparable types
-                try {
-                  aggResult = values.reduce((a, b) =>
-                      (a as Comparable).compareTo(b as Comparable) < 0 ? a : b);
-                } catch (e) {
-                  aggResult = null;
-                }
-              }
-              break;
-            case 'max':
-              if (values.every((v) => v is num)) {
-                aggResult = values.cast<num>().reduce(max);
-              } else {
-                try {
-                  aggResult = values.reduce((a, b) =>
-                      (a as Comparable).compareTo(b as Comparable) > 0 ? a : b);
-                } catch (e) {
-                  aggResult = null;
-                }
-              }
-              break;
-            default:
-              throw ArgumentError('Unsupported aggregation function: $aggFunc');
-          }
-        }
-        rowData.add(aggResult);
-      }
-      pivotData.add(rowData);
-    }
-
-    // Apply fill_value
-    if (fillValue != null) {
-      for (int i = 0; i < pivotData.length; i++) {
-        for (int j = 1; j < pivotData[i].length; j++) {
-          // Start from j=1 to skip the index column
-          if (pivotData[i][j] == null) {
-            pivotData[i][j] = fillValue;
-          }
-        }
-      }
-    }
-
-    return DataFrame._(newColumns, pivotData);
-  }
-
-  /// Reshapes the DataFrame based on column values.
-  ///
-  /// This function is used for strict reshaping without aggregation.
-  /// If there are duplicate entries for an `index` and `columns` pair,
-  /// it will raise an `ArgumentError`.
-  ///
-  /// Parameters:
-  ///   - `index`: Column name to use as the new DataFrame's index.
-  ///   - `columns`: Column name whose unique values will form the new DataFrame's columns.
-  ///   - `values`: Column name whose values will populate the new DataFrame.
-  ///             If null, and there are multiple remaining columns, this might be ambiguous
-  ///             or require hierarchical columns (currently requires `values` to be specified).
-  ///
-  /// Returns a new, reshaped DataFrame.
-  DataFrame pivot(
-      {required String index, required String columns, String? values}) {
-    if (!hasColumn(index) || !hasColumn(columns)) {
-      throw ArgumentError('Index or columns column not found in DataFrame.');
-    }
-    String valueCol = values ?? '';
-
-    if (values != null) {
-      if (!hasColumn(values)) {
-        throw ArgumentError('Values column $values not found in DataFrame.');
-      }
-    } else {
-      List<String> remainingCols = _columns
-          .map((c) => c.toString())
-          .where((c) => c != index && c != columns)
-          .toList();
-      if (remainingCols.isEmpty) {
-        throw ArgumentError(
-            'No values columns found to pivot. Specify `values` or ensure other columns exist.');
-      }
-      if (remainingCols.length > 1) {
-        print(
-            'Warning: Multiple value columns found and `values` parameter is null. Using first remaining column: ${remainingCols.first}');
-        valueCol = remainingCols.first;
-      } else {
-        valueCol = remainingCols.first;
-      }
-    }
-
-    final indexValues = this[index].unique()
-      ..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
-    final columnValues = this[columns].unique()
-      ..sort((a, b) => (a as Comparable).compareTo(b as Comparable));
-
-    final newColumns = <dynamic>[index, ...columnValues];
-    final pivotData = <List<dynamic>>[];
-
-    final indexIdx = _columns.indexOf(index);
-    final columnsIdx = _columns.indexOf(columns);
-    final valuesIdx = _columns.indexOf(valueCol);
-
-    // Check for duplicates
-    final Set<String> uniqueIndexColumnPairs = {};
-    for (var row in _data) {
-      String pairKey = "${row[indexIdx]}_${row[columnsIdx]}";
-      if (uniqueIndexColumnPairs.contains(pairKey)) {
-        throw ArgumentError(
-            "Index contains duplicate entries for index '${row[indexIdx]}' and columns '${row[columnsIdx]}', cannot reshape without aggregation. Use pivot_table instead.");
-      }
-      uniqueIndexColumnPairs.add(pairKey);
-    }
-
-    // Create a map for quick lookup: {indexValue: {columnValue: value}}
-    final Map<dynamic, Map<dynamic, dynamic>> dataMap = {};
-    for (var row in _data) {
-      dataMap.putIfAbsent(row[indexIdx], () => {})[row[columnsIdx]] =
-          row[valuesIdx];
-    }
-
-    for (var indexVal in indexValues) {
-      final rowData = <dynamic>[indexVal];
-      for (var columnVal in columnValues) {
-        rowData.add(dataMap[indexVal]?[columnVal]); // Will add null if no value
-      }
-      pivotData.add(rowData);
-    }
-
-    return DataFrame._(newColumns, pivotData);
-  }
-
-  /// Converts the DataFrame from wide to long format.
-  ///
-  /// Parameters:
-  ///   - `idVars`: Columns to use as identifier variables
-  ///   - `valueVars`: Columns to unpivot
-  ///   - `varName`: Name for the variable column
-  ///   - `valueName`: Name for the value column
-  DataFrame melt(
-      {required List<String> idVars,
-      List<String>? valueVars,
-      String varName = 'variable',
-      String valueName = 'value'}) {
-    // Validate input columns
-    for (var col in idVars) {
-      if (!hasColumn(col)) {
-        throw ArgumentError('Column $col does not exist');
-      }
-    }
-
-    // Determine value variables if not specified
-    final actualValueVars = valueVars ??
-        _columns
-            .where((col) => !idVars.contains(col))
-            .map((col) => col.toString())
-            .toList();
-
-    for (var col in actualValueVars) {
-      if (!hasColumn(col)) {
-        throw ArgumentError('Column $col does not exist');
-      }
-    }
-
-    // Create new columns for melted DataFrame
-    final newColumns = <dynamic>[...idVars, varName, valueName];
-    final newData = <List<dynamic>>[];
-
-    // Get indices for faster access
-    final idIndices = idVars.map((col) => _columns.indexOf(col)).toList();
-    final valueIndices =
-        actualValueVars.map((col) => _columns.indexOf(col)).toList();
-
-    // Melt the DataFrame
-    for (var row in _data) {
-      // Extract id values
-      final idValues = idIndices.map((idx) => row[idx]).toList();
-
-      // Create a new row for each value variable
-      for (var i = 0; i < valueIndices.length; i++) {
-        final valueIdx = valueIndices[i];
-        final variable = actualValueVars[i];
-        final value = row[valueIdx];
-
-        final newRow = [...idValues, variable, value];
-        newData.add(newRow);
-      }
-    }
-
-    return DataFrame._(newColumns, newData);
-  }
-
   /// Computes cumulative calculations for a column.
   ///
   /// Parameters:
@@ -4143,283 +3729,6 @@ extension DataFrameFunctions on DataFrame {
     return DataFrame._(newColumns, newData);
   }
 
-  /// Compute a cross-tabulation of two factors.
-  ///
-  /// Parameters:
-  ///   - `index`: Row name to use for the rows
-  ///   - `column`: Column name to use for the columns
-  ///   - `values`: Optional column name to aggregate
-  ///   - `aggfunc`: Aggregation function to use ('count', 'sum', 'mean', 'min', 'max')
-  ///   - `normalize`: If true or 'all', normalize all values. If 'index', normalize across rows.
-  ///                  If 'columns', normalize across columns.
-  ///   - `margins`: Add row/column margins (subtotals)
-  ///   - `marginsName`: Name of the row/column that will contain the totals
-  DataFrame crosstab(
-      {required String index,
-      required String column,
-      String? values,
-      String aggfunc = 'count',
-      dynamic normalize = false,
-      bool margins = false,
-      String marginsName = 'All'}) {
-    if (!hasColumn(index)) {
-      throw ArgumentError('Row column $index does not exist');
-    }
-
-    if (!hasColumn(column)) {
-      throw ArgumentError('Column column $column does not exist');
-    }
-
-    if (values != null && !hasColumn(values)) {
-      throw ArgumentError('Values column $values does not exist');
-    }
-
-    // Get unique values for rows and columns
-    final rowValues = this[index].unique();
-    final columnValues = this[column].unique();
-
-    // Create new column names
-    final newColumns = <dynamic>[index, ...columnValues];
-
-    // Get indices for faster access
-    final rowIdx = _columns.indexOf(index);
-    final colIdx = _columns.indexOf(column);
-    final valIdx = values != null ? _columns.indexOf(values) : -1;
-
-    // Group data by row and column values
-    final grouped = <dynamic, Map<dynamic, List<dynamic>>>{};
-
-    for (var dataRow in _data) {
-      final rowValue = dataRow[rowIdx];
-      final colValue = dataRow[colIdx];
-
-      if (rowValue == null || colValue == null) continue;
-
-      grouped.putIfAbsent(rowValue, () => {});
-      grouped[rowValue]!.putIfAbsent(colValue, () => []);
-
-      if (values != null) {
-        grouped[rowValue]![colValue]!.add(dataRow[valIdx]);
-      } else {
-        grouped[rowValue]![colValue]!.add(1); // For counting
-      }
-    }
-
-    // Create cross-tabulation data
-    final crossTabData = <List<dynamic>>[];
-    final rowSums = <dynamic, dynamic>{};
-    final colSums = <dynamic, dynamic>{};
-    var grandTotal = 0.0;
-
-    // First pass: calculate the raw values and totals
-    for (var rowValue in rowValues) {
-      final rowData = <dynamic>[rowValue];
-      var rowSum = 0.0;
-
-      for (var colValue in columnValues) {
-        final cellValues = grouped[rowValue]?[colValue] ?? [];
-        dynamic cellValue;
-
-        if (cellValues.isEmpty) {
-          cellValue = 0; // Default value for empty cells
-        } else {
-          // Apply aggregation function
-          switch (aggfunc.toLowerCase()) {
-            case 'count':
-              cellValue = cellValues.length;
-              break;
-
-            case 'sum':
-              if (cellValues.every((v) => v is num)) {
-                cellValue =
-                    cellValues.fold<num>(0, (prev, val) => prev + (val as num));
-              } else {
-                cellValue = null;
-              }
-              break;
-
-            case 'mean':
-              if (cellValues.every((v) => v is num)) {
-                final sum =
-                    cellValues.fold<num>(0, (prev, val) => prev + (val as num));
-                cellValue = sum / cellValues.length;
-              } else {
-                cellValue = null;
-              }
-              break;
-
-            case 'min':
-              if (cellValues.every((v) => v is num)) {
-                cellValue =
-                    cellValues.cast<num>().reduce((a, b) => a < b ? a : b);
-              } else if (cellValues.isNotEmpty) {
-                cellValue = cellValues.reduce(
-                    (a, b) => a.toString().compareTo(b.toString()) < 0 ? a : b);
-              } else {
-                cellValue = null;
-              }
-              break;
-
-            case 'max':
-              if (cellValues.every((v) => v is num)) {
-                cellValue =
-                    cellValues.cast<num>().reduce((a, b) => a > b ? a : b);
-              } else if (cellValues.isNotEmpty) {
-                cellValue = cellValues.reduce(
-                    (a, b) => a.toString().compareTo(b.toString()) > 0 ? a : b);
-              } else {
-                cellValue = null;
-              }
-              break;
-
-            default:
-              throw ArgumentError('Unsupported aggregation function: $aggfunc');
-          }
-        }
-
-        rowData.add(cellValue);
-
-        // Update row and column sums
-        if (cellValue is num) {
-          rowSum += cellValue;
-          colSums[colValue] = (colSums[colValue] ?? 0.0) + cellValue;
-          grandTotal += cellValue;
-        }
-      }
-
-      rowSums[rowValue] = rowSum;
-      crossTabData.add(rowData);
-    }
-
-    // Store the raw data before normalization for margin calculations
-    crossTabData.map((row) => List<dynamic>.from(row)).toList();
-    final rawRowSums = Map<dynamic, dynamic>.from(rowSums);
-    final rawColSums = Map<dynamic, dynamic>.from(colSums);
-    final rawGrandTotal = grandTotal;
-
-    // Apply normalization if requested
-    if (normalize != false) {
-      String normType = normalize is bool ? 'all' : normalize.toString();
-
-      for (var i = 0; i < crossTabData.length; i++) {
-        final rowValue = crossTabData[i][0];
-
-        for (var j = 1; j < crossTabData[i].length; j++) {
-          if (crossTabData[i][j] is num) {
-            double divisor = 1.0;
-
-            switch (normType) {
-              case 'all':
-                divisor = rawGrandTotal;
-                break;
-              case 'index':
-                divisor = rawRowSums[rowValue] ?? 1.0;
-                break;
-              case 'columns':
-                final colValue = newColumns[j];
-                divisor = rawColSums[colValue] ?? 1.0;
-                break;
-            }
-
-            if (divisor != 0) {
-              crossTabData[i][j] = (crossTabData[i][j] as num) / divisor;
-            } else {
-              crossTabData[i][j] = 0.0;
-            }
-          }
-        }
-      }
-    }
-
-    // Add margins if requested
-    if (margins) {
-      // Add row totals column
-      newColumns.add(marginsName);
-
-      for (var i = 0; i < crossTabData.length; i++) {
-        if (normalize == 'index') {
-          // For index normalization, row sum should be 1.0
-          crossTabData[i].add(1.0);
-        } else if (normalize == 'columns') {
-          // For column normalization, calculate the sum of normalized values
-          double sum = 0.0;
-          for (var j = 1; j < crossTabData[i].length; j++) {
-            if (crossTabData[i][j] is num) {
-              sum += crossTabData[i][j];
-            }
-          }
-          crossTabData[i].add(sum);
-        } else if (normalize == true || normalize == 'all') {
-          // For all normalization, calculate the sum of normalized values
-          double sum = 0.0;
-          for (var j = 1; j < crossTabData[i].length; j++) {
-            if (crossTabData[i][j] is num) {
-              sum += crossTabData[i][j];
-            }
-          }
-          crossTabData[i].add(sum);
-        } else {
-          // For no normalization, use the raw row sum
-          crossTabData[i].add(rawRowSums[crossTabData[i][0]] ?? 0.0);
-        }
-      }
-
-      // Add column totals row
-      final totalRow = <dynamic>[marginsName];
-
-      for (var j = 1; j < newColumns.length; j++) {
-        if (j == newColumns.length - 1) {
-          // Last column is the grand total
-          if (normalize == 'index') {
-            // For index normalization, sum of row sums (each 1.0)
-            totalRow.add(crossTabData.length.toDouble());
-          } else if (normalize == 'columns') {
-            // For column normalization, sum of column sums (each 1.0)
-            totalRow.add(columnValues.length.toDouble());
-          } else if (normalize == true || normalize == 'all') {
-            // For all normalization, sum should be 1.0
-            totalRow.add(1.0);
-          } else {
-            // For no normalization, use the raw grand total
-            totalRow.add(rawGrandTotal);
-          }
-        } else {
-          final colValue = newColumns[j];
-
-          if (normalize == 'index') {
-            // For index normalization, calculate the sum of normalized values
-            double sum = 0.0;
-            for (var i = 0; i < crossTabData.length; i++) {
-              if (crossTabData[i][j] is num) {
-                sum += crossTabData[i][j];
-              }
-            }
-            totalRow.add(sum);
-          } else if (normalize == 'columns') {
-            // For column normalization, column sum should be 1.0
-            totalRow.add(1.0);
-          } else if (normalize == true || normalize == 'all') {
-            // For all normalization, calculate the sum of normalized values
-            double sum = 0.0;
-            for (var i = 0; i < crossTabData.length; i++) {
-              if (crossTabData[i][j] is num) {
-                sum += crossTabData[i][j];
-              }
-            }
-            totalRow.add(sum);
-          } else {
-            // For no normalization, use the raw column sum
-            totalRow.add(rawColSums[colValue] ?? 0.0);
-          }
-        }
-      }
-
-      crossTabData.add(totalRow);
-    }
-
-    return DataFrame._(newColumns, crossTabData);
-  }
-
   /// Transform each element of a list-like column to a row.
   ///
   /// Parameters:
@@ -4605,5 +3914,644 @@ extension DataFrameFunctions on DataFrame {
     }
 
     return resultDf;
+  }
+}
+
+/// Extension providing interpolation methods for DataFrame.
+///
+/// This extension adds various interpolation methods to fill missing values
+/// in DataFrame columns using different mathematical approaches.
+extension DataFrameInterpolation on DataFrame {
+  /// Interpolates missing values in the DataFrame using the specified method.
+  ///
+  /// This method fills missing values (null or replaceMissingValueWith)
+  /// using various interpolation techniques applied column-wise or row-wise.
+  ///
+  /// Parameters:
+  ///   - `method`: The interpolation method to use. Options:
+  ///     - 'linear': Linear interpolation between adjacent non-missing values
+  ///     - 'polynomial': Polynomial interpolation (requires `order` parameter)
+  ///     - 'spline': Cubic spline interpolation
+  ///   - `axis`: The axis along which to interpolate:
+  ///     - 0: Interpolate along rows (column-wise interpolation)
+  ///     - 1: Interpolate along columns (row-wise interpolation)
+  ///   - `limit`: Maximum number of consecutive missing values to interpolate.
+  ///     If null, interpolates all missing values.
+  ///   - `limitDirection`: Direction to apply the limit:
+  ///     - 'forward': Apply limit in forward direction
+  ///     - 'backward': Apply limit in backward direction
+  ///     - 'both': Apply limit in both directions
+  ///   - `order`: Polynomial order for polynomial interpolation (default: 2)
+  ///   - `columns`: List of column names to interpolate. If null, interpolates all numeric columns.
+  ///
+  /// Returns:
+  ///   A new DataFrame with interpolated values. The original DataFrame is unchanged.
+  ///
+  /// Throws:
+  ///   - `ArgumentError` if method is not supported or axis is invalid
+  ///   - `StateError` if there are insufficient non-missing values for interpolation
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1.0, null, 3.0, null, 5.0],
+  ///   'B': [10.0, 20.0, null, 40.0, 50.0]
+  /// });
+  ///
+  /// // Linear interpolation along columns (axis=0)
+  /// var interpolated = df.interpolate(method: 'linear');
+  /// // Result: A column becomes [1.0, 2.0, 3.0, 4.0, 5.0]
+  /// //         B column becomes [10.0, 20.0, 30.0, 40.0, 50.0]
+  ///
+  /// // With limit
+  /// var limited = df.interpolate(method: 'linear', limit: 1);
+  /// ```
+  DataFrame interpolate({
+    String method = 'linear',
+    int axis = 0,
+    int? limit,
+    String limitDirection = 'forward',
+    int order = 2,
+    List<String>? columns,
+  }) {
+    if (!['linear', 'polynomial', 'spline'].contains(method)) {
+      throw ArgumentError(
+          "method must be one of 'linear', 'polynomial', 'spline'");
+    }
+
+    if (axis != 0 && axis != 1) {
+      throw ArgumentError("axis must be 0 (columns) or 1 (rows)");
+    }
+
+    if (!['forward', 'backward', 'both'].contains(limitDirection)) {
+      throw ArgumentError(
+          "limitDirection must be one of 'forward', 'backward', 'both'");
+    }
+
+    if (method == 'polynomial' && order < 1) {
+      throw ArgumentError(
+          "order must be at least 1 for polynomial interpolation");
+    }
+
+    // Create a copy of the DataFrame
+    Map<String, List<dynamic>> dataMap = {};
+    for (var entry in toMap().entries) {
+      dataMap[entry.key.toString()] = entry.value.data;
+    }
+    DataFrame result = DataFrame.fromMap(dataMap);
+
+    if (axis == 0) {
+      // Interpolate along columns (column-wise)
+      List<String> columnsToInterpolate = columns ??
+          _columns
+              .where((col) => _isNumericColumn(col.toString()))
+              .map((col) => col.toString())
+              .toList();
+
+      for (String colName in columnsToInterpolate) {
+        if (hasColumn(colName)) {
+          Series column = result[colName];
+          try {
+            Series interpolatedColumn = column.interpolate(
+              method: method,
+              limit: limit,
+              limitDirection: limitDirection,
+              order: order,
+            );
+            result.addColumn(colName, defaultValue: interpolatedColumn.data);
+          } catch (e) {
+            // Skip columns that can't be interpolated (e.g., insufficient data)
+            continue;
+          }
+        }
+      }
+    } else {
+      // Interpolate along rows (row-wise)
+      for (int rowIndex = 0; rowIndex < shape.rows; rowIndex++) {
+        List<dynamic> rowData = [];
+        List<String> columnNames = [];
+
+        // Get numeric columns for this row
+        for (var col in _columns) {
+          String colName = col.toString();
+          if (columns == null || columns.contains(colName)) {
+            if (_isNumericColumn(colName)) {
+              rowData.add(result[colName].data[rowIndex]);
+              columnNames.add(colName);
+            }
+          }
+        }
+
+        if (rowData.isNotEmpty) {
+          // Create a temporary series for this row
+          Series rowSeries = Series(rowData, name: 'row_$rowIndex');
+
+          try {
+            Series interpolatedRow = rowSeries.interpolate(
+              method: method,
+              limit: limit,
+              limitDirection: limitDirection,
+              order: order,
+            );
+
+            // Update the result DataFrame with interpolated values
+            for (int i = 0; i < columnNames.length; i++) {
+              result[columnNames[i]].data[rowIndex] = interpolatedRow.data[i];
+            }
+          } catch (e) {
+            // Skip rows that can't be interpolated
+            continue;
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /// Checks if a column contains primarily numeric data.
+  bool _isNumericColumn(String columnName) {
+    if (!hasColumn(columnName)) return false;
+
+    Series column = this[columnName];
+    int numericCount = 0;
+    int totalNonMissing = 0;
+
+    for (var value in column.data) {
+      if (!_isValueMissing(value)) {
+        totalNonMissing++;
+        if (value is num) {
+          numericCount++;
+        }
+      }
+    }
+
+    // Consider a column numeric if at least 80% of non-missing values are numeric
+    return totalNonMissing > 0 && (numericCount / totalNonMissing) >= 0.8;
+  }
+
+  /// Helper method to check if a value is missing.
+  bool _isValueMissing(dynamic value) {
+    return value == null ||
+        (replaceMissingValueWith != null && value == replaceMissingValueWith);
+  }
+
+  /// Enhanced fillna method with limit and direction parameters for DataFrame.
+  ///
+  /// This method provides advanced missing value filling capabilities with
+  /// limit controls and directional constraints.
+  ///
+  /// Parameters:
+  ///   - `value`: The value to use for filling missing entries, or a Map for column-specific values.
+  ///   - `method`: The method to use for filling ('ffill' or 'bfill').
+  ///   - `limit`: Maximum number of consecutive missing values to fill.
+  ///   - `limitDirection`: Direction to apply the limit ('forward', 'backward', 'both').
+  ///   - `columns`: List of column names to fill. If null, fills all columns.
+  ///
+  /// Returns:
+  ///   A new DataFrame with missing values filled according to the specified parameters.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1.0, null, null, 4.0],
+  ///   'B': [null, 2.0, null, null]
+  /// });
+  ///
+  /// // Fill with limit
+  /// var filled = df.fillnaAdvanced(method: 'ffill', limit: 1);
+  /// ```
+  DataFrame fillnaAdvanced({
+    dynamic value,
+    String? method,
+    int? limit,
+    String limitDirection = 'forward',
+    List<String>? columns,
+  }) {
+    if (method != null && !['ffill', 'bfill'].contains(method)) {
+      throw ArgumentError("method must be either 'ffill' or 'bfill'");
+    }
+
+    if (!['forward', 'backward', 'both'].contains(limitDirection)) {
+      throw ArgumentError(
+          "limitDirection must be one of 'forward', 'backward', 'both'");
+    }
+
+    // Create a copy of the DataFrame
+    Map<String, List<dynamic>> dataMap = {};
+    for (var entry in toMap().entries) {
+      dataMap[entry.key.toString()] = entry.value.data;
+    }
+    DataFrame result = DataFrame.fromMap(dataMap);
+
+    List<String> columnsToFill =
+        columns ?? _columns.map((col) => col.toString()).toList();
+
+    for (String colName in columnsToFill) {
+      if (hasColumn(colName)) {
+        Series column = result[colName];
+
+        // Determine the fill value for this column
+        dynamic columnFillValue = value;
+        if (value is Map<String, dynamic> && value.containsKey(colName)) {
+          columnFillValue = value[colName];
+        } else if (value is Map<String, dynamic>) {
+          continue; // Skip columns not specified in the map
+        }
+
+        Series filledColumn;
+        if (method != null) {
+          filledColumn = column.fillna(
+            method: method,
+            limit: limit,
+            limitDirection: limitDirection,
+          );
+        } else if (columnFillValue != null) {
+          filledColumn = column.fillna(
+            value: columnFillValue,
+            limit: limit,
+            limitDirection: limitDirection,
+          );
+        } else {
+          continue; // Skip if no value or method specified
+        }
+
+        result.addColumn(colName, defaultValue: filledColumn.data);
+      }
+    }
+
+    return result;
+  }
+
+  /// Forward fill missing values in DataFrame columns.
+  ///
+  /// Parameters:
+  ///   - `limit`: Maximum number of consecutive missing values to fill.
+  ///   - `limitDirection`: Direction to apply the limit.
+  ///   - `columns`: List of column names to fill. If null, fills all columns.
+  ///
+  /// Returns:
+  ///   A new DataFrame with forward-filled values.
+  DataFrame ffillDataFrame({
+    int? limit,
+    String limitDirection = 'forward',
+    List<String>? columns,
+  }) {
+    return fillnaAdvanced(
+      method: 'ffill',
+      limit: limit,
+      limitDirection: limitDirection,
+      columns: columns,
+    );
+  }
+
+  /// Backward fill missing values in DataFrame columns.
+  ///
+  /// Parameters:
+  ///   - `limit`: Maximum number of consecutive missing values to fill.
+  ///   - `limitDirection`: Direction to apply the limit.
+  ///   - `columns`: List of column names to fill. If null, fills all columns.
+  ///
+  /// Returns:
+  ///   A new DataFrame with backward-filled values.
+  DataFrame bfillDataFrame({
+    int? limit,
+    String limitDirection = 'forward',
+    List<String>? columns,
+  }) {
+    return fillnaAdvanced(
+      method: 'bfill',
+      limit: limit,
+      limitDirection: limitDirection,
+      columns: columns,
+    );
+  }
+}
+
+/// Extension providing missing data analysis tools for DataFrame.
+///
+/// This extension adds comprehensive methods for analyzing missing data patterns,
+/// providing insights into data quality and completeness.
+extension DataFrameMissingDataAnalysis on DataFrame {
+  /// Returns a DataFrame showing missing data patterns.
+  ///
+  /// This method creates a boolean DataFrame where True indicates missing values
+  /// and False indicates non-missing values, making it easy to visualize
+  /// missing data patterns.
+  ///
+  /// Returns:
+  ///   A DataFrame with the same shape as the original, containing boolean values
+  ///   indicating missing data locations.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3],
+  ///   'B': [null, 2, 3],
+  ///   'C': [1, 2, null]
+  /// });
+  ///
+  /// var missingPattern = df.missingDataPattern();
+  /// // Returns DataFrame with True/False values showing missing patterns
+  /// ```
+  DataFrame missingDataPattern() {
+    Map<String, List<dynamic>> patternData = {};
+
+    for (var col in _columns) {
+      String colName = col.toString();
+      Series column = this[colName];
+      List<bool> missingPattern =
+          column.data.map((value) => _isValueMissing(value)).toList();
+      patternData[colName] = missingPattern;
+    }
+
+    return DataFrame.fromMap(patternData);
+  }
+
+  /// Returns summary statistics about missing data in the DataFrame.
+  ///
+  /// This method provides comprehensive statistics about missing values
+  /// including counts, percentages, and patterns.
+  ///
+  /// Returns:
+  ///   A DataFrame containing missing data statistics for each column.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3, null],
+  ///   'B': [null, 2, 3, 4],
+  ///   'C': [1, 2, 3, 4]
+  /// });
+  ///
+  /// var summary = df.missingDataSummary();
+  /// // Returns DataFrame with columns: missing_count, missing_percentage, non_missing_count
+  /// ```
+  DataFrame missingDataSummary() {
+    List<String> columnNames = [];
+    List<int> missingCounts = [];
+    List<double> missingPercentages = [];
+    List<int> nonMissingCounts = [];
+    List<int> totalCounts = [];
+
+    for (var col in _columns) {
+      String colName = col.toString();
+      Series column = this[colName];
+
+      int missingCount = 0;
+      int nonMissingCount = 0;
+
+      for (var value in column.data) {
+        if (_isValueMissing(value)) {
+          missingCount++;
+        } else {
+          nonMissingCount++;
+        }
+      }
+
+      int total = missingCount + nonMissingCount;
+      double missingPercentage = total > 0 ? (missingCount / total) * 100 : 0.0;
+
+      columnNames.add(colName);
+      missingCounts.add(missingCount);
+      missingPercentages.add(missingPercentage);
+      nonMissingCounts.add(nonMissingCount);
+      totalCounts.add(total);
+    }
+
+    return DataFrame.fromMap({
+      'column': columnNames,
+      'missing_count': missingCounts,
+      'missing_percentage': missingPercentages,
+      'non_missing_count': nonMissingCounts,
+      'total_count': totalCounts,
+    });
+  }
+
+  /// Identifies rows with missing data and their patterns.
+  ///
+  /// This method analyzes which rows contain missing values and groups
+  /// them by their missing data patterns.
+  ///
+  /// Parameters:
+  ///   - `includeComplete`: If true, includes rows with no missing values.
+  ///
+  /// Returns:
+  ///   A Map where keys are missing data patterns (as strings) and values
+  ///   are lists of row indices that match each pattern.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3, null],
+  ///   'B': [null, 2, null, 4],
+  ///   'C': [1, null, 3, 4]
+  /// });
+  ///
+  /// var patterns = df.missingDataRowPatterns();
+  /// // Returns: {'A_missing,B_missing': [0], 'A_missing,C_missing': [1], ...}
+  /// ```
+  Map<String, List<int>> missingDataRowPatterns(
+      {bool includeComplete = false}) {
+    Map<String, List<int>> patterns = {};
+
+    for (int rowIndex = 0; rowIndex < shape.rows; rowIndex++) {
+      List<String> missingColumns = [];
+
+      for (var col in _columns) {
+        String colName = col.toString();
+        Series column = this[colName];
+
+        if (_isValueMissing(column.data[rowIndex])) {
+          missingColumns.add('${colName}_missing');
+        }
+      }
+
+      String pattern =
+          missingColumns.isEmpty ? 'complete' : missingColumns.join(',');
+
+      if (includeComplete || pattern != 'complete') {
+        if (!patterns.containsKey(pattern)) {
+          patterns[pattern] = [];
+        }
+        patterns[pattern]!.add(rowIndex);
+      }
+    }
+
+    return patterns;
+  }
+
+  /// Returns the completeness ratio for each column.
+  ///
+  /// This method calculates what percentage of each column contains
+  /// non-missing values.
+  ///
+  /// Returns:
+  ///   A Series containing completeness ratios (0.0 to 1.0) for each column.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3, 4],  // 75% complete
+  ///   'B': [1, 2, 3, 4],     // 100% complete
+  ///   'C': [null, null, null, null]  // 0% complete
+  /// });
+  ///
+  /// var completeness = df.columnCompleteness();
+  /// // Returns Series: A: 0.75, B: 1.0, C: 0.0
+  /// ```
+  Series columnCompleteness() {
+    List<String> columnNames = [];
+    List<double> completenessRatios = [];
+
+    for (var col in _columns) {
+      String colName = col.toString();
+      Series column = this[colName];
+
+      int nonMissingCount = 0;
+      int totalCount = column.data.length;
+
+      for (var value in column.data) {
+        if (!_isValueMissing(value)) {
+          nonMissingCount++;
+        }
+      }
+
+      double completeness = totalCount > 0 ? nonMissingCount / totalCount : 0.0;
+
+      columnNames.add(colName);
+      completenessRatios.add(completeness);
+    }
+
+    return Series(completenessRatios, name: 'completeness', index: columnNames);
+  }
+
+  /// Identifies columns that have missing values.
+  ///
+  /// Parameters:
+  ///   - `threshold`: Minimum percentage of missing values to include a column (0.0 to 1.0).
+  ///
+  /// Returns:
+  ///   A list of column names that have missing values above the threshold.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3, 4],
+  ///   'B': [1, 2, 3, 4],
+  ///   'C': [null, null, 3, 4]
+  /// });
+  ///
+  /// var columnsWithMissing = df.columnsWithMissingData(threshold: 0.1);
+  /// // Returns: ['A', 'C'] (columns with >10% missing values)
+  /// ```
+  List<String> columnsWithMissingData({double threshold = 0.0}) {
+    if (threshold < 0.0 || threshold > 1.0) {
+      throw ArgumentError('threshold must be between 0.0 and 1.0');
+    }
+
+    List<String> columnsWithMissing = [];
+
+    for (var col in _columns) {
+      String colName = col.toString();
+      Series column = this[colName];
+
+      int missingCount = 0;
+      int totalCount = column.data.length;
+
+      for (var value in column.data) {
+        if (_isValueMissing(value)) {
+          missingCount++;
+        }
+      }
+
+      double missingRatio = totalCount > 0 ? missingCount / totalCount : 0.0;
+
+      if (missingRatio > threshold) {
+        columnsWithMissing.add(colName);
+      }
+    }
+
+    return columnsWithMissing;
+  }
+
+  /// Creates a visualization-friendly summary of missing data patterns.
+  ///
+  /// This method generates a compact representation of missing data patterns
+  /// that can be used for creating visualizations or reports.
+  ///
+  /// Returns:
+  ///   A Map containing various missing data metrics and patterns.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, null, 3],
+  ///   'B': [null, 2, 3],
+  ///   'C': [1, 2, null]
+  /// });
+  ///
+  /// var vizData = df.missingDataVisualizationSummary();
+  /// // Returns comprehensive missing data analysis for visualization
+  /// ```
+  Map<String, dynamic> missingDataVisualizationSummary() {
+    // Get basic statistics
+    DataFrame summary = missingDataSummary();
+    Series completeness = columnCompleteness();
+    Map<String, List<int>> rowPatterns =
+        missingDataRowPatterns(includeComplete: true);
+
+    // Calculate overall statistics
+    int totalCells = shape.rows * shape.columns;
+    int totalMissingCells = 0;
+
+    for (var col in _columns) {
+      String colName = col.toString();
+      Series column = this[colName];
+      for (var value in column.data) {
+        if (_isValueMissing(value)) {
+          totalMissingCells++;
+        }
+      }
+    }
+
+    double overallMissingPercentage =
+        totalCells > 0 ? (totalMissingCells / totalCells) * 100 : 0.0;
+
+    // Find most and least complete columns
+    String mostCompleteColumn = '';
+    String leastCompleteColumn = '';
+    double maxCompleteness = -1.0;
+    double minCompleteness = 2.0;
+
+    for (int i = 0; i < completeness.data.length; i++) {
+      double comp = completeness.data[i] as double;
+      String colName = completeness.index[i].toString();
+
+      if (comp > maxCompleteness) {
+        maxCompleteness = comp;
+        mostCompleteColumn = colName;
+      }
+
+      if (comp < minCompleteness) {
+        minCompleteness = comp;
+        leastCompleteColumn = colName;
+      }
+    }
+
+    return {
+      'total_cells': totalCells,
+      'total_missing_cells': totalMissingCells,
+      'overall_missing_percentage': overallMissingPercentage,
+      'columns_with_missing': columnsWithMissingData(),
+      'most_complete_column': mostCompleteColumn,
+      'least_complete_column': leastCompleteColumn,
+      'max_completeness': maxCompleteness,
+      'min_completeness': minCompleteness,
+      'unique_missing_patterns': rowPatterns.keys.length,
+      'row_patterns': rowPatterns,
+      'column_summary': summary.toMap(),
+      'column_completeness': completeness.toList(),
+    };
   }
 }
