@@ -6,13 +6,15 @@ import '../file_helper/file_io.dart';
 /// Abstract base class for data writers
 abstract class DataWriter {
   /// Writes a DataFrame to the specified path
-  Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options});
+  Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options});
 }
 
 /// Writer for Parquet files
 class ParquetWriter implements DataWriter {
   @override
-  Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options}) async {
+  Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options}) async {
     try {
       final content = _dataFrameToParquetLikeContent(df, options);
       final fileIO = FileIO();
@@ -22,42 +24,43 @@ class ParquetWriter implements DataWriter {
     }
   }
 
-  String _dataFrameToParquetLikeContent(DataFrame df, Map<String, dynamic>? options) {
+  String _dataFrameToParquetLikeContent(
+      DataFrame df, Map<String, dynamic>? options) {
     // This is a simplified implementation
     // In practice, you'd use a proper Parquet writing library
     final compression = options?['compression'] as String? ?? 'none';
     final includeIndex = options?['include_index'] as bool? ?? false;
-    
+
     final buffer = StringBuffer();
     final columns = df.columns;
-    
+
     // Write header
     if (includeIndex) {
       buffer.write('index,');
     }
     buffer.writeln(columns.join(','));
-    
+
     // Write data
     for (int i = 0; i < df.shape.rows; i++) {
       if (includeIndex) {
         buffer.write('$i,');
       }
-      
+
       final row = columns.map((col) {
         final value = df[col]![i];
         return _formatValue(value);
       }).join(',');
-      
+
       buffer.writeln(row);
     }
-    
+
     String content = buffer.toString();
-    
+
     // Apply compression if specified
     if (compression != 'none') {
       content = _applyCompression(content, compression);
     }
-    
+
     return content;
   }
 }
@@ -65,7 +68,8 @@ class ParquetWriter implements DataWriter {
 /// Writer for Excel files
 class ExcelWriter implements DataWriter {
   @override
-  Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options}) async {
+  Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options}) async {
     try {
       final content = _dataFrameToExcelLikeContent(df, options);
       final fileIO = FileIO();
@@ -75,34 +79,36 @@ class ExcelWriter implements DataWriter {
     }
   }
 
-  String _dataFrameToExcelLikeContent(DataFrame df, Map<String, dynamic>? options) {
+  String _dataFrameToExcelLikeContent(
+      DataFrame df, Map<String, dynamic>? options) {
     // final sheetName = options?['sheet_name'] as String? ?? 'Sheet1'; // For future use
     final includeIndex = options?['include_index'] as bool? ?? false;
     final dateFormat = options?['date_format'] as String? ?? 'yyyy-MM-dd';
-    
+
     final buffer = StringBuffer();
     final columns = df.columns;
-    
+
     // Write header
     if (includeIndex) {
       buffer.write('Index,');
     }
-    buffer.writeln(columns.map((col) => _escapeExcelValue(col.toString())).join(','));
-    
+    buffer.writeln(
+        columns.map((col) => _escapeExcelValue(col.toString())).join(','));
+
     // Write data
     for (int i = 0; i < df.shape.rows; i++) {
       if (includeIndex) {
         buffer.write('$i,');
       }
-      
+
       final row = columns.map((col) {
         final value = df[col]![i];
         return _escapeExcelValue(_formatExcelValue(value, dateFormat));
       }).join(',');
-      
+
       buffer.writeln(row);
     }
-    
+
     return buffer.toString();
   }
 
@@ -126,7 +132,8 @@ class ExcelWriter implements DataWriter {
 /// Writer for CSV files
 class CsvWriter implements DataWriter {
   @override
-  Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options}) async {
+  Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options}) async {
     try {
       final content = _dataFrameToCsvContent(df, options);
       final fileIO = FileIO();
@@ -143,39 +150,46 @@ class CsvWriter implements DataWriter {
     final quoteChar = options?['quote_char'] as String? ?? '"';
     final escapeChar = options?['escape_char'] as String? ?? '"';
     final lineTerminator = options?['line_terminator'] as String? ?? '\n';
-    
+
     final buffer = StringBuffer();
     final columns = df.columns;
-    
+
     // Write header
     if (includeHeader) {
       if (includeIndex) {
         buffer.write('index$separator');
       }
-      buffer.write(columns.map((col) => _escapeCsvValue(col, separator, quoteChar, escapeChar)).join(separator));
+      buffer.write(columns
+          .map((col) => _escapeCsvValue(col, separator, quoteChar, escapeChar))
+          .join(separator));
       buffer.write(lineTerminator);
     }
-    
+
     // Write data
     for (int i = 0; i < df.shape.rows; i++) {
       if (includeIndex) {
         buffer.write('$i$separator');
       }
-      
+
       final row = columns.map((col) {
         final value = df[col]![i];
-        return _escapeCsvValue(_formatValue(value), separator, quoteChar, escapeChar);
+        return _escapeCsvValue(
+            _formatValue(value), separator, quoteChar, escapeChar);
       }).join(separator);
-      
+
       buffer.write(row);
       buffer.write(lineTerminator);
     }
-    
+
     return buffer.toString();
   }
 
-  String _escapeCsvValue(String value, String separator, String quoteChar, String escapeChar) {
-    if (value.contains(separator) || value.contains(quoteChar) || value.contains('\n') || value.contains('\r')) {
+  String _escapeCsvValue(
+      String value, String separator, String quoteChar, String escapeChar) {
+    if (value.contains(separator) ||
+        value.contains(quoteChar) ||
+        value.contains('\n') ||
+        value.contains('\r')) {
       final escaped = value.replaceAll(quoteChar, escapeChar + quoteChar);
       return '$quoteChar$escaped$quoteChar';
     }
@@ -186,7 +200,8 @@ class CsvWriter implements DataWriter {
 /// Writer for JSON files
 class JsonWriter implements DataWriter {
   @override
-  Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options}) async {
+  Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options}) async {
     try {
       final content = _dataFrameToJsonContent(df, options);
       final fileIO = FileIO();
@@ -200,9 +215,9 @@ class JsonWriter implements DataWriter {
     final orient = options?['orient'] as String? ?? 'records';
     final includeIndex = options?['include_index'] as bool? ?? false;
     final indent = options?['indent'] as int?;
-    
+
     dynamic jsonData;
-    
+
     switch (orient) {
       case 'records':
         jsonData = _toRecordsFormat(df, includeIndex);
@@ -219,39 +234,38 @@ class JsonWriter implements DataWriter {
       default:
         jsonData = _toRecordsFormat(df, includeIndex);
     }
-    
-    final encoder = indent != null 
-        ? JsonEncoder.withIndent(' ' * indent)
-        : JsonEncoder();
-    
+
+    final encoder =
+        indent != null ? JsonEncoder.withIndent(' ' * indent) : JsonEncoder();
+
     return encoder.convert(jsonData);
   }
 
   List<Map<String, dynamic>> _toRecordsFormat(DataFrame df, bool includeIndex) {
     final records = <Map<String, dynamic>>[];
     final columns = df.columns;
-    
+
     for (int i = 0; i < df.shape.rows; i++) {
       final record = <String, dynamic>{};
-      
+
       if (includeIndex) {
         record['index'] = i;
       }
-      
+
       for (final col in columns) {
         record[col] = df[col]![i];
       }
-      
+
       records.add(record);
     }
-    
+
     return records;
   }
 
   Map<String, Map<String, dynamic>> _toIndexFormat(DataFrame df) {
     final result = <String, Map<String, dynamic>>{};
     final columns = df.columns;
-    
+
     for (int i = 0; i < df.shape.rows; i++) {
       final row = <String, dynamic>{};
       for (final col in columns) {
@@ -259,30 +273,30 @@ class JsonWriter implements DataWriter {
       }
       result[i.toString()] = row;
     }
-    
+
     return result;
   }
 
   Map<String, List<dynamic>> _toColumnsFormat(DataFrame df) {
     final result = <String, List<dynamic>>{};
     final columns = df.columns;
-    
+
     for (final col in columns) {
       result[col] = df[col]!;
     }
-    
+
     return result;
   }
 
   List<List<dynamic>> _toValuesFormat(DataFrame df) {
     final result = <List<dynamic>>[];
     final columns = df.columns;
-    
+
     for (int i = 0; i < df.shape.rows; i++) {
       final row = columns.map((col) => df[col]![i]).toList();
       result.add(row);
     }
-    
+
     return result;
   }
 }
@@ -299,59 +313,58 @@ class FileWriter {
   };
 
   /// Writes a DataFrame to a file, automatically detecting format by extension
-  static Future<void> write(DataFrame df, String path, {Map<String, dynamic>? options}) async {
+  static Future<void> write(DataFrame df, String path,
+      {Map<String, dynamic>? options}) async {
     final extension = _getFileExtension(path).toLowerCase();
     final writer = _writers[extension];
-    
+
     if (writer == null) {
-      throw UnsupportedWriteFormatError('Unsupported file format for writing: $extension');
+      throw UnsupportedWriteFormatError(
+          'Unsupported file format for writing: $extension');
     }
-    
+
     await writer.write(df, path, options: options);
   }
 
   /// Writes a DataFrame to a Parquet file
-  static Future<void> writeParquet(DataFrame df, String path, {
-    String compression = 'none',
-    bool includeIndex = false,
-    Map<String, dynamic>? options
-  }) async {
+  static Future<void> writeParquet(DataFrame df, String path,
+      {String compression = 'none',
+      bool includeIndex = false,
+      Map<String, dynamic>? options}) async {
     final mergedOptions = <String, dynamic>{
       'compression': compression,
       'include_index': includeIndex,
       ...?options,
     };
-    
+
     await ParquetWriter().write(df, path, options: mergedOptions);
   }
 
   /// Writes a DataFrame to an Excel file
-  static Future<void> writeExcel(DataFrame df, String path, {
-    String sheetName = 'Sheet1',
-    bool includeIndex = false,
-    String dateFormat = 'yyyy-MM-dd',
-    Map<String, dynamic>? options
-  }) async {
+  static Future<void> writeExcel(DataFrame df, String path,
+      {String sheetName = 'Sheet1',
+      bool includeIndex = false,
+      String dateFormat = 'yyyy-MM-dd',
+      Map<String, dynamic>? options}) async {
     final mergedOptions = <String, dynamic>{
       'sheet_name': sheetName,
       'include_index': includeIndex,
       'date_format': dateFormat,
       ...?options,
     };
-    
+
     await ExcelWriter().write(df, path, options: mergedOptions);
   }
 
   /// Writes a DataFrame to a CSV file
-  static Future<void> writeCsv(DataFrame df, String path, {
-    String separator = ',',
-    bool includeIndex = false,
-    bool includeHeader = true,
-    String quoteChar = '"',
-    String escapeChar = '"',
-    String lineTerminator = '\n',
-    Map<String, dynamic>? options
-  }) async {
+  static Future<void> writeCsv(DataFrame df, String path,
+      {String separator = ',',
+      bool includeIndex = false,
+      bool includeHeader = true,
+      String quoteChar = '"',
+      String escapeChar = '"',
+      String lineTerminator = '\n',
+      Map<String, dynamic>? options}) async {
     final mergedOptions = <String, dynamic>{
       'separator': separator,
       'include_index': includeIndex,
@@ -361,24 +374,23 @@ class FileWriter {
       'line_terminator': lineTerminator,
       ...?options,
     };
-    
+
     await CsvWriter().write(df, path, options: mergedOptions);
   }
 
   /// Writes a DataFrame to a JSON file
-  static Future<void> writeJson(DataFrame df, String path, {
-    String orient = 'records',
-    bool includeIndex = false,
-    int? indent,
-    Map<String, dynamic>? options
-  }) async {
+  static Future<void> writeJson(DataFrame df, String path,
+      {String orient = 'records',
+      bool includeIndex = false,
+      int? indent,
+      Map<String, dynamic>? options}) async {
     final mergedOptions = <String, dynamic>{
       'orient': orient,
       'include_index': includeIndex,
       if (indent != null) 'indent': indent,
       ...?options,
     };
-    
+
     await JsonWriter().write(df, path, options: mergedOptions);
   }
 
@@ -432,7 +444,7 @@ String _applyCompression(String content, String compression) {
 class ParquetWriteError extends Error {
   final String message;
   ParquetWriteError(this.message);
-  
+
   @override
   String toString() => 'ParquetWriteError: $message';
 }
@@ -441,7 +453,7 @@ class ParquetWriteError extends Error {
 class ExcelWriteError extends Error {
   final String message;
   ExcelWriteError(this.message);
-  
+
   @override
   String toString() => 'ExcelWriteError: $message';
 }
@@ -450,7 +462,7 @@ class ExcelWriteError extends Error {
 class CsvWriteError extends Error {
   final String message;
   CsvWriteError(this.message);
-  
+
   @override
   String toString() => 'CsvWriteError: $message';
 }
@@ -459,7 +471,7 @@ class CsvWriteError extends Error {
 class JsonWriteError extends Error {
   final String message;
   JsonWriteError(this.message);
-  
+
   @override
   String toString() => 'JsonWriteError: $message';
 }
@@ -468,7 +480,7 @@ class JsonWriteError extends Error {
 class UnsupportedWriteFormatError extends Error {
   final String message;
   UnsupportedWriteFormatError(this.message);
-  
+
   @override
   String toString() => 'UnsupportedWriteFormatError: $message';
 }

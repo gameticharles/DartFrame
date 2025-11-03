@@ -29,7 +29,7 @@ class VectorizedApplyBenchmark extends BenchmarkBase {
   void run() {
     // Test simple vectorized operation (synchronous)
     series.vectorizedMath(2, '*');
-    
+
     // Test complex vectorized operation (synchronous)
     final squared = series.vectorizedMath(series, '*');
     final doubled = series.vectorizedMath(2, '*');
@@ -65,7 +65,7 @@ class VectorizedMathBenchmark extends BenchmarkBase {
     // Series-scalar operations
     series1.vectorizedMath(scalar, '+');
     series1.vectorizedMath(scalar, '*');
-    
+
     // Series-series operations
     series1.vectorizedMath(series2, '+');
     series1.vectorizedMath(series2, '*');
@@ -100,7 +100,7 @@ class VectorizedComparisonBenchmark extends BenchmarkBase {
     // Scalar comparisons
     series1.vectorizedComparison(threshold, '>');
     series1.vectorizedComparison(threshold, '<=');
-    
+
     // Series comparisons
     series1.vectorizedComparison(series2, '==');
     series1.vectorizedComparison(series2, '!=');
@@ -165,7 +165,8 @@ class ParallelProcessingBenchmark extends BenchmarkBase {
   late dynamic Function(dynamic) expensiveFunc;
 
   ParallelProcessingBenchmark(this.size, this.useParallel)
-      : super('ParallelProcessing.${useParallel ? 'parallel' : 'sequential'}(size:$size)');
+      : super(
+            'ParallelProcessing.${useParallel ? 'parallel' : 'sequential'}(size:$size)');
 
   @override
   void setup() {
@@ -190,7 +191,8 @@ class ParallelProcessingBenchmark extends BenchmarkBase {
     if (useParallel) {
       // Simulate parallel processing with multiple smaller operations
       for (int i = 0; i < largeSeries.length; i += 1000) {
-        int endIndex = (i + 1000 < largeSeries.length) ? i + 1000 : largeSeries.length;
+        int endIndex =
+            (i + 1000 < largeSeries.length) ? i + 1000 : largeSeries.length;
         // Process chunk (using endIndex for validation)
         if (endIndex > i) {
           largeSeries.vectorizedMath(2, '*');
@@ -220,7 +222,7 @@ class DataFrameParallelColumnBenchmark extends BenchmarkBase {
       data['col_$j'] = List.generate(rows, (i) => _random.nextDouble() * 100);
     }
     dataFrame = DataFrame.fromMap(data);
-    
+
     // Processing function that applies multiple operations
     processingFunc = (Series series) {
       // Use synchronous vectorized math instead of async vectorizedApply
@@ -248,7 +250,8 @@ class BatchProcessingBenchmark extends BenchmarkBase {
   late dynamic Function(Series) batchFunc;
 
   BatchProcessingBenchmark(this.numSeries, this.seriesSize, this.useParallel)
-      : super('BatchProcessing.${useParallel ? 'parallel' : 'sequential'}(series:$numSeries,size:$seriesSize)');
+      : super(
+            'BatchProcessing.${useParallel ? 'parallel' : 'sequential'}(series:$numSeries,size:$seriesSize)');
 
   @override
   void setup() {
@@ -259,7 +262,7 @@ class BatchProcessingBenchmark extends BenchmarkBase {
         name: 'series_$i',
       ));
     }
-    
+
     batchFunc = (Series series) {
       return series.vectorizedMath(series, '*'); // Square each element
     };
@@ -295,9 +298,10 @@ class MemoryOptimizationBenchmark extends BenchmarkBase {
       'strings': List.generate(size, (i) => 'item_$i'),
     };
     originalDataFrame = DataFrame.fromMap(data);
-    
+
     originalSeries = Series(
-      List.generate(size, (i) => (i % 100).toDouble()), // Integers stored as doubles
+      List.generate(
+          size, (i) => (i % 100).toDouble()), // Integers stored as doubles
       name: 'test_series',
     );
   }
@@ -306,10 +310,10 @@ class MemoryOptimizationBenchmark extends BenchmarkBase {
   void run() {
     // Test DataFrame memory optimization
     originalDataFrame.optimizeMemory();
-    
+
     // Test Series memory optimization
     originalSeries.optimizeMemory();
-    
+
     // Test memory usage estimation
     originalDataFrame.memoryUsage;
     originalSeries.memoryUsage;
@@ -325,7 +329,8 @@ class CachePerformanceBenchmark extends BenchmarkBase {
   late dynamic Function() expensiveOperation;
 
   CachePerformanceBenchmark(this.size, this.useCache)
-      : super('CachePerformance.${useCache ? 'cached' : 'uncached'}(size:$size)');
+      : super(
+            'CachePerformance.${useCache ? 'cached' : 'uncached'}(size:$size)');
 
   @override
   void setup() {
@@ -333,13 +338,13 @@ class CachePerformanceBenchmark extends BenchmarkBase {
       List.generate(size, (i) => _random.nextDouble() * 100),
       name: 'test_series',
     );
-    
+
     Map<String, List<dynamic>> data = {};
     for (int j = 0; j < 5; j++) {
       data['col_$j'] = List.generate(size, (i) => _random.nextDouble() * 100);
     }
     testDataFrame = DataFrame.fromMap(data);
-    
+
     // Simulate expensive operation
     expensiveOperation = () {
       List<double> result = [];
@@ -386,7 +391,7 @@ class PerformanceComparisonBenchmark extends BenchmarkBase {
       List.generate(size, (i) => _random.nextDouble() * 100),
       name: 'test_series',
     );
-    
+
     Map<String, List<dynamic>> data = {};
     for (int j = 0; j < 10; j++) {
       data['col_$j'] = List.generate(size, (i) => _random.nextDouble() * 100);
@@ -427,10 +432,10 @@ class PerformanceComparisonBenchmark extends BenchmarkBase {
 
 void main() {
   print('=== PERFORMANCE OPTIMIZATION BENCHMARKS ===\n');
-  
+
   final sizes = [1000, 10000, 100000];
   final smallSizes = [1000, 5000];
-  
+
   // Vectorized operations benchmarks
   print('--- Vectorized Operations ---');
   for (int size in sizes) {
@@ -440,14 +445,14 @@ void main() {
     VectorizedStringBenchmark(size).report();
     VectorizedAggregationBenchmark(size).report();
   }
-  
+
   // Parallel processing benchmarks
   print('\n--- Parallel Processing ---');
   for (int size in sizes) {
     ParallelProcessingBenchmark(size, false).report(); // Sequential
-    ParallelProcessingBenchmark(size, true).report();  // Parallel
+    ParallelProcessingBenchmark(size, true).report(); // Parallel
   }
-  
+
   // DataFrame parallel column processing
   print('\n--- DataFrame Parallel Processing ---');
   final rowCounts = [1000, 5000];
@@ -457,31 +462,32 @@ void main() {
       DataFrameParallelColumnBenchmark(rows, cols).report();
     }
   }
-  
+
   // Batch processing benchmarks
   print('\n--- Batch Processing ---');
   final batchConfigs = [
-    [5, 1000],   // 5 series of 1000 elements each
-    [10, 5000],  // 10 series of 5000 elements each
+    [5, 1000], // 5 series of 1000 elements each
+    [10, 5000], // 10 series of 5000 elements each
   ];
   for (List<int> config in batchConfigs) {
-    BatchProcessingBenchmark(config[0], config[1], false).report(); // Sequential
-    BatchProcessingBenchmark(config[0], config[1], true).report();  // Parallel
+    BatchProcessingBenchmark(config[0], config[1], false)
+        .report(); // Sequential
+    BatchProcessingBenchmark(config[0], config[1], true).report(); // Parallel
   }
-  
+
   // Memory optimization benchmarks
   print('\n--- Memory Optimization ---');
   for (int size in smallSizes) {
     MemoryOptimizationBenchmark(size).report();
   }
-  
+
   // Cache performance benchmarks
   print('\n--- Cache Performance ---');
   for (int size in smallSizes) {
     CachePerformanceBenchmark(size, false).report(); // Uncached
-    CachePerformanceBenchmark(size, true).report();  // Cached
+    CachePerformanceBenchmark(size, true).report(); // Cached
   }
-  
+
   // Performance comparison benchmarks
   print('\n--- Performance Comparisons ---');
   final operations = [
@@ -492,12 +498,12 @@ void main() {
     'memory_optimized',
     'parallel_processing',
   ];
-  
+
   for (String operation in operations) {
     for (int size in smallSizes) {
       PerformanceComparisonBenchmark(size, operation).report();
     }
   }
-  
+
   print('\n=== BENCHMARK COMPLETE ===');
 }

@@ -1,8 +1,6 @@
 part of 'series.dart';
 
 extension SeriesFunctions on Series {
-
-
   /// Creates a copy of the Series.
   ///
   /// Returns a new Series with the same data and name.
@@ -52,7 +50,6 @@ extension SeriesFunctions on Series {
   /// - `skipna`: Whether to exclude NA/null values. If an entire row/column is NA, the result will be NA.
   ///
   /// Returns:
-
 
   /// Find the index location of the maximum value in the series.
   ///

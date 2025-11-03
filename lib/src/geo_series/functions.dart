@@ -2770,31 +2770,32 @@ extension GeoSeriesFunctions on GeoSeries {
   GeoJSONGeometry convexHull() {
     // Collect all points from all geometries
     List<List<double>> allPoints = [];
-    
+
     for (var geom in data) {
       if (geom != null) {
         allPoints.addAll(_extractCoordinates(geom));
       }
     }
-    
+
     if (allPoints.isEmpty) {
       return GeoJSONGeometryCollection([]);
     }
-    
+
     if (allPoints.length == 1) {
       return GeoJSONPoint(allPoints[0]);
     }
-    
+
     if (allPoints.length == 2) {
       return GeoJSONLineString(allPoints);
     }
-    
+
     // Remove duplicate points
     final uniquePoints = <List<double>>[];
     for (var point in allPoints) {
       bool isDuplicate = false;
       for (var existing in uniquePoints) {
-        if (existing.length >= 2 && point.length >= 2 &&
+        if (existing.length >= 2 &&
+            point.length >= 2 &&
             (existing[0] - point[0]).abs() < 1e-10 &&
             (existing[1] - point[1]).abs() < 1e-10) {
           isDuplicate = true;
@@ -2805,7 +2806,7 @@ extension GeoSeriesFunctions on GeoSeries {
         uniquePoints.add(point);
       }
     }
-    
+
     if (uniquePoints.length < 3) {
       if (uniquePoints.length == 1) {
         return GeoJSONPoint(uniquePoints[0]);
@@ -2815,10 +2816,10 @@ extension GeoSeriesFunctions on GeoSeries {
         return GeoJSONGeometryCollection([]);
       }
     }
-    
+
     // Compute convex hull using Graham scan algorithm
     final hullPoints = _grahamScan(uniquePoints);
-    
+
     if (hullPoints.length < 3) {
       if (hullPoints.length == 1) {
         return GeoJSONPoint(hullPoints[0]);
@@ -2828,64 +2829,69 @@ extension GeoSeriesFunctions on GeoSeries {
         return GeoJSONGeometryCollection([]);
       }
     }
-    
+
     // Close the polygon
     final closedHull = List<List<double>>.from(hullPoints);
-    if (closedHull.isNotEmpty && 
-        (closedHull.first[0] != closedHull.last[0] || 
-         closedHull.first[1] != closedHull.last[1])) {
+    if (closedHull.isNotEmpty &&
+        (closedHull.first[0] != closedHull.last[0] ||
+            closedHull.first[1] != closedHull.last[1])) {
       closedHull.add([closedHull.first[0], closedHull.first[1]]);
     }
-    
+
     return GeoJSONPolygon([closedHull]);
   }
 
   /// Graham scan algorithm for computing convex hull
   List<List<double>> _grahamScan(List<List<double>> points) {
     if (points.length < 3) return points;
-    
+
     // Find the bottom-most point (and leftmost in case of tie)
     List<double> start = points[0];
     int startIndex = 0;
-    
+
     for (int i = 1; i < points.length; i++) {
       final point = points[i];
-      if (point[1] < start[1] || (point[1] == start[1] && point[0] < start[0])) {
+      if (point[1] < start[1] ||
+          (point[1] == start[1] && point[0] < start[0])) {
         start = point;
         startIndex = i;
       }
     }
-    
+
     // Remove start point from the list and add it to the beginning
     points.removeAt(startIndex);
     points.insert(0, start);
-    
+
     // Sort points by polar angle with respect to start point
     points.sublist(1).sort((a, b) {
       final angleA = atan2(a[1] - start[1], a[0] - start[0]);
       final angleB = atan2(b[1] - start[1], b[0] - start[0]);
-      
+
       if (angleA < angleB) return -1;
       if (angleA > angleB) return 1;
-      
+
       // If angles are equal, sort by distance
-      final distA = (a[0] - start[0]) * (a[0] - start[0]) + (a[1] - start[1]) * (a[1] - start[1]);
-      final distB = (b[0] - start[0]) * (b[0] - start[0]) + (b[1] - start[1]) * (b[1] - start[1]);
-      
+      final distA = (a[0] - start[0]) * (a[0] - start[0]) +
+          (a[1] - start[1]) * (a[1] - start[1]);
+      final distB = (b[0] - start[0]) * (b[0] - start[0]) +
+          (b[1] - start[1]) * (b[1] - start[1]);
+
       return distA.compareTo(distB);
     });
-    
+
     // Build convex hull
     final hull = <List<double>>[];
-    
+
     for (var point in points) {
       // Remove points that make a right turn
-      while (hull.length >= 2 && _crossProduct(hull[hull.length - 2], hull[hull.length - 1], point) <= 0) {
+      while (hull.length >= 2 &&
+          _crossProduct(hull[hull.length - 2], hull[hull.length - 1], point) <=
+              0) {
         hull.removeLast();
       }
       hull.add(point);
     }
-    
+
     return hull;
   }
 

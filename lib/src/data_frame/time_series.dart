@@ -22,7 +22,7 @@ extension DataFrameTimeSeries on DataFrame {
   /// ```dart
   /// // Resample daily data to monthly, taking the mean
   /// var monthlyData = df.resample('M', dateColumn: 'date', aggFunc: 'mean');
-  /// 
+  ///
   /// // Resample hourly data to daily, taking the sum
   /// var dailyData = df.resample('D', dateColumn: 'timestamp', aggFunc: 'sum');
   /// ```
@@ -53,16 +53,16 @@ extension DataFrameTimeSeries on DataFrame {
 
     if (actualDateColumn == null) {
       throw ArgumentError(
-        'No date column specified and no DateTime column found automatically'
-      );
+          'No date column specified and no DateTime column found automatically');
     }
 
     if (!columns.contains(actualDateColumn)) {
-      throw ArgumentError('Date column "$actualDateColumn" not found in DataFrame');
+      throw ArgumentError(
+          'Date column "$actualDateColumn" not found in DataFrame');
     }
 
     final dateSeriesData = this[actualDateColumn].data;
-    
+
     // Validate that the date column contains DateTime objects
     final dateTimes = <DateTime>[];
     for (int i = 0; i < dateSeriesData.length; i++) {
@@ -71,8 +71,7 @@ extension DataFrameTimeSeries on DataFrame {
         dateTimes.add(value);
       } else if (value != null) {
         throw ArgumentError(
-          'Date column "$actualDateColumn" contains non-DateTime values'
-        );
+            'Date column "$actualDateColumn" contains non-DateTime values');
       }
     }
 
@@ -83,11 +82,11 @@ extension DataFrameTimeSeries on DataFrame {
     // Create time series index from the date column
     final sortedDates = List<DateTime>.from(dateTimes)..sort();
     final timeIndex = TimeSeriesIndex(sortedDates);
-    
+
     // Determine the resampling range
     final startDate = timeIndex.first;
     final endDate = timeIndex.last;
-    
+
     // Create the target frequency index
     final targetIndex = TimeSeriesIndex.dateRange(
       start: startDate,
@@ -97,7 +96,7 @@ extension DataFrameTimeSeries on DataFrame {
 
     // Group data by time periods
     final groups = <DateTime, List<int>>{};
-    
+
     for (int i = 0; i < dateSeriesData.length; i++) {
       final dateValue = dateSeriesData[i];
       if (dateValue is DateTime) {
@@ -111,13 +110,13 @@ extension DataFrameTimeSeries on DataFrame {
     // Apply aggregation function to each group
     final resultData = <List<dynamic>>[];
     final resultIndex = <DateTime>[];
-    
+
     for (final binDate in targetIndex.timestamps) {
       final rowIndices = groups[binDate] ?? [];
-      
+
       if (rowIndices.isNotEmpty) {
         final aggregatedRow = <dynamic>[];
-        
+
         for (final col in columns) {
           if (col == actualDateColumn) {
             // For the date column, use the bin date
@@ -128,12 +127,12 @@ extension DataFrameTimeSeries on DataFrame {
                 .map((idx) => this[col].data[idx])
                 .where((val) => val != null && val != replaceMissingValueWith)
                 .toList();
-            
+
             final aggregatedValue = _applyAggregation(values, aggFunc);
             aggregatedRow.add(aggregatedValue);
           }
         }
-        
+
         resultData.add(aggregatedRow);
         resultIndex.add(binDate);
       }
@@ -207,7 +206,7 @@ extension DataFrameTimeSeries on DataFrame {
 
     final dateSeriesData = this[actualDateColumn].data;
     final dateTimes = dateSeriesData.whereType<DateTime>().toList()..sort();
-    
+
     if (dateTimes.isEmpty) {
       throw ArgumentError('No valid DateTime values found');
     }
@@ -220,10 +219,10 @@ extension DataFrameTimeSeries on DataFrame {
     );
 
     final resultData = <List<dynamic>>[];
-    
+
     for (final targetDate in targetIndex.timestamps) {
       final row = <dynamic>[];
-      
+
       for (final col in columns) {
         if (col == actualDateColumn) {
           row.add(targetDate);
@@ -232,7 +231,7 @@ extension DataFrameTimeSeries on DataFrame {
           row.add(value);
         }
       }
-      
+
       resultData.add(row);
     }
 
@@ -250,21 +249,21 @@ extension DataFrameTimeSeries on DataFrame {
     for (int i = 0; i < bins.length; i++) {
       final binStart = bins[i];
       final binEnd = i < bins.length - 1 ? bins[i + 1] : binStart;
-      
+
       bool inBin = false;
       if (closed == 'left') {
-        inBin = date.isAtSameMomentAs(binStart) || 
-                (date.isAfter(binStart) && date.isBefore(binEnd));
+        inBin = date.isAtSameMomentAs(binStart) ||
+            (date.isAfter(binStart) && date.isBefore(binEnd));
       } else {
-        inBin = date.isAtSameMomentAs(binEnd) || 
-                (date.isAfter(binStart) && date.isBefore(binEnd));
+        inBin = date.isAtSameMomentAs(binEnd) ||
+            (date.isAfter(binStart) && date.isBefore(binEnd));
       }
-      
+
       if (inBin) {
         return binStart;
       }
     }
-    
+
     return null;
   }
 
@@ -279,31 +278,31 @@ extension DataFrameTimeSeries on DataFrame {
         final numValues = values.whereType<num>().toList();
         if (numValues.isEmpty) return replaceMissingValueWith;
         return numValues.reduce((a, b) => a + b) / numValues.length;
-        
+
       case 'sum':
         final numValues = values.whereType<num>().toList();
         if (numValues.isEmpty) return replaceMissingValueWith;
         return numValues.reduce((a, b) => a + b);
-        
+
       case 'min':
         final numValues = values.whereType<num>().toList();
         if (numValues.isEmpty) return replaceMissingValueWith;
         return numValues.reduce((a, b) => a < b ? a : b);
-        
+
       case 'max':
         final numValues = values.whereType<num>().toList();
         if (numValues.isEmpty) return replaceMissingValueWith;
         return numValues.reduce((a, b) => a > b ? a : b);
-        
+
       case 'count':
         return values.length;
-        
+
       case 'first':
         return values.first;
-        
+
       case 'last':
         return values.last;
-        
+
       default:
         throw ArgumentError('Unsupported aggregation function: $aggFunc');
     }
@@ -316,13 +315,13 @@ extension DataFrameTimeSeries on DataFrame {
       (col) => this[col].data.any((val) => val is DateTime),
       orElse: () => '',
     );
-    
+
     if (dateColumn.isEmpty) {
       return replaceMissingValueWith;
     }
 
     final dateSeriesData = this[dateColumn].data;
-    
+
     switch (method.toLowerCase()) {
       case 'pad':
       case 'ffill':
@@ -337,7 +336,7 @@ extension DataFrameTimeSeries on DataFrame {
           }
         }
         return lastValue;
-        
+
       case 'backfill':
       case 'bfill':
         // Backward fill - use the next known value after targetDate
@@ -348,12 +347,12 @@ extension DataFrameTimeSeries on DataFrame {
           }
         }
         return replaceMissingValueWith;
-        
+
       case 'nearest':
         // Use the nearest value in time
         dynamic nearestValue = replaceMissingValueWith;
         Duration? minDifference;
-        
+
         for (int i = 0; i < dateSeriesData.length; i++) {
           final date = dateSeriesData[i];
           if (date is DateTime) {
@@ -365,10 +364,9 @@ extension DataFrameTimeSeries on DataFrame {
           }
         }
         return nearestValue;
-        
+
       default:
         throw ArgumentError('Unsupported fill method: $method');
     }
   }
 }
-

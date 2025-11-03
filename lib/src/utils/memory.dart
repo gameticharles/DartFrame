@@ -33,7 +33,7 @@ class MemoryOptimizer {
   ///   'large_double': [1.0, 2.0, 3.0, 4.0, 5.0],
   ///   'text': ['a', 'b', 'c', 'd', 'e']
   /// });
-  /// 
+  ///
   /// var optimized = MemoryOptimizer.optimizeDataFrame(df);
   /// // 'large_double' might be converted to int if all values are whole numbers
   /// ```
@@ -52,7 +52,7 @@ class MemoryOptimizer {
 
     for (String columnName in df.columns.cast<String>()) {
       Series series = df[columnName];
-      
+
       if (columnsToOptimize.contains(columnName)) {
         optimizedData[columnName] = optimizeSeries(series).data;
       } else {
@@ -78,13 +78,13 @@ class MemoryOptimizer {
   /// A new Series with optimized data types.
   static Series optimizeSeries(Series series) {
     List<dynamic> optimizedData = [];
-    
+
     for (dynamic value in series.data) {
       if (value == null) {
         optimizedData.add(value);
         continue;
       }
-      
+
       if (value is double) {
         // Check if double can be represented as int without loss
         if (value == value.truncate()) {
@@ -116,13 +116,13 @@ class MemoryOptimizer {
   /// A new Series with downcasted integer values.
   static Series downcastToInteger(Series series) {
     List<dynamic> downcasted = [];
-    
+
     for (dynamic value in series.data) {
       if (value == null) {
         downcasted.add(value);
         continue;
       }
-      
+
       if (value is num) {
         if (value == value.truncate()) {
           downcasted.add(_optimizeInteger(value.toInt()));
@@ -152,7 +152,7 @@ class MemoryOptimizer {
   /// A new Series with typed array data.
   static Series toTypedArray(Series series, String dataType) {
     List<dynamic> nonNullValues = series.data.where((v) => v != null).toList();
-    
+
     if (nonNullValues.isEmpty) {
       return series;
     }
@@ -193,15 +193,15 @@ class MemoryOptimizer {
   /// An estimate of memory usage in bytes.
   static int estimateMemoryUsage(DataFrame df) {
     int totalBytes = 0;
-    
+
     // Estimate overhead for DataFrame structure
     totalBytes += 1000; // Base overhead
-    
+
     for (String columnName in df.columns.cast<String>()) {
       Series series = df[columnName];
       totalBytes += estimateSeriesMemoryUsage(series);
     }
-    
+
     return totalBytes;
   }
 
@@ -214,17 +214,17 @@ class MemoryOptimizer {
   /// An estimate of memory usage in bytes.
   static int estimateSeriesMemoryUsage(Series series) {
     int totalBytes = 0;
-    
+
     // Base overhead for Series structure
     totalBytes += 200;
-    
+
     for (dynamic value in series.data) {
       totalBytes += _estimateValueSize(value);
     }
-    
+
     // Index overhead
     totalBytes += series.index.length * 8; // Approximate
-    
+
     return totalBytes;
   }
 
@@ -237,7 +237,7 @@ class MemoryOptimizer {
   /// A map containing optimization recommendations for each column.
   static Map<String, String> getOptimizationRecommendations(DataFrame df) {
     Map<String, String> recommendations = {};
-    
+
     for (String columnName in df.columns.cast<String>()) {
       Series series = df[columnName];
       String recommendation = _analyzeSeriesForOptimization(series);
@@ -245,7 +245,7 @@ class MemoryOptimizer {
         recommendations[columnName] = recommendation;
       }
     }
-    
+
     return recommendations;
   }
 
@@ -258,35 +258,37 @@ class MemoryOptimizer {
   /// A formatted string containing memory usage information.
   static String createMemoryReport(DataFrame df) {
     StringBuffer report = StringBuffer();
-    
+
     report.writeln('Memory Usage Report');
     report.writeln('==================');
-    report.writeln('DataFrame Shape: ${df.rowCount} rows × ${df.columnCount} columns');
-    
+    report.writeln(
+        'DataFrame Shape: ${df.rowCount} rows × ${df.columnCount} columns');
+
     int totalMemory = estimateMemoryUsage(df);
     report.writeln('Total Estimated Memory: ${_formatBytes(totalMemory)}');
     report.writeln();
-    
+
     report.writeln('Column Details:');
     report.writeln('---------------');
-    
+
     for (String columnName in df.columns.cast<String>()) {
       Series series = df[columnName];
       int columnMemory = estimateSeriesMemoryUsage(series);
       String dataType = _inferDataType(series);
-      
+
       report.writeln('$columnName:');
       report.writeln('  Data Type: $dataType');
       report.writeln('  Memory Usage: ${_formatBytes(columnMemory)}');
-      report.writeln('  Non-null Count: ${series.data.where((v) => v != null).length}');
-      
+      report.writeln(
+          '  Non-null Count: ${series.data.where((v) => v != null).length}');
+
       String recommendation = _analyzeSeriesForOptimization(series);
       if (recommendation.isNotEmpty) {
         report.writeln('  Recommendation: $recommendation');
       }
       report.writeln();
     }
-    
+
     return report.toString();
   }
 
@@ -298,19 +300,19 @@ class MemoryOptimizer {
     List<String>? excludeColumns,
   ) {
     List<String> columnsToOptimize = List.from(allColumns);
-    
+
     if (includeColumns != null) {
       columnsToOptimize = columnsToOptimize
           .where((col) => includeColumns.contains(col))
           .toList();
     }
-    
+
     if (excludeColumns != null) {
       columnsToOptimize = columnsToOptimize
           .where((col) => !excludeColumns.contains(col))
           .toList();
     }
-    
+
     return columnsToOptimize;
   }
 
@@ -335,10 +337,11 @@ class MemoryOptimizer {
     return value;
   }
 
-  static Series _createSeriesFromTypedData(Series originalSeries, TypedData typedData) {
+  static Series _createSeriesFromTypedData(
+      Series originalSeries, TypedData typedData) {
     List<dynamic> newData = [];
     int typedIndex = 0;
-    
+
     for (dynamic value in originalSeries.data) {
       if (value == null) {
         newData.add(null);
@@ -362,7 +365,7 @@ class MemoryOptimizer {
         typedIndex++;
       }
     }
-    
+
     return Series(
       newData,
       name: originalSeries.name,
@@ -372,7 +375,7 @@ class MemoryOptimizer {
 
   static int _estimateValueSize(dynamic value) {
     if (value == null) return 8; // Pointer size
-    
+
     if (value is int) {
       return 8; // 64-bit integer
     } else if (value is double) {
@@ -390,21 +393,21 @@ class MemoryOptimizer {
 
   static String _analyzeSeriesForOptimization(Series series) {
     List<dynamic> nonNullValues = series.data.where((v) => v != null).toList();
-    
+
     if (nonNullValues.isEmpty) {
       return '';
     }
-    
+
     // Check if all values are integers that could be downcasted
     if (nonNullValues.every((v) => v is double && v == v.truncate())) {
       return 'Convert double to int (all values are whole numbers)';
     }
-    
+
     // Check if integers can be represented in smaller types
     if (nonNullValues.every((v) => v is int)) {
       int min = nonNullValues.cast<int>().reduce((a, b) => a < b ? a : b);
       int max = nonNullValues.cast<int>().reduce((a, b) => a > b ? a : b);
-      
+
       if (min >= -128 && max <= 127) {
         return 'Can use int8 (values fit in -128 to 127 range)';
       } else if (min >= -32768 && max <= 32767) {
@@ -413,7 +416,7 @@ class MemoryOptimizer {
         return 'Can use int32 (values fit in 32-bit range)';
       }
     }
-    
+
     // Check if doubles can be represented as float32
     if (nonNullValues.every((v) => v is double)) {
       bool canUseFloat32 = nonNullValues.every((v) {
@@ -421,30 +424,30 @@ class MemoryOptimizer {
         double float32Value = original;
         return (float32Value - original).abs() < 1e-6;
       });
-      
+
       if (canUseFloat32) {
         return 'Can use float32 instead of float64';
       }
     }
-    
+
     return '';
   }
 
   static String _inferDataType(Series series) {
     List<dynamic> nonNullValues = series.data.where((v) => v != null).toList();
-    
+
     if (nonNullValues.isEmpty) {
       return 'null';
     }
-    
+
     Type mostCommonType = nonNullValues.first.runtimeType;
     Map<Type, int> typeCounts = {};
-    
+
     for (var value in nonNullValues) {
       Type valueType = value.runtimeType;
       typeCounts[valueType] = (typeCounts[valueType] ?? 0) + 1;
     }
-    
+
     int maxCount = 0;
     typeCounts.forEach((type, count) {
       if (count > maxCount) {
@@ -452,7 +455,7 @@ class MemoryOptimizer {
         mostCommonType = type;
       }
     });
-    
+
     return mostCommonType.toString();
   }
 

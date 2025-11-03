@@ -16,7 +16,11 @@ void main() {
           [4, 5, 6],
           [7, 8, 9],
           [10, 11, 12]
-        ], columns: ['A', 'B', 'C']);
+        ], columns: [
+          'A',
+          'B',
+          'C'
+        ]);
 
         // DataFrame with missing values
         dfWithMissing = DataFrame([
@@ -24,14 +28,22 @@ void main() {
           [4, null, 6],
           [null, 8, 9],
           [10, 11, 12]
-        ], columns: ['A', 'B', 'C']);
+        ], columns: [
+          'A',
+          'B',
+          'C'
+        ]);
 
         // Mixed data types DataFrame
         dfMixed = DataFrame([
           [1, 'text', 3.5],
           [2, 'more', 4.5],
           [3, 'data', 5.5]
-        ], columns: ['numeric', 'text', 'float']);
+        ], columns: [
+          'numeric',
+          'text',
+          'float'
+        ]);
       });
 
       group('median()', () {
@@ -52,17 +64,18 @@ void main() {
         test('handles non-numeric columns', () {
           var result = dfMixed.median();
           expect(result.data[0], equals(2.0)); // numeric column median
-          expect(result.data[1], equals(dfMixed.replaceMissingValueWith)); // text column
+          expect(result.data[1],
+              equals(dfMixed.replaceMissingValueWith)); // text column
           expect(result.data[2], equals(4.5)); // float column median
         });
 
         test('skipna parameter works correctly', () {
           var resultSkip = dfWithMissing.median(skipna: true);
           var resultNoSkip = dfWithMissing.median(skipna: false);
-          
+
           // With skipna=true, should ignore nulls
           expect(resultSkip.data[0], equals(4));
-          
+
           // Results should be the same since nulls are filtered in both cases
           expect(resultSkip.data, equals(resultNoSkip.data));
         });
@@ -75,8 +88,12 @@ void main() {
             [2, 'b', 1.0],
             [1, 'a', 2.0],
             [3, 'a', 1.0]
-          ], columns: ['A', 'B', 'C']);
-          
+          ], columns: [
+            'A',
+            'B',
+            'C'
+          ]);
+
           var result = dfMode.mode();
           expect(result.data[0], equals(1)); // Most frequent in column A
           expect(result.data[1], equals('a')); // Most frequent in column B
@@ -89,8 +106,12 @@ void main() {
             [null, 2, 1.0],
             [1, 2, null],
             [1, 2, 1.0]
-          ], columns: ['A', 'B', 'C']);
-          
+          ], columns: [
+            'A',
+            'B',
+            'C'
+          ]);
+
           var result = dfModeWithNull.mode(dropna: true);
           expect(result.data[0], equals(1)); // Mode ignoring nulls
           expect(result.data[1], equals(2)); // Mode ignoring nulls
@@ -108,9 +129,11 @@ void main() {
         test('calculates different quantiles', () {
           var q25 = df.quantileStats(0.25);
           var q75 = df.quantileStats(0.75);
-          
-          expect(q25.data[0], closeTo(3.25, 0.01)); // 25th percentile of [1,4,7,10]
-          expect(q75.data[0], closeTo(7.75, 0.01)); // 75th percentile of [1,4,7,10]
+
+          expect(q25.data[0],
+              closeTo(3.25, 0.01)); // 25th percentile of [1,4,7,10]
+          expect(q75.data[0],
+              closeTo(7.75, 0.01)); // 75th percentile of [1,4,7,10]
         });
 
         test('throws error for invalid quantile values', () {
@@ -119,7 +142,11 @@ void main() {
         });
 
         test('handles edge cases', () {
-          var singleRow = DataFrame([[5]], columns: ['A']);
+          var singleRow = DataFrame([
+            [5]
+          ], columns: [
+            'A'
+          ]);
           var result = singleRow.quantileStats(0.5);
           expect(result.data[0], equals(5));
         });
@@ -128,7 +155,7 @@ void main() {
       group('stdAdvanced()', () {
         test('calculates standard deviation', () {
           var result = df.std();
-          
+
           // Manual calculation for column A: [1,4,7,10]
           // Mean = 5.5, variance = ((1-5.5)² + (4-5.5)² + (7-5.5)² + (10-5.5)²) / 3
           // = (20.25 + 2.25 + 2.25 + 20.25) / 3 = 15
@@ -139,13 +166,17 @@ void main() {
         test('handles ddof parameter', () {
           var resultDdof1 = df.std(ddof: 1); // Sample std
           var resultDdof0 = df.std(ddof: 0); // Population std
-          
+
           // Population std should be smaller than sample std
           expect(resultDdof0.data[0], lessThan(resultDdof1.data[0]));
         });
 
         test('handles insufficient data', () {
-          var singleValue = DataFrame([[1]], columns: ['A']);
+          var singleValue = DataFrame([
+            [1]
+          ], columns: [
+            'A'
+          ]);
           var result = singleValue.std(ddof: 1);
           expect(result.data[0], equals(singleValue.replaceMissingValueWith));
         });
@@ -154,7 +185,7 @@ void main() {
       group('variance()', () {
         test('calculates variance correctly', () {
           var result = df.variance();
-          
+
           // For column A: [1,4,7,10], variance should be 15 (with ddof=1)
           expect(result.data[0], closeTo(15.0, 0.01));
         });
@@ -162,10 +193,11 @@ void main() {
         test('variance equals std squared', () {
           var stdResult = df.std();
           var varResult = df.variance();
-          
+
           for (int i = 0; i < stdResult.length; i++) {
             if (stdResult.data[i] is num && varResult.data[i] is num) {
-              expect(varResult.data[i], closeTo(pow(stdResult.data[i], 2), 0.01));
+              expect(
+                  varResult.data[i], closeTo(pow(stdResult.data[i], 2), 0.01));
             }
           }
         });
@@ -174,12 +206,12 @@ void main() {
       group('corrAdvanced()', () {
         test('calculates Pearson correlation matrix', () {
           var result = df.corrAdvanced(method: 'pearson');
-          
+
           // Diagonal should be 1.0 (perfect correlation with self)
           expect(result.iloc(0, 0), equals(1.0));
           expect(result.iloc(1, 1), equals(1.0));
           expect(result.iloc(2, 2), equals(1.0));
-          
+
           // Off-diagonal elements should be 1.0 for perfectly correlated data
           expect(result.iloc(0, 1), closeTo(1.0, 0.01));
           expect(result.iloc(1, 2), closeTo(1.0, 0.01));
@@ -187,7 +219,7 @@ void main() {
 
         test('calculates Spearman correlation matrix', () {
           var result = df.corrAdvanced(method: 'spearman');
-          
+
           // Should also be perfect correlation for monotonic data
           expect(result.iloc(0, 0), equals(1.0));
           expect(result.iloc(0, 1), closeTo(1.0, 0.01));
@@ -200,7 +232,8 @@ void main() {
         test('handles non-numeric columns', () {
           // Should only include numeric columns in correlation matrix
           var result = dfMixed.corrAdvanced();
-          expect(result.columns.length, equals(2)); // Only numeric and float columns
+          expect(result.columns.length,
+              equals(2)); // Only numeric and float columns
           expect(result.columns, contains('numeric'));
           expect(result.columns, contains('float'));
           expect(result.columns, isNot(contains('text')));
@@ -210,7 +243,7 @@ void main() {
       group('cov()', () {
         test('calculates covariance matrix', () {
           var result = df.cov();
-          
+
           // Diagonal should be variance
           var variance = df.variance();
           expect(result.iloc(0, 0), closeTo(variance.data[0], 0.01));
@@ -220,7 +253,7 @@ void main() {
 
         test('covariance matrix is symmetric', () {
           var result = df.cov();
-          
+
           expect(result.iloc(0, 1), closeTo(result.iloc(1, 0), 0.01));
           expect(result.iloc(0, 2), closeTo(result.iloc(2, 0), 0.01));
           expect(result.iloc(1, 2), closeTo(result.iloc(2, 1), 0.01));
@@ -317,7 +350,7 @@ void main() {
         test('handles ddof parameter', () {
           var stdSample = numericSeries.std(ddof: 1);
           var stdPopulation = numericSeries.std(ddof: 0);
-          
+
           expect(stdPopulation, lessThan(stdSample));
         });
 
@@ -336,7 +369,7 @@ void main() {
         test('variance equals std squared', () {
           var std = numericSeries.std();
           var variance = numericSeries.variance();
-          
+
           expect(variance, closeTo(pow(std, 2), 0.01));
         });
       });
@@ -374,7 +407,7 @@ void main() {
         test('Fisher vs Pearson definition', () {
           var fisherKurt = numericSeries.kurtosis(fisher: true);
           var pearsonKurt = numericSeries.kurtosis(fisher: false);
-          
+
           // Fisher kurtosis should be approximately 3 less than Pearson
           expect(fisherKurt, lessThan(pearsonKurt));
         });
@@ -395,7 +428,8 @@ void main() {
         test('throws error for invalid window size', () {
           expect(() => numericSeries.rolling(0), throwsArgumentError);
           expect(() => numericSeries.rolling(-1), throwsArgumentError);
-          expect(() => numericSeries.rolling(10), throwsArgumentError); // Larger than series
+          expect(() => numericSeries.rolling(10),
+              throwsArgumentError); // Larger than series
         });
 
         group('RollingSeries operations', () {
@@ -407,24 +441,24 @@ void main() {
 
           test('mean() calculates rolling mean', () {
             var result = rolling.mean();
-            
+
             // First two values should be missing
             expect(result.data[0], isNull);
             expect(result.data[1], isNull);
-            
+
             // Third value: mean of [1,2,3] = 2.0
             expect(result.data[2], equals(2.0));
-            
+
             // Fourth value: mean of [2,3,4] = 3.0
             expect(result.data[3], equals(3.0));
-            
+
             // Fifth value: mean of [3,4,5] = 4.0
             expect(result.data[4], equals(4.0));
           });
 
           test('sum() calculates rolling sum', () {
             var result = rolling.sum();
-            
+
             expect(result.data[2], equals(6)); // 1+2+3
             expect(result.data[3], equals(9)); // 2+3+4
             expect(result.data[4], equals(12)); // 3+4+5
@@ -432,14 +466,14 @@ void main() {
 
           test('std() calculates rolling standard deviation', () {
             var result = rolling.std();
-            
+
             // Standard deviation of [1,2,3] = 1.0
             expect(result.data[2], closeTo(1.0, 0.01));
           });
 
           test('min() calculates rolling minimum', () {
             var result = rolling.min();
-            
+
             expect(result.data[2], equals(1)); // min of [1,2,3]
             expect(result.data[3], equals(2)); // min of [2,3,4]
             expect(result.data[4], equals(3)); // min of [3,4,5]
@@ -447,7 +481,7 @@ void main() {
 
           test('max() calculates rolling maximum', () {
             var result = rolling.max();
-            
+
             expect(result.data[2], equals(3)); // max of [1,2,3]
             expect(result.data[3], equals(4)); // max of [2,3,4]
             expect(result.data[4], equals(5)); // max of [3,4,5]
@@ -459,7 +493,7 @@ void main() {
     group('Edge Cases and Error Handling', () {
       test('handles empty DataFrame', () {
         var emptyDf = DataFrame([], columns: []);
-        
+
         expect(() => emptyDf.median(), returnsNormally);
         expect(() => emptyDf.mode(), returnsNormally);
       });
@@ -468,15 +502,18 @@ void main() {
         var textDf = DataFrame([
           ['a', 'b'],
           ['c', 'd']
-        ], columns: ['col1', 'col2']);
-        
+        ], columns: [
+          'col1',
+          'col2'
+        ]);
+
         expect(() => textDf.corrAdvanced(), throwsArgumentError);
         expect(() => textDf.cov(), throwsArgumentError);
       });
 
       test('handles Series with all missing values', () {
         var allMissingSeries = Series([null, null, null], name: 'all_missing');
-        
+
         expect(allMissingSeries.median(), isNull);
         expect(allMissingSeries.std().isNaN, isTrue);
         expect(allMissingSeries.variance().isNaN, isTrue);
@@ -485,7 +522,7 @@ void main() {
       test('statistical accuracy validation', () {
         // Test against known statistical values
         var knownSeries = Series([2, 4, 4, 4, 5, 5, 7, 9], name: 'known');
-        
+
         // Known values calculated manually
         expect(knownSeries.median(), equals(4.5));
         expect(knownSeries.mode(), equals(4));

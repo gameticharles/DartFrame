@@ -293,7 +293,7 @@ extension DataFrameFunctions on DataFrame {
   /// // 1  2
   /// // 2  3
   /// ```
-  DataFrame head([int n=5]) {
+  DataFrame head([int n = 5]) {
     if (n < 0) {
       throw ArgumentError('Number of rows for head must be non-negative.');
     }
@@ -2937,7 +2937,7 @@ extension DataFrameFunctions on DataFrame {
 
     // Add left columns (with suffixes for conflicting non-join columns)
     for (var col in _columns) {
-      if (other._columns.contains(col) && 
+      if (other._columns.contains(col) &&
           !(rightCols.contains(col) && leftCols.contains(col))) {
         // Add suffix for duplicate non-join columns
         newColumns.add('$col${suffixes[0]}');
@@ -2952,7 +2952,7 @@ extension DataFrameFunctions on DataFrame {
       if (rightCols.contains(col) && leftCols.contains(col)) {
         continue;
       }
-      
+
       if (_columns.contains(col)) {
         // Add suffix for duplicate non-join columns
         newColumns.add('$col${suffixes[1]}');
@@ -3104,7 +3104,7 @@ extension DataFrameFunctions on DataFrame {
             if (indicator != false) mergeIndicatorValues.add('right_only');
           }
         }
-        
+
         // Add remaining right-only rows with valid keys
         rightMap.forEach((keyString, rightRows) {
           if (!processedRightKeys.contains(keyString)) {

@@ -100,7 +100,8 @@ class Series<T> {
   String get seriesDtype => _dtype;
 
   /// Categorical accessor (similar to pandas .cat)
-  CategoricalAccessor? get cat => isCategorical ? CategoricalAccessor(this) : null;
+  CategoricalAccessor? get cat =>
+      isCategorical ? CategoricalAccessor(this) : null;
 
   /// Converts the Series to a specific data type.
   ///
@@ -111,10 +112,12 @@ class Series<T> {
   ///
   /// Returns:
   ///   The Series with converted data type (modifies in place)
-  Series astype(String dtype, {List<dynamic>? categories, bool ordered = false}) {
+  Series astype(String dtype,
+      {List<dynamic>? categories, bool ordered = false}) {
     switch (dtype.toLowerCase()) {
       case 'category':
-        _categorical = _Categorical(data, categories: categories, ordered: ordered);
+        _categorical =
+            _Categorical(data, categories: categories, ordered: ordered);
         _dtype = 'category';
         _syncDataFromCategorical();
         break;
@@ -179,10 +182,10 @@ class Series<T> {
   ///   True if the Series appears to contain categorical data
   bool isCategoricalLike({double threshold = 0.5}) {
     if (data.isEmpty) return false;
-    
+
     final uniqueCount = nunique();
     final ratio = uniqueCount / data.length;
-    
+
     return ratio <= threshold;
   }
 
@@ -1315,7 +1318,7 @@ class Series<T> {
   /// Example:
   /// ```dart
   /// var s = Series([1.0, null, null, null, 5.0], name: 'data');
-  /// 
+  ///
   /// // Fill with value
   /// print(s.fillna(value: 0.0));
   /// // Output: [1.0, 0.0, 0.0, 0.0, 5.0]
@@ -1352,7 +1355,7 @@ class Series<T> {
     } else if (value != null) {
       return _fillWithValue(newData, value, limit, limitDirection);
     }
-    
+
     return Series(newData, name: name, index: List.from(index));
   }
 
@@ -1372,7 +1375,8 @@ class Series<T> {
   /// // Output: [1.0, 1.0, null, 4.0, 4.0]
   /// ```
   Series ffill({int? limit, String limitDirection = 'forward'}) {
-    return fillna(method: 'ffill', limit: limit, limitDirection: limitDirection);
+    return fillna(
+        method: 'ffill', limit: limit, limitDirection: limitDirection);
   }
 
   /// Backward fill (use next valid observation to fill gap).
@@ -1391,11 +1395,13 @@ class Series<T> {
   /// // Output: [null, 3.0, 3.0, 5.0, 5.0]
   /// ```
   Series bfill({int? limit, String limitDirection = 'forward'}) {
-    return fillna(method: 'bfill', limit: limit, limitDirection: limitDirection);
+    return fillna(
+        method: 'bfill', limit: limit, limitDirection: limitDirection);
   }
 
   /// Helper method for forward filling with limit control.
-  Series _forwardFill(List<dynamic> newData, int? limit, String limitDirection) {
+  Series _forwardFill(
+      List<dynamic> newData, int? limit, String limitDirection) {
     if (limit == null) {
       // No limit - fill all missing values
       dynamic lastValidObservation = const Object();
@@ -1417,8 +1423,9 @@ class Series<T> {
         }
       }
 
-      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
-      
+      List<int> indicesToFill =
+          _applyFillLimit(missingIndices, limit, limitDirection);
+
       dynamic lastValidObservation = const Object();
       for (int i = 0; i < newData.length; i++) {
         if (!_isMissing(newData[i])) {
@@ -1430,12 +1437,13 @@ class Series<T> {
         }
       }
     }
-    
+
     return Series(newData, name: name, index: List.from(index));
   }
 
   /// Helper method for backward filling with limit control.
-  Series _backwardFill(List<dynamic> newData, int? limit, String limitDirection) {
+  Series _backwardFill(
+      List<dynamic> newData, int? limit, String limitDirection) {
     if (limit == null) {
       // No limit - fill all missing values
       dynamic nextValidObservation = const Object();
@@ -1457,8 +1465,9 @@ class Series<T> {
         }
       }
 
-      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
-      
+      List<int> indicesToFill =
+          _applyFillLimit(missingIndices, limit, limitDirection);
+
       dynamic nextValidObservation = const Object();
       for (int i = newData.length - 1; i >= 0; i--) {
         if (!_isMissing(newData[i])) {
@@ -1470,12 +1479,13 @@ class Series<T> {
         }
       }
     }
-    
+
     return Series(newData, name: name, index: List.from(index));
   }
 
   /// Helper method for filling with a specific value and limit control.
-  Series _fillWithValue(List<dynamic> newData, dynamic value, int? limit, String limitDirection) {
+  Series _fillWithValue(
+      List<dynamic> newData, dynamic value, int? limit, String limitDirection) {
     if (limit == null) {
       // No limit - fill all missing values
       for (int i = 0; i < newData.length; i++) {
@@ -1492,20 +1502,22 @@ class Series<T> {
         }
       }
 
-      List<int> indicesToFill = _applyFillLimit(missingIndices, limit, limitDirection);
-      
+      List<int> indicesToFill =
+          _applyFillLimit(missingIndices, limit, limitDirection);
+
       for (int i in indicesToFill) {
         newData[i] = value;
       }
     }
-    
+
     return Series(newData, name: name, index: List.from(index));
   }
 
   /// Applies limit constraints to the list of missing indices for fill operations.
-  List<int> _applyFillLimit(List<int> missingIndices, int limit, String limitDirection) {
+  List<int> _applyFillLimit(
+      List<int> missingIndices, int limit, String limitDirection) {
     List<int> result = [];
-    
+
     if (limitDirection == 'forward' || limitDirection == 'both') {
       int consecutiveCount = 0;
       for (int i = 0; i < missingIndices.length; i++) {
@@ -1514,7 +1526,7 @@ class Series<T> {
         } else {
           consecutiveCount = 1;
         }
-        
+
         if (consecutiveCount <= limit) {
           result.add(missingIndices[i]);
         }
@@ -1525,17 +1537,18 @@ class Series<T> {
       List<int> backwardResult = [];
       int consecutiveCount = 0;
       for (int i = missingIndices.length - 1; i >= 0; i--) {
-        if (i == missingIndices.length - 1 || missingIndices[i] == missingIndices[i + 1] - 1) {
+        if (i == missingIndices.length - 1 ||
+            missingIndices[i] == missingIndices[i + 1] - 1) {
           consecutiveCount++;
         } else {
           consecutiveCount = 1;
         }
-        
+
         if (consecutiveCount <= limit) {
           backwardResult.add(missingIndices[i]);
         }
       }
-      
+
       if (limitDirection == 'backward') {
         result = backwardResult;
       } else {

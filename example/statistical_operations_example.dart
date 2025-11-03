@@ -118,7 +118,7 @@ void main() async {
   print('Min: ${salesSeries.min()}');
   print('Max: ${salesSeries.max()}');
   print('Count: ${salesSeries.count()}');
-  
+
   // Use the advanced statistical methods to avoid conflicts
   try {
     print('Median: ${salesSeries.median()}');
@@ -169,22 +169,14 @@ void main() async {
   print('=' * 40);
 
   // Use groupByAgg for aggregation operations
-  final regionStatsMean = salesData.groupByAgg('Region', {
-    'Sales': 'mean',
-    'Profit': 'mean',
-    'Customers': 'mean'
-  });
+  final regionStatsMean = salesData.groupByAgg(
+      'Region', {'Sales': 'mean', 'Profit': 'mean', 'Customers': 'mean'});
 
-  final regionStatsSum = salesData.groupByAgg('Region', {
-    'Sales': 'sum',
-    'Profit': 'sum',
-    'Customers': 'count'
-  });
+  final regionStatsSum = salesData.groupByAgg(
+      'Region', {'Sales': 'sum', 'Profit': 'sum', 'Customers': 'count'});
 
-  final regionStatsMinMax = salesData.groupByAgg('Region', {
-    'Sales': 'min',
-    'Profit': 'max'
-  });
+  final regionStatsMinMax =
+      salesData.groupByAgg('Region', {'Sales': 'min', 'Profit': 'max'});
 
   print('Mean Statistics by Region:');
   print(regionStatsMean);
@@ -217,7 +209,8 @@ void main() async {
   final percentiles = [0.1, 0.25, 0.5, 0.75, 0.9];
   print('Sales Percentiles:');
   for (final p in percentiles) {
-    print('${(p * 100).toInt()}th percentile: ${salesSeries.quantileAdvanced(p)}');
+    print(
+        '${(p * 100).toInt()}th percentile: ${salesSeries.quantileAdvanced(p)}');
   }
   print('');
 

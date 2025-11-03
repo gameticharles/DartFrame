@@ -316,7 +316,7 @@ bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
 ///
 /// ## Rolling Operations:
 /// DartFrame provides two methods for rolling window operations:
-/// 
+///
 /// ### **Recommended: `rollingWindow()`** ✅
 /// Use `df.rollingWindow(window)` for comprehensive pandas-like rolling operations:
 /// ```dart
@@ -325,16 +325,16 @@ bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
 /// var corrResult = rolling.corr();     // Correlation matrix
 /// var customResult = rolling.apply((window) => window.reduce((a, b) => a + b));
 /// ```
-/// 
+///
 /// ### **Deprecated: `rolling()`** ⚠️
 /// The `df.rolling(column, window, function)` method is deprecated and will be removed.
 /// It only works on single columns and has limited functionality.
-/// 
+///
 /// **Migration Guide:**
 /// ```dart
 /// // OLD (deprecated):
 /// var result = df.rolling('column', 3, 'mean');
-/// 
+///
 /// // NEW (recommended):
 /// var result = df.rollingWindow(3).mean()['column'];
 /// ```

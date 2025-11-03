@@ -49,10 +49,8 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Filter numeric values only
-      List<num> numericValues = columnData
-          .whereType<num>()
-          .cast<num>()
-          .toList();
+      List<num> numericValues =
+          columnData.whereType<num>().cast<num>().toList();
 
       if (numericValues.isEmpty) {
         medianValues.add(replaceMissingValueWith);
@@ -61,10 +59,11 @@ extension DataFrameStatistics on DataFrame {
 
       numericValues.sort();
       int length = numericValues.length;
-      
+
       if (length % 2 == 0) {
         // Even number of elements - average of middle two
-        double median = (numericValues[length ~/ 2 - 1] + numericValues[length ~/ 2]) / 2.0;
+        double median =
+            (numericValues[length ~/ 2 - 1] + numericValues[length ~/ 2]) / 2.0;
         medianValues.add(median);
       } else {
         // Odd number of elements - middle element
@@ -102,7 +101,7 @@ extension DataFrameStatistics on DataFrame {
       resultIndex.add(columnName);
 
       Map<dynamic, int> valueCounts = {};
-      
+
       for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
         dynamic value = _data[rowIndex][colIndex];
         if (dropna && _isMissingValue(value)) {
@@ -119,7 +118,7 @@ extension DataFrameStatistics on DataFrame {
       // Find the value with maximum count
       dynamic modeValue = replaceMissingValueWith;
       int maxCount = 0;
-      
+
       valueCounts.forEach((value, count) {
         if (count > maxCount) {
           maxCount = count;
@@ -178,10 +177,8 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Filter numeric values only
-      List<num> numericValues = columnData
-          .whereType<num>()
-          .cast<num>()
-          .toList();
+      List<num> numericValues =
+          columnData.whereType<num>().cast<num>().toList();
 
       if (numericValues.isEmpty) {
         quantileValues.add(replaceMissingValueWith);
@@ -190,7 +187,7 @@ extension DataFrameStatistics on DataFrame {
 
       numericValues.sort();
       int length = numericValues.length;
-      
+
       if (length == 1) {
         quantileValues.add(numericValues[0]);
         continue;
@@ -199,13 +196,13 @@ extension DataFrameStatistics on DataFrame {
       double index = q * (length - 1);
       int lowerIndex = index.floor();
       int upperIndex = index.ceil();
-      
+
       if (lowerIndex == upperIndex) {
         quantileValues.add(numericValues[lowerIndex]);
       } else {
         double weight = index - lowerIndex;
-        double interpolatedValue = numericValues[lowerIndex] * (1 - weight) + 
-                                 numericValues[upperIndex] * weight;
+        double interpolatedValue = numericValues[lowerIndex] * (1 - weight) +
+            numericValues[upperIndex] * weight;
         quantileValues.add(interpolatedValue);
       }
     }
@@ -254,10 +251,8 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Filter numeric values only
-      List<num> numericValues = columnData
-          .whereType<num>()
-          .cast<num>()
-          .toList();
+      List<num> numericValues =
+          columnData.whereType<num>().cast<num>().toList();
 
       if (numericValues.isEmpty || numericValues.length <= ddof) {
         stdValues.add(replaceMissingValueWith);
@@ -265,16 +260,17 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Calculate mean
-      double mean = numericValues.reduce((a, b) => a + b) / numericValues.length;
-      
+      double mean =
+          numericValues.reduce((a, b) => a + b) / numericValues.length;
+
       // Calculate variance
       double sumSquaredDiffs = numericValues
           .map((value) => (value - mean) * (value - mean))
           .reduce((a, b) => a + b);
-      
+
       double variance = sumSquaredDiffs / (numericValues.length - ddof);
       double standardDeviation = sqrt(variance);
-      
+
       stdValues.add(standardDeviation);
     }
 
@@ -322,10 +318,8 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Filter numeric values only
-      List<num> numericValues = columnData
-          .whereType<num>()
-          .cast<num>()
-          .toList();
+      List<num> numericValues =
+          columnData.whereType<num>().cast<num>().toList();
 
       if (numericValues.isEmpty || numericValues.length <= ddof) {
         varValues.add(replaceMissingValueWith);
@@ -333,15 +327,16 @@ extension DataFrameStatistics on DataFrame {
       }
 
       // Calculate mean
-      double mean = numericValues.reduce((a, b) => a + b) / numericValues.length;
-      
+      double mean =
+          numericValues.reduce((a, b) => a + b) / numericValues.length;
+
       // Calculate variance
       double sumSquaredDiffs = numericValues
           .map((value) => (value - mean) * (value - mean))
           .reduce((a, b) => a + b);
-      
+
       double variance = sumSquaredDiffs / (numericValues.length - ddof);
-      
+
       varValues.add(variance);
     }
 
@@ -379,10 +374,10 @@ extension DataFrameStatistics on DataFrame {
     // Get numeric columns only
     List<String> numericColumns = [];
     List<int> numericColumnIndices = [];
-    
+
     for (int colIndex = 0; colIndex < _columns.length; colIndex++) {
       String columnName = _columns[colIndex].toString();
-      
+
       // Check if column has any numeric values
       bool hasNumericValues = false;
       for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
@@ -392,7 +387,7 @@ extension DataFrameStatistics on DataFrame {
           break;
         }
       }
-      
+
       if (hasNumericValues) {
         numericColumns.add(columnName);
         numericColumnIndices.add(colIndex);
@@ -400,12 +395,13 @@ extension DataFrameStatistics on DataFrame {
     }
 
     if (numericColumns.isEmpty) {
-      throw ArgumentError('No numeric columns found for correlation calculation');
+      throw ArgumentError(
+          'No numeric columns found for correlation calculation');
     }
 
     // Create correlation matrix
     List<List<dynamic>> correlationMatrix = [];
-    
+
     for (int i = 0; i < numericColumns.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < numericColumns.length; j++) {
@@ -413,11 +409,7 @@ extension DataFrameStatistics on DataFrame {
           row.add(1.0); // Perfect correlation with itself
         } else {
           double correlation = _calculateCorrelation(
-            numericColumnIndices[i], 
-            numericColumnIndices[j], 
-            method, 
-            skipna
-          );
+              numericColumnIndices[i], numericColumnIndices[j], method, skipna);
           row.add(correlation);
         }
       }
@@ -456,10 +448,10 @@ extension DataFrameStatistics on DataFrame {
     // Get numeric columns only
     List<String> numericColumns = [];
     List<int> numericColumnIndices = [];
-    
+
     for (int colIndex = 0; colIndex < _columns.length; colIndex++) {
       String columnName = _columns[colIndex].toString();
-      
+
       // Check if column has any numeric values
       bool hasNumericValues = false;
       for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
@@ -469,7 +461,7 @@ extension DataFrameStatistics on DataFrame {
           break;
         }
       }
-      
+
       if (hasNumericValues) {
         numericColumns.add(columnName);
         numericColumnIndices.add(colIndex);
@@ -477,21 +469,18 @@ extension DataFrameStatistics on DataFrame {
     }
 
     if (numericColumns.isEmpty) {
-      throw ArgumentError('No numeric columns found for covariance calculation');
+      throw ArgumentError(
+          'No numeric columns found for covariance calculation');
     }
 
     // Create covariance matrix
     List<List<dynamic>> covarianceMatrix = [];
-    
+
     for (int i = 0; i < numericColumns.length; i++) {
       List<dynamic> row = [];
       for (int j = 0; j < numericColumns.length; j++) {
         double covariance = _calculateCovariance(
-          numericColumnIndices[i], 
-          numericColumnIndices[j], 
-          skipna, 
-          ddof
-        );
+            numericColumnIndices[i], numericColumnIndices[j], skipna, ddof);
         row.add(covariance);
       }
       covarianceMatrix.add(row);
@@ -505,72 +494,74 @@ extension DataFrameStatistics on DataFrame {
   }
 
   /// Helper method to calculate correlation between two columns.
-  double _calculateCorrelation(int colIndex1, int colIndex2, String method, bool skipna) {
+  double _calculateCorrelation(
+      int colIndex1, int colIndex2, String method, bool skipna) {
     List<num> values1 = [];
     List<num> values2 = [];
-    
+
     // Collect paired valid values
     for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
       dynamic val1 = _data[rowIndex][colIndex1];
       dynamic val2 = _data[rowIndex][colIndex2];
-      
+
       if (skipna && (_isMissingValue(val1) || _isMissingValue(val2))) {
         continue;
       }
-      
+
       if (val1 is num && val2 is num) {
         values1.add(val1);
         values2.add(val2);
       }
     }
-    
+
     if (values1.length < 2) {
       return double.nan;
     }
-    
+
     if (method == 'pearson') {
       return _pearsonCorrelation(values1, values2);
     } else if (method == 'spearman') {
       return _spearmanCorrelation(values1, values2);
     }
-    
+
     return double.nan;
   }
 
   /// Helper method to calculate covariance between two columns.
-  double _calculateCovariance(int colIndex1, int colIndex2, bool skipna, int ddof) {
+  double _calculateCovariance(
+      int colIndex1, int colIndex2, bool skipna, int ddof) {
     List<num> values1 = [];
     List<num> values2 = [];
-    
+
     // Collect paired valid values
     for (int rowIndex = 0; rowIndex < _data.length; rowIndex++) {
       dynamic val1 = _data[rowIndex][colIndex1];
       dynamic val2 = _data[rowIndex][colIndex2];
-      
+
       if (skipna && (_isMissingValue(val1) || _isMissingValue(val2))) {
         continue;
       }
-      
+
       if (val1 is num && val2 is num) {
         values1.add(val1);
         values2.add(val2);
       }
     }
-    
+
     if (values1.length <= ddof) {
       return double.nan;
     }
-    
+
     // Calculate means
     double mean1 = values1.reduce((a, b) => a + b) / values1.length;
     double mean2 = values2.reduce((a, b) => a + b) / values2.length;
-    
+
     // Calculate covariance
     double sumProducts = 0;
     for (int i = 0; i < values1.length; i++) {
       sumProducts += (values1[i] - mean1) * (values2[i] - mean2);
     }
-    
+
     return sumProducts / (values1.length - ddof);
   }
 
@@ -579,29 +570,31 @@ extension DataFrameStatistics on DataFrame {
     if (x.length != y.length || x.length < 2) {
       return double.nan;
     }
-    
-    double meanX = x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
-    double meanY = y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
-    
+
+    double meanX =
+        x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
+    double meanY =
+        y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
+
     double numerator = 0;
     double sumSquaredX = 0;
     double sumSquaredY = 0;
-    
+
     for (int i = 0; i < x.length; i++) {
       double diffX = x[i] - meanX;
       double diffY = y[i] - meanY;
-      
+
       numerator += diffX * diffY;
       sumSquaredX += diffX * diffX;
       sumSquaredY += diffY * diffY;
     }
-    
+
     double denominator = sqrt(sumSquaredX * sumSquaredY);
-    
+
     if (denominator == 0) {
       return double.nan;
     }
-    
+
     return numerator / denominator;
   }
 
@@ -610,11 +603,11 @@ extension DataFrameStatistics on DataFrame {
     if (x.length != y.length || x.length < 2) {
       return double.nan;
     }
-    
+
     // Convert to ranks
     List<double> ranksX = _calculateRanks(x);
     List<double> ranksY = _calculateRanks(y);
-    
+
     // Calculate Pearson correlation on ranks
     return _pearsonCorrelation(ranksX.cast<num>(), ranksY.cast<num>());
   }
@@ -625,12 +618,12 @@ extension DataFrameStatistics on DataFrame {
     for (int i = 0; i < values.length; i++) {
       indexed.add(MapEntry(values[i], i));
     }
-    
+
     // Sort by value
     indexed.sort((a, b) => a.key.compareTo(b.key));
-    
+
     List<double> ranks = List.filled(values.length, 0.0);
-    
+
     // Assign ranks, handling ties by averaging
     int i = 0;
     while (i < indexed.length) {
@@ -639,25 +632,25 @@ extension DataFrameStatistics on DataFrame {
       while (j < indexed.length && indexed[j].key == indexed[i].key) {
         j++;
       }
-      
+
       // Calculate average rank for tied values
       double avgRank = (i + j - 1) / 2.0 + 1; // +1 because ranks start at 1
-      
+
       // Assign average rank to all tied values
       for (int k = i; k < j; k++) {
         ranks[indexed[k].value] = avgRank;
       }
-      
+
       i = j;
     }
-    
+
     return ranks;
   }
 
   /// Helper method to check if a value is considered missing.
   bool _isMissingValue(dynamic value) {
-    return value == null || 
-           (replaceMissingValueWith != null && value == replaceMissingValueWith) ||
-           _missingDataIndicator.contains(value);
+    return value == null ||
+        (replaceMissingValueWith != null && value == replaceMissingValueWith) ||
+        _missingDataIndicator.contains(value);
   }
 }

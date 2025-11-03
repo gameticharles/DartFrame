@@ -553,17 +553,19 @@ void main() {
         {'A': 1, 'B': 2, 'C': 3},
         {'A': 4, 'B': 5, 'C': 6},
       ]);
-      
+
       final melted = df.melt(idVars: ['A'], valueVars: ['B', 'C']);
-      
+
       expect(melted.columns, equals(['A', 'variable', 'value']));
       expect(melted.rowCount, equals(4));
-      expect(melted.rows, equals([
-        [1, 'B', 2],
-        [1, 'C', 3],
-        [4, 'B', 5],
-        [4, 'C', 6],
-      ]));
+      expect(
+          melted.rows,
+          equals([
+            [1, 'B', 2],
+            [1, 'C', 3],
+            [4, 'B', 5],
+            [4, 'C', 6],
+          ]));
     });
 
     test('Melt with custom variable and value names', () {
@@ -571,21 +573,22 @@ void main() {
         {'id': 'A', 'x': 10, 'y': 20},
         {'id': 'B', 'x': 30, 'y': 40},
       ]);
-      
+
       final melted = df.melt(
-        idVars: ['id'], 
-        valueVars: ['x', 'y'],
-        varName: 'metric',
-        valueName: 'measurement'
-      );
-      
+          idVars: ['id'],
+          valueVars: ['x', 'y'],
+          varName: 'metric',
+          valueName: 'measurement');
+
       expect(melted.columns, equals(['id', 'metric', 'measurement']));
-      expect(melted.rows, equals([
-        ['A', 'x', 10],
-        ['A', 'y', 20],
-        ['B', 'x', 30],
-        ['B', 'y', 40],
-      ]));
+      expect(
+          melted.rows,
+          equals([
+            ['A', 'x', 10],
+            ['A', 'y', 20],
+            ['B', 'x', 30],
+            ['B', 'y', 40],
+          ]));
     });
 
     test('Melt without specifying valueVars (uses all non-id columns)', () {
@@ -593,12 +596,13 @@ void main() {
         {'id': 1, 'a': 10, 'b': 20, 'c': 30},
         {'id': 2, 'a': 40, 'b': 50, 'c': 60},
       ]);
-      
+
       final melted = df.melt(idVars: ['id']);
-      
+
       expect(melted.columns, equals(['id', 'variable', 'value']));
       expect(melted.rowCount, equals(6)); // 2 rows * 3 value columns
-      expect(melted.column('variable').unique().toSet(), equals({'a', 'b', 'c'}));
+      expect(
+          melted.column('variable').unique().toSet(), equals({'a', 'b', 'c'}));
     });
 
     test('Melt with multiple id variables', () {
@@ -606,17 +610,20 @@ void main() {
         {'group': 'X', 'id': 1, 'val1': 100, 'val2': 200},
         {'group': 'Y', 'id': 2, 'val1': 300, 'val2': 400},
       ]);
-      
-      final melted = df.melt(idVars: ['group', 'id'], valueVars: ['val1', 'val2']);
-      
+
+      final melted =
+          df.melt(idVars: ['group', 'id'], valueVars: ['val1', 'val2']);
+
       expect(melted.columns, equals(['group', 'id', 'variable', 'value']));
       expect(melted.rowCount, equals(4));
-      expect(melted.rows, equals([
-        ['X', 1, 'val1', 100],
-        ['X', 1, 'val2', 200],
-        ['Y', 2, 'val1', 300],
-        ['Y', 2, 'val2', 400],
-      ]));
+      expect(
+          melted.rows,
+          equals([
+            ['X', 1, 'val1', 100],
+            ['X', 1, 'val2', 200],
+            ['Y', 2, 'val1', 300],
+            ['Y', 2, 'val2', 400],
+          ]));
     });
   });
 
@@ -626,13 +633,10 @@ void main() {
         {'A': 1, 'B': 2, 'C': 3},
         {'A': 4, 'B': 5, 'C': 6},
       ]);
-      
+
       final melted = df.meltEnhanced(
-        idVars: ['A'], 
-        valueVars: ['B', 'C'],
-        ignoreIndex: false
-      );
-      
+          idVars: ['A'], valueVars: ['B', 'C'], ignoreIndex: false);
+
       expect(melted.columns, equals(['A', 'variable', 'value']));
       expect(melted.rowCount, equals(4));
       // Index should be preserved in some form
@@ -644,21 +648,22 @@ void main() {
         {'id': 'X', 'metric1': 10, 'metric2': 20},
         {'id': 'Y', 'metric1': 30, 'metric2': 40},
       ]);
-      
+
       final melted = df.meltEnhanced(
-        idVars: ['id'],
-        valueVars: ['metric1', 'metric2'],
-        varName: 'measurement_type',
-        valueName: 'score'
-      );
-      
+          idVars: ['id'],
+          valueVars: ['metric1', 'metric2'],
+          varName: 'measurement_type',
+          valueName: 'score');
+
       expect(melted.columns, equals(['id', 'measurement_type', 'score']));
-      expect(melted.rows, equals([
-        ['X', 'metric1', 10],
-        ['X', 'metric2', 20],
-        ['Y', 'metric1', 30],
-        ['Y', 'metric2', 40],
-      ]));
+      expect(
+          melted.rows,
+          equals([
+            ['X', 'metric1', 10],
+            ['X', 'metric2', 20],
+            ['Y', 'metric1', 30],
+            ['Y', 'metric2', 40],
+          ]));
     });
   });
 
@@ -668,12 +673,12 @@ void main() {
         {'A': 1, 'B': 2, 'C': 3},
         {'A': 4, 'B': 5, 'C': 6},
       ]);
-      
+
       final stacked = df.stack();
-      
+
       expect(stacked.columns, equals(['level_0', 'level_1', 'value']));
       expect(stacked.rowCount, equals(6)); // 2 rows * 3 columns
-      
+
       // Check that all original values are present
       final values = stacked.column('value').data;
       expect(values.toSet(), equals({1, 2, 3, 4, 5, 6}));
@@ -684,9 +689,9 @@ void main() {
         {'A': 1, 'B': null, 'C': 3},
         {'A': 4, 'B': 5, 'C': null},
       ]);
-      
+
       final stacked = df.stack(dropna: false);
-      
+
       expect(stacked.rowCount, equals(6)); // All values including nulls
       final values = stacked.column('value').data;
       expect(values.where((v) => v == null).length, equals(2));
@@ -697,9 +702,9 @@ void main() {
         {'A': 1, 'B': null, 'C': 3},
         {'A': 4, 'B': 5, 'C': null},
       ]);
-      
+
       final stacked = df.stack(dropna: true);
-      
+
       expect(stacked.rowCount, equals(4)); // Nulls dropped
       final values = stacked.column('value').data;
       expect(values.where((v) => v == null).length, equals(0));
@@ -714,9 +719,9 @@ void main() {
         {'A': 4, 'B': 5, 'C': 6},
       ]);
       final stacked = df.stack();
-      
+
       final unstacked = stacked.unstack();
-      
+
       // Should have similar structure to original
       expect(unstacked.rowCount, equals(2));
       expect(unstacked.columnCount, greaterThan(1));
@@ -729,9 +734,9 @@ void main() {
         {'level_0': 1, 'level_1': 'A', 'value': 3},
         // Missing: level_0=1, level_1='B'
       ]);
-      
+
       final unstacked = stacked.unstack(fillValue: -999);
-      
+
       expect(unstacked.rowCount, equals(2));
       // Should contain the fill value where data was missing
       final allValues = unstacked.rows.expand((row) => row).toList();
@@ -745,12 +750,12 @@ void main() {
         {'A': 1, 'B': 2, 'C': 3},
         {'A': 4, 'B': 5, 'C': 6},
       ]);
-      
+
       final transposed = df.transpose();
-      
+
       expect(transposed.rowCount, equals(3)); // Original columns become rows
       expect(transposed.columnCount, equals(2)); // Original rows become columns
-      
+
       // Check that data is correctly transposed
       expect(transposed.rows[0], equals([1, 4])); // Original column A
       expect(transposed.rows[1], equals([2, 5])); // Original column B
@@ -762,9 +767,9 @@ void main() {
         {'X': 10, 'Y': 20},
         {'X': 30, 'Y': 40},
       ]);
-      
+
       final transposed = df.transpose(copy: false);
-      
+
       expect(transposed.rowCount, equals(2));
       expect(transposed.columnCount, equals(2));
       expect(transposed.rows[0], equals([10, 30]));
@@ -773,9 +778,9 @@ void main() {
 
     test('Transpose empty DataFrame', () {
       final df = DataFrame.fromRows([]);
-      
+
       final transposed = df.transpose();
-      
+
       expect(transposed.rowCount, equals(0));
       expect(transposed.columnCount, equals(0));
     });
@@ -789,13 +794,10 @@ void main() {
         {'id': 2, 'variable': 'A', 'value': 30},
         {'id': 2, 'variable': 'B', 'value': 40},
       ]);
-      
-      final wide = longDf.widen(
-        index: 'id',
-        columns: 'variable',
-        values: 'value'
-      );
-      
+
+      final wide =
+          longDf.widen(index: 'id', columns: 'variable', values: 'value');
+
       expect(wide.rowCount, equals(2));
       expect(wide.columns, contains('A'));
       expect(wide.columns, contains('B'));
@@ -804,19 +806,19 @@ void main() {
     test('Widen with aggregation', () {
       final longDf = DataFrame.fromRows([
         {'group': 'X', 'metric': 'score', 'value': 10},
-        {'group': 'X', 'metric': 'score', 'value': 15}, // Duplicate - needs aggregation
+        {
+          'group': 'X',
+          'metric': 'score',
+          'value': 15
+        }, // Duplicate - needs aggregation
         {'group': 'X', 'metric': 'count', 'value': 5},
         {'group': 'Y', 'metric': 'score', 'value': 20},
         {'group': 'Y', 'metric': 'count', 'value': 8},
       ]);
-      
+
       final wide = longDf.widen(
-        index: 'group',
-        columns: 'metric',
-        values: 'value',
-        aggFunc: 'mean'
-      );
-      
+          index: 'group', columns: 'metric', values: 'value', aggFunc: 'mean');
+
       expect(wide.rowCount, equals(2));
       expect(wide.columns, contains('score'));
       expect(wide.columns, contains('count'));
@@ -826,16 +828,16 @@ void main() {
   group('Enhanced merge scenarios', () {
     // Note: These tests are simplified due to current issues with the join implementation
     // They test the merge method interface and basic functionality
-    
+
     test('Merge method exists and accepts parameters', () {
       final left = DataFrame.fromRows([
         {'id': 1, 'left_val': 10},
       ]);
-      
+
       final right = DataFrame.fromRows([
         {'id': 1, 'right_val': 100},
       ]);
-      
+
       // Test that merge method can be called without throwing
       expect(() {
         left.merge(right, on: ['id'], how: 'inner');
@@ -846,61 +848,54 @@ void main() {
       final left = DataFrame.fromRows([
         {'id': 1, 'name': 'Alice'},
       ]);
-      
+
       final right = DataFrame.fromRows([
         {'id': 1, 'score': 95},
       ]);
-      
+
       // This should throw an error due to invalid validation type
-      expect(
-        () => left.merge(right, on: ['id'], validate: 'invalid'),
-        throwsArgumentError
-      );
+      expect(() => left.merge(right, on: ['id'], validate: 'invalid'),
+          throwsArgumentError);
     });
 
-    test('Merge throws error when both on and leftOn/rightOn are specified', () {
+    test('Merge throws error when both on and leftOn/rightOn are specified',
+        () {
       final left = DataFrame.fromRows([
         {'id': 1, 'name': 'Alice'},
       ]);
-      
+
       final right = DataFrame.fromRows([
         {'id': 1, 'score': 95},
       ]);
-      
-      expect(
-        () => left.merge(right, on: ['id'], leftOn: ['id']),
-        throwsArgumentError
-      );
+
+      expect(() => left.merge(right, on: ['id'], leftOn: ['id']),
+          throwsArgumentError);
     });
 
-    test('Merge throws error when neither on nor leftOn/rightOn are specified', () {
+    test('Merge throws error when neither on nor leftOn/rightOn are specified',
+        () {
       final left = DataFrame.fromRows([
         {'id': 1, 'name': 'Alice'},
       ]);
-      
+
       final right = DataFrame.fromRows([
         {'id': 1, 'score': 95},
       ]);
-      
-      expect(
-        () => left.merge(right, how: 'inner'),
-        throwsArgumentError
-      );
+
+      expect(() => left.merge(right, how: 'inner'), throwsArgumentError);
     });
 
     test('Merge throws error for index-based joins (not implemented)', () {
       final left = DataFrame.fromRows([
         {'id': 1, 'name': 'Alice'},
       ]);
-      
+
       final right = DataFrame.fromRows([
         {'id': 1, 'score': 95},
       ]);
-      
-      expect(
-        () => left.merge(right, leftIndex: true),
-        throwsA(isA<UnimplementedError>())
-      );
+
+      expect(() => left.merge(right, leftIndex: true),
+          throwsA(isA<UnimplementedError>()));
     });
   });
 
@@ -918,13 +913,15 @@ void main() {
         });
       }
       final largeDf = DataFrame.fromRows(rows);
-      
+
       final stopwatch = Stopwatch()..start();
-      final melted = largeDf.melt(idVars: ['id'], valueVars: ['A', 'B', 'C', 'D']);
+      final melted =
+          largeDf.melt(idVars: ['id'], valueVars: ['A', 'B', 'C', 'D']);
       stopwatch.stop();
-      
+
       expect(melted.rowCount, equals(4000)); // 1000 rows * 4 value columns
-      expect(stopwatch.elapsedMilliseconds, lessThan(5000)); // Should complete in reasonable time
+      expect(stopwatch.elapsedMilliseconds,
+          lessThan(5000)); // Should complete in reasonable time
     });
 
     test('Stack performance with large dataset', () {
@@ -939,11 +936,11 @@ void main() {
         });
       }
       final largeDf = DataFrame.fromRows(rows);
-      
+
       final stopwatch = Stopwatch()..start();
       final stacked = largeDf.stack();
       stopwatch.stop();
-      
+
       expect(stacked.rowCount, equals(2500)); // 500 rows * 5 columns
       expect(stopwatch.elapsedMilliseconds, lessThan(3000));
     });
@@ -951,14 +948,16 @@ void main() {
     test('Merge performance test (basic functionality)', () {
       // Simplified performance test that doesn't rely on working merge
       final leftRows = <Map<String, dynamic>>[];
-      
+
       for (int i = 0; i < 1000; i++) {
         leftRows.add({'id': i, 'left_val': i * 10});
       }
-      
+
       final leftDf = DataFrame.fromRows(leftRows);
-      final rightDf = DataFrame.fromRows([{'id': 1, 'right_val': 100}]);
-      
+      final rightDf = DataFrame.fromRows([
+        {'id': 1, 'right_val': 100}
+      ]);
+
       final stopwatch = Stopwatch()..start();
       // Just test that merge can be called without crashing
       try {
@@ -967,7 +966,7 @@ void main() {
         // Expected to potentially fail due to join issues
       }
       stopwatch.stop();
-      
+
       expect(stopwatch.elapsedMilliseconds, lessThan(5000));
     });
 
@@ -976,7 +975,7 @@ void main() {
       for (int i = 0; i < 100; i++) {
         row['col$i'] = i;
       }
-      
+
       final rows = <Map<String, dynamic>>[];
       for (int i = 0; i < 50; i++) {
         final newRow = <String, dynamic>{};
@@ -985,13 +984,13 @@ void main() {
         }
         rows.add(newRow);
       }
-      
+
       final wideDf = DataFrame.fromRows(rows);
-      
+
       final stopwatch = Stopwatch()..start();
       final transposed = wideDf.transpose();
       stopwatch.stop();
-      
+
       expect(transposed.rowCount, equals(100)); // Original columns
       expect(transposed.columnCount, equals(50)); // Original rows
       expect(stopwatch.elapsedMilliseconds, lessThan(3000));
@@ -1001,7 +1000,7 @@ void main() {
       final rows = <Map<String, dynamic>>[];
       final categories = ['A', 'B', 'C', 'D', 'E'];
       final subcategories = ['X', 'Y', 'Z'];
-      
+
       for (int i = 0; i < 1000; i++) {
         rows.add({
           'category': categories[i % categories.length],
@@ -1010,18 +1009,17 @@ void main() {
           'count': math.Random().nextInt(50) + 1,
         });
       }
-      
+
       final largeDf = DataFrame.fromRows(rows);
-      
+
       final stopwatch = Stopwatch()..start();
       final pivot = largeDf.pivotTable(
-        index: 'category',
-        columns: 'subcategory',
-        values: 'value',
-        aggFunc: 'mean'
-      );
+          index: 'category',
+          columns: 'subcategory',
+          values: 'value',
+          aggFunc: 'mean');
       stopwatch.stop();
-      
+
       expect(pivot.rowCount, equals(categories.length));
       expect(stopwatch.elapsedMilliseconds, lessThan(4000));
     });

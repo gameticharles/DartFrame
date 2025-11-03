@@ -569,8 +569,6 @@ extension DataFrameReshaping on DataFrame {
         return values.reduce((a, b) => a + b); // Default to sum
     }
   }
-
-
 }
 
 /// Extension providing enhanced merge and join operations for DataFrame.
@@ -695,7 +693,7 @@ extension DataFrameMerging on DataFrame {
     return result;
   }
 
-   /// Concatenates this DataFrame with one or more other DataFrames along a specified axis.
+  /// Concatenates this DataFrame with one or more other DataFrames along a specified axis.
   ///
   /// This method allows for combining DataFrames either row-wise (stacking vertically)
   /// or column-wise (joining horizontally).
@@ -883,7 +881,7 @@ extension DataFrameMerging on DataFrame {
 
       List<List<dynamic>> finalData = [];
       int targetRows;
-      
+
       if (join == 'outer') {
         // Outer join: use maximum number of rows
         targetRows = 0;
@@ -928,7 +926,6 @@ extension DataFrameMerging on DataFrame {
       throw ArgumentError('axis must be 0 (row-wise) or 1 (column-wise).');
     }
   }
-
 
   /// Concatenate DataFrames along a particular axis with optional set logic
   /// along the other axes.
@@ -981,7 +978,6 @@ extension DataFrameMerging on DataFrame {
     );
   }
 
-  
   /// Compute a cross-tabulation of two factors.
   ///
   /// Parameters:
@@ -1259,7 +1255,6 @@ extension DataFrameMerging on DataFrame {
     return DataFrame._(newColumns, crossTabData);
   }
 
-  
   /// Reshapes the DataFrame based on column values.
   ///
   /// This function is used for strict reshaping without aggregation.

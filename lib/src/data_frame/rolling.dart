@@ -18,7 +18,7 @@ part of 'data_frame.dart';
 /// ```dart
 /// // OLD (deprecated, single column):
 /// var result = df.rolling('column', 3, 'mean');
-/// 
+///
 /// // NEW (recommended, all columns):
 /// var result = df.rollingWindow(3).mean();
 /// var singleColumn = result['column']; // Extract specific column if needed
@@ -29,7 +29,7 @@ class RollingDataFrame {
   final int? minPeriods;
   final bool center;
   final String winType;
-  
+
   /// Creates a RollingDataFrame instance.
   ///
   /// Parameters:
@@ -38,14 +38,9 @@ class RollingDataFrame {
   /// - `minPeriods`: Minimum number of observations required to have a value
   /// - `center`: Whether to center the window around the current observation
   /// - `winType`: Type of window ('boxcar' for uniform weighting)
-  RollingDataFrame(
-    this._df, 
-    this.window, {
-    this.minPeriods,
-    this.center = false,
-    this.winType = 'boxcar'
-  });
-  
+  RollingDataFrame(this._df, this.window,
+      {this.minPeriods, this.center = false, this.winType = 'boxcar'});
+
   /// Calculates the rolling mean for each numeric column.
   ///
   /// Returns:
@@ -68,7 +63,7 @@ class RollingDataFrame {
       return windowData.reduce((a, b) => a + b) / windowData.length;
     });
   }
-  
+
   /// Calculates the rolling sum for each numeric column.
   ///
   /// Returns:
@@ -79,7 +74,7 @@ class RollingDataFrame {
       return windowData.reduce((a, b) => a + b);
     });
   }
-  
+
   /// Calculates the rolling standard deviation for each numeric column.
   ///
   /// Returns:
@@ -87,7 +82,7 @@ class RollingDataFrame {
   DataFrame std() {
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.length < 2) return _df.replaceMissingValueWith;
-      
+
       double mean = windowData.reduce((a, b) => a + b) / windowData.length;
       double sumSquaredDiffs = windowData
           .map((value) => (value - mean) * (value - mean))
@@ -96,7 +91,7 @@ class RollingDataFrame {
       return sqrt(variance);
     });
   }
-  
+
   /// Calculates the rolling variance for each numeric column.
   ///
   /// Returns:
@@ -104,7 +99,7 @@ class RollingDataFrame {
   DataFrame variance() {
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.length < 2) return _df.replaceMissingValueWith;
-      
+
       double mean = windowData.reduce((a, b) => a + b) / windowData.length;
       double sumSquaredDiffs = windowData
           .map((value) => (value - mean) * (value - mean))
@@ -112,7 +107,7 @@ class RollingDataFrame {
       return sumSquaredDiffs / (windowData.length - 1);
     });
   }
-  
+
   /// Calculates the rolling minimum for each numeric column.
   ///
   /// Returns:
@@ -123,7 +118,7 @@ class RollingDataFrame {
       return windowData.reduce((a, b) => a < b ? a : b);
     });
   }
-  
+
   /// Calculates the rolling maximum for each numeric column.
   ///
   /// Returns:
@@ -134,7 +129,7 @@ class RollingDataFrame {
       return windowData.reduce((a, b) => a > b ? a : b);
     });
   }
-  
+
   /// Calculates the rolling median for each numeric column.
   ///
   /// Returns:
@@ -142,10 +137,10 @@ class RollingDataFrame {
   DataFrame median() {
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.isEmpty) return _df.replaceMissingValueWith;
-      
+
       List<num> sortedData = List.from(windowData)..sort();
       int length = sortedData.length;
-      
+
       if (length % 2 == 0) {
         return (sortedData[length ~/ 2 - 1] + sortedData[length ~/ 2]) / 2.0;
       } else {
@@ -153,7 +148,7 @@ class RollingDataFrame {
       }
     });
   }
-  
+
   /// Calculates the rolling quantile for each numeric column.
   ///
   /// Parameters:
@@ -165,29 +160,29 @@ class RollingDataFrame {
     if (q < 0 || q > 1) {
       throw ArgumentError('Quantile must be between 0 and 1');
     }
-    
+
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.isEmpty) return _df.replaceMissingValueWith;
-      
+
       List<num> sortedData = List.from(windowData)..sort();
       int length = sortedData.length;
-      
+
       if (length == 1) return sortedData[0];
-      
+
       double index = q * (length - 1);
       int lowerIndex = index.floor();
       int upperIndex = index.ceil();
-      
+
       if (lowerIndex == upperIndex) {
         return sortedData[lowerIndex];
       } else {
         double weight = index - lowerIndex;
-        return sortedData[lowerIndex] * (1 - weight) + 
-               sortedData[upperIndex] * weight;
+        return sortedData[lowerIndex] * (1 - weight) +
+            sortedData[upperIndex] * weight;
       }
     });
   }
-  
+
   /// Calculates the rolling correlation between columns.
   ///
   /// Parameters:
@@ -203,10 +198,11 @@ class RollingDataFrame {
     } else if (pairwise) {
       return _applyPairwiseRollingCorrelation();
     } else {
-      throw ArgumentError('Either provide other DataFrame or set pairwise=true');
+      throw ArgumentError(
+          'Either provide other DataFrame or set pairwise=true');
     }
   }
-  
+
   /// Calculates the rolling covariance between columns.
   ///
   /// Parameters:
@@ -222,10 +218,11 @@ class RollingDataFrame {
     } else if (pairwise) {
       return _applyPairwiseRollingCovariance();
     } else {
-      throw ArgumentError('Either provide other DataFrame or set pairwise=true');
+      throw ArgumentError(
+          'Either provide other DataFrame or set pairwise=true');
     }
   }
-  
+
   /// Calculates the rolling skewness for each numeric column.
   ///
   /// Returns:
@@ -233,27 +230,27 @@ class RollingDataFrame {
   DataFrame skew() {
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.length < 3) return _df.replaceMissingValueWith;
-      
+
       double mean = windowData.reduce((a, b) => a + b) / windowData.length;
-      
+
       double sumSquaredDiffs = windowData
           .map((value) => (value - mean) * (value - mean))
           .reduce((a, b) => a + b);
-      
+
       double variance = sumSquaredDiffs / (windowData.length - 1);
       double stdDev = sqrt(variance);
-      
+
       if (stdDev == 0) return _df.replaceMissingValueWith;
-      
+
       double sumCubedDiffs = windowData
           .map((value) => pow((value - mean) / stdDev, 3).toDouble())
           .reduce((a, b) => a + b);
-      
+
       int n = windowData.length;
       return (n / ((n - 1) * (n - 2))) * sumCubedDiffs;
     });
   }
-  
+
   /// Calculates the rolling kurtosis for each numeric column.
   ///
   /// Parameters:
@@ -264,25 +261,26 @@ class RollingDataFrame {
   DataFrame kurt({bool fisher = true}) {
     return _applyRollingOperation((List<num> windowData) {
       if (windowData.length < 4) return _df.replaceMissingValueWith;
-      
+
       double mean = windowData.reduce((a, b) => a + b) / windowData.length;
-      
+
       double sumSquaredDiffs = windowData
           .map((value) => (value - mean) * (value - mean))
           .reduce((a, b) => a + b);
-      
+
       double variance = sumSquaredDiffs / (windowData.length - 1);
       double stdDev = sqrt(variance);
-      
+
       if (stdDev == 0) return _df.replaceMissingValueWith;
-      
+
       double sumFourthPowers = windowData
           .map((value) => pow((value - mean) / stdDev, 4).toDouble())
           .reduce((a, b) => a + b);
-      
+
       int n = windowData.length;
-      double kurtosisValue = (n * (n + 1) / ((n - 1) * (n - 2) * (n - 3))) * sumFourthPowers;
-      
+      double kurtosisValue =
+          (n * (n + 1) / ((n - 1) * (n - 2) * (n - 3))) * sumFourthPowers;
+
       if (fisher) {
         double correction = 3.0 * (n - 1) * (n - 1) / ((n - 2) * (n - 3));
         return kurtosisValue - correction;
@@ -291,7 +289,7 @@ class RollingDataFrame {
       }
     });
   }
-  
+
   /// Applies a custom aggregation function over the rolling window.
   ///
   /// Parameters:
@@ -302,19 +300,19 @@ class RollingDataFrame {
   DataFrame apply(dynamic Function(List<num>) func) {
     return _applyRollingOperation(func);
   }
-  
+
   /// Internal method to apply rolling operations across all columns.
   DataFrame _applyRollingOperation(dynamic Function(List<num>) operation) {
     List<List<dynamic>> resultData = [];
     int effectiveMinPeriods = minPeriods ?? window;
-    
+
     for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
       List<dynamic> resultRow = [];
-      
+
       for (int colIndex = 0; colIndex < _df._columns.length; colIndex++) {
         // Determine window bounds
         int startIndex, endIndex;
-        
+
         if (center) {
           int halfWindow = window ~/ 2;
           startIndex = (rowIndex - halfWindow).clamp(0, _df._data.length);
@@ -323,14 +321,14 @@ class RollingDataFrame {
           startIndex = (rowIndex - window + 1).clamp(0, _df._data.length);
           endIndex = rowIndex + 1;
         }
-        
+
         // Check if we have enough periods
         int actualWindow = endIndex - startIndex;
         if (actualWindow < effectiveMinPeriods) {
           resultRow.add(_df.replaceMissingValueWith);
           continue;
         }
-        
+
         // Collect window data for this column
         List<num> windowData = [];
         for (int i = startIndex; i < endIndex; i++) {
@@ -339,15 +337,15 @@ class RollingDataFrame {
             windowData.add(value);
           }
         }
-        
+
         // Apply the operation
         dynamic result = operation(windowData);
         resultRow.add(result);
       }
-      
+
       resultData.add(resultRow);
     }
-    
+
     return DataFrame(
       resultData,
       columns: _df._columns.toList(),
@@ -356,60 +354,63 @@ class RollingDataFrame {
       missingDataIndicator: _df._missingDataIndicator,
     );
   }
-  
+
   /// Internal method to apply rolling correlation with another DataFrame.
   DataFrame _applyRollingCorrelation(DataFrame other) {
     if (_df._data.length != other._data.length) {
       throw ArgumentError('DataFrames must have the same number of rows');
     }
-    
+
     List<List<dynamic>> resultData = [];
     int effectiveMinPeriods = minPeriods ?? window;
-    
+
     for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
       List<dynamic> resultRow = [];
-      
+
       for (int colIndex = 0; colIndex < _df._columns.length; colIndex++) {
         if (colIndex >= other._columns.length) {
           resultRow.add(_df.replaceMissingValueWith);
           continue;
         }
-        
+
         // Determine window bounds
         int startIndex = (rowIndex - window + 1).clamp(0, _df._data.length);
         int endIndex = rowIndex + 1;
-        
+
         if (endIndex - startIndex < effectiveMinPeriods) {
           resultRow.add(_df.replaceMissingValueWith);
           continue;
         }
-        
+
         // Collect paired window data
         List<num> windowData1 = [];
         List<num> windowData2 = [];
-        
+
         for (int i = startIndex; i < endIndex; i++) {
           dynamic value1 = _df._data[i][colIndex];
           dynamic value2 = other._data[i][colIndex];
-          
-          if (!_isMissingValue(value1) && !_isMissingValue(value2) && 
-              value1 is num && value2 is num) {
+
+          if (!_isMissingValue(value1) &&
+              !_isMissingValue(value2) &&
+              value1 is num &&
+              value2 is num) {
             windowData1.add(value1);
             windowData2.add(value2);
           }
         }
-        
+
         if (windowData1.length < 2) {
           resultRow.add(_df.replaceMissingValueWith);
         } else {
-          double correlation = _calculatePearsonCorrelation(windowData1, windowData2);
+          double correlation =
+              _calculatePearsonCorrelation(windowData1, windowData2);
           resultRow.add(correlation);
         }
       }
-      
+
       resultData.add(resultRow);
     }
-    
+
     return DataFrame(
       resultData,
       columns: _df._columns.toList(),
@@ -418,16 +419,16 @@ class RollingDataFrame {
       missingDataIndicator: _df._missingDataIndicator,
     );
   }
-  
+
   /// Internal method to apply pairwise rolling correlation.
   DataFrame _applyPairwiseRollingCorrelation() {
     // Get numeric columns only
     List<String> numericColumns = [];
     List<int> numericColumnIndices = [];
-    
+
     for (int colIndex = 0; colIndex < _df._columns.length; colIndex++) {
       String columnName = _df._columns[colIndex].toString();
-      
+
       bool hasNumericValues = false;
       for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
         dynamic value = _df._data[rowIndex][colIndex];
@@ -436,24 +437,25 @@ class RollingDataFrame {
           break;
         }
       }
-      
+
       if (hasNumericValues) {
         numericColumns.add(columnName);
         numericColumnIndices.add(colIndex);
       }
     }
-    
+
     if (numericColumns.isEmpty) {
-      throw ArgumentError('No numeric columns found for correlation calculation');
+      throw ArgumentError(
+          'No numeric columns found for correlation calculation');
     }
-    
+
     // Create correlation matrix for each time point
     List<List<dynamic>> resultData = [];
     int effectiveMinPeriods = minPeriods ?? window;
-    
+
     for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
       List<dynamic> resultRow = [];
-      
+
       for (int i = 0; i < numericColumns.length; i++) {
         for (int j = 0; j < numericColumns.length; j++) {
           if (i == j) {
@@ -461,25 +463,24 @@ class RollingDataFrame {
           } else {
             int startIndex = (rowIndex - window + 1).clamp(0, _df._data.length);
             int endIndex = rowIndex + 1;
-            
+
             if (endIndex - startIndex < effectiveMinPeriods) {
               resultRow.add(_df.replaceMissingValueWith);
             } else {
               double correlation = _calculateRollingCorrelationBetweenColumns(
-                numericColumnIndices[i], 
-                numericColumnIndices[j], 
-                startIndex, 
-                endIndex
-              );
+                  numericColumnIndices[i],
+                  numericColumnIndices[j],
+                  startIndex,
+                  endIndex);
               resultRow.add(correlation);
             }
           }
         }
       }
-      
+
       resultData.add(resultRow);
     }
-    
+
     // Create column names for the flattened correlation matrix
     List<String> resultColumns = [];
     for (int i = 0; i < numericColumns.length; i++) {
@@ -487,7 +488,7 @@ class RollingDataFrame {
         resultColumns.add('${numericColumns[i]}_${numericColumns[j]}');
       }
     }
-    
+
     return DataFrame(
       resultData,
       columns: resultColumns,
@@ -496,47 +497,49 @@ class RollingDataFrame {
       missingDataIndicator: _df._missingDataIndicator,
     );
   }
-  
+
   /// Internal method to apply rolling covariance with another DataFrame.
   DataFrame _applyRollingCovariance(DataFrame other) {
     if (_df._data.length != other._data.length) {
       throw ArgumentError('DataFrames must have the same number of rows');
     }
-    
+
     List<List<dynamic>> resultData = [];
     int effectiveMinPeriods = minPeriods ?? window;
-    
+
     for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
       List<dynamic> resultRow = [];
-      
+
       for (int colIndex = 0; colIndex < _df._columns.length; colIndex++) {
         if (colIndex >= other._columns.length) {
           resultRow.add(_df.replaceMissingValueWith);
           continue;
         }
-        
+
         int startIndex = (rowIndex - window + 1).clamp(0, _df._data.length);
         int endIndex = rowIndex + 1;
-        
+
         if (endIndex - startIndex < effectiveMinPeriods) {
           resultRow.add(_df.replaceMissingValueWith);
           continue;
         }
-        
+
         List<num> windowData1 = [];
         List<num> windowData2 = [];
-        
+
         for (int i = startIndex; i < endIndex; i++) {
           dynamic value1 = _df._data[i][colIndex];
           dynamic value2 = other._data[i][colIndex];
-          
-          if (!_isMissingValue(value1) && !_isMissingValue(value2) && 
-              value1 is num && value2 is num) {
+
+          if (!_isMissingValue(value1) &&
+              !_isMissingValue(value2) &&
+              value1 is num &&
+              value2 is num) {
             windowData1.add(value1);
             windowData2.add(value2);
           }
         }
-        
+
         if (windowData1.length < 2) {
           resultRow.add(_df.replaceMissingValueWith);
         } else {
@@ -544,10 +547,10 @@ class RollingDataFrame {
           resultRow.add(covariance);
         }
       }
-      
+
       resultData.add(resultRow);
     }
-    
+
     return DataFrame(
       resultData,
       columns: _df._columns.toList(),
@@ -556,16 +559,16 @@ class RollingDataFrame {
       missingDataIndicator: _df._missingDataIndicator,
     );
   }
-  
+
   /// Internal method to apply pairwise rolling covariance.
   DataFrame _applyPairwiseRollingCovariance() {
     // Similar to pairwise correlation but calculating covariance
     List<String> numericColumns = [];
     List<int> numericColumnIndices = [];
-    
+
     for (int colIndex = 0; colIndex < _df._columns.length; colIndex++) {
       String columnName = _df._columns[colIndex].toString();
-      
+
       bool hasNumericValues = false;
       for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
         dynamic value = _df._data[rowIndex][colIndex];
@@ -574,52 +577,52 @@ class RollingDataFrame {
           break;
         }
       }
-      
+
       if (hasNumericValues) {
         numericColumns.add(columnName);
         numericColumnIndices.add(colIndex);
       }
     }
-    
+
     if (numericColumns.isEmpty) {
-      throw ArgumentError('No numeric columns found for covariance calculation');
+      throw ArgumentError(
+          'No numeric columns found for covariance calculation');
     }
-    
+
     List<List<dynamic>> resultData = [];
     int effectiveMinPeriods = minPeriods ?? window;
-    
+
     for (int rowIndex = 0; rowIndex < _df._data.length; rowIndex++) {
       List<dynamic> resultRow = [];
-      
+
       for (int i = 0; i < numericColumns.length; i++) {
         for (int j = 0; j < numericColumns.length; j++) {
           int startIndex = (rowIndex - window + 1).clamp(0, _df._data.length);
           int endIndex = rowIndex + 1;
-          
+
           if (endIndex - startIndex < effectiveMinPeriods) {
             resultRow.add(_df.replaceMissingValueWith);
           } else {
             double covariance = _calculateRollingCovarianceBetweenColumns(
-              numericColumnIndices[i], 
-              numericColumnIndices[j], 
-              startIndex, 
-              endIndex
-            );
+                numericColumnIndices[i],
+                numericColumnIndices[j],
+                startIndex,
+                endIndex);
             resultRow.add(covariance);
           }
         }
       }
-      
+
       resultData.add(resultRow);
     }
-    
+
     List<String> resultColumns = [];
     for (int i = 0; i < numericColumns.length; i++) {
       for (int j = 0; j < numericColumns.length; j++) {
         resultColumns.add('${numericColumns[i]}_${numericColumns[j]}');
       }
     }
-    
+
     return DataFrame(
       resultData,
       columns: resultColumns,
@@ -628,98 +631,109 @@ class RollingDataFrame {
       missingDataIndicator: _df._missingDataIndicator,
     );
   }
-  
+
   /// Helper method to calculate Pearson correlation coefficient.
   double _calculatePearsonCorrelation(List<num> x, List<num> y) {
     if (x.length != y.length || x.length < 2) {
       return double.nan;
     }
-    
-    double meanX = x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
-    double meanY = y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
-    
+
+    double meanX =
+        x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
+    double meanY =
+        y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
+
     double numerator = 0;
     double sumSquaredX = 0;
     double sumSquaredY = 0;
-    
+
     for (int i = 0; i < x.length; i++) {
       double diffX = x[i] - meanX;
       double diffY = y[i] - meanY;
-      
+
       numerator += diffX * diffY;
       sumSquaredX += diffX * diffX;
       sumSquaredY += diffY * diffY;
     }
-    
+
     double denominator = sqrt(sumSquaredX * sumSquaredY);
-    
+
     if (denominator == 0) {
       return double.nan;
     }
-    
+
     return numerator / denominator;
   }
-  
+
   /// Helper method to calculate covariance.
   double _calculateCovariance(List<num> x, List<num> y) {
     if (x.length != y.length || x.length < 2) {
       return double.nan;
     }
-    
-    double meanX = x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
-    double meanY = y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
-    
+
+    double meanX =
+        x.map((e) => e.toDouble()).reduce((a, b) => a + b) / x.length;
+    double meanY =
+        y.map((e) => e.toDouble()).reduce((a, b) => a + b) / y.length;
+
     double sumProducts = 0;
     for (int i = 0; i < x.length; i++) {
       sumProducts += (x[i] - meanX) * (y[i] - meanY);
     }
-    
+
     return sumProducts / (x.length - 1);
   }
-  
+
   /// Helper method to calculate rolling correlation between two columns.
-  double _calculateRollingCorrelationBetweenColumns(int colIndex1, int colIndex2, int startIndex, int endIndex) {
+  double _calculateRollingCorrelationBetweenColumns(
+      int colIndex1, int colIndex2, int startIndex, int endIndex) {
     List<num> values1 = [];
     List<num> values2 = [];
-    
+
     for (int rowIndex = startIndex; rowIndex < endIndex; rowIndex++) {
       dynamic val1 = _df._data[rowIndex][colIndex1];
       dynamic val2 = _df._data[rowIndex][colIndex2];
-      
-      if (!_isMissingValue(val1) && !_isMissingValue(val2) && 
-          val1 is num && val2 is num) {
+
+      if (!_isMissingValue(val1) &&
+          !_isMissingValue(val2) &&
+          val1 is num &&
+          val2 is num) {
         values1.add(val1);
         values2.add(val2);
       }
     }
-    
+
     return _calculatePearsonCorrelation(values1, values2);
   }
-  
+
   /// Helper method to calculate rolling covariance between two columns.
-  double _calculateRollingCovarianceBetweenColumns(int colIndex1, int colIndex2, int startIndex, int endIndex) {
+  double _calculateRollingCovarianceBetweenColumns(
+      int colIndex1, int colIndex2, int startIndex, int endIndex) {
     List<num> values1 = [];
     List<num> values2 = [];
-    
+
     for (int rowIndex = startIndex; rowIndex < endIndex; rowIndex++) {
       dynamic val1 = _df._data[rowIndex][colIndex1];
       dynamic val2 = _df._data[rowIndex][colIndex2];
-      
-      if (!_isMissingValue(val1) && !_isMissingValue(val2) && 
-          val1 is num && val2 is num) {
+
+      if (!_isMissingValue(val1) &&
+          !_isMissingValue(val2) &&
+          val1 is num &&
+          val2 is num) {
         values1.add(val1);
         values2.add(val2);
       }
     }
-    
+
     return _calculateCovariance(values1, values2);
   }
-  
+
   /// Helper method to check if a value is considered missing.
   bool _isMissingValue(dynamic value) {
-    return value == null || 
-           (_df.replaceMissingValueWith != null && value == _df.replaceMissingValueWith) ||
-           _df._missingDataIndicator.contains(value);
+    return value == null ||
+        (_df.replaceMissingValueWith != null &&
+            value == _df.replaceMissingValueWith) ||
+        _df._missingDataIndicator.contains(value);
   }
 }
 
@@ -769,35 +783,31 @@ extension DataFrameRolling on DataFrame {
   ///   [7, 8, 9],
   ///   [10, 11, 12]
   /// ], columns: ['A', 'B', 'C']);
-  /// 
+  ///
   /// // Basic rolling operations
   /// var rolling = df.rollingWindow(3);
   /// var meanResult = rolling.mean();     // Rolling mean for all columns
   /// var sumResult = rolling.sum();       // Rolling sum for all columns
   /// var stdResult = rolling.std();       // Rolling standard deviation
-  /// 
+  ///
   /// // Advanced operations
   /// var medianResult = rolling.median(); // Rolling median
   /// var q75Result = rolling.quantile(0.75); // 75th percentile
-  /// 
+  ///
   /// // Custom function
-  /// var rangeResult = rolling.apply((window) => 
-  ///   window.reduce((a, b) => a > b ? a : b) - 
+  /// var rangeResult = rolling.apply((window) =>
+  ///   window.reduce((a, b) => a > b ? a : b) -
   ///   window.reduce((a, b) => a < b ? a : b)
   /// );
-  /// 
+  ///
   /// // Correlation between DataFrames
   /// var df2 = DataFrame([[2, 4, 6], [8, 10, 12]], columns: ['A', 'B', 'C']);
   /// var corrResult = rolling.corr(other: df2);
-  /// 
+  ///
   /// print(meanResult);
   /// ```
-  RollingDataFrame rollingWindow(
-    int window, {
-    int? minPeriods,
-    bool center = false,
-    String winType = 'boxcar'
-  }) {
+  RollingDataFrame rollingWindow(int window,
+      {int? minPeriods, bool center = false, String winType = 'boxcar'}) {
     if (window <= 0) {
       throw ArgumentError('Window size must be positive');
     }
@@ -807,13 +817,8 @@ extension DataFrameRolling on DataFrame {
     if (minPeriods != null && minPeriods <= 0) {
       throw ArgumentError('minPeriods must be positive');
     }
-    
-    return RollingDataFrame(
-      this, 
-      window, 
-      minPeriods: minPeriods,
-      center: center,
-      winType: winType
-    );
+
+    return RollingDataFrame(this, window,
+        minPeriods: minPeriods, center: center, winType: winType);
   }
 }

@@ -31,11 +31,13 @@ class PerformanceOptimizer {
     print('DartFrame Performance Platform Info:');
     print('- Platform: ${info['platform']}');
     print('- Supports Isolates: ${info['supportsIsolates']}');
-    print('- Supports Parallel Processing: ${info['supportsParallelProcessing']}');
+    print(
+        '- Supports Parallel Processing: ${info['supportsParallelProcessing']}');
     print('- Recommended Chunk Size: ${info['recommendedChunkSize']}');
 
     if (!info['supportsParallelProcessing']) {
-      print('- Note: Parallel operations will fall back to synchronous processing');
+      print(
+          '- Note: Parallel operations will fall back to synchronous processing');
     }
   }
 
@@ -556,8 +558,6 @@ class PerformanceOptimizer {
     }
     return math.sqrt(sumSquaredDifferences / values.length);
   }
-
-
 }
 
 /// Extension methods for Series vectorized operations.

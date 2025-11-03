@@ -107,14 +107,12 @@ class GeoDataFrame extends DataFrame {
     while (rows.length < requiredRows) {
       rows.add(List<dynamic>.filled(columns.length, null));
     }
-    
+
     // Update index if we added new rows
     if (rows.length > originalRowCount) {
       // Extend the index with new numeric indices
       final newIndices = List.generate(
-        rows.length - originalRowCount, 
-        (i) => originalRowCount + i
-      );
+          rows.length - originalRowCount, (i) => originalRowCount + i);
       index.addAll(newIndices);
     }
 
@@ -131,9 +129,9 @@ class GeoDataFrame extends DataFrame {
     }
 
     // Only process geometries if they need conversion (not already GeoJSON geometries)
-    bool needsProcessing = geomList.any((geom) => 
-        geom != null && geom is! GeoJSONGeometry);
-    
+    bool needsProcessing =
+        geomList.any((geom) => geom != null && geom is! GeoJSONGeometry);
+
     if (needsProcessing) {
       _processGeometryColumn();
     }
@@ -177,7 +175,7 @@ class GeoDataFrame extends DataFrame {
   GeoDataFrame copy() {
     // Use DataFrame's copy method to ensure all DataFrame properties are properly copied
     final dataFrameCopy = (this as DataFrame).copy();
-    
+
     // Create and return a new GeoDataFrame with the copied DataFrame
     return GeoDataFrame(
       dataFrameCopy,

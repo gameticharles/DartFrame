@@ -24,22 +24,22 @@ Future<Series> parallelApply(
   int chunkSize,
 ) async {
   List<dynamic> data = series.data;
-  
+
   try {
     List<Future<List<dynamic>>> futures = [];
-    
+
     for (int i = 0; i < data.length; i += chunkSize) {
       int end = math.min(i + chunkSize, data.length);
       List<dynamic> chunk = data.sublist(i, end);
-      
+
       futures.add(Isolate.run(() {
         return chunk.map(func).toList();
       }));
     }
-    
+
     List<List<dynamic>> results = await Future.wait(futures);
     List<dynamic> flatResult = results.expand((chunk) => chunk).toList();
-    
+
     return Series(flatResult, name: series.name, index: series.index);
   } catch (e) {
     // Fallback to synchronous processing if isolates fail
@@ -59,24 +59,24 @@ Future<List<dynamic>> parallelApplyDataFrameRows(
 ) async {
   try {
     List<Future<List<dynamic>>> futures = [];
-    
+
     for (int i = 0; i < df.rowCount; i += chunkSize) {
       int end = math.min(i + chunkSize, df.rowCount);
-      
+
       // Capture the data we need for the isolate
       Map<String, List<dynamic>> chunkData = {};
       List<String> columnNames = df.columns.cast<String>();
-      
+
       // Extract column data for the chunk
       for (String columnName in columnNames) {
         List<dynamic> columnData = df[columnName].data;
         chunkData[columnName] = columnData.sublist(i, end);
       }
-      
+
       futures.add(Isolate.run(() {
         List<dynamic> chunkResults = [];
         int chunkSize = chunkData[columnNames.first]!.length;
-        
+
         for (int idx = 0; idx < chunkSize; idx++) {
           Map<String, dynamic> row = {};
           for (String columnName in columnNames) {
@@ -87,7 +87,7 @@ Future<List<dynamic>> parallelApplyDataFrameRows(
         return chunkResults;
       }));
     }
-    
+
     List<List<dynamic>> results = await Future.wait(futures);
     return results.expand((chunk) => chunk).toList();
   } catch (e) {
