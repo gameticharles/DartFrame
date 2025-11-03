@@ -936,9 +936,9 @@ extension SeriesStatistics on Series {
   /// Example:
   /// ```dart
   /// var s = Series([1, 2, 2, 3, 3, 3], name: 'data');
-  /// print(s.value_counts()); // Series with counts
+  /// print(s.valueCounts()); // Series with counts
   /// ```
-  Series value_counts({
+  Series valueCounts({
     bool normalize = false,
     bool sort = true,
     bool ascending = false,
