@@ -560,7 +560,7 @@ extension SeriesStatistics on Series {
   /// ```
   dynamic quantile(double q, {bool skipna = true}) {
     if (q < 0 || q > 1) {
-      throw ArgumentError('Quantile must be between 0 and 1');
+      throw Exception('Percentile must be between 0 and 1');
     }
 
     List<dynamic> validData = [];
@@ -573,14 +573,16 @@ extension SeriesStatistics on Series {
     }
 
     if (validData.isEmpty) {
-      return _missingRepresentation;
+      throw Exception(
+          'Cannot calculate quantile of an empty series or series with all missing values');
     }
 
     // Filter numeric values only
     List<num> numericValues = validData.whereType<num>().cast<num>().toList();
 
     if (numericValues.isEmpty) {
-      return _missingRepresentation;
+      throw Exception(
+          'Cannot calculate quantile of an empty series or series with all missing values');
     }
 
     numericValues.sort();

@@ -200,7 +200,7 @@ void main() {
       final originalDf = DataFrame.fromMap(testData);
       
       // Test CSV export
-      await originalDf.toCsv();
+      originalDf.toCsv();
       
       // Test CSV import
       try {

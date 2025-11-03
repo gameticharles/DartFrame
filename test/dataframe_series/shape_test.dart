@@ -87,26 +87,26 @@ void main() {
         var shape2D = Shape([10, 5]);
         
         // Add dimension at beginning
-        var shape3D_start = shape2D.addDimension(3);
-        expect(shape3D_start.toList(), equals([3, 10, 5]));
+        var shape3dStart = shape2D.addDimension(3);
+        expect(shape3dStart.toList(), equals([3, 10, 5]));
         
         // Add dimension at end
-        var shape3D_end = shape2D.addDimension(3, axis: 2);
-        expect(shape3D_end.toList(), equals([10, 5, 3]));
+        var shape3dEnd = shape2D.addDimension(3, axis: 2);
+        expect(shape3dEnd.toList(), equals([10, 5, 3]));
         
         // Add dimension in middle
-        var shape3D_middle = shape2D.addDimension(3, axis: 1);
-        expect(shape3D_middle.toList(), equals([10, 3, 5]));
+        var shape3dMiddle = shape2D.addDimension(3, axis: 1);
+        expect(shape3dMiddle.toList(), equals([10, 3, 5]));
       });
 
       test('removeDimension works correctly', () {
         var shape3D = Shape([10, 5, 3]);
         
-        var shape2D_remove_first = shape3D.removeDimension(0);
-        expect(shape2D_remove_first.toList(), equals([5, 3]));
+        var shape2dRemoveFirst = shape3D.removeDimension(0);
+        expect(shape2dRemoveFirst.toList(), equals([5, 3]));
         
-        var shape2D_remove_last = shape3D.removeDimension(2);
-        expect(shape2D_remove_last.toList(), equals([10, 5]));
+        var shape2dRemoveLast = shape3D.removeDimension(2);
+        expect(shape2dRemoveLast.toList(), equals([10, 5]));
       });
 
       test('transpose works correctly', () {

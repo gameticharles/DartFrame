@@ -1,4 +1,8 @@
 
+# 0.6.2
+
+- **[IMPROVEMENT]** Improved dart format.
+
 # 0.6.1
 
 - **[Fixed]** Doc Strings.

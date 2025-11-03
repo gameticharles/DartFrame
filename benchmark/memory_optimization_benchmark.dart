@@ -130,8 +130,9 @@ class SeriesMemoryOptimizationBenchmark extends BenchmarkBase {
 
   @override
   void run() {
-    int originalMemory = originalSeries.memoryUsage;
-    int optimizedMemory = optimizedSeries.memoryUsage;
+    // Measure memory usage and verify data integrity
+    originalSeries.memoryUsage;
+    optimizedSeries.memoryUsage;
 
     // Verify data integrity
     assert(originalSeries.length == optimizedSeries.length);
@@ -183,7 +184,7 @@ class MemoryEstimationAccuracyBenchmark extends BenchmarkBase {
 
     // Test optimization recommendations
     Map<String, String> recommendations = testDataFrame.memoryRecommendations;
-    assert(recommendations is Map<String, String>);
+    assert(recommendations.isNotEmpty);
   }
 }
 

@@ -295,7 +295,7 @@ class RollingDataFrame {
   /// Applies a custom aggregation function over the rolling window.
   ///
   /// Parameters:
-  /// - `func`: A function that takes a List<num> and returns a dynamic value
+  /// - `func`: A function that takes a `List<num>` and returns a dynamic value
   ///
   /// Returns:
   /// A new DataFrame with the results of applying the function to each window.

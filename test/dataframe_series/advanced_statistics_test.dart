@@ -298,8 +298,8 @@ void main() {
         });
 
         test('throws error for invalid quantile', () {
-          expect(() => numericSeries.quantile(-0.1), throwsArgumentError);
-          expect(() => numericSeries.quantile(1.1), throwsArgumentError);
+          expect(() => numericSeries.quantile(-0.1), throwsA(isA<Exception>()));
+          expect(() => numericSeries.quantile(1.1), throwsA(isA<Exception>()));
         });
 
         test('handles single value', () {

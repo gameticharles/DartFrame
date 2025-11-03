@@ -54,7 +54,7 @@ void main() async {
   print('Service Area Centroids:');
   for (int i = 0; i < centroids.length; i++) {
     final coords = centroids.geometries()[i];
-    print('${serviceAreas['name'][i]}: ${coords}');
+    print('${serviceAreas['name'][i]}: $coords');
   }
   print('');
 

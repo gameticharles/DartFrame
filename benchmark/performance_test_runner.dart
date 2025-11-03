@@ -394,7 +394,7 @@ class CachePerformanceTest extends PerformanceTest {
     for (int i = 0; i < operationCount; i++) {
       String key = 'operation_${i % 10}'; // Reuse keys to test cache hits
       
-      String result = CacheManager.cacheOperation(key, () {
+      CacheManager.cacheOperation(key, () {
         cacheMisses++;
         // Simulate expensive computation
         double value = 0;

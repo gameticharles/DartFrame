@@ -163,8 +163,9 @@ class ExcelReader implements DataReader {
   }
 
   dynamic _parseExcelValue(String? value) {
-    if (value == null || value.isEmpty || value.toLowerCase() == 'null')
+    if (value == null || value.isEmpty || value.toLowerCase() == 'null') {
       return null;
+    }
 
     // Remove quotes if present
     String cleanValue = value;

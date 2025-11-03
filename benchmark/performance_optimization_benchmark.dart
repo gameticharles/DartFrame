@@ -190,9 +190,11 @@ class ParallelProcessingBenchmark extends BenchmarkBase {
     if (useParallel) {
       // Simulate parallel processing with multiple smaller operations
       for (int i = 0; i < largeSeries.length; i += 1000) {
-        int end = (i + 1000 < largeSeries.length) ? i + 1000 : largeSeries.length;
-        // Process chunk
-        largeSeries.vectorizedMath(2, '*');
+        int endIndex = (i + 1000 < largeSeries.length) ? i + 1000 : largeSeries.length;
+        // Process chunk (using endIndex for validation)
+        if (endIndex > i) {
+          largeSeries.vectorizedMath(2, '*');
+        }
       }
     } else {
       // Sequential processing

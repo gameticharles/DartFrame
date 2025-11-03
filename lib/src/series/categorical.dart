@@ -9,10 +9,10 @@ part of 'series.dart';
 /// efficiency and supporting both ordered and unordered categories.
 class _Categorical {
   /// The integer codes representing the categorical values
-  List<int> _codes;
+  final List<int> _codes;
 
   /// The category labels
-  List<dynamic> _categories;
+  final List<dynamic> _categories;
 
   /// Whether the categories have a meaningful order
   bool _ordered;
