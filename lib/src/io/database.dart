@@ -20,11 +20,24 @@ class SQLiteConnection implements DatabaseConnection {
   
   SQLiteConnection(this._connectionString);
   
+  /// Gets the connection string (useful for debugging)
+  String get connectionString => _connectionString;
+  
   /// Connects to the SQLite database
   Future<void> connect() async {
     try {
       // In a real implementation, this would use the sqflite package
-      // For now, we'll simulate the connection
+      // For now, we'll simulate the connection using the connection string
+      if (_connectionString.isEmpty) {
+        throw DatabaseConnectionError('Connection string cannot be empty');
+      }
+      
+      // Validate SQLite connection string format
+      final uri = Uri.parse(_connectionString);
+      if (uri.scheme != 'sqlite') {
+        throw DatabaseConnectionError('Invalid SQLite connection string: $_connectionString');
+      }
+      
       _isConnected = true;
     } catch (e) {
       throw DatabaseConnectionError('Failed to connect to SQLite: $e');
@@ -78,10 +91,28 @@ class PostgreSQLConnection implements DatabaseConnection {
   
   PostgreSQLConnection(this._connectionString);
   
+  /// Gets the connection string (useful for debugging)
+  String get connectionString => _connectionString;
+  
   /// Connects to the PostgreSQL database
   Future<void> connect() async {
     try {
       // In a real implementation, this would use the postgres package
+      if (_connectionString.isEmpty) {
+        throw DatabaseConnectionError('Connection string cannot be empty');
+      }
+      
+      // Validate PostgreSQL connection string format
+      final uri = Uri.parse(_connectionString);
+      if (!['postgresql', 'postgres'].contains(uri.scheme)) {
+        throw DatabaseConnectionError('Invalid PostgreSQL connection string: $_connectionString');
+      }
+      
+      // In practice, you would parse the connection string and connect:
+      // final host = uri.host;
+      // final port = uri.port;
+      // final database = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'postgres';
+      
       _isConnected = true;
     } catch (e) {
       throw DatabaseConnectionError('Failed to connect to PostgreSQL: $e');
@@ -132,10 +163,28 @@ class MySQLConnection implements DatabaseConnection {
   
   MySQLConnection(this._connectionString);
   
+  /// Gets the connection string (useful for debugging)
+  String get connectionString => _connectionString;
+  
   /// Connects to the MySQL database
   Future<void> connect() async {
     try {
       // In a real implementation, this would use the mysql1 package
+      if (_connectionString.isEmpty) {
+        throw DatabaseConnectionError('Connection string cannot be empty');
+      }
+      
+      // Validate MySQL connection string format
+      final uri = Uri.parse(_connectionString);
+      if (uri.scheme != 'mysql') {
+        throw DatabaseConnectionError('Invalid MySQL connection string: $_connectionString');
+      }
+      
+      // In practice, you would parse the connection string and connect:
+      // final host = uri.host;
+      // final port = uri.port;
+      // final database = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'mysql';
+      
       _isConnected = true;
     } catch (e) {
       throw DatabaseConnectionError('Failed to connect to MySQL: $e');

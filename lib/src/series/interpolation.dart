@@ -33,11 +33,11 @@ extension SeriesInterpolation on Series {
   /// Example:
   /// ```dart
   /// var s = Series([1.0, null, null, 4.0, 5.0, null, 7.0], name: 'data');
-  /// 
+  ///
   /// // Linear interpolation
   /// var linear = s.interpolate(method: 'linear');
   /// // Result: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
-  /// 
+  ///
   /// // With limit
   /// var limited = s.interpolate(method: 'linear', limit: 1);
   /// // Result: [1.0, 2.0, null, 4.0, 5.0, 6.0, 7.0]
@@ -59,7 +59,8 @@ extension SeriesInterpolation on Series {
     }
 
     if (method == 'polynomial' && order < 1) {
-      throw ArgumentError("order must be at least 1 for polynomial interpolation");
+      throw ArgumentError(
+          "order must be at least 1 for polynomial interpolation");
     }
 
     // Check if we have enough non-missing values
@@ -73,7 +74,8 @@ extension SeriesInterpolation on Series {
       case 'linear':
         return _linearInterpolate(limit: limit, limitDirection: limitDirection);
       case 'polynomial':
-        return _polynomialInterpolate(order, limit: limit, limitDirection: limitDirection);
+        return _polynomialInterpolate(order,
+            limit: limit, limitDirection: limitDirection);
       case 'spline':
         return _splineInterpolate(limit: limit, limitDirection: limitDirection);
       default:
@@ -84,7 +86,7 @@ extension SeriesInterpolation on Series {
   /// Performs linear interpolation between adjacent non-missing values.
   Series _linearInterpolate({int? limit, String limitDirection = 'forward'}) {
     List<dynamic> newData = List.from(data);
-    
+
     // Find all missing value positions
     List<int> missingIndices = [];
     for (int i = 0; i < newData.length; i++) {
@@ -98,13 +100,14 @@ extension SeriesInterpolation on Series {
     }
 
     // Apply limit if specified
-    List<int> indicesToInterpolate = _applyLimit(missingIndices, limit, limitDirection);
+    List<int> indicesToInterpolate =
+        _applyLimit(missingIndices, limit, limitDirection);
 
     for (int i in indicesToInterpolate) {
       // Find the nearest non-missing values before and after
       int? leftIndex;
       int? rightIndex;
-      
+
       // Find left boundary
       for (int j = i - 1; j >= 0; j--) {
         if (!_isMissing(newData[j])) {
@@ -112,7 +115,7 @@ extension SeriesInterpolation on Series {
           break;
         }
       }
-      
+
       // Find right boundary
       for (int j = i + 1; j < newData.length; j++) {
         if (!_isMissing(newData[j])) {
@@ -125,13 +128,13 @@ extension SeriesInterpolation on Series {
       if (leftIndex != null && rightIndex != null) {
         final leftValue = newData[leftIndex];
         final rightValue = newData[rightIndex];
-        
+
         // Only interpolate if both values are numeric
         if (leftValue is num && rightValue is num) {
           final distance = rightIndex - leftIndex;
           final position = i - leftIndex;
-          final interpolatedValue = leftValue + 
-              (rightValue - leftValue) * (position / distance);
+          final interpolatedValue =
+              leftValue + (rightValue - leftValue) * (position / distance);
           newData[i] = interpolatedValue;
         }
       }
@@ -141,9 +144,10 @@ extension SeriesInterpolation on Series {
   }
 
   /// Performs polynomial interpolation using Lagrange interpolation.
-  Series _polynomialInterpolate(int order, {int? limit, String limitDirection = 'forward'}) {
+  Series _polynomialInterpolate(int order,
+      {int? limit, String limitDirection = 'forward'}) {
     List<dynamic> newData = List.from(data);
-    
+
     // Find all missing value positions
     List<int> missingIndices = [];
     for (int i = 0; i < newData.length; i++) {
@@ -170,12 +174,14 @@ extension SeriesInterpolation on Series {
     }
 
     // Apply limit if specified
-    List<int> indicesToInterpolate = _applyLimit(missingIndices, limit, limitDirection);
+    List<int> indicesToInterpolate =
+        _applyLimit(missingIndices, limit, limitDirection);
 
     for (int i in indicesToInterpolate) {
       // Use the closest `order + 1` points for interpolation
-      List<MapEntry<int, num>> nearestPoints = _findNearestPoints(knownPoints, i, order + 1);
-      
+      List<MapEntry<int, num>> nearestPoints =
+          _findNearestPoints(knownPoints, i, order + 1);
+
       if (nearestPoints.length >= order + 1) {
         double interpolatedValue = _lagrangeInterpolation(nearestPoints, i);
         newData[i] = interpolatedValue;
@@ -188,7 +194,7 @@ extension SeriesInterpolation on Series {
   /// Performs cubic spline interpolation.
   Series _splineInterpolate({int? limit, String limitDirection = 'forward'}) {
     List<dynamic> newData = List.from(data);
-    
+
     // Find all missing value positions
     List<int> missingIndices = [];
     for (int i = 0; i < newData.length; i++) {
@@ -215,12 +221,13 @@ extension SeriesInterpolation on Series {
     }
 
     // Apply limit if specified
-    List<int> indicesToInterpolate = _applyLimit(missingIndices, limit, limitDirection);
+    List<int> indicesToInterpolate =
+        _applyLimit(missingIndices, limit, limitDirection);
 
     // Build cubic spline coefficients
     List<double> x = knownPoints.map((p) => p.key.toDouble()).toList();
     List<double> y = knownPoints.map((p) => p.value.toDouble()).toList();
-    
+
     List<List<double>> splineCoeffs = _buildCubicSpline(x, y);
 
     for (int i in indicesToInterpolate) {
@@ -232,13 +239,14 @@ extension SeriesInterpolation on Series {
   }
 
   /// Applies limit constraints to the list of missing indices.
-  List<int> _applyLimit(List<int> missingIndices, int? limit, String limitDirection) {
+  List<int> _applyLimit(
+      List<int> missingIndices, int? limit, String limitDirection) {
     if (limit == null) {
       return missingIndices;
     }
 
     List<int> result = [];
-    
+
     if (limitDirection == 'forward' || limitDirection == 'both') {
       int consecutiveCount = 0;
       for (int i = 0; i < missingIndices.length; i++) {
@@ -247,7 +255,7 @@ extension SeriesInterpolation on Series {
         } else {
           consecutiveCount = 1;
         }
-        
+
         if (consecutiveCount <= limit) {
           result.add(missingIndices[i]);
         }
@@ -258,17 +266,18 @@ extension SeriesInterpolation on Series {
       List<int> backwardResult = [];
       int consecutiveCount = 0;
       for (int i = missingIndices.length - 1; i >= 0; i--) {
-        if (i == missingIndices.length - 1 || missingIndices[i] == missingIndices[i + 1] - 1) {
+        if (i == missingIndices.length - 1 ||
+            missingIndices[i] == missingIndices[i + 1] - 1) {
           consecutiveCount++;
         } else {
           consecutiveCount = 1;
         }
-        
+
         if (consecutiveCount <= limit) {
           backwardResult.add(missingIndices[i]);
         }
       }
-      
+
       if (limitDirection == 'backward') {
         result = backwardResult;
       } else {
@@ -281,30 +290,31 @@ extension SeriesInterpolation on Series {
   }
 
   /// Finds the nearest points to a given index for polynomial interpolation.
-  List<MapEntry<int, num>> _findNearestPoints(List<MapEntry<int, num>> points, int targetIndex, int count) {
+  List<MapEntry<int, num>> _findNearestPoints(
+      List<MapEntry<int, num>> points, int targetIndex, int count) {
     List<MapEntry<int, num>> sortedByDistance = List.from(points);
-    sortedByDistance.sort((a, b) => 
+    sortedByDistance.sort((a, b) =>
         (a.key - targetIndex).abs().compareTo((b.key - targetIndex).abs()));
-    
+
     return sortedByDistance.take(count).toList();
   }
 
   /// Performs Lagrange interpolation.
   double _lagrangeInterpolation(List<MapEntry<int, num>> points, int x) {
     double result = 0.0;
-    
+
     for (int i = 0; i < points.length; i++) {
       double term = points[i].value.toDouble();
-      
+
       for (int j = 0; j < points.length; j++) {
         if (i != j) {
           term *= (x - points[j].key) / (points[i].key - points[j].key);
         }
       }
-      
+
       result += term;
     }
-    
+
     return result;
   }
 
@@ -327,7 +337,8 @@ extension SeriesInterpolation on Series {
 
     // Calculate alpha values
     for (int i = 1; i < n - 1; i++) {
-      alpha[i] = (3 / h[i]) * (y[i + 1] - y[i]) - (3 / h[i - 1]) * (y[i] - y[i - 1]);
+      alpha[i] =
+          (3 / h[i]) * (y[i + 1] - y[i]) - (3 / h[i - 1]) * (y[i] - y[i - 1]);
     }
 
     // Solve tridiagonal system
@@ -362,7 +373,8 @@ extension SeriesInterpolation on Series {
   }
 
   /// Evaluates the cubic spline at a given point.
-  double _evaluateSpline(List<List<double>> coeffs, List<double> x, double targetX) {
+  double _evaluateSpline(
+      List<List<double>> coeffs, List<double> x, double targetX) {
     // Find the appropriate segment
     int segment = 0;
     for (int i = 0; i < x.length - 1; i++) {
@@ -375,8 +387,11 @@ extension SeriesInterpolation on Series {
     // Evaluate the cubic polynomial for this segment
     double dx = targetX - x[segment];
     List<double> coeff = coeffs[segment];
-    
-    return coeff[0] + coeff[1] * dx + coeff[2] * dx * dx + coeff[3] * dx * dx * dx;
+
+    return coeff[0] +
+        coeff[1] * dx +
+        coeff[2] * dx * dx +
+        coeff[3] * dx * dx * dx;
   }
 }
 
@@ -443,12 +458,10 @@ extension SeriesMissingDataAnalysis on Series {
   List<Map<String, int>> missingSegments() {
     List<Map<String, int>> segments = [];
     int? segmentStart;
-    
+
     for (int i = 0; i < data.length; i++) {
       if (_isMissing(data[i])) {
-        if (segmentStart == null) {
-          segmentStart = i;
-        }
+        segmentStart ??= i;
       } else {
         if (segmentStart != null) {
           segments.add({
@@ -460,7 +473,7 @@ extension SeriesMissingDataAnalysis on Series {
         }
       }
     }
-    
+
     // Handle case where series ends with missing values
     if (segmentStart != null) {
       segments.add({
@@ -469,7 +482,7 @@ extension SeriesMissingDataAnalysis on Series {
         'length': data.length - segmentStart,
       });
     }
-    
+
     return segments;
   }
 
@@ -486,8 +499,10 @@ extension SeriesMissingDataAnalysis on Series {
   int longestMissingSegment() {
     List<Map<String, int>> segments = missingSegments();
     if (segments.isEmpty) return 0;
-    
-    return segments.map((segment) => segment['length']!).reduce((a, b) => a > b ? a : b);
+
+    return segments
+        .map((segment) => segment['length']!)
+        .reduce((a, b) => a > b ? a : b);
   }
 
   /// Checks if the Series has any missing values.
@@ -539,7 +554,7 @@ extension SeriesMissingDataAnalysis on Series {
   /// ```
   Map<String, dynamic> missingDataSummary() {
     List<Map<String, int>> segments = missingSegments();
-    
+
     return {
       'total_count': data.length,
       'missing_count': missingCount(),
@@ -551,8 +566,10 @@ extension SeriesMissingDataAnalysis on Series {
       'missing_segments': segments,
       'number_of_segments': segments.length,
       'longest_segment_length': longestMissingSegment(),
-      'average_segment_length': segments.isEmpty ? 0.0 : 
-          segments.map((s) => s['length']!).reduce((a, b) => a + b) / segments.length,
+      'average_segment_length': segments.isEmpty
+          ? 0.0
+          : segments.map((s) => s['length']!).reduce((a, b) => a + b) /
+              segments.length,
     };
   }
 }

@@ -1,8 +1,3 @@
-/// Time series utilities for DartFrame
-///
-/// This file contains classes and utilities for handling time series data,
-/// including frequency detection, conversion, and time-based indexing.
-
 import 'dart:math' as math;
 
 /// Represents a time series index with timestamps and frequency information.

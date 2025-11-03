@@ -1,34 +1,13 @@
 library;
 
-import 'dart:isolate';
 import 'dart:math' as math;
 import '../series/series.dart';
 import '../data_frame/data_frame.dart';
 
-// Platform detection
-bool get _isWeb {
-  // Check if we're running on web by trying to access web-specific APIs
-  try {
-    // Try to import dart:html which is only available on web
-    // This is a compile-time check, so we use a different approach
-    return identical(0, 0.0) == false;
-  } catch (e) {
-    return true;
-  }
-}
-
-/// Checks if isolates are supported on the current platform.
-bool get _supportsIsolates {
-  if (_isWeb) return false;
-
-  try {
-    // Try to check if Isolate.run is available
-    // This is a runtime check
-    return Isolate.run != null;
-  } catch (e) {
-    return false;
-  }
-}
+// Platform-specific conditional imports
+import 'performance_stub.dart'
+    if (dart.library.isolate) 'performance_native.dart'
+    if (dart.library.html) 'performance_web.dart' as platform;
 
 /// Performance optimization utilities for DartFrame.
 ///
@@ -43,13 +22,7 @@ bool get _supportsIsolates {
 class PerformanceOptimizer {
   /// Returns information about the current platform's performance capabilities.
   static Map<String, dynamic> getPlatformInfo() {
-    return {
-      'isWeb': _isWeb,
-      'supportsIsolates': _supportsIsolates,
-      'supportsParallelProcessing': _supportsIsolates,
-      'recommendedChunkSize': _supportsIsolates ? 1000 : 10000,
-      'platform': _isWeb ? 'web' : 'native',
-    };
+    return platform.getPlatformInfo();
   }
 
   /// Prints platform capabilities to help with debugging and optimization.
@@ -58,13 +31,11 @@ class PerformanceOptimizer {
     print('DartFrame Performance Platform Info:');
     print('- Platform: ${info['platform']}');
     print('- Supports Isolates: ${info['supportsIsolates']}');
-    print(
-        '- Supports Parallel Processing: ${info['supportsParallelProcessing']}');
+    print('- Supports Parallel Processing: ${info['supportsParallelProcessing']}');
     print('- Recommended Chunk Size: ${info['recommendedChunkSize']}');
 
     if (!info['supportsParallelProcessing']) {
-      print(
-          '- Note: Parallel operations will fall back to synchronous processing');
+      print('- Note: Parallel operations will fall back to synchronous processing');
     }
   }
 
@@ -329,7 +300,8 @@ class PerformanceOptimizer {
     dynamic Function(Series) func, {
     bool parallel = false,
   }) async {
-    if (!parallel || !_supportsIsolates) {
+    Map<String, dynamic> platformInfo = getPlatformInfo();
+    if (!parallel || !platformInfo['supportsParallelProcessing']) {
       // Sequential processing (always used on web or unsupported platforms)
       List<Series> results = [];
       for (Series series in seriesList) {
@@ -373,7 +345,8 @@ class PerformanceOptimizer {
     List<String> columnsToProcess = columnNames ?? df.columns.cast<String>();
     Map<String, List<dynamic>> resultData = {};
 
-    if (!_supportsIsolates) {
+    Map<String, dynamic> platformInfo = getPlatformInfo();
+    if (!platformInfo['supportsParallelProcessing']) {
       // Sequential processing on web or unsupported platforms
       for (String columnName in columnsToProcess) {
         Series column = df[columnName];
@@ -513,34 +486,8 @@ class PerformanceOptimizer {
     dynamic Function(dynamic) func,
     int chunkSize,
   ) async {
-    List<dynamic> data = series.data;
-
-    // Check if isolates are supported on the current platform
-    if (!_supportsIsolates) {
-      // Fallback to synchronous processing on web or unsupported platforms
-      return _synchronousApply(series, func);
-    }
-
-    try {
-      List<Future<List<dynamic>>> futures = [];
-
-      for (int i = 0; i < data.length; i += chunkSize) {
-        int end = math.min(i + chunkSize, data.length);
-        List<dynamic> chunk = data.sublist(i, end);
-
-        futures.add(Isolate.run(() {
-          return chunk.map(func).toList();
-        }));
-      }
-
-      List<List<dynamic>> results = await Future.wait(futures);
-      List<dynamic> flatResult = results.expand((chunk) => chunk).toList();
-
-      return Series(flatResult, name: series.name, index: series.index);
-    } catch (e) {
-      // Fallback to synchronous processing if isolates fail
-      return _synchronousApply(series, func);
-    }
+    // Use platform-specific implementation
+    return platform.parallelApply(series, func, chunkSize);
   }
 
   static Future<List<dynamic>> _parallelApplyDataFrameRows(
@@ -548,49 +495,8 @@ class PerformanceOptimizer {
     dynamic Function(Map<String, dynamic>) func,
     int chunkSize,
   ) async {
-    // Check if isolates are supported on the current platform
-    if (!_supportsIsolates) {
-      // Fallback to synchronous processing on web or unsupported platforms
-      return _synchronousApplyDataFrameRows(df, func);
-    }
-
-    try {
-      List<Future<List<dynamic>>> futures = [];
-
-      for (int i = 0; i < df.rowCount; i += chunkSize) {
-        int end = math.min(i + chunkSize, df.rowCount);
-
-        // Capture the data we need for the isolate
-        Map<String, List<dynamic>> chunkData = {};
-        List<String> columnNames = df.columns.cast<String>();
-
-        // Extract column data for the chunk
-        for (String columnName in columnNames) {
-          List<dynamic> columnData = df[columnName].data;
-          chunkData[columnName] = columnData.sublist(i, end);
-        }
-
-        futures.add(Isolate.run(() {
-          List<dynamic> chunkResults = [];
-          int chunkSize = chunkData[columnNames.first]!.length;
-
-          for (int idx = 0; idx < chunkSize; idx++) {
-            Map<String, dynamic> row = {};
-            for (String columnName in columnNames) {
-              row[columnName] = chunkData[columnName]![idx];
-            }
-            chunkResults.add(func(row));
-          }
-          return chunkResults;
-        }));
-      }
-
-      List<List<dynamic>> results = await Future.wait(futures);
-      return results.expand((chunk) => chunk).toList();
-    } catch (e) {
-      // Fallback to synchronous processing if isolates fail
-      return _synchronousApplyDataFrameRows(df, func);
-    }
+    // Use platform-specific implementation
+    return platform.parallelApplyDataFrameRows(df, func, chunkSize);
   }
 
   static dynamic _performMathOperation(
@@ -651,34 +557,7 @@ class PerformanceOptimizer {
     return math.sqrt(sumSquaredDifferences / values.length);
   }
 
-  /// Synchronous fallback for Series apply operations (used on web platforms).
-  static Future<Series> _synchronousApply(
-    Series series,
-    dynamic Function(dynamic) func,
-  ) async {
-    List<dynamic> result = [];
-    for (dynamic value in series.data) {
-      result.add(func(value));
-    }
-    return Series(result, name: series.name, index: series.index);
-  }
 
-  /// Synchronous fallback for DataFrame row operations (used on web platforms).
-  static Future<List<dynamic>> _synchronousApplyDataFrameRows(
-    DataFrame df,
-    dynamic Function(Map<String, dynamic>) func,
-  ) async {
-    List<dynamic> results = [];
-    for (int i = 0; i < df.rowCount; i++) {
-      Map<String, dynamic> row = {};
-      // Access each column value for this row
-      for (String columnName in df.columns.cast<String>()) {
-        row[columnName] = df[columnName].data[i];
-      }
-      results.add(func(row));
-    }
-    return results;
-  }
 }
 
 /// Extension methods for Series vectorized operations.
