@@ -43,10 +43,10 @@ void main() async {
 
   // Calculate areas of service zones
   final areas = serviceAreas.geometry.area;
-  serviceAreas['area_sq_deg'] = areas;
+  serviceAreas['area_sq_deg'] = areas.data;
 
   print('Service Area Measurements:');
-  print(serviceAreas[['name', 'area_sq_deg']]);
+  print(serviceAreas.select(['name', 'area_sq_deg']));
   print('');
 
   // Calculate centroids
@@ -91,7 +91,7 @@ void main() async {
   );
 
   print('Customers within Service Areas:');
-  print(customersInAreas[['name_left', 'name_right', 'value']]);
+  print(customersInAreas.select(['name', 'name_right', 'value']));
   print('');
 
   // 4. Distance Analysis
@@ -109,8 +109,11 @@ void main() async {
     
     for (int j = 0; j < storeLocations.featureCount; j++) {
       final storeName = storeLocations['name'][j];
-      final distance = customerGeoms.distance(storeGeoms)[i][j];
-      print('  to $storeName: ${distance.toStringAsFixed(4)} degrees');
+      // Calculate distance between individual geometries
+      final customerGeom = customerGeoms.data[i];
+      final storeGeom = storeGeoms.data[j];
+      final distance = GeoSeries([customerGeom]).distance(GeoSeries([storeGeom])).data[0];
+      print('  to $storeName: ${distance?.toStringAsFixed(4) ?? 'N/A'} degrees');
     }
   }
   print('');
@@ -120,13 +123,11 @@ void main() async {
   print('=' * 40);
 
   // Aggregate customer values by service area
-  final areaStats = customersInAreas
-      .where((row) => row[customersInAreas.columns.indexOf('name_right')] != null)
-      .groupBy(['name_right'])
-      .agg({
-        'value': ['sum', 'count', 'mean'],
-        'customer_id': 'count'
-      });
+  final filteredCustomers = customersInAreas.filter((row) => row['name_right'] != null);
+  final areaStats = filteredCustomers.groupByAgg(['name_right'], {
+    'value': 'sum',
+    'customer_id': 'count'
+  });
 
   print('Customer Statistics by Service Area:');
   print(areaStats);
@@ -141,7 +142,7 @@ void main() async {
   final convexHull = allStores.convexHull();
   
   print('Convex Hull of Store Network:');
-  print('Hull geometry type: ${convexHull.geometryType}');
+  print('Hull geometry type: ${convexHull.runtimeType}');
   print('');
 
   // Buffer operations with different distances
@@ -194,28 +195,42 @@ void main() async {
   print('=' * 40);
 
   // Create two overlapping regions
-  final region1 = GeoDataFrame.fromCoordinates([
+  final region1Polygon = GeoJSONPolygon([[
     [-75.0, 40.0], [-73.0, 40.0], [-73.0, 42.0], [-75.0, 42.0], [-75.0, 40.0]
-  ], attributes: DataFrame.fromRows([
-    {'region': 'Northeast', 'priority': 1}
-  ]), coordinateType: 'lonlat');
+  ]]);
+  final region1 = GeoDataFrame.fromFeatureCollection(
+    GeoJSONFeatureCollection([
+      GeoJSONFeature(region1Polygon, properties: {'region': 'Northeast', 'priority': 1})
+    ])
+  );
 
-  final region2 = GeoDataFrame.fromCoordinates([
+  final region2Polygon = GeoJSONPolygon([[
     [-76.0, 39.0], [-74.0, 39.0], [-74.0, 41.0], [-76.0, 41.0], [-76.0, 39.0]
-  ], attributes: DataFrame.fromRows([
-    {'region': 'Mid-Atlantic', 'priority': 2}
-  ]), coordinateType: 'lonlat');
+  ]]);
+  final region2 = GeoDataFrame.fromFeatureCollection(
+    GeoJSONFeatureCollection([
+      GeoJSONFeature(region2Polygon, properties: {'region': 'Mid-Atlantic', 'priority': 2})
+    ])
+  );
 
   // Intersection of regions
   final intersection = region1.overlay(region2, how: 'intersection');
   print('Intersection of regions:');
-  print('Intersection area: ${intersection.geometry.area[0]}');
+  if (intersection.featureCount > 0) {
+    print('Intersection area: ${intersection.geometry.area[0]}');
+  } else {
+    print('No intersection found');
+  }
   print('');
 
   // Union of regions
   final union = region1.overlay(region2, how: 'union');
   print('Union of regions:');
-  print('Union area: ${union.geometry.area[0]}');
+  if (union.featureCount > 0) {
+    print('Union area: ${union.geometry.area[0]}');
+  } else {
+    print('No union result');
+  }
   print('');
 
   // 10. Spatial Analysis Summary
@@ -225,9 +240,8 @@ void main() async {
   // Calculate network statistics
   final totalStores = storeLocations.featureCount;
   final totalCustomers = customers.featureCount;
-  final customersInNetwork = customersInAreas
-      .where((row) => row[customersInAreas.columns.indexOf('name_right')] != null)
-      .rowCount;
+  final customersInNetworkFiltered = customersInAreas.filter((row) => row['name_right'] != null);
+  final customersInNetwork = customersInNetworkFiltered.rowCount;
   
   final networkCoverage = (customersInNetwork / totalCustomers) * 100;
   
@@ -242,8 +256,12 @@ void main() async {
   final storeDistances = <double>[];
   for (int i = 0; i < totalStores; i++) {
     for (int j = i + 1; j < totalStores; j++) {
-      final distance = storeGeoms.distance(storeGeoms)[i][j];
-      storeDistances.add(distance);
+      final geom1 = storeGeoms.data[i];
+      final geom2 = storeGeoms.data[j];
+      final distance = GeoSeries([geom1]).distance(GeoSeries([geom2])).data[0];
+      if (distance != null) {
+        storeDistances.add(distance);
+      }
     }
   }
   

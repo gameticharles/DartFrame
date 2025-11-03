@@ -1,5 +1,6 @@
 library;
 
+import 'dart:math';
 import 'package:geojson_vi/geojson_vi.dart';
 import 'package:geoxml/geoxml.dart';
 
@@ -78,6 +79,66 @@ class GeoDataFrame extends DataFrame {
   GeoSeries get geometry =>
       GeoSeries(this[geometryColumn].data, crs: crs, name: geometryColumn);
 
+  /// Sets the geometry column. Accepts a GeoSeries or any Iterable of geometry values.
+  /// Replaces/creates the geometry column and updates rows accordingly.
+  set geometry(dynamic value) {
+    List<dynamic> geomList;
+    if (value is GeoSeries) {
+      geomList = value.data;
+    } else if (value is Iterable) {
+      geomList = value.toList();
+    } else {
+      throw ArgumentError('geometry must be a GeoSeries or Iterable');
+    }
+
+    // Ensure geometry column exists
+    final bool addedGeometryColumn = !columns.contains(geometryColumn);
+    if (addedGeometryColumn) {
+      // Use addColumn method to properly add the geometry column
+      addColumn(geometryColumn, defaultValue: null);
+    }
+    final geomIndex = columns.indexOf(geometryColumn);
+
+    // addColumn already handles adding null values to existing rows
+
+    // Ensure rows list can hold all geometries
+    final requiredRows = geomList.length;
+    final originalRowCount = rows.length;
+    while (rows.length < requiredRows) {
+      rows.add(List<dynamic>.filled(columns.length, null));
+    }
+    
+    // Update index if we added new rows
+    if (rows.length > originalRowCount) {
+      // Extend the index with new numeric indices
+      final newIndices = List.generate(
+        rows.length - originalRowCount, 
+        (i) => originalRowCount + i
+      );
+      index.addAll(newIndices);
+    }
+
+    // Ensure each row has enough columns (in case there are other column mismatches)
+    for (var i = 0; i < rows.length; i++) {
+      while (rows[i].length < columns.length) {
+        rows[i].add(null);
+      }
+    }
+
+    // Assign geometries, set null for remaining rows if fewer geometries provided
+    for (var i = 0; i < rows.length; i++) {
+      rows[i][geomIndex] = i < geomList.length ? geomList[i] : null;
+    }
+
+    // Only process geometries if they need conversion (not already GeoJSON geometries)
+    bool needsProcessing = geomList.any((geom) => 
+        geom != null && geom is! GeoJSONGeometry);
+    
+    if (needsProcessing) {
+      _processGeometryColumn();
+    }
+  }
+
   /// Gets the attributes as a DataFrame (without the geometry column).
   DataFrame get attributes {
     final attributeColumns =
@@ -103,6 +164,27 @@ class GeoDataFrame extends DataFrame {
 
   /// Gets the number of properties in the data.
   int get propertyCount => headers.length;
+
+  /// Copy of the GeoDataFrame
+  /// Returns a new GeoDataFrame that is a copy of the current one.
+  /// This is useful for creating a duplicate of the data without affecting the original.
+  ///
+  /// Example:
+  /// ```dart
+  /// var originalGDF = GeoDataFrame(...);
+  /// var copiedGDF = originalGDF.copy();
+  /// ```
+  GeoDataFrame copy() {
+    // Use DataFrame's copy method to ensure all DataFrame properties are properly copied
+    final dataFrameCopy = (this as DataFrame).copy();
+    
+    // Create and return a new GeoDataFrame with the copied DataFrame
+    return GeoDataFrame(
+      dataFrameCopy,
+      geometryColumn: geometryColumn,
+      crs: crs,
+    );
+  }
 
   /// Gets the total bounds of all geometries in the GeoDataFrame.
   /// Returns `[minX, minY, maxX, maxY]` for the entire collection.
@@ -138,8 +220,10 @@ class GeoDataFrame extends DataFrame {
             columns: dataFrame.columns,
             dataFrame.rows as List<List<dynamic>>,
             index: dataFrame.index) {
-    // Process geometry column
-    _processGeometryColumn();
+    // Process geometry column only if it exists
+    if (columns.contains(geometryColumn)) {
+      _processGeometryColumn();
+    }
   }
 
   /// Process the geometry column to ensure it contains valid GeoJSON geometries

@@ -83,7 +83,52 @@
   - Correlation operations: `corr()`, `cov()` with other DataFrames
   - Custom functions: `apply()` method for user-defined operations
   - Support for centered windows, minimum periods, and flexible parameters
-- **[FEATURE]** Implemented basic statistical methods (median, mode, quantile, etc.)
+- **[FEATURE]** Implemented comprehensive statistical methods and consolidated statistical functions
+  - **CONSOLIDATION**: Moved all basic statistical functions from `functions.dart` to `statistics.dart` for better organization
+    - Migrated `count()`, `mean()`, `min()`, `max()`, `sum()`, `describe()` with enhanced APIs
+    - All functions now have consistent `skipna` parameter (defaults to `true`)
+    - Improved error handling with `ArgumentError` instead of generic exceptions
+    - Better missing value handling using internal `_isMissing()` method
+    - Enhanced return types: `dynamic` for min/max/sum to handle missing values properly
+  - **NEW**: 19 additional statistical functions added to SeriesStatistics extension
+  - **NEW**: Basic Statistics Functions:
+    - `cumsum()` - Cumulative sum over the Series with skipna support
+    - `nunique()` - Count number of unique values with dropna parameter
+    - `value_counts()` - Frequency count with normalize, sort, ascending, and dropna options
+  - **NEW**: Percentile Functions:
+    - `percentile()` - Alternative to quantile using 0-100 scale for easier interpretation
+    - `iqr()` - Interquartile Range (Q3 - Q1) for measuring statistical dispersion
+  - **NEW**: Advanced Statistics Functions:
+    - `sem()` - Standard Error of the Mean with configurable degrees of freedom
+    - `mad()` - Mean Absolute Deviation for robust central tendency measurement
+    - `range()` - Range (max - min) for measuring data spread
+  - **NEW**: Correlation and Covariance Functions:
+    - `corr()` - Pearson correlation coefficient with another Series
+    - `cov()` - Covariance with another Series and configurable degrees of freedom
+    - `autocorr()` - Autocorrelation with configurable lag periods for time series analysis
+  - **NEW**: Rank and Order Statistics Functions:
+    - `rank()` - Rank values with 5 tie-breaking methods ('average', 'min', 'max', 'first', 'dense')
+    - `pct_change()` - Percentage change between consecutive values for time series analysis
+    - `diff()` - Difference between consecutive values with configurable periods
+  - **NEW**: Robust Statistics Functions:
+    - `trimmed_mean()` - Mean after removing outliers from both tails (configurable proportion)
+    - `winsorized_mean()` - Mean after capping outliers at boundary values
+  - **NEW**: Distribution Functions:
+    - `entropy()` - Shannon entropy with configurable logarithm base for information theory
+    - `geometric_mean()` - Geometric mean for positive values (nth root of product)
+    - `harmonic_mean()` - Harmonic mean for positive values (reciprocal of arithmetic mean of reciprocals)
+  - **ENHANCEMENT**: All statistical functions feature:
+    - Consistent API design with `skipna` parameters
+    - Comprehensive documentation with mathematical explanations and examples
+    - Proper edge case handling (empty data, insufficient samples, non-numeric data)
+    - Return `double.nan` or `_missingRepresentation` for invalid cases instead of throwing exceptions
+    - Full integration with existing Series functionality and DataFrame operations
+  - **PERFORMANCE**: Optimized mathematical operations using dart:math library functions
+  - **COMPATIBILITY**: Pandas-like API for familiar data science workflows
+  - **ARCHITECTURE**: Over 40 statistical functions now available in Series class
+  - Fixed broken `describe()` function that was calling undefined `std()` and `quantile()` methods
+  - Removed duplicate `cumsum()` function from `functions.dart` to avoid conflicts
+  - All existing tests pass with enhanced statistical functionality
 - **[DEPRECATION]** Deprecated single-column `rolling()` method in favor of `rollingWindow()`
   - Added migration guide and compatibility documentation
   - Maintained backward compatibility for existing code
