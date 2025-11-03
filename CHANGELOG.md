@@ -1,4 +1,9 @@
 
+# 0.6.1
+
+- **[Fixed]** Doc Strings.
+- **[IMPROVEMENT]** Improved dart format.
+
 # 0.6.0
 
 - **[FEATURE]** Added comprehensive time series enhancements

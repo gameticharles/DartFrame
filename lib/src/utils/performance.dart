@@ -5,24 +5,84 @@ import 'dart:math' as math;
 import '../series/series.dart';
 import '../data_frame/data_frame.dart';
 
+// Platform detection
+bool get _isWeb {
+  // Check if we're running on web by trying to access web-specific APIs
+  try {
+    // Try to import dart:html which is only available on web
+    // This is a compile-time check, so we use a different approach
+    return identical(0, 0.0) == false;
+  } catch (e) {
+    return true;
+  }
+}
+
+/// Checks if isolates are supported on the current platform.
+bool get _supportsIsolates {
+  if (_isWeb) return false;
+
+  try {
+    // Try to check if Isolate.run is available
+    // This is a runtime check
+    return Isolate.run != null;
+  } catch (e) {
+    return false;
+  }
+}
+
 /// Performance optimization utilities for DartFrame.
 ///
 /// This class provides methods to improve performance through:
 /// - Vectorized operations on Series and DataFrame
-/// - Parallel processing for CPU-intensive tasks
+/// - Parallel processing for CPU-intensive tasks (when supported)
 /// - Optimized mathematical operations
 /// - Batch processing capabilities
+///
+/// Note: Parallel processing automatically falls back to synchronous processing
+/// on web platforms where isolates are not supported.
 class PerformanceOptimizer {
+  /// Returns information about the current platform's performance capabilities.
+  static Map<String, dynamic> getPlatformInfo() {
+    return {
+      'isWeb': _isWeb,
+      'supportsIsolates': _supportsIsolates,
+      'supportsParallelProcessing': _supportsIsolates,
+      'recommendedChunkSize': _supportsIsolates ? 1000 : 10000,
+      'platform': _isWeb ? 'web' : 'native',
+    };
+  }
+
+  /// Prints platform capabilities to help with debugging and optimization.
+  static void printPlatformInfo() {
+    Map<String, dynamic> info = getPlatformInfo();
+    print('DartFrame Performance Platform Info:');
+    print('- Platform: ${info['platform']}');
+    print('- Supports Isolates: ${info['supportsIsolates']}');
+    print(
+        '- Supports Parallel Processing: ${info['supportsParallelProcessing']}');
+    print('- Recommended Chunk Size: ${info['recommendedChunkSize']}');
+
+    if (!info['supportsParallelProcessing']) {
+      print(
+          '- Note: Parallel operations will fall back to synchronous processing');
+    }
+  }
+
   /// Applies a function to each element of a Series using vectorized operations.
   ///
   /// This method is optimized for performance and should be preferred over
   /// manual iteration when applying the same operation to all elements.
   ///
+  /// **Cross-Platform Behavior:**
+  /// - On native platforms (mobile, desktop): Uses isolates for parallel processing when `parallel=true`
+  /// - On web platforms: Automatically falls back to synchronous processing (isolates not supported)
+  /// - The API remains the same across all platforms for seamless development
+  ///
   /// Parameters:
   /// - `series`: The Series to apply the function to
   /// - `func`: The function to apply to each element
-  /// - `parallel`: Whether to use parallel processing for large Series
-  /// - `chunkSize`: Size of chunks for parallel processing
+  /// - `parallel`: Whether to use parallel processing for large Series (auto-fallback on web)
+  /// - `chunkSize`: Size of chunks for parallel processing (larger chunks recommended for web)
   ///
   /// Returns:
   /// A new Series with the function applied to each element.
@@ -30,9 +90,10 @@ class PerformanceOptimizer {
   /// Example:
   /// ```dart
   /// var series = Series([1, 2, 3, 4, 5], name: 'numbers');
-  /// var squared = PerformanceOptimizer.vectorizedApply(
+  /// var squared = await PerformanceOptimizer.vectorizedApply(
   ///   series,
   ///   (x) => x * x,
+  ///   parallel: true, // Will use isolates on native, sync on web
   /// );
   /// // Result: Series([1, 4, 9, 16, 25], name: 'numbers')
   /// ```
@@ -130,7 +191,7 @@ class PerformanceOptimizer {
     String operation,
   ) {
     List<dynamic> result = [];
-    
+
     if (series2 is Series) {
       // Element-wise operation between two Series
       int minLength = math.min(series1.length, series2.length);
@@ -164,7 +225,7 @@ class PerformanceOptimizer {
     String operation,
   ) {
     List<bool> result = [];
-    
+
     if (series2 is Series) {
       // Element-wise comparison between two Series
       int minLength = math.min(series1.length, series2.length);
@@ -180,7 +241,8 @@ class PerformanceOptimizer {
       }
     }
 
-    return Series(result.cast<dynamic>(), name: '${series1.name}_comparison', index: series1.index);
+    return Series(result.cast<dynamic>(),
+        name: '${series1.name}_comparison', index: series1.index);
   }
 
   /// Performs vectorized string operations on Series containing strings.
@@ -198,15 +260,15 @@ class PerformanceOptimizer {
     String? argument,
   }) {
     List<dynamic> result = [];
-    
+
     for (dynamic value in series.data) {
       if (value == null) {
         result.add(null);
         continue;
       }
-      
+
       String stringValue = value.toString();
-      
+
       switch (operation.toLowerCase()) {
         case 'upper':
           result.add(stringValue.toUpperCase());
@@ -246,7 +308,8 @@ class PerformanceOptimizer {
       }
     }
 
-    return Series(result, name: '${series.name}_$operation', index: series.index);
+    return Series(result,
+        name: '${series.name}_$operation', index: series.index);
   }
 
   /// Performs batch operations on multiple Series simultaneously.
@@ -266,8 +329,8 @@ class PerformanceOptimizer {
     dynamic Function(Series) func, {
     bool parallel = false,
   }) async {
-    if (!parallel) {
-      // Sequential processing
+    if (!parallel || !_supportsIsolates) {
+      // Sequential processing (always used on web or unsupported platforms)
       List<Series> results = [];
       for (Series series in seriesList) {
         results.add(func(series));
@@ -275,13 +338,22 @@ class PerformanceOptimizer {
       return results;
     }
 
-    // Parallel processing
-    List<Future<Series>> futures = [];
-    for (Series series in seriesList) {
-      futures.add(Future(() => func(series)));
+    try {
+      // Parallel processing (only on non-web platforms)
+      List<Future<Series>> futures = [];
+      for (Series series in seriesList) {
+        futures.add(Future(() => func(series)));
+      }
+
+      return await Future.wait(futures);
+    } catch (e) {
+      // Fallback to sequential processing
+      List<Series> results = [];
+      for (Series series in seriesList) {
+        results.add(func(series));
+      }
+      return results;
     }
-    
-    return await Future.wait(futures);
   }
 
   /// Optimizes DataFrame operations by processing columns in parallel.
@@ -300,34 +372,66 @@ class PerformanceOptimizer {
   }) async {
     List<String> columnsToProcess = columnNames ?? df.columns.cast<String>();
     Map<String, List<dynamic>> resultData = {};
-    
-    // Process specified columns in parallel
-    List<Future<MapEntry<String, Series>>> futures = [];
-    
-    for (String columnName in columnsToProcess) {
-      Series column = df[columnName];
-      futures.add(Future(() {
+
+    if (!_supportsIsolates) {
+      // Sequential processing on web or unsupported platforms
+      for (String columnName in columnsToProcess) {
+        Series column = df[columnName];
         Series processedColumn = func(column);
-        return MapEntry(columnName, processedColumn);
-      }));
-    }
-    
-    List<MapEntry<String, Series>> results = await Future.wait(futures);
-    
-    // Build result data map
-    for (String columnName in df.columns.cast<String>()) {
-      if (columnsToProcess.contains(columnName)) {
-        // Find the processed result for this column
-        MapEntry<String, Series> result = results.firstWhere(
-          (entry) => entry.key == columnName,
-        );
-        resultData[columnName] = result.value.data;
-      } else {
+        resultData[columnName] = processedColumn.data;
+      }
+
+      // Keep original data for unprocessed columns
+      for (String columnName in df.columns.cast<String>()) {
+        if (!columnsToProcess.contains(columnName)) {
+          resultData[columnName] = df[columnName].data;
+        }
+      }
+    } else {
+      try {
+        // Process specified columns in parallel (non-web platforms)
+        List<Future<MapEntry<String, Series>>> futures = [];
+
+        for (String columnName in columnsToProcess) {
+          Series column = df[columnName];
+          futures.add(Future(() {
+            Series processedColumn = func(column);
+            return MapEntry(columnName, processedColumn);
+          }));
+        }
+
+        List<MapEntry<String, Series>> results = await Future.wait(futures);
+
+        // Build result data map
+        for (String columnName in df.columns.cast<String>()) {
+          if (columnsToProcess.contains(columnName)) {
+            // Find the processed result for this column
+            MapEntry<String, Series> result = results.firstWhere(
+              (entry) => entry.key == columnName,
+            );
+            resultData[columnName] = result.value.data;
+          } else {
+            // Keep original data for unprocessed columns
+            resultData[columnName] = df[columnName].data;
+          }
+        }
+      } catch (e) {
+        // Fallback to sequential processing
+        for (String columnName in columnsToProcess) {
+          Series column = df[columnName];
+          Series processedColumn = func(column);
+          resultData[columnName] = processedColumn.data;
+        }
+
         // Keep original data for unprocessed columns
-        resultData[columnName] = df[columnName].data;
+        for (String columnName in df.columns.cast<String>()) {
+          if (!columnsToProcess.contains(columnName)) {
+            resultData[columnName] = df[columnName].data;
+          }
+        }
       }
     }
-    
+
     return DataFrame.fromMap(
       resultData,
       index: df.index,
@@ -349,32 +453,30 @@ class PerformanceOptimizer {
     List<String> operations,
   ) {
     Map<String, double> results = {};
-    List<num> numericValues = series.data
-        .where((v) => v != null && v is num)
-        .cast<num>()
-        .toList();
-    
+    List<num> numericValues =
+        series.data.where((v) => v != null && v is num).cast<num>().toList();
+
     if (numericValues.isEmpty) {
       for (String operation in operations) {
         results[operation] = double.nan;
       }
       return results;
     }
-    
+
     // Pre-calculate commonly needed values
     double sum = 0;
     double min = numericValues.first.toDouble();
     double max = numericValues.first.toDouble();
-    
+
     for (num value in numericValues) {
       double doubleValue = value.toDouble();
       sum += doubleValue;
       if (doubleValue < min) min = doubleValue;
       if (doubleValue > max) max = doubleValue;
     }
-    
+
     double mean = sum / numericValues.length;
-    
+
     for (String operation in operations) {
       switch (operation.toLowerCase()) {
         case 'sum':
@@ -400,7 +502,7 @@ class PerformanceOptimizer {
           throw ArgumentError('Unsupported aggregation operation: $operation');
       }
     }
-    
+
     return results;
   }
 
@@ -412,21 +514,33 @@ class PerformanceOptimizer {
     int chunkSize,
   ) async {
     List<dynamic> data = series.data;
-    List<Future<List<dynamic>>> futures = [];
-    
-    for (int i = 0; i < data.length; i += chunkSize) {
-      int end = math.min(i + chunkSize, data.length);
-      List<dynamic> chunk = data.sublist(i, end);
-      
-      futures.add(Isolate.run(() {
-        return chunk.map(func).toList();
-      }));
+
+    // Check if isolates are supported on the current platform
+    if (!_supportsIsolates) {
+      // Fallback to synchronous processing on web or unsupported platforms
+      return _synchronousApply(series, func);
     }
-    
-    List<List<dynamic>> results = await Future.wait(futures);
-    List<dynamic> flatResult = results.expand((chunk) => chunk).toList();
-    
-    return Series(flatResult, name: series.name, index: series.index);
+
+    try {
+      List<Future<List<dynamic>>> futures = [];
+
+      for (int i = 0; i < data.length; i += chunkSize) {
+        int end = math.min(i + chunkSize, data.length);
+        List<dynamic> chunk = data.sublist(i, end);
+
+        futures.add(Isolate.run(() {
+          return chunk.map(func).toList();
+        }));
+      }
+
+      List<List<dynamic>> results = await Future.wait(futures);
+      List<dynamic> flatResult = results.expand((chunk) => chunk).toList();
+
+      return Series(flatResult, name: series.name, index: series.index);
+    } catch (e) {
+      // Fallback to synchronous processing if isolates fail
+      return _synchronousApply(series, func);
+    }
   }
 
   static Future<List<dynamic>> _parallelApplyDataFrameRows(
@@ -434,35 +548,59 @@ class PerformanceOptimizer {
     dynamic Function(Map<String, dynamic>) func,
     int chunkSize,
   ) async {
-    List<Future<List<dynamic>>> futures = [];
-    
-    for (int i = 0; i < df.rowCount; i += chunkSize) {
-      int end = math.min(i + chunkSize, df.rowCount);
-      
-      futures.add(Isolate.run(() {
-        List<dynamic> chunkResults = [];
-        for (int j = i; j < end; j++) {
-          Map<String, dynamic> row = {};
-          for (int k = 0; k < df.columnCount; k++) {
-            row[df.columns[k].toString()] = df.iloc[j][k];
-          }
-          chunkResults.add(func(row));
-        }
-        return chunkResults;
-      }));
+    // Check if isolates are supported on the current platform
+    if (!_supportsIsolates) {
+      // Fallback to synchronous processing on web or unsupported platforms
+      return _synchronousApplyDataFrameRows(df, func);
     }
-    
-    List<List<dynamic>> results = await Future.wait(futures);
-    return results.expand((chunk) => chunk).toList();
+
+    try {
+      List<Future<List<dynamic>>> futures = [];
+
+      for (int i = 0; i < df.rowCount; i += chunkSize) {
+        int end = math.min(i + chunkSize, df.rowCount);
+
+        // Capture the data we need for the isolate
+        Map<String, List<dynamic>> chunkData = {};
+        List<String> columnNames = df.columns.cast<String>();
+
+        // Extract column data for the chunk
+        for (String columnName in columnNames) {
+          List<dynamic> columnData = df[columnName].data;
+          chunkData[columnName] = columnData.sublist(i, end);
+        }
+
+        futures.add(Isolate.run(() {
+          List<dynamic> chunkResults = [];
+          int chunkSize = chunkData[columnNames.first]!.length;
+
+          for (int idx = 0; idx < chunkSize; idx++) {
+            Map<String, dynamic> row = {};
+            for (String columnName in columnNames) {
+              row[columnName] = chunkData[columnName]![idx];
+            }
+            chunkResults.add(func(row));
+          }
+          return chunkResults;
+        }));
+      }
+
+      List<List<dynamic>> results = await Future.wait(futures);
+      return results.expand((chunk) => chunk).toList();
+    } catch (e) {
+      // Fallback to synchronous processing if isolates fail
+      return _synchronousApplyDataFrameRows(df, func);
+    }
   }
 
-  static dynamic _performMathOperation(dynamic val1, dynamic val2, String operation) {
+  static dynamic _performMathOperation(
+      dynamic val1, dynamic val2, String operation) {
     if (val1 == null || val2 == null) return null;
-    
+
     if (val1 is! num || val2 is! num) {
       throw ArgumentError('Math operations require numeric values');
     }
-    
+
     switch (operation) {
       case '+':
         return val1 + val2;
@@ -481,10 +619,11 @@ class PerformanceOptimizer {
     }
   }
 
-  static bool _performComparisonOperation(dynamic val1, dynamic val2, String operation) {
+  static bool _performComparisonOperation(
+      dynamic val1, dynamic val2, String operation) {
     if (val1 == null && val2 == null) return operation == '==';
     if (val1 == null || val2 == null) return operation == '!=';
-    
+
     switch (operation) {
       case '==':
         return val1 == val2;
@@ -510,6 +649,35 @@ class PerformanceOptimizer {
       sumSquaredDifferences += diff * diff;
     }
     return math.sqrt(sumSquaredDifferences / values.length);
+  }
+
+  /// Synchronous fallback for Series apply operations (used on web platforms).
+  static Future<Series> _synchronousApply(
+    Series series,
+    dynamic Function(dynamic) func,
+  ) async {
+    List<dynamic> result = [];
+    for (dynamic value in series.data) {
+      result.add(func(value));
+    }
+    return Series(result, name: series.name, index: series.index);
+  }
+
+  /// Synchronous fallback for DataFrame row operations (used on web platforms).
+  static Future<List<dynamic>> _synchronousApplyDataFrameRows(
+    DataFrame df,
+    dynamic Function(Map<String, dynamic>) func,
+  ) async {
+    List<dynamic> results = [];
+    for (int i = 0; i < df.rowCount; i++) {
+      Map<String, dynamic> row = {};
+      // Access each column value for this row
+      for (String columnName in df.columns.cast<String>()) {
+        row[columnName] = df[columnName].data[i];
+      }
+      results.add(func(row));
+    }
+    return results;
   }
 }
 
@@ -652,7 +820,7 @@ class CacheManager {
     bool forceRefresh = false,
   }) {
     ttl ??= _defaultTtl;
-    
+
     if (!forceRefresh && _cache.containsKey(key)) {
       CacheEntry entry = _cache[key]!;
       if (!entry.isExpired(DateTime.now())) {
@@ -686,7 +854,8 @@ class CacheManager {
     Duration? ttl,
     bool forceRefresh = false,
   }) {
-    String key = _generateDataFrameKey(df, operationName, additionalKeyComponents);
+    String key =
+        _generateDataFrameKey(df, operationName, additionalKeyComponents);
     return cacheOperation(key, operation, ttl: ttl, forceRefresh: forceRefresh);
   }
 
@@ -699,7 +868,8 @@ class CacheManager {
     Duration? ttl,
     bool forceRefresh = false,
   }) {
-    String key = _generateSeriesKey(series, operationName, additionalKeyComponents);
+    String key =
+        _generateSeriesKey(series, operationName, additionalKeyComponents);
     return cacheOperation(key, operation, ttl: ttl, forceRefresh: forceRefresh);
   }
 
@@ -707,13 +877,13 @@ class CacheManager {
   static void invalidateDataFrameCache(DataFrame df) {
     String dfHash = _generateDataFrameHash(df);
     List<String> keysToRemove = [];
-    
+
     for (String key in _cache.keys) {
       if (key.contains(dfHash)) {
         keysToRemove.add(key);
       }
     }
-    
+
     for (String key in keysToRemove) {
       _cache.remove(key);
     }
@@ -723,13 +893,13 @@ class CacheManager {
   static void invalidateSeriesCache(Series series) {
     String seriesHash = _generateSeriesHash(series);
     List<String> keysToRemove = [];
-    
+
     for (String key in _cache.keys) {
       if (key.contains(seriesHash)) {
         keysToRemove.add(key);
       }
     }
-    
+
     for (String key in keysToRemove) {
       _cache.remove(key);
     }
@@ -739,13 +909,13 @@ class CacheManager {
   static void cleanupExpiredEntries() {
     DateTime now = DateTime.now();
     List<String> expiredKeys = [];
-    
+
     for (MapEntry<String, CacheEntry> entry in _cache.entries) {
       if (entry.value.isExpired(now)) {
         expiredKeys.add(entry.key);
       }
     }
-    
+
     for (String key in expiredKeys) {
       _cache.remove(key);
     }
@@ -758,13 +928,14 @@ class CacheManager {
 
     // Remove expired entries first
     cleanupExpiredEntries();
-    
+
     if (_cache.length <= _maxCacheSize) return;
 
     // Use LRU eviction strategy
     List<MapEntry<String, CacheEntry>> entries = _cache.entries.toList();
-    entries.sort((a, b) => a.value.lastAccessed.compareTo(b.value.lastAccessed));
-    
+    entries
+        .sort((a, b) => a.value.lastAccessed.compareTo(b.value.lastAccessed));
+
     int entriesToRemove = _cache.length - _maxCacheSize;
     for (int i = 0; i < entriesToRemove; i++) {
       _cache.remove(entries[i].key);
@@ -778,11 +949,11 @@ class CacheManager {
   ) {
     String dfHash = _generateDataFrameHash(df);
     String key = 'df_${dfHash}_$operationName';
-    
+
     if (additionalComponents != null) {
       key += '_${additionalComponents.join('_')}';
     }
-    
+
     return key;
   }
 
@@ -793,11 +964,11 @@ class CacheManager {
   ) {
     String seriesHash = _generateSeriesHash(series);
     String key = 'series_${seriesHash}_$operationName';
-    
+
     if (additionalComponents != null) {
       key += '_${additionalComponents.join('_')}';
     }
-    
+
     return key;
   }
 
@@ -806,7 +977,7 @@ class CacheManager {
     StringBuffer buffer = StringBuffer();
     buffer.write('${df.rowCount}x${df.columnCount}');
     buffer.write('_${df.columns.join(',')}');
-    
+
     // Sample first and last few rows for hash
     int sampleSize = math.min(3, df.rowCount);
     for (int i = 0; i < sampleSize; i++) {
@@ -817,7 +988,7 @@ class CacheManager {
         buffer.write('_${df.iloc[i].join(',')}');
       }
     }
-    
+
     return buffer.toString().hashCode.toString();
   }
 
@@ -825,7 +996,7 @@ class CacheManager {
     // Generate a hash based on Series structure and a sample of data
     StringBuffer buffer = StringBuffer();
     buffer.write('${series.length}_${series.name}');
-    
+
     // Sample first and last few values for hash
     int sampleSize = math.min(5, series.length);
     for (int i = 0; i < sampleSize; i++) {
@@ -836,7 +1007,7 @@ class CacheManager {
         buffer.write('_${series.data[i]}');
       }
     }
-    
+
     return buffer.toString().hashCode.toString();
   }
 
@@ -871,8 +1042,8 @@ class CacheEntry {
     required this.createdAt,
     required this.ttl,
     required this.estimatedSize,
-  }) : lastAccessed = DateTime.now(),
-       accessCount = 1;
+  })  : lastAccessed = DateTime.now(),
+        accessCount = 1;
 
   bool isExpired(DateTime now) {
     return now.difference(createdAt) > ttl;

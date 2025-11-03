@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 
 import '../../dartframe.dart';
-import '../utils/time_series.dart';
 
 part 'accessors.dart';
 part 'functions.dart';
@@ -55,7 +54,7 @@ class Shape {
   ///
   /// Throws [StateError] if this is not at least a 2D shape.
   int get rows {
-    if (_dimensions.length < 1) {
+    if (_dimensions.isEmpty) {
       throw StateError('Shape must have at least 1 dimension to access rows');
     }
     return _dimensions[0];
@@ -1278,7 +1277,7 @@ class DataFrame {
 
   /// Returns the shape of the DataFrame as a Shape object.
   ///
-  /// This provides both named access (rows, columns) and indexed access [0], [1]
+  /// This provides both named access (rows, columns) and indexed access `[0], [1]`
   /// for pandas-like behavior.
   ///
   /// Returns:

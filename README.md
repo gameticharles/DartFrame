@@ -62,14 +62,6 @@
 - **Chunked Reading**: Handle large files with memory-efficient chunked reading
 - **Streaming Processing**: Process data streams for real-time analysis
 
-### 🎨 **Plotting & Visualization**
-
-- **Integrated Plotting**: Create visualizations directly from DataFrames and Series
-- **Multiple Chart Types**: Line plots, bar charts, scatter plots, histograms, and box plots
-- **Time Series Plotting**: Specialized plotting for time series data with seasonal decomposition
-- **Statistical Plots**: Regression plots, correlation heatmaps, and distribution visualizations
-- **Geospatial Plotting**: Map visualizations and choropleth maps for spatial data
-
 ### 📊 **Categorical Data Support**
 
 - **Categorical Data Type**: Memory-efficient categorical data with ordered and unordered categories

@@ -307,7 +307,7 @@ extension GeoDataFrameFunctions on GeoDataFrame {
 
   /// Performs a spatial query using a bounding box or geometry.
   ///
-  /// [bounds]: Either a List<double> representing [minX, minY, maxX, maxY] or a GeoJSONGeometry.
+  /// [bounds]: Either a `List<double>` representing `[minX, minY, maxX, maxY]` or a GeoJSONGeometry.
   ///
   /// Returns a list of indices of features that intersect with the query bounds.
   List<int> spatialQuery(dynamic bounds) {
