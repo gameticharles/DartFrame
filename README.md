@@ -101,9 +101,6 @@ For comprehensive documentation on specific classes and their functionalities, p
 - **[GeoSeries](./doc/geoseries.md)**: Geometry-aware Series operations and spatial analysis methods
 - **[Spatial Operations](./doc/spatial_operations.md)**: Advanced spatial analysis including joins, overlays, and spatial indexing
 
-### Visualization Documentation
-- **[Plotting & Visualization](./doc/plotting.md)**: Complete guide to creating charts, plots, and visualizations directly from your data
-
 ### Examples
 Explore practical examples in the `example` directory:
 - **[Statistical Operations](./example/statistical_operations_example.dart)**: Advanced statistical analysis and operations

@@ -247,8 +247,9 @@ class ChunkedReader {
   }
 
   dynamic _parseValue(String? value) {
-    if (value == null || value.isEmpty || value.toLowerCase() == 'null')
+    if (value == null || value.isEmpty || value.toLowerCase() == 'null') {
       return null;
+    }
 
     // Remove quotes if present
     String cleanValue = value;
@@ -366,8 +367,9 @@ class StreamingDataProcessor {
   }
 
   dynamic _parseValue(String? value) {
-    if (value == null || value.isEmpty || value.toLowerCase() == 'null')
+    if (value == null || value.isEmpty || value.toLowerCase() == 'null') {
       return null;
+    }
 
     // Remove quotes if present
     String cleanValue = value;
