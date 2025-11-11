@@ -88,11 +88,6 @@ For comprehensive documentation on specific classes and their functionalities, p
 - **[DataFrame](./doc/dataframe.md)**: Comprehensive guide covering all DataFrame operations, from basic data manipulation to advanced statistical analysis
 - **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
 
-### Examples
-Explore practical examples in the `example` directory:
-- **[Statistical Operations](./example/statistical_operations_example.dart)**: Advanced statistical analysis and operations
-- **[Geospatial Analysis](./example/geospatial_analysis_example.dart)**: Comprehensive spatial data analysis workflows
-- **[Plotting & Visualization](./example/plotting_visualization_example.dart)**: Creating various types of plots and visualizations
 
 You can also find additional runnable examples in the `example` directory of the repository.
 
@@ -148,13 +143,6 @@ This major update brings DartFrame closer to pandas functionality with comprehen
 - Support for Parquet, Excel, and HDF5 formats
 - Database connectivity for SQL operations
 - Chunked reading for large files
-
-#### **Visualization Integration**
-- Built-in plotting with `.plot` accessor
-- Multiple chart types: line, bar, scatter, histogram, box plots
-- Time series and statistical plotting
-- Geospatial map visualizations
-- Interactive plotting capabilities
 
 #### **Time Series & Categorical Data**
 - Time series resampling and frequency conversion
