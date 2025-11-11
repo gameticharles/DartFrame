@@ -9,10 +9,10 @@
 [![Code size](https://img.shields.io/github/languages/code-size/gameticharles/dartframe?ogo=github&logoColor=white)](https://github.com/gameticharles/dartframe)
 [![License](https://img.shields.io/github/license/gameticharles/dartframe?ogo=github&logoColor=white)](https://github.com/gameticharles/dartframe/blob/main/LICENSE)
 
-[![Stars](https://img.shields.io/github/stars/gameticharles/DartFrame)](https://github.com/gameticharles/DartFrame/stargazers)
-[![Forks](https://img.shields.io/github/forks/gameticharles/DartFrame)](https://github.com/gameticharles/DartFrame/network/members)
-[![Github watchers](https://img.shields.io./github/watchers/gameticharles/DartFrame)](https://github.com/gameticharles/DartFrame/MyBadges)
-[![Issues](https://img.shields.io./github/issues-raw/gameticharles/DartFrame)](https://github.com/gameticharles/DartFrame/issues)
+[![Stars](https://img.shields.io/github/stars/gameticharles/dartFrame)](https://github.com/gameticharles/dartFrame/stargazers)
+[![Forks](https://img.shields.io/github/forks/gameticharles/dartFrame)](https://github.com/gameticharles/dartFrame/network/members)
+[![Github watchers](https://img.shields.io./github/watchers/gameticharles/dartFrame)](https://github.com/gameticharles/dartFrame/MyBadges)
+[![Issues](https://img.shields.io./github/issues-raw/gameticharles/dartFrame)](https://github.com/gameticharles/dartFrame/issues)
 
 # DartFrame
 
@@ -39,14 +39,6 @@
 - **Interpolation Methods**: Fill missing values using linear, polynomial, and spline interpolation
 - **Advanced Fill Operations**: Forward fill and backward fill with limits and direction control
 - **Missing Data Analysis**: Analyze patterns in missing data for better data quality insights
-
-### 🗺️ **Geospatial Capabilities**
-
-- **Spatial Joins**: Perform spatial joins based on geometric relationships
-- **Overlay Operations**: Execute intersection, union, and difference operations between geometries
-- **Coordinate Transformations**: Transform between different coordinate reference systems
-- **Spatial Indexing**: Build spatial indexes for efficient spatial queries and operations
-- **Buffer & Dissolve**: Create buffer zones and dissolve geometries based on attributes
 
 ### ⚡ **Performance Optimizations**
 
@@ -95,11 +87,6 @@ For comprehensive documentation on specific classes and their functionalities, p
 ### Core Documentation
 - **[DataFrame](./doc/dataframe.md)**: Comprehensive guide covering all DataFrame operations, from basic data manipulation to advanced statistical analysis
 - **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
-
-### Geospatial Documentation
-- **[GeoDataFrame](./doc/geodataframe.md)**: Working with geospatial data, spatial operations, and coordinate transformations
-- **[GeoSeries](./doc/geoseries.md)**: Geometry-aware Series operations and spatial analysis methods
-- **[Spatial Operations](./doc/spatial_operations.md)**: Advanced spatial analysis including joins, overlays, and spatial indexing
 
 ### Examples
 Explore practical examples in the `example` directory:

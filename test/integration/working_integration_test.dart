@@ -319,58 +319,5 @@ void main() {
       final valueSeries = df['value'] as Series;
       expect(valueSeries.sum(), equals(55));
     });
-
-    test('GeoDataFrame basic operations', () {
-      final geoData = {
-        'name': ['Point A', 'Point B', 'Point C'],
-        'value': [10.0, 20.0, 30.0],
-        'geometry': ['POINT(0 0)', 'POINT(1 1)', 'POINT(2 2)'],
-      };
-      final df = DataFrame.fromMap(geoData);
-      final gdf = GeoDataFrame(df, geometryColumn: 'geometry');
-
-      // Test that basic DataFrame operations work
-      expect(gdf.describe(), isA<Map>());
-      expect(gdf['name'], isA<Series>());
-      expect(gdf.rowCount, equals(3));
-      expect(gdf.columnCount, equals(3));
-
-      // Test that enhanced operations work
-      expect(gdf.median(), isA<Series>());
-      expect(gdf.std(), isA<Series>());
-    });
-
-    test('GeoSeries basic operations', () {
-      final geoSeries = GeoSeries([
-        {
-          'type': 'Point',
-          'coordinates': [0, 0]
-        },
-        {
-          'type': 'Point',
-          'coordinates': [1, 1]
-        },
-        {
-          'type': 'Point',
-          'coordinates': [2, 2]
-        },
-      ], name: 'geometry');
-
-      // Test basic operations
-      expect(geoSeries.length, equals(3));
-      expect(geoSeries[0], isNotNull);
-      expect(geoSeries.name, equals('geometry'));
-
-      // Test that it can be used in DataFrame
-      final df = DataFrame.fromMap({
-        'geometry': geoSeries.data,
-        'id': [1, 2, 3],
-      });
-
-      expect(df, isA<DataFrame>());
-      expect(df.rowCount, equals(3));
-      final idSeries = df['id'] as Series;
-      expect(idSeries.sum(), equals(6));
-    });
   });
 }

@@ -1,4 +1,13 @@
 
+# 0.7.0
+
+- **[BREAKING CHANGE]** Removed all geospatial features (`GeoDataFrame`, `GeoSeries`).
+  - **REMOVAL**: The `GeoDataFrame` and `GeoSeries` classes, along with all related spatial analysis methods, have been completely removed from the `dartframe` package.
+  - **REASON**: This change was made to streamline the core library, reduce its size, and separate concerns. Geospatial functionality is now housed in a dedicated, specialized package.
+  - **MIGRATION**: All geospatial features have been migrated to the new `geoengine` package. To continue using `GeoDataFrame` and `GeoSeries`, please add `geoengine` to your `pubspec.yaml` dependencies.
+  - You can find the new package here: [geoengine](https://pub.dev/packages/geoengine) on pub.dev.
+  - This move allows for more focused development on both the core data manipulation features in `dartframe` and the geospatial capabilities in `geoengine`.
+
 # 0.6.3
 
 - **[IMPROVEMENT]** Improved dart format.

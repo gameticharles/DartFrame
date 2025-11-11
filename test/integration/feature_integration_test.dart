@@ -310,64 +310,6 @@ void main() {
     });
   });
 
-  group('Geospatial Integration', () {
-    test('GeoDataFrame enhancements work with existing functionality', () {
-      // Create basic GeoDataFrame
-      final geoData = {
-        'name': ['Point A', 'Point B', 'Point C'],
-        'value': [10.0, 20.0, 30.0],
-        'geometry': ['POINT(0 0)', 'POINT(1 1)', 'POINT(2 2)'],
-      };
-      final df = DataFrame.fromMap(geoData);
-      final gdf = GeoDataFrame(df, geometryColumn: 'geometry');
-
-      // Test that existing DataFrame operations work
-      expect(gdf.describe(), isA<Map>());
-      expect(gdf['name'], isA<Series>());
-      expect(gdf.rowCount, equals(3));
-
-      // Test that new statistical operations work
-      expect(gdf.std(), isA<Series>());
-      expect(gdf.median(), isA<Series>());
-
-      // Test that reshaping works
-      final melted = gdf.melt(idVars: ['name'], valueVars: ['value']);
-      expect(melted, isA<DataFrame>());
-    });
-
-    test('GeoSeries enhancements work with existing Series operations', () {
-      final geoSeries = GeoSeries([
-        {
-          'type': 'Point',
-          'coordinates': [0, 0]
-        },
-        {
-          'type': 'Point',
-          'coordinates': [1, 1]
-        },
-        {
-          'type': 'Point',
-          'coordinates': [2, 2]
-        },
-      ], name: 'geometry');
-
-      // Test that existing Series operations work
-      expect(geoSeries.length, equals(3));
-      expect(geoSeries[0], isNotNull);
-
-      // Test that GeoSeries can be used in DataFrame
-      final df = DataFrame.fromMap({
-        'geometry': geoSeries.data,
-        'id': [1, 2, 3],
-      });
-
-      expect(df, isA<DataFrame>());
-      expect(df.rowCount, equals(3));
-      final idSeries = df['id'] as Series;
-      expect(idSeries.sum(), equals(6));
-    });
-  });
-
   group('Time Series Integration', () {
     test('Time series enhancements work with existing functionality', () {
       final dates =
