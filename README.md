@@ -16,7 +16,10 @@
 
 # DartFrame
 
-**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tools like Pandas and GeoPandas, DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
+**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tool like Pandas. DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
+
+Note: For GeoData functionalities (Geories and GeoDataFrames), they can now be found in the package called [geoengine](https://pub.dev/packages/geoengine) which utilizes this package and adds more spatial analysis capabilities.
+
 
 ## Key Features
 
