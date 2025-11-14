@@ -10,9 +10,8 @@ documentation: "https://github.com/gameticharles/DartFrame/blob/main/doc/datafra
 
 # Add regular dependencies here.
 dependencies:
+  archive: ^3.6.1
   intl: ^0.20.2
-  geojson_vi: ^2.2.5
-  geoxml: ^2.6.2
   web: ^1.1.1
   r_tree: ^3.0.1
 
@@ -24,5 +23,3 @@ dev_dependencies:
 topics:
   - dataframe
   - series
-  - geodataframe
-  - geoseries

@@ -52,7 +52,17 @@ Note: For GeoData functionalities (Geories and GeoDataFrames), they can now be f
 
 ### 📈 **Enhanced I/O Capabilities**
 
-- **Multiple Formats**: Support for Parquet, Excel, HDF5, and additional file formats
+- **Multiple Formats**: Support for CSV, JSON, Parquet, Excel, and HDF5 file formats
+- **HDF5 Support**: Pure Dart HDF5 reader with no FFI dependencies
+  - Read datasets from HDF5 files (including MATLAB v7.3 MAT-files)
+  - Support for compressed (gzip, lzf) and chunked datasets
+  - Navigate group hierarchies and read attributes
+  - Cross-platform compatible (Windows, macOS, Linux, Web, Mobile)
+  - **Full datatype support**: integers, floats, strings, compounds, arrays, enums, references
+  - **Variable-length data**: Full support for vlen strings and vlen arrays
+  - **Boolean arrays**: Dedicated support for boolean data
+  - **Opaque data**: Enhanced handling of binary blobs with tags
+  - Note: Read-only access (see [full capabilities](./example/README_hdf5.md))
 - **Database Connectivity**: Connect to SQL databases for data import and export
 - **Chunked Reading**: Handle large files with memory-efficient chunked reading
 - **Streaming Processing**: Process data streams for real-time analysis
@@ -91,6 +101,8 @@ For comprehensive documentation on specific classes and their functionalities, p
 - **[DataFrame](./doc/dataframe.md)**: Comprehensive guide covering all DataFrame operations, from basic data manipulation to advanced statistical analysis
 - **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
 
+### I/O Documentation
+- **[HDF5 Reading Guide](./example/README_hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
 
 You can also find additional runnable examples in the `example` directory of the repository.
 
@@ -133,13 +145,6 @@ This major update brings DartFrame closer to pandas functionality with comprehen
 - Advanced fill operations with `ffill()` and `bfill()` with limits
 - Missing data pattern analysis tools
 
-#### **Geospatial Enhancements**
-- Spatial joins based on geometric relationships
-- Overlay operations (intersection, union, difference)
-- Coordinate reference system transformations
-- Spatial indexing for efficient queries
-- Buffer, dissolve, and simplify operations
-
 #### **Performance & I/O Improvements**
 - Memory optimization utilities
 - Vectorized operations for better performance
@@ -159,10 +164,52 @@ See the [examples](./example/) directory for comprehensive demonstrations of the
 ```bash
 dart pub get
 ```
-To get started, import the library:
+
+## Quick Start
+
+### Basic Usage
+
+Import the library:
 ```dart
 import 'package:dartframe/dartframe.dart';
 ```
+
+Create and manipulate DataFrames:
+```dart
+// Create a DataFrame from a map
+final df = DataFrame.fromMap({
+  'name': ['Alice', 'Bob', 'Charlie'],
+  'age': [25, 30, 35],
+  'city': ['New York', 'London', 'Paris']
+});
+
+print(df.head());
+print(df.describe());
+```
+
+### Reading HDF5 Files
+
+DartFrame includes built-in support for reading HDF5 files:
+
+```dart
+// Read a dataset from an HDF5 file
+final df = await FileReader.readHDF5(
+  'data.h5',
+  dataset: '/mydata',
+);
+
+// Inspect file structure
+final info = await HDF5Reader.inspect('data.h5');
+print('Available datasets: ${info['datasets']}');
+
+// Read attributes (metadata)
+final attrs = await HDF5Reader.readAttributes(
+  'data.h5',
+  dataset: '/mydata',
+);
+print('Units: ${attrs['units']}');
+```
+
 For detailed examples and usage, please refer to the documentation in the `doc` folder and the examples in the `example` folder.
 
 ---

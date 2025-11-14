@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.7.1"
+  archive:
+    dependency: "direct main"
+    description:
+      name: archive
+      sha256: cb6a278ef2dbb298455e1a713bda08524a175630ec643a242c399c932a0a1f7d
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.6.1"
   args:
     dependency: transitive
     description:
@@ -105,22 +113,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
-  geojson_vi:
-    dependency: "direct main"
-    description:
-      name: geojson_vi
-      sha256: a47e0efd17617aef8b239719ea2a3ef743563e873709531ee5498ccfd04069f2
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.5"
-  geoxml:
-    dependency: "direct main"
-    description:
-      name: geoxml
-      sha256: "3001f183bfc5edf92e628ed36d80fc5350055edc2fed8ab8a95185f5f05f4134"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.2"
   glob:
     dependency: transitive
     description:
@@ -233,14 +225,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
-  petitparser:
-    dependency: transitive
-    description:
-      name: petitparser
-      sha256: "07c8f0b1913bcde1ff0d26e57ace2f3012ccbf2b204e070290dad3bb22797646"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.0"
   pool:
     dependency: transitive
     description:
@@ -257,14 +241,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.5"
-  quiver:
-    dependency: transitive
-    description:
-      name: quiver
-      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.2"
   r_tree:
     dependency: "direct main"
     description:
@@ -441,14 +417,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
-  xml:
-    dependency: transitive
-    description:
-      name: xml
-      sha256: b015a8ad1c488f66851d762d3090a21c600e479dc75e68328c52774040cf9226
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.5.0"
   yaml:
     dependency: transitive
     description:

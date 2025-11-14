@@ -1,159 +1,143 @@
 DartFrame Performance Test Report
-Generated: 2025-10-19 11:20:53.126110
+Generated: 2025-11-14 13:37:49.453742
 ==================================================
 
 Test Summary:
-Total tests: 13
-Successful: 13
-Failed: 0
+Total tests: 17
+Successful: 16
+Failed: 1
 
 Detailed Results:
 --------------------
-Vectorized Operations Test (size: 1000):
+HDF5 File Open (5.1 KB):
   Success: true
-  Execution time: 9ms
-  Memory usage: 24.8 KB
-  Throughput: 333074.28 ops/sec
-  data_size: 1000
-  operations_performed: 3
-  memory_before: 16200
-  memory_after: 25400
-  sum_result: 48983.32727755592
-  mean_result: 48.98332727755592
-  std_result: 29.1402854067391
+  Execution time: 17ms
+  file_size: 5240
+  file_path: example/data/test_simple.h5
 
-Vectorized Operations Test (size: 10000):
-  Success: true
-  Execution time: 8ms
-  Memory usage: 244.5 KB
-  Throughput: 3645643.46 ops/sec
-  data_size: 10000
-  operations_performed: 3
-  memory_before: 160200
-  memory_after: 250400
-  sum_result: 501312.1349032356
-  mean_result: 50.13121349032356
-  std_result: 28.704887689004696
-
-Vectorized Operations Test (size: 100000):
-  Success: true
-  Execution time: 23ms
-  Memory usage: 2.4 MB
-  Throughput: 12593929.73 ops/sec
-  data_size: 100000
-  operations_performed: 3
-  memory_before: 1600200
-  memory_after: 2500400
-  sum_result: 4997854.067138037
-  mean_result: 49.978540671380365
-  std_result: 28.889491816079808
-
-Memory Optimization Test (size: 1000):
-  Success: true
-  Execution time: 6ms
-  Memory usage: 64.3 KB
-  data_size: 1000
-  memory_before: 65800
-  memory_after: 65800
-  optimization_ratio: 1.0
-  memory_saved_percent: 0.0
-  rows: 1000
-  columns: 4
-
-Memory Optimization Test (size: 5000):
-  Success: true
-  Execution time: 8ms
-  Memory usage: 314.3 KB
-  data_size: 5000
-  memory_before: 321800
-  memory_after: 321800
-  optimization_ratio: 1.0
-  memory_saved_percent: 0.0
-  rows: 5000
-  columns: 4
-
-Memory Optimization Test (size: 10000):
-  Success: true
-  Execution time: 6ms
-  Memory usage: 626.8 KB
-  data_size: 10000
-  memory_before: 641800
-  memory_after: 641800
-  optimization_ratio: 1.0
-  memory_saved_percent: 0.0
-  rows: 10000
-  columns: 4
-
-Cache Performance Test (operations: 100):
-  Success: true
-  Execution time: 2ms
-  Throughput: 49776.01 ops/sec
-  operation_count: 100
-  cache_hits: 90
-  cache_misses: 10
-  hit_ratio: 0.9
-  cache_entries: 10
-  cache_size: 500
-
-Cache Performance Test (operations: 500):
-  Success: true
-  Execution time: 0ms
-  Throughput: 1086956.52 ops/sec
-  operation_count: 500
-  cache_hits: 490
-  cache_misses: 10
-  hit_ratio: 0.98
-  cache_entries: 10
-  cache_size: 500
-
-Cache Performance Test (operations: 1000):
-  Success: true
-  Execution time: 0ms
-  Throughput: 1763668.43 ops/sec
-  operation_count: 1000
-  cache_hits: 990
-  cache_misses: 10
-  hit_ratio: 0.99
-  cache_entries: 10
-  cache_size: 500
-
-Parallel Processing Test (size: 1000, parallel: false):
-  Success: true
-  Execution time: 2ms
-  Memory usage: 15.8 KB
-  Throughput: 463821.89 ops/sec
-  data_size: 1000
-  parallel_processing: false
-  chunk_size: 1000
-  result_length: 1000
-
-Parallel Processing Test (size: 1000, parallel: true):
+HDF5 File Open (14.4 KB):
   Success: true
   Execution time: 7ms
-  Memory usage: 15.8 KB
-  Throughput: 125517.76 ops/sec
-  data_size: 1000
-  parallel_processing: true
-  chunk_size: 1000
-  result_length: 1000
+  file_size: 14728
+  file_path: example/data/test_chunked.h5
 
-Parallel Processing Test (size: 5000, parallel: false):
+HDF5 Contiguous Read (/data1d, 100 elements):
   Success: true
-  Execution time: 2ms
-  Memory usage: 78.3 KB
-  Throughput: 1778093.88 ops/sec
-  data_size: 5000
-  parallel_processing: false
-  chunk_size: 5000
-  result_length: 5000
+  Execution time: 17ms
+  Memory usage: 40 B
+  elements_read: 5
+  data_size_bytes: 40
+  throughput_mbps: 0.00
 
-Parallel Processing Test (size: 5000, parallel: true):
+HDF5 Contiguous Read (/data2d, 100 elements):
   Success: true
-  Execution time: 2ms
-  Memory usage: 78.3 KB
-  Throughput: 2423654.87 ops/sec
-  data_size: 5000
-  parallel_processing: true
-  chunk_size: 1000
-  result_length: 5000
+  Execution time: 10ms
+  Memory usage: 72 B
+  elements_read: 9
+  data_size_bytes: 72
+  throughput_mbps: 0.01
+
+HDF5 Chunked Read (/chunked_1d, 10000 elements):
+  Success: true
+  Execution time: 21ms
+  Memory usage: 160 B
+  elements_read: 20
+  data_size_bytes: 160
+  throughput_mbps: 0.01
+
+HDF5 Chunked Read (/chunked_2d, 10000 elements):
+  Success: true
+  Execution time: 20ms
+  Memory usage: 480 B
+  elements_read: 60
+  data_size_bytes: 480
+  throughput_mbps: 0.02
+
+HDF5 Compressed Read (/gzip_1d, 10000 elements):
+  Success: true
+  Execution time: 23ms
+  Memory usage: 800 B
+  elements_read: 100
+  data_size_bytes: 800
+  throughput_mbps: 0.03
+
+HDF5 Compressed Read (/lzf_1d, 10000 elements):
+  Success: true
+  Execution time: 16ms
+  Memory usage: 400 B
+  elements_read: 50
+  data_size_bytes: 400
+  throughput_mbps: 0.02
+
+HDF5 String Read (/fixed_ascii):
+  Success: true
+  Execution time: 11ms
+  Memory usage: 28 B
+  strings_read: 3
+  total_characters: 14
+  data_size_bytes: 28
+
+HDF5 String Read (/vlen_ascii):
+  Success: false
+  Execution time: -1ms
+  Error: HDF5 Error: Read dataset failed
+Message: Unsupported datatype
+File: test/fixtures/string_test.h5
+Path: /vlen_ascii
+Details: class=9, size=16 bytes
+
+Recovery Suggestions:
+  1. Check if the datatype is supported in the documentation
+  2. Convert the dataset to a supported datatype (int, float, string)
+  3. Use h5repack to convert the file to use standard datatypes
+
+
+HDF5 Compound Read (/simple_compound):
+  Success: true
+  Execution time: 11ms
+  records_read: 3
+  fields_per_record: 3
+  total_fields: 9
+
+HDF5 Group Navigation:
+  Success: true
+  Execution time: 24ms
+  total_objects: 4
+  datasets: 3
+  groups: 1
+
+HDF5 Caching Test (10 iterations):
+  Success: true
+  Execution time: 33ms
+  iterations: 10
+  avg_time_per_access_ms: 3.30
+
+HDF5 Caching Test (50 iterations):
+  Success: true
+  Execution time: 148ms
+  iterations: 50
+  avg_time_per_access_ms: 2.96
+
+HDF5 Attribute Read (/data):
+  Success: true
+  Execution time: 20ms
+  attribute_count: 8
+
+HDF5 File Inspection:
+  Success: true
+  Execution time: 21ms
+  total_datasets: 3
+  total_groups: 1
+  max_depth: 2
+  compressed_datasets: 0
+  chunked_datasets: 0
+
+HDF5 File Inspection:
+  Success: true
+  Execution time: 12ms
+  total_datasets: 0
+  total_groups: 0
+  max_depth: 1
+  compressed_datasets: 0
+  chunked_datasets: 0
 

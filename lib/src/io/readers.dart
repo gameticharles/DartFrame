@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../data_frame/data_frame.dart';
 import '../file_helper/file_io.dart';
+import 'hdf5_reader.dart';
 
 /// Abstract base class for data readers
 abstract class DataReader {
@@ -198,6 +199,8 @@ class FileReader {
     '.xlsx': ExcelReader(),
     '.xls': ExcelReader(),
     '.csv': ExcelReader(), // CSV can be handled by Excel reader
+    '.h5': HDF5Reader(),
+    '.hdf5': HDF5Reader(),
   };
 
   /// Reads a file and returns a DataFrame, automatically detecting format by extension
@@ -233,6 +236,27 @@ class FileReader {
     };
 
     return ExcelReader().read(path, options: mergedOptions);
+  }
+
+  /// Reads an HDF5 file
+  static Future<DataFrame> readHDF5(String path,
+      {String? dataset, Map<String, dynamic>? options}) async {
+    final mergedOptions = <String, dynamic>{
+      if (dataset != null) 'dataset': dataset,
+      ...?options,
+    };
+
+    return HDF5Reader().read(path, options: mergedOptions);
+  }
+
+  /// Inspects an HDF5 file structure
+  static Future<Map<String, dynamic>> inspectHDF5(String path) async {
+    return HDF5Reader.inspect(path);
+  }
+
+  /// Lists datasets in an HDF5 file
+  static Future<List<String>> listHDF5Datasets(String path) async {
+    return HDF5Reader.listDatasets(path);
   }
 
   static String _getFileExtension(String path) {

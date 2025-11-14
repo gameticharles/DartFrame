@@ -112,7 +112,7 @@ void main() async {
   print('=' * 40);
 
   // Calculate median, mode, and quantiles
-  final salesSeries = salesData['Sales'];
+  final salesSeries = salesData['Sales'] as Series;
   print('Sales Statistics:');
   print('Mean: ${salesSeries.mean()}');
   print('Min: ${salesSeries.min()}');
@@ -123,12 +123,12 @@ void main() async {
   try {
     print('Median: ${salesSeries.median()}');
     print('Mode: ${salesSeries.mode()}');
-    print('Standard Deviation: ${salesSeries.stdAdvanced()}');
+    print('Standard Deviation: ${salesSeries.std()}');
     print('Variance: ${salesSeries.variance()}');
     print('Skewness: ${salesSeries.skew()}');
     print('Kurtosis: ${salesSeries.kurtosis()}');
-    print('25th Percentile: ${salesSeries.quantileAdvanced(0.25)}');
-    print('75th Percentile: ${salesSeries.quantileAdvanced(0.75)}');
+    print('25th Percentile: ${salesSeries.quantile(0.25)}');
+    print('75th Percentile: ${salesSeries.quantile(0.75)}');
   } catch (e) {
     print('Advanced statistics error: $e');
   }
@@ -209,8 +209,7 @@ void main() async {
   final percentiles = [0.1, 0.25, 0.5, 0.75, 0.9];
   print('Sales Percentiles:');
   for (final p in percentiles) {
-    print(
-        '${(p * 100).toInt()}th percentile: ${salesSeries.quantileAdvanced(p)}');
+    print('${(p * 100).toInt()}th percentile: ${salesSeries.quantile(p)}');
   }
   print('');
 
@@ -226,7 +225,7 @@ void main() async {
       'Mean vs Median difference: ${(salesSeries.mean() - salesSeries.median()).abs()}');
 
   if ((salesSeries.mean() - salesSeries.median()).abs() <
-      salesSeries.stdAdvanced() * 0.1) {
+      salesSeries.std() * 0.1) {
     print('Distribution appears approximately normal');
   } else {
     print('Distribution may be skewed');
@@ -237,8 +236,8 @@ void main() async {
   print('9. OUTLIER DETECTION');
   print('=' * 40);
 
-  final q1 = salesSeries.quantileAdvanced(0.25);
-  final q3 = salesSeries.quantileAdvanced(0.75);
+  final q1 = salesSeries.quantile(0.25);
+  final q3 = salesSeries.quantile(0.75);
   final iqr = q3 - q1;
   final lowerBound = q1 - 1.5 * iqr;
   final upperBound = q3 + 1.5 * iqr;
