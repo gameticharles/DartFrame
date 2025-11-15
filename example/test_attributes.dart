@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// Test attribute reading functionality

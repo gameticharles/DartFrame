@@ -1,3 +1,7 @@
+# 0.8.1
+
+- **[FIX]** Code fix
+
 # 0.8.0
 
 - **[MAJOR FEATURE]** Enhanced File I/O Support with Web Compatibility
