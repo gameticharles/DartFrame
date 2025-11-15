@@ -1,12 +1,21 @@
 # 0.8.0
 
 - **[MAJOR FEATURE]** Enhanced File I/O Support with Web Compatibility
-  - **NEW**: Full CSV support using `csv` package (v6.0.0) - read/write with custom delimiters, headers, encoding
-  - **NEW**: Full Excel support using `excel` package (v4.0.6) - read/write .xlsx/.xls files with multi-sheet operations
+  - **NEW**: Full CSV support using `csv` package - read/write with custom delimiters, headers, encoding
+  - **NEW**: Full Excel support using `excel` package- read/write .xlsx/.xls files with multi-sheet operations
   - **NEW**: Multi-sheet Excel operations - `readAllExcelSheets()` and `writeExcelSheets()` for working with entire workbooks
   - **NEW**: Platform-agnostic FileIO abstraction - works on desktop, mobile, and web without code changes
   - **NEW**: Binary file support - `readBytesFromFile()` and `writeBytesToFile()` for Excel and other binary formats
+  - **NEW**: `deleteFile()` method added to FileIO interface for temporary file cleanup
   - **ENHANCEMENT**: All file readers/writers now use FileIO for cross-platform compatibility
+  - **ENHANCEMENT**: DataFrame I/O methods now support both file paths and string content
+    - `DataFrame.fromCSV()` supports both `path` and `csv` parameters with full DataFrame options (formatData, missingDataIndicator, replaceMissingValueWith, allowFlexibleColumns)
+    - `DataFrame.fromJson()` supports both `path` and `jsonString` parameters with all orientations and DataFrame options
+    - Automatic temporary file handling for string-based input with proper cleanup
+  - **ENHANCEMENT**: Unified `toJSON()` method combines in-memory conversion and file writing
+    - Returns JSON structure when `path` is null (in-memory mode)
+    - Writes to file when `path` is provided (file mode)
+    - Supports all orientations: 'records', 'index', 'columns', 'values'
   - **WEB**: Full web browser support - upload files for processing, download results
   - Comprehensive documentation with examples for all file formats
 
@@ -17,6 +26,7 @@
   - **NEW**: Compression support (gzip, lzf, shuffle filter) and chunked storage with B-tree indexing
   - **NEW**: Group navigation, attributes, metadata, and dataset slicing
   - **NEW**: Cross-platform compatible (Windows, macOS, Linux, Web, iOS, Android) - no FFI dependencies
+- **[BREAKING CHANGE]** All functions with field name `inputFilePath` have been simplified to `path`.
 
 # 0.7.0
 

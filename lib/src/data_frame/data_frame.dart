@@ -744,7 +744,7 @@ class DataFrame {
   static Future<DataFrame> fromCSV({
     String? path,
     String? csv,
-    String fieldDelimiter = ',',
+    String delimiter = ',',
     String textDelimiter = '"',
     bool hasHeader = true,
     int? skipRows,
@@ -770,7 +770,7 @@ class DataFrame {
         await tempFile.saveToFile(tempPath, csv);
         df = await FileReader.readCsv(
           tempPath,
-          fieldDelimiter: fieldDelimiter,
+          fieldDelimiter: delimiter,
           textDelimiter: textDelimiter,
           hasHeader: hasHeader,
           skipRows: skipRows,
@@ -790,7 +790,7 @@ class DataFrame {
       // Otherwise read from file path
       df = await FileReader.readCsv(
         path!,
-        fieldDelimiter: fieldDelimiter,
+        fieldDelimiter: delimiter,
         textDelimiter: textDelimiter,
         hasHeader: hasHeader,
         skipRows: skipRows,
@@ -820,40 +820,63 @@ class DataFrame {
     return df;
   }
 
-  /// Constructs a DataFrame from a JSON file.
+  /// Constructs a DataFrame from a JSON file or string.
   ///
   /// This method uses the new [FileReader] infrastructure for robust JSON parsing
-  /// with support for multiple orientations.
+  /// with support for multiple orientations. Supports both file paths and direct JSON string content.
   ///
   /// Parameters:
-  /// - `path`: Path to the JSON file to read.
+  /// - `path`: Path to the JSON file to read (optional if `jsonString` is provided).
+  /// - `jsonString`: JSON string content to parse (optional if `path` is provided).
   /// - `orient`: JSON orientation format (default: 'records').
   ///   - 'records': List of objects `[{"col1": val1}, ...]`
   ///   - 'index': Object with index keys `{"0": {"col1": val1}, ...}`
   ///   - 'columns': Object with column arrays `{"col1": [val1, val2], ...}`
   ///   - 'values': 2D array `[[val1, val2], ...]`
   /// - `columns`: Column names for 'values' orientation.
+  /// - `formatData`: Apply data cleaning and type conversion (default: false).
+  /// - `missingDataIndicator`: List of values to treat as missing when formatData is true.
+  /// - `replaceMissingValueWith`: Value to use for missing data.
+  /// - `allowFlexibleColumns`: Allow dynamic column changes (default: false).
   /// - `options`: Additional JSON parsing options.
   ///
   /// Returns:
   /// A `Future<DataFrame>` that completes with the newly created DataFrame.
   ///
+  /// Throws:
+  /// - `ArgumentError` if both `path` and `jsonString` are null.
+  ///
   /// Example:
   /// ```dart
-  /// // Read records format (default)
+  /// // Read from file (records format - default)
   /// final df = await DataFrame.fromJson(path: 'data.json');
   ///
-  /// // Read columns format
+  /// // Parse JSON string with data formatting
+  /// String jsonData = '''
+  /// [
+  ///   {"id": 1, "product": "Laptop", "price": 1200.00},
+  ///   {"id": 2, "product": "Mouse", "price": 25.50, "inStock": true},
+  ///   {"id": 3, "product": "Keyboard", "price": 75.00}
+  /// ]
+  /// ''';
+  /// final df = await DataFrame.fromJson(
+  ///   jsonString: jsonData,
+  ///   formatData: true,
+  ///   missingDataIndicator: ['NA', 'N/A'],
+  ///   replaceMissingValueWith: null,
+  /// );
+  ///
+  /// // Read columns format from file
   /// final df = await DataFrame.fromJson(
   ///   path: 'data.json',
   ///   orient: 'columns',
   /// );
   ///
-  /// // Read values format with column names
+  /// // Parse values format with column names
   /// final df = await DataFrame.fromJson(
-  ///   path: 'data.json',
+  ///   jsonString: '[[1, 2], [3, 4]]',
   ///   orient: 'values',
-  ///   columns: ['col1', 'col2', 'col3'],
+  ///   columns: ['col1', 'col2'],
   /// );
   /// ```
   ///
@@ -861,17 +884,71 @@ class DataFrame {
   /// - [FileReader.readJson] for more JSON reading options
   /// - [toJSON] for converting DataFrames to JSON format
   static Future<DataFrame> fromJson({
-    required String path,
+    String? path,
+    String? jsonString,
     String orient = 'records',
     List<String>? columns,
+    bool formatData = false,
+    List<dynamic> missingDataIndicator = const [],
+    dynamic replaceMissingValueWith,
+    bool allowFlexibleColumns = false,
     Map<String, dynamic>? options,
   }) async {
-    return FileReader.readJson(
-      path,
-      orient: orient,
-      columns: columns,
-      options: options,
-    );
+    if (path == null && jsonString == null) {
+      throw ArgumentError('Either path or jsonString must be provided.');
+    }
+
+    DataFrame df;
+
+    // If JSON string is provided, write to temp file and read it
+    if (jsonString != null) {
+      final tempFile = FileIO();
+      final tempPath =
+          '.temp_json_${DateTime.now().millisecondsSinceEpoch}.json';
+      try {
+        await tempFile.saveToFile(tempPath, jsonString);
+        df = await FileReader.readJson(
+          tempPath,
+          orient: orient,
+          columns: columns,
+          options: options,
+        );
+      } finally {
+        // Clean up temp file
+        try {
+          await tempFile.deleteFile(tempPath);
+        } catch (_) {
+          // Ignore cleanup errors
+        }
+      }
+    } else {
+      // Otherwise read from file path
+      df = await FileReader.readJson(
+        path!,
+        orient: orient,
+        columns: columns,
+        options: options,
+      );
+    }
+
+    // Apply DataFrame-specific post-processing if needed
+    if (formatData ||
+        missingDataIndicator.isNotEmpty ||
+        replaceMissingValueWith != null ||
+        allowFlexibleColumns) {
+      // Create a new DataFrame with the specified options
+      return DataFrame._(
+        df._columns,
+        df._data,
+        index: df.index,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        formatData: formatData,
+        missingDataIndicator: missingDataIndicator,
+      );
+    }
+
+    return df;
   }
 
   /// Creates an empty DataFrame with specified column names.

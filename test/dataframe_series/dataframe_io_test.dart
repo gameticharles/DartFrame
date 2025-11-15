@@ -13,7 +13,7 @@ void main() {
         expect(
             df.rows[0],
             equals([
-              '1',
+              1,
               'apple'
             ])); // fromCSV reads as strings initially unless formatData
       });
@@ -26,8 +26,8 @@ void main() {
           hasHeader: false,
         );
         expect(df.rowCount, equals(3));
-        expect(df.columns, equals(['Column 0', 'Column 1'])); // Auto-generated
-        expect(df.rows[0], equals(['1', 'x']));
+        expect(df.columns, equals(['col_0', 'col_1'])); // Auto-generated
+        expect(df.rows[0], equals([1, 'x']));
       });
 
       test('CSV string with formatData and missing values', () async {

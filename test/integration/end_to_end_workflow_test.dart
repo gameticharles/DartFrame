@@ -69,7 +69,7 @@ void main() {
 
       // Verify export worked by reading back
       try {
-        final readBack = await DataFrame.fromCSV(inputFilePath: 'output.csv');
+        final readBack = await DataFrame.fromCSV(path: 'output.csv');
         expect(readBack.rowCount, equals(df.rowCount));
       } catch (e) {
         print('Skipping CSV read verification: $e');

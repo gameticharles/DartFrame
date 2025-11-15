@@ -79,7 +79,7 @@ void main() {
       expect(File(path).existsSync(), isTrue);
 
       // Read with semicolon delimiter
-      final df = await DataFrame.fromCSV(path: path, fieldDelimiter: ';');
+      final df = await DataFrame.fromCSV(path: path, delimiter: ';');
       expect(df.shape.rows, equals(3));
       expect(df.shape.columns, equals(4));
     });

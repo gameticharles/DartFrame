@@ -207,7 +207,7 @@ void main() {
 
       // Test CSV import
       try {
-        final readDf = await DataFrame.fromCSV(inputFilePath: 'output.csv');
+        final readDf = await DataFrame.fromCSV(path: 'output.csv');
         expect(readDf, isA<DataFrame>());
         expect(readDf.columns, equals(originalDf.columns));
         expect(readDf.rowCount, equals(originalDf.rowCount));
