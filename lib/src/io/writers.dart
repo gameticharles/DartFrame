@@ -1,318 +1,136 @@
 import 'dart:async';
-import 'dart:convert';
 import '../data_frame/data_frame.dart';
-import '../file_helper/file_io.dart';
+import 'csv_writer.dart';
+import 'excel_writer.dart';
+import 'parquet_writer.dart';
+import 'json_writer.dart';
 
-/// Abstract base class for data writers
+/// Abstract base class for data writers.
+///
+/// This interface defines the contract that all file format writers must implement.
+/// Each writer is responsible for converting a DataFrame to a specific file format
+/// and writing it to disk.
+///
+/// Implementations include:
+/// - [CsvFileWriter] for CSV files
+/// - [ExcelFileWriter] for Excel files
+/// - [JsonWriter] for JSON files
+/// - [ParquetWriter] for Parquet files (basic implementation)
 abstract class DataWriter {
-  /// Writes a DataFrame to the specified path
+  /// Writes a DataFrame to the specified path.
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the file will be saved
+  /// - `options`: Format-specific options for writing
+  ///
+  /// ## Returns
+  /// A Future that completes when the file has been written.
+  ///
+  /// Throws format-specific errors if writing fails.
   Future<void> write(DataFrame df, String path,
       {Map<String, dynamic>? options});
 }
 
-/// Writer for Parquet files
-class ParquetWriter implements DataWriter {
-  @override
-  Future<void> write(DataFrame df, String path,
-      {Map<String, dynamic>? options}) async {
-    try {
-      final content = _dataFrameToParquetLikeContent(df, options);
-      final fileIO = FileIO();
-      fileIO.saveToFile(path, content);
-    } catch (e) {
-      throw ParquetWriteError('Failed to write Parquet file: $e');
-    }
-  }
+// Format-specific writers are now in separate files:
+// - parquet_writer.dart - Parquet file writer (placeholder)
+// - excel_writer.dart - Excel file writer using excel package
+// - csv_writer.dart - CSV file writer using csv package
+// - json_writer.dart - JSON file writer with multiple orientations
 
-  String _dataFrameToParquetLikeContent(
-      DataFrame df, Map<String, dynamic>? options) {
-    // This is a simplified implementation
-    // In practice, you'd use a proper Parquet writing library
-    final compression = options?['compression'] as String? ?? 'none';
-    final includeIndex = options?['include_index'] as bool? ?? false;
-
-    final buffer = StringBuffer();
-    final columns = df.columns;
-
-    // Write header
-    if (includeIndex) {
-      buffer.write('index,');
-    }
-    buffer.writeln(columns.join(','));
-
-    // Write data
-    for (int i = 0; i < df.shape.rows; i++) {
-      if (includeIndex) {
-        buffer.write('$i,');
-      }
-
-      final row = columns.map((col) {
-        final value = df[col]![i];
-        return _formatValue(value);
-      }).join(',');
-
-      buffer.writeln(row);
-    }
-
-    String content = buffer.toString();
-
-    // Apply compression if specified
-    if (compression != 'none') {
-      content = _applyCompression(content, compression);
-    }
-
-    return content;
-  }
-}
-
-/// Writer for Excel files
-class ExcelWriter implements DataWriter {
-  @override
-  Future<void> write(DataFrame df, String path,
-      {Map<String, dynamic>? options}) async {
-    try {
-      final content = _dataFrameToExcelLikeContent(df, options);
-      final fileIO = FileIO();
-      fileIO.saveToFile(path, content);
-    } catch (e) {
-      throw ExcelWriteError('Failed to write Excel file: $e');
-    }
-  }
-
-  String _dataFrameToExcelLikeContent(
-      DataFrame df, Map<String, dynamic>? options) {
-    // final sheetName = options?['sheet_name'] as String? ?? 'Sheet1'; // For future use
-    final includeIndex = options?['include_index'] as bool? ?? false;
-    final dateFormat = options?['date_format'] as String? ?? 'yyyy-MM-dd';
-
-    final buffer = StringBuffer();
-    final columns = df.columns;
-
-    // Write header
-    if (includeIndex) {
-      buffer.write('Index,');
-    }
-    buffer.writeln(
-        columns.map((col) => _escapeExcelValue(col.toString())).join(','));
-
-    // Write data
-    for (int i = 0; i < df.shape.rows; i++) {
-      if (includeIndex) {
-        buffer.write('$i,');
-      }
-
-      final row = columns.map((col) {
-        final value = df[col]![i];
-        return _escapeExcelValue(_formatExcelValue(value, dateFormat));
-      }).join(',');
-
-      buffer.writeln(row);
-    }
-
-    return buffer.toString();
-  }
-
-  String _escapeExcelValue(String value) {
-    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
-      return '"${value.replaceAll('"', '""')}"';
-    }
-    return value;
-  }
-
-  String _formatExcelValue(dynamic value, String dateFormat) {
-    if (value == null) return '';
-    if (value is DateTime) {
-      // Simple date formatting - in practice would use intl package
-      return value.toIso8601String().split('T')[0];
-    }
-    return value.toString();
-  }
-}
-
-/// Writer for CSV files
-class CsvWriter implements DataWriter {
-  @override
-  Future<void> write(DataFrame df, String path,
-      {Map<String, dynamic>? options}) async {
-    try {
-      final content = _dataFrameToCsvContent(df, options);
-      final fileIO = FileIO();
-      fileIO.saveToFile(path, content);
-    } catch (e) {
-      throw CsvWriteError('Failed to write CSV file: $e');
-    }
-  }
-
-  String _dataFrameToCsvContent(DataFrame df, Map<String, dynamic>? options) {
-    final separator = options?['separator'] as String? ?? ',';
-    final includeIndex = options?['include_index'] as bool? ?? false;
-    final includeHeader = options?['include_header'] as bool? ?? true;
-    final quoteChar = options?['quote_char'] as String? ?? '"';
-    final escapeChar = options?['escape_char'] as String? ?? '"';
-    final lineTerminator = options?['line_terminator'] as String? ?? '\n';
-
-    final buffer = StringBuffer();
-    final columns = df.columns;
-
-    // Write header
-    if (includeHeader) {
-      if (includeIndex) {
-        buffer.write('index$separator');
-      }
-      buffer.write(columns
-          .map((col) => _escapeCsvValue(col, separator, quoteChar, escapeChar))
-          .join(separator));
-      buffer.write(lineTerminator);
-    }
-
-    // Write data
-    for (int i = 0; i < df.shape.rows; i++) {
-      if (includeIndex) {
-        buffer.write('$i$separator');
-      }
-
-      final row = columns.map((col) {
-        final value = df[col]![i];
-        return _escapeCsvValue(
-            _formatValue(value), separator, quoteChar, escapeChar);
-      }).join(separator);
-
-      buffer.write(row);
-      buffer.write(lineTerminator);
-    }
-
-    return buffer.toString();
-  }
-
-  String _escapeCsvValue(
-      String value, String separator, String quoteChar, String escapeChar) {
-    if (value.contains(separator) ||
-        value.contains(quoteChar) ||
-        value.contains('\n') ||
-        value.contains('\r')) {
-      final escaped = value.replaceAll(quoteChar, escapeChar + quoteChar);
-      return '$quoteChar$escaped$quoteChar';
-    }
-    return value;
-  }
-}
-
-/// Writer for JSON files
-class JsonWriter implements DataWriter {
-  @override
-  Future<void> write(DataFrame df, String path,
-      {Map<String, dynamic>? options}) async {
-    try {
-      final content = _dataFrameToJsonContent(df, options);
-      final fileIO = FileIO();
-      fileIO.saveToFile(path, content);
-    } catch (e) {
-      throw JsonWriteError('Failed to write JSON file: $e');
-    }
-  }
-
-  String _dataFrameToJsonContent(DataFrame df, Map<String, dynamic>? options) {
-    final orient = options?['orient'] as String? ?? 'records';
-    final includeIndex = options?['include_index'] as bool? ?? false;
-    final indent = options?['indent'] as int?;
-
-    dynamic jsonData;
-
-    switch (orient) {
-      case 'records':
-        jsonData = _toRecordsFormat(df, includeIndex);
-        break;
-      case 'index':
-        jsonData = _toIndexFormat(df);
-        break;
-      case 'columns':
-        jsonData = _toColumnsFormat(df);
-        break;
-      case 'values':
-        jsonData = _toValuesFormat(df);
-        break;
-      default:
-        jsonData = _toRecordsFormat(df, includeIndex);
-    }
-
-    final encoder =
-        indent != null ? JsonEncoder.withIndent(' ' * indent) : JsonEncoder();
-
-    return encoder.convert(jsonData);
-  }
-
-  List<Map<String, dynamic>> _toRecordsFormat(DataFrame df, bool includeIndex) {
-    final records = <Map<String, dynamic>>[];
-    final columns = df.columns;
-
-    for (int i = 0; i < df.shape.rows; i++) {
-      final record = <String, dynamic>{};
-
-      if (includeIndex) {
-        record['index'] = i;
-      }
-
-      for (final col in columns) {
-        record[col] = df[col]![i];
-      }
-
-      records.add(record);
-    }
-
-    return records;
-  }
-
-  Map<String, Map<String, dynamic>> _toIndexFormat(DataFrame df) {
-    final result = <String, Map<String, dynamic>>{};
-    final columns = df.columns;
-
-    for (int i = 0; i < df.shape.rows; i++) {
-      final row = <String, dynamic>{};
-      for (final col in columns) {
-        row[col] = df[col]![i];
-      }
-      result[i.toString()] = row;
-    }
-
-    return result;
-  }
-
-  Map<String, List<dynamic>> _toColumnsFormat(DataFrame df) {
-    final result = <String, List<dynamic>>{};
-    final columns = df.columns;
-
-    for (final col in columns) {
-      result[col] = df[col]!;
-    }
-
-    return result;
-  }
-
-  List<List<dynamic>> _toValuesFormat(DataFrame df) {
-    final result = <List<dynamic>>[];
-    final columns = df.columns;
-
-    for (int i = 0; i < df.shape.rows; i++) {
-      final row = columns.map((col) => df[col]![i]).toList();
-      result.add(row);
-    }
-
-    return result;
-  }
-}
-
-/// Generic file writer that can handle multiple formats
+/// Generic file writer that automatically detects and handles multiple file formats.
+///
+/// FileWriter provides a unified interface for writing DataFrames to various file
+/// formats. It automatically detects the file format based on the file extension
+/// and uses the appropriate writer implementation.
+///
+/// ## Supported Formats
+/// - **CSV** (.csv): Comma-separated values using [CsvFileWriter]
+/// - **Excel** (.xlsx, .xls): Excel workbooks using [ExcelFileWriter]
+/// - **JSON** (.json): JSON format using [JsonWriter]
+/// - **Parquet** (.parquet, .pq): Parquet columnar format (basic implementation)
+///
+/// ## Features
+/// - Automatic format detection by file extension
+/// - Format-specific options support
+/// - Convenient wrapper methods for each format
+/// - Multi-sheet Excel support
+/// - Multiple JSON orientations
+///
+/// ## Example
+/// ```dart
+/// // Auto-detect format
+/// await FileWriter.write(df, 'output.csv');
+///
+/// // Format-specific methods
+/// await FileWriter.writeCsv(df, 'output.csv',
+///   fieldDelimiter: ';',
+///   includeHeader: true,
+/// );
+///
+/// await FileWriter.writeExcel(df, 'output.xlsx',
+///   sheetName: 'MyData',
+///   includeIndex: true,
+/// );
+///
+/// // Write multiple Excel sheets
+/// await FileWriter.writeExcelSheets({
+///   'Sales': salesDf,
+///   'Inventory': inventoryDf,
+/// }, 'report.xlsx');
+///
+/// await FileWriter.writeJson(df, 'output.json',
+///   orient: 'records',
+///   indent: 2,
+/// );
+/// ```
+///
+/// See also:
+/// - [FileReader] for reading DataFrames from files
+/// - [CsvFileWriter], [ExcelFileWriter], [JsonWriter] for format-specific writers
 class FileWriter {
   static final Map<String, DataWriter> _writers = {
     '.parquet': ParquetWriter(),
     '.pq': ParquetWriter(),
-    '.xlsx': ExcelWriter(),
-    '.xls': ExcelWriter(),
-    '.csv': CsvWriter(),
+    '.xlsx': ExcelFileWriter(),
+    '.xls': ExcelFileWriter(),
+    '.csv': CsvFileWriter(),
     '.json': JsonWriter(),
   };
 
-  /// Writes a DataFrame to a file, automatically detecting format by extension
+  /// Writes a DataFrame to a file, automatically detecting format by extension.
+  ///
+  /// This is the most convenient method for writing files when you don't need
+  /// format-specific options. The file format is determined by the file extension.
+  ///
+  /// ## Supported Extensions
+  /// - .csv → CSV writer
+  /// - .xlsx, .xls → Excel writer
+  /// - .json → JSON writer
+  /// - .parquet, .pq → Parquet writer
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the file will be saved
+  /// - `options`: Optional format-specific options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Write CSV
+  /// await FileWriter.write(df, 'output.csv');
+  ///
+  /// // Write Excel
+  /// await FileWriter.write(df, 'output.xlsx');
+  ///
+  /// // Write with options
+  /// await FileWriter.write(df, 'output.csv', options: {
+  ///   'fieldDelimiter': ';',
+  ///   'includeHeader': true,
+  /// });
+  /// ```
+  ///
+  /// Throws [UnsupportedWriteFormatError] if the file extension is not recognized.
+  /// Throws format-specific errors if writing fails.
   static Future<void> write(DataFrame df, String path,
       {Map<String, dynamic>? options}) async {
     final extension = _getFileExtension(path).toLowerCase();
@@ -326,7 +144,19 @@ class FileWriter {
     await writer.write(df, path, options: options);
   }
 
-  /// Writes a DataFrame to a Parquet file
+  /// Writes a DataFrame to a Parquet file.
+  ///
+  /// **Note:** This is a basic implementation. For production use with real
+  /// Parquet files, integrate a proper Parquet library.
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the file will be saved
+  /// - `compression`: Compression method (default: 'none')
+  /// - `includeIndex`: Include row index column (default: false)
+  /// - `options`: Additional writing options
+  ///
+  /// Throws [ParquetWriteError] if writing fails.
   static Future<void> writeParquet(DataFrame df, String path,
       {String compression = 'none',
       bool includeIndex = false,
@@ -340,45 +170,193 @@ class FileWriter {
     await ParquetWriter().write(df, path, options: mergedOptions);
   }
 
-  /// Writes a DataFrame to an Excel file
+  /// Writes a DataFrame to an Excel file (.xlsx).
+  ///
+  /// Creates an Excel workbook with a single sheet containing the DataFrame data.
+  /// Data types are preserved (numbers, dates, booleans).
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the Excel file will be saved
+  /// - `sheetName`: Name of the sheet to create (default: 'Sheet1')
+  /// - `includeHeader`: Include header row (default: true)
+  /// - `includeIndex`: Include row index column (default: false)
+  /// - `options`: Additional writing options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Basic write
+  /// await FileWriter.writeExcel(df, 'output.xlsx');
+  ///
+  /// // With custom sheet name
+  /// await FileWriter.writeExcel(df, 'output.xlsx',
+  ///   sheetName: 'MyData',
+  /// );
+  ///
+  /// // With index column
+  /// await FileWriter.writeExcel(df, 'output.xlsx',
+  ///   sheetName: 'Results',
+  ///   includeIndex: true,
+  /// );
+  /// ```
+  ///
+  /// Throws [ExcelWriteError] if writing fails.
+  ///
+  /// See also:
+  /// - [writeExcelSheets] for writing multiple sheets
   static Future<void> writeExcel(DataFrame df, String path,
       {String sheetName = 'Sheet1',
-      bool includeIndex = false,
-      String dateFormat = 'yyyy-MM-dd',
-      Map<String, dynamic>? options}) async {
-    final mergedOptions = <String, dynamic>{
-      'sheet_name': sheetName,
-      'include_index': includeIndex,
-      'date_format': dateFormat,
-      ...?options,
-    };
-
-    await ExcelWriter().write(df, path, options: mergedOptions);
-  }
-
-  /// Writes a DataFrame to a CSV file
-  static Future<void> writeCsv(DataFrame df, String path,
-      {String separator = ',',
-      bool includeIndex = false,
       bool includeHeader = true,
-      String quoteChar = '"',
-      String escapeChar = '"',
-      String lineTerminator = '\n',
+      bool includeIndex = false,
       Map<String, dynamic>? options}) async {
     final mergedOptions = <String, dynamic>{
-      'separator': separator,
-      'include_index': includeIndex,
-      'include_header': includeHeader,
-      'quote_char': quoteChar,
-      'escape_char': escapeChar,
-      'line_terminator': lineTerminator,
+      'sheetName': sheetName,
+      'includeHeader': includeHeader,
+      'includeIndex': includeIndex,
       ...?options,
     };
 
-    await CsvWriter().write(df, path, options: mergedOptions);
+    await ExcelFileWriter().write(df, path, options: mergedOptions);
   }
 
-  /// Writes a DataFrame to a JSON file
+  /// Writes multiple DataFrames to different sheets in a single Excel file
+  ///
+  /// Takes a Map where keys are sheet names and values are DataFrames.
+  /// This allows creating an Excel workbook with multiple sheets in one operation.
+  ///
+  /// Example:
+  /// ```dart
+  /// final sheets = {
+  ///   'Sales': salesDf,
+  ///   'Inventory': inventoryDf,
+  ///   'Summary': summaryDf,
+  /// };
+  /// await FileWriter.writeExcelSheets(sheets, 'report.xlsx');
+  /// ```
+  static Future<void> writeExcelSheets(
+    Map<String, DataFrame> sheets,
+    String path, {
+    bool includeHeader = true,
+    bool includeIndex = false,
+    Map<String, dynamic>? options,
+  }) async {
+    await ExcelFileWriter.writeMultipleSheets(
+      sheets,
+      path,
+      includeHeader: includeHeader,
+      includeIndex: includeIndex,
+      options: options,
+    );
+  }
+
+  /// Writes a DataFrame to a CSV (Comma-Separated Values) file.
+  ///
+  /// Provides full control over CSV formatting with customizable delimiters,
+  /// text qualifiers, and output options.
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the CSV file will be saved
+  /// - `fieldDelimiter`: Field separator character (default: ',')
+  /// - `textDelimiter`: Text quote character (default: '"')
+  /// - `textEndDelimiter`: Ending text delimiter (default: same as textDelimiter)
+  /// - `eol`: Line ending character (default: '\n')
+  /// - `includeHeader`: Include header row (default: true)
+  /// - `includeIndex`: Include row index column (default: false)
+  /// - `options`: Additional writing options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Basic CSV writing
+  /// await FileWriter.writeCsv(df, 'output.csv');
+  ///
+  /// // Semicolon-separated
+  /// await FileWriter.writeCsv(df, 'output.csv',
+  ///   fieldDelimiter: ';',
+  /// );
+  ///
+  /// // Tab-separated with Windows line endings
+  /// await FileWriter.writeCsv(df, 'output.tsv',
+  ///   fieldDelimiter: '\t',
+  ///   eol: '\r\n',
+  /// );
+  ///
+  /// // With index column
+  /// await FileWriter.writeCsv(df, 'output.csv',
+  ///   includeIndex: true,
+  /// );
+  ///
+  /// // Without header
+  /// await FileWriter.writeCsv(df, 'output.csv',
+  ///   includeHeader: false,
+  /// );
+  /// ```
+  ///
+  /// Throws [CsvWriteError] if writing fails.
+  static Future<void> writeCsv(DataFrame df, String path,
+      {String fieldDelimiter = ',',
+      String textDelimiter = '"',
+      String? textEndDelimiter,
+      String? eol,
+      bool includeHeader = true,
+      bool includeIndex = false,
+      Map<String, dynamic>? options}) async {
+    final mergedOptions = <String, dynamic>{
+      'fieldDelimiter': fieldDelimiter,
+      'textDelimiter': textDelimiter,
+      if (textEndDelimiter != null) 'textEndDelimiter': textEndDelimiter,
+      if (eol != null) 'eol': eol,
+      'includeHeader': includeHeader,
+      'includeIndex': includeIndex,
+      ...?options,
+    };
+
+    await CsvFileWriter().write(df, path, options: mergedOptions);
+  }
+
+  /// Writes a DataFrame to a JSON file with customizable format.
+  ///
+  /// Supports multiple JSON orientations similar to pandas, allowing you to
+  /// choose the most appropriate format for your use case.
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the JSON file will be saved
+  /// - `orient`: JSON orientation format (default: 'records')
+  ///   - 'records': List of objects (one per row)
+  ///   - 'index': Object with index keys and row objects
+  ///   - 'columns': Object with column keys and value arrays
+  ///   - 'values': 2D array of values only
+  /// - `includeIndex`: Include row index in output (default: false)
+  /// - `indent`: Number of spaces for indentation (default: no indentation)
+  /// - `options`: Additional writing options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Records format (default)
+  /// await FileWriter.writeJson(df, 'output.json');
+  /// // [{"col1": val1, "col2": val2}, ...]
+  ///
+  /// // Columns format
+  /// await FileWriter.writeJson(df, 'output.json',
+  ///   orient: 'columns',
+  /// );
+  /// // {"col1": [val1, val2, ...], "col2": [...]}
+  ///
+  /// // Pretty-printed with indentation
+  /// await FileWriter.writeJson(df, 'output.json',
+  ///   orient: 'records',
+  ///   indent: 2,
+  /// );
+  ///
+  /// // Values only (2D array)
+  /// await FileWriter.writeJson(df, 'output.json',
+  ///   orient: 'values',
+  /// );
+  /// // [[val1, val2, ...], [val3, val4, ...]]
+  /// ```
+  ///
+  /// Throws [JsonWriteError] if writing fails.
   static Future<void> writeJson(DataFrame df, String path,
       {String orient = 'records',
       bool includeIndex = false,
@@ -401,80 +379,11 @@ class FileWriter {
   }
 }
 
-/// Compression utilities
-class CompressionUtils {
-  /// Applies compression to content
-  static String compress(String content, String method) {
-    switch (method.toLowerCase()) {
-      case 'gzip':
-        return _gzipCompress(content);
-      case 'deflate':
-        return _deflateCompress(content);
-      default:
-        return content;
-    }
-  }
-
-  static String _gzipCompress(String content) {
-    // Mock implementation - would use dart:io gzip in practice
-    return content; // Placeholder
-  }
-
-  static String _deflateCompress(String content) {
-    // Mock implementation - would use dart:io deflate in practice
-    return content; // Placeholder
-  }
-}
-
-/// Utility function to format values for output
-String _formatValue(dynamic value) {
-  if (value == null) return '';
-  if (value is DateTime) {
-    return value.toIso8601String();
-  }
-  return value.toString();
-}
-
-/// Utility function to apply compression
-String _applyCompression(String content, String compression) {
-  return CompressionUtils.compress(content, compression);
-}
-
-/// Exception thrown when Parquet writing fails
-class ParquetWriteError extends Error {
-  final String message;
-  ParquetWriteError(this.message);
-
-  @override
-  String toString() => 'ParquetWriteError: $message';
-}
-
-/// Exception thrown when Excel writing fails
-class ExcelWriteError extends Error {
-  final String message;
-  ExcelWriteError(this.message);
-
-  @override
-  String toString() => 'ExcelWriteError: $message';
-}
-
-/// Exception thrown when CSV writing fails
-class CsvWriteError extends Error {
-  final String message;
-  CsvWriteError(this.message);
-
-  @override
-  String toString() => 'CsvWriteError: $message';
-}
-
-/// Exception thrown when JSON writing fails
-class JsonWriteError extends Error {
-  final String message;
-  JsonWriteError(this.message);
-
-  @override
-  String toString() => 'JsonWriteError: $message';
-}
+// All format-specific write errors are now in their respective writer files:
+// - ParquetWriteError in parquet_writer.dart
+// - ExcelWriteError in excel_writer.dart
+// - CsvWriteError in csv_writer.dart
+// - JsonWriteError in json_writer.dart
 
 /// Exception thrown when file format is not supported for writing
 class UnsupportedWriteFormatError extends Error {

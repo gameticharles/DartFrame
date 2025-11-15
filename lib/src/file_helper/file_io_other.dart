@@ -4,7 +4,7 @@ import 'dart:io';
 import 'file_io.dart';
 
 class FileIO implements FileIOBase {
-  void _saveToFileDesktop(String path, String data) async {
+  Future<void> _saveToFileDesktop(String path, String data) async {
     var file = File(path);
     await file.writeAsString(data);
   }
@@ -49,12 +49,49 @@ class FileIO implements FileIOBase {
   }
 
   @override
-  void saveToFile(String path, String data) {
-    _saveToFileDesktop(path, data);
+  Future<void> saveToFile(String path, String data) async {
+    await _saveToFileDesktop(path, data);
   }
 
   @override
   Future<String> readFromFile(dynamic path) async {
     return await _readFromFileDesktop(path);
+  }
+
+  @override
+  Future<List<int>> readBytesFromFile(dynamic path) async {
+    var file = File(path);
+    if (await file.exists()) {
+      return await file.readAsBytes();
+    } else {
+      throw Exception('File does not exist: $path');
+    }
+  }
+
+  @override
+  Future<void> writeBytesToFile(String path, List<int> bytes) async {
+    var file = File(path);
+    await file.writeAsBytes(bytes);
+  }
+
+  @override
+  Future<bool> fileExists(String path) async {
+    var file = File(path);
+    return await file.exists();
+  }
+
+  @override
+  Future<bool> deleteFile(String path) async {
+    try {
+      var file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      // Return false if deletion fails
+      return false;
+    }
   }
 }

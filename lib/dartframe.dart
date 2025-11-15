@@ -8,6 +8,9 @@ export 'src/io/writers.dart';
 export 'src/io/database.dart';
 export 'src/io/chunked_reader.dart';
 export 'src/io/hdf5_reader.dart';
+export 'src/io/json_reader.dart';
+export 'src/io/csv_reader.dart';
+export 'src/io/excel_reader.dart';
 
 // HDF5 Advanced API - for users who need low-level access
 export 'src/io/hdf5/hdf5_file.dart';

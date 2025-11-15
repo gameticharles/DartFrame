@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 
 import '../../dartframe.dart';
+import '../io/readers.dart';
+import '../io/writers.dart';
 
 part 'accessors.dart';
 part 'functions.dart';
@@ -681,186 +683,194 @@ class DataFrame {
     return value;
   }
 
-  /// Constructs a DataFrame from a CSV (Comma Separated Values) string or file.
+  /// Constructs a DataFrame from a CSV (Comma Separated Values) file or string.
+  ///
+  /// This method uses the new [FileReader] infrastructure for robust CSV parsing.
+  /// Supports both file paths and direct CSV string content.
   ///
   /// Parameters:
-  /// - `csv`: An optional `String` containing the CSV data. If `null`, `inputFilePath` must be provided.
-  /// - `delimiter`: The `String` used to separate values in each row. Defaults to `,`.
-  /// - `inputFilePath`: An optional `String` path to a CSV file. If `csv` is `null`, this path is used to read the data.
-  /// - `hasHeader`: A `bool` indicating if the first row of the CSV is a header row containing column names. Defaults to `true`.
-  ///   If `false`, generic column names (e.g., "Column 0", "Column 1") are generated.
-  /// - `hasRowIndex`: A `bool` indicating if the first column of the CSV should be used as the DataFrame's index.
-  ///   Defaults to `false`. (Currently, if `true`, the first column name from the header becomes 'Row Index', and data is shifted).
-  ///   *Note: Full implementation of using a CSV column as a primary index is pending.*
-  /// - `allowFlexibleColumns`: A `bool` controlling if columns can be added/removed later. Defaults to `false`.
-  /// - `replaceMissingValueWith`: A `dynamic` value to use for missing entries identified during parsing or formatting.
-  /// - `formatData`: A `bool` that, if `true`, applies `cleanData` to each parsed value. Defaults to `false`.
-  /// - `missingDataIndicator`: A `List` of strings/values to be treated as missing during parsing if `formatData` is true.
+  /// - `path`: Path to the CSV file to read (optional if `csv` is provided).
+  /// - `csv`: CSV string content to parse (optional if `path` is provided).
+  /// - `fieldDelimiter`: Field separator character (default: ',').
+  /// - `textDelimiter`: Text quote character (default: '"').
+  /// - `hasHeader`: Whether first row is header (default: true).
+  /// - `skipRows`: Number of rows to skip (default: 0).
+  /// - `maxRows`: Maximum rows to read (default: all).
+  /// - `columnNames`: Custom column names when no header.
+  /// - `formatData`: Apply data cleaning and type conversion (default: false).
+  /// - `missingDataIndicator`: List of values to treat as missing when formatData is true.
+  /// - `replaceMissingValueWith`: Value to use for missing data.
+  /// - `allowFlexibleColumns`: Allow dynamic column changes (default: false).
+  /// - `options`: Additional CSV parsing options.
   ///
   /// Returns:
   /// A `Future<DataFrame>` that completes with the newly created DataFrame.
   ///
   /// Throws:
-  /// - `ArgumentError` if both `csv` and `inputFilePath` are `null`.
-  /// - File I/O errors if `inputFilePath` is provided but cannot be read.
+  /// - `ArgumentError` if both `path` and `csv` are null.
   ///
   /// Example:
   /// ```dart
-  /// // From a CSV string with a header
+  /// // Read CSV file with header
+  /// final df = await DataFrame.fromCSV(path: 'data.csv');
+  ///
+  /// // Parse CSV string with data formatting
   /// String csvData = "Name,Age,City\nAlice,30,New York\nBob,24,San Francisco";
-  /// DataFrame df1 = await DataFrame.fromCSV(csv: csvData);
-  /// print(df1);
-  /// // Output:
-  /// //       Name  Age          City
-  /// // 0    Alice   30      New York
-  /// // 1      Bob   24 San Francisco
+  /// final df = await DataFrame.fromCSV(
+  ///   csv: csvData,
+  ///   formatData: true,
+  ///   missingDataIndicator: ['NA', 'N/A'],
+  ///   replaceMissingValueWith: null,
+  /// );
   ///
-  /// // From a CSV string without a header
+  /// // Read semicolon-separated file
+  /// final df = await DataFrame.fromCSV(
+  ///   path: 'data.csv',
+  ///   fieldDelimiter: ';',
+  /// );
+  ///
+  /// // Parse CSV string without header
   /// String csvDataNoHeader = "apple,1.0\nbanana,0.5";
-  /// DataFrame df2 = await DataFrame.fromCSV(csv: csvDataNoHeader, hasHeader: false);
-  /// print(df2);
-  /// // Output:
-  /// //   Column 0  Column 1
-  /// // 0    apple       1.0
-  /// // 1   banana       0.5
-  ///
-  /// // Reading from a file (conceptual - requires actual file 'data.csv')
-  /// // File 'data.csv':
-  /// // ID,Product,Price
-  /// // 1,Laptop,1200
-  /// // 2,Mouse,25
-  /// // DataFrame dfFromFile = await DataFrame.fromCSV(inputFilePath: 'data.csv');
-  /// // print(dfFromFile);
+  /// final df = await DataFrame.fromCSV(
+  ///   csv: csvDataNoHeader,
+  ///   hasHeader: false,
+  ///   columnNames: ['item', 'price'],
+  /// );
   /// ```
+  ///
+  /// See also:
+  /// - [FileReader.readCsv] for more CSV reading options
+  /// - [toCSV] for writing DataFrames to CSV files
   static Future<DataFrame> fromCSV({
+    String? path,
     String? csv,
-    String delimiter = ',',
-    String? inputFilePath,
+    String fieldDelimiter = ',',
+    String textDelimiter = '"',
     bool hasHeader = true,
-    bool hasRowIndex = false,
-    bool allowFlexibleColumns = false,
-    dynamic replaceMissingValueWith,
+    int? skipRows,
+    int? maxRows,
+    List<String>? columnNames,
     bool formatData = false,
-    List missingDataIndicator = const [],
+    List<dynamic> missingDataIndicator = const [],
+    dynamic replaceMissingValueWith,
+    bool allowFlexibleColumns = false,
+    Map<String, dynamic>? options,
   }) async {
-    String? csvContent = csv;
-    if (csvContent == null && inputFilePath != null) {
-      // Read file
-      FileIO fileIO = FileIO();
-      csvContent = await fileIO.readFromFile(inputFilePath);
-    } else if (csvContent == null) {
-      throw ArgumentError('Either csv or inputFilePath must be provided.');
+    if (path == null && csv == null) {
+      throw ArgumentError('Either path or csv must be provided.');
     }
 
-    List<List> rows = csvContent
-        .trim()
-        .split('\n')
-        .map((row) => row.split(delimiter).map((value) => value).toList())
-        .toList();
+    DataFrame df;
 
-    // Extract column names from the first line
-    final columnNames =
-        hasHeader ? rows[0] : List.generate(rows[0].length, (i) => 'Column $i');
-
-    if (hasRowIndex) {
-      columnNames.insert(0, 'Row Index');
+    // If CSV string is provided, write to temp file and read it
+    if (csv != null) {
+      final tempFile = FileIO();
+      final tempPath = '.temp_csv_${DateTime.now().millisecondsSinceEpoch}.csv';
+      try {
+        await tempFile.saveToFile(tempPath, csv);
+        df = await FileReader.readCsv(
+          tempPath,
+          fieldDelimiter: fieldDelimiter,
+          textDelimiter: textDelimiter,
+          hasHeader: hasHeader,
+          skipRows: skipRows,
+          maxRows: maxRows,
+          columnNames: columnNames,
+          options: options,
+        );
+      } finally {
+        // Clean up temp file
+        try {
+          await tempFile.deleteFile(tempPath);
+        } catch (_) {
+          // Ignore cleanup errors
+        }
+      }
+    } else {
+      // Otherwise read from file path
+      df = await FileReader.readCsv(
+        path!,
+        fieldDelimiter: fieldDelimiter,
+        textDelimiter: textDelimiter,
+        hasHeader: hasHeader,
+        skipRows: skipRows,
+        maxRows: maxRows,
+        columnNames: columnNames,
+        options: options,
+      );
     }
 
-    return DataFrame._(
-      columnNames,
-      hasHeader
-          ? rows.sublist(1)
-          : rows, // Only skip first row if hasHeader is true
-      //rowHeader: hasRowIndex ? rows[0] : List.generate(rows[0].length, (i) => i),
-      index: [], // todo: Not implemented yet
-      replaceMissingValueWith: replaceMissingValueWith,
-      allowFlexibleColumns: allowFlexibleColumns,
-      formatData: formatData,
-      missingDataIndicator: missingDataIndicator,
-    );
+    // Apply DataFrame-specific post-processing if needed
+    if (formatData ||
+        missingDataIndicator.isNotEmpty ||
+        replaceMissingValueWith != null ||
+        allowFlexibleColumns) {
+      // Create a new DataFrame with the specified options
+      return DataFrame._(
+        df._columns,
+        df._data,
+        index: df.index,
+        allowFlexibleColumns: allowFlexibleColumns,
+        replaceMissingValueWith: replaceMissingValueWith,
+        formatData: formatData,
+        missingDataIndicator: missingDataIndicator,
+      );
+    }
+
+    return df;
   }
 
-  /// Constructs a DataFrame from a JSON string or file.
+  /// Constructs a DataFrame from a JSON file.
   ///
-  /// The JSON structure is expected to be a list of objects (maps), where each object
-  /// represents a row, and object keys represent column names.
-  /// All objects in the list should ideally have a consistent set of keys;
-  /// the column names are derived from the keys of the first object in the list.
+  /// This method uses the new [FileReader] infrastructure for robust JSON parsing
+  /// with support for multiple orientations.
   ///
   /// Parameters:
-  /// - `jsonString`: An optional `String` containing the JSON data. If `null`, `inputFilePath` must be provided.
-  /// - `inputFilePath`: An optional `String` path to a JSON file. If `jsonString` is `null`, this path is used.
-  /// - `allowFlexibleColumns`: A `bool` controlling if columns can be added/removed later. Defaults to `false`.
-  /// - `replaceMissingValueWith`: A `dynamic` value for missing entries.
-  /// - `formatData`: A `bool` that, if `true`, applies `cleanData` to each parsed value. Defaults to `false`.
-  /// - `missingDataIndicator`: A `List` of values to treat as missing if `formatData` is true.
+  /// - `path`: Path to the JSON file to read.
+  /// - `orient`: JSON orientation format (default: 'records').
+  ///   - 'records': List of objects `[{"col1": val1}, ...]`
+  ///   - 'index': Object with index keys `{"0": {"col1": val1}, ...}`
+  ///   - 'columns': Object with column arrays `{"col1": [val1, val2], ...}`
+  ///   - 'values': 2D array `[[val1, val2], ...]`
+  /// - `columns`: Column names for 'values' orientation.
+  /// - `options`: Additional JSON parsing options.
   ///
   /// Returns:
   /// A `Future<DataFrame>` that completes with the newly created DataFrame.
   ///
-  /// Throws:
-  /// - `ArgumentError` if both `jsonString` and `inputFilePath` are `null`.
-  /// - `FormatException` if the JSON content is invalid or not a list of maps.
-  /// - File I/O errors if `inputFilePath` is provided but cannot be read.
-  ///
   /// Example:
   /// ```dart
-  /// // From a JSON string
-  /// String jsonData = '''
-  /// [
-  ///   {"id": 1, "product": "Laptop", "price": 1200.00},
-  ///   {"id": 2, "product": "Mouse", "price": 25.50, "inStock": true},
-  ///   {"id": 3, "product": "Keyboard", "price": 75.00}
-  /// ]
-  /// ''';
-  /// DataFrame df1 = await DataFrame.fromJson(jsonString: jsonData);
-  /// print(df1);
-  /// // Output (note: 'inStock' column might have nulls for rows where it's not present):
-  /// //   id  product   price  inStock
-  /// // 0   1   Laptop  1200.0     null
-  /// // 1   2    Mouse   25.50     true
-  /// // 2   3 Keyboard   75.00     null
+  /// // Read records format (default)
+  /// final df = await DataFrame.fromJson(path: 'data.json');
   ///
-  /// // Reading from a file (conceptual - requires actual file 'data.json')
-  /// // DataFrame dfFromFile = await DataFrame.fromJson(inputFilePath: 'data.json');
-  /// // print(dfFromFile);
+  /// // Read columns format
+  /// final df = await DataFrame.fromJson(
+  ///   path: 'data.json',
+  ///   orient: 'columns',
+  /// );
+  ///
+  /// // Read values format with column names
+  /// final df = await DataFrame.fromJson(
+  ///   path: 'data.json',
+  ///   orient: 'values',
+  ///   columns: ['col1', 'col2', 'col3'],
+  /// );
   /// ```
+  ///
+  /// See also:
+  /// - [FileReader.readJson] for more JSON reading options
+  /// - [toJSON] for converting DataFrames to JSON format
   static Future<DataFrame> fromJson({
-    String? jsonString,
-    String? inputFilePath,
-    bool allowFlexibleColumns = false,
-    dynamic replaceMissingValueWith,
-    bool formatData = false,
-    List missingDataIndicator = const [],
+    required String path,
+    String orient = 'records',
+    List<String>? columns,
+    Map<String, dynamic>? options,
   }) async {
-    String? jsonContent = jsonString;
-    if (jsonContent == null && inputFilePath != null) {
-      // Read file
-      FileIO fileIO = FileIO();
-      jsonContent = await fileIO.readFromFile(inputFilePath);
-    } else if (jsonContent == null) {
-      throw ArgumentError(
-          'Either jsonString or inputFilePath must be provided.');
-    }
-
-    final jsonData = jsonDecode(jsonContent) as List;
-
-    // Extract column names from the first object
-    final columnNames = jsonData[0].keys.toList();
-
-    // Extract data from all objects
-    final data = jsonData
-        .map((obj) => columnNames.map((name) => obj[name]).toList())
-        .toList();
-
-    return DataFrame._(
-      columnNames,
-      data,
-      index: [], // Not applicable for JSON
-      replaceMissingValueWith: replaceMissingValueWith,
-      allowFlexibleColumns: allowFlexibleColumns,
-      formatData: formatData,
-      missingDataIndicator: missingDataIndicator,
+    return FileReader.readJson(
+      path,
+      orient: orient,
+      columns: columns,
+      options: options,
     );
   }
 
@@ -1118,13 +1128,26 @@ class DataFrame {
     );
   }
 
-  /// Converts the DataFrame to a list of maps (JSON-like structure).
+  /// Converts the DataFrame to JSON format or writes it to a JSON file.
   ///
-  /// Each map in the list represents a row, with column names (as `String`) as keys.
+  /// This method has two modes of operation:
+  /// 1. **In-memory conversion** (when `path` is null): Returns a JSON-compatible structure
+  /// 2. **File writing** (when `path` is provided): Writes JSON to a file
+  ///
+  /// Parameters:
+  /// - `path`: Optional path where the JSON file will be saved. If null, returns in-memory structure.
+  /// - `orient`: JSON orientation format (default: 'records').
+  ///   - 'records': List of objects `[{"col1": val1}, ...]`
+  ///   - 'index': Object with index keys `{"0": {"col1": val1}, ...}`
+  ///   - 'columns': Object with column arrays `{"col1": [val1, val2], ...}`
+  ///   - 'values': 2D array `[[val1, val2], ...]`
+  /// - `includeIndex`: Include row index in output (default: false).
+  /// - `indent`: Number of spaces for indentation when writing to file (default: no indentation).
+  /// - `options`: Additional JSON options.
   ///
   /// Returns:
-  /// A `List<Map<String, dynamic>>` representing the DataFrame.
-  /// This format is directly compatible with `jsonEncode()` from `dart:convert`.
+  /// - When `path` is null: A `List<Map<String, dynamic>>` (for 'records' orient) or appropriate structure
+  /// - When `path` is provided: A `Future<void>` that completes when the file has been written
   ///
   /// Example:
   /// ```dart
@@ -1133,26 +1156,375 @@ class DataFrame {
   ///   ['Bob', 25],
   /// ], columns: ['Name', 'Age']);
   ///
+  /// // In-memory conversion (records format - default)
   /// List<Map<String, dynamic>> jsonList = df.toJSON();
   /// print(jsonList);
-  /// // Output:
-  /// // [
-  /// //   {'Name': 'Alice', 'Age': 30},
-  /// //   {'Name': 'Bob', 'Age': 25}
-  /// // ]
+  /// // Output: [{'Name': 'Alice', 'Age': 30}, {'Name': 'Bob', 'Age': 25}]
   ///
-  /// String jsonString = jsonEncode(jsonList); // To get the actual JSON string
-  /// print(jsonString);
+  /// // Convert to JSON string
+  /// String jsonString = jsonEncode(df.toJSON());
   /// // Output: [{"Name":"Alice","Age":30},{"Name":"Bob","Age":25}]
+  ///
+  /// // Write to file (records format)
+  /// await df.toJSON(path: 'output.json');
+  ///
+  /// // Write with columns format and pretty-printing
+  /// await df.toJSON(
+  ///   path: 'output.json',
+  ///   orient: 'columns',
+  ///   indent: 2,
+  /// );
+  ///
+  /// // In-memory with different orientation
+  /// var columnsData = df.toJSON(orient: 'columns');
+  /// // Returns: {"Name": ["Alice", "Bob"], "Age": [30, 25]}
   /// ```
-  List<Map<String, dynamic>> toJSON() {
-    return rows.map<Map<String, dynamic>>((row) {
-      var rowMap = <String, dynamic>{};
-      for (int i = 0; i < _columns.length; i++) {
-        rowMap[_columns[i].toString()] = row[i];
-      }
-      return rowMap;
-    }).toList();
+  ///
+  /// See also:
+  /// - [FileWriter.writeJson] for more JSON writing options
+  /// - [fromJson] for reading JSON files
+  dynamic toJSON({
+    String? path,
+    String orient = 'records',
+    bool includeIndex = false,
+    int? indent,
+    Map<String, dynamic>? options,
+  }) {
+    // If path is provided, write to file
+    if (path != null) {
+      return FileWriter.writeJson(
+        this,
+        path,
+        orient: orient,
+        includeIndex: includeIndex,
+        indent: indent,
+        options: options,
+      );
+    }
+
+    // Otherwise, return in-memory structure based on orientation
+    switch (orient) {
+      case 'records':
+        return rows.map<Map<String, dynamic>>((row) {
+          var rowMap = <String, dynamic>{};
+          if (includeIndex) {
+            rowMap['index'] = rows.indexOf(row);
+          }
+          for (int i = 0; i < _columns.length; i++) {
+            rowMap[_columns[i].toString()] = row[i];
+          }
+          return rowMap;
+        }).toList();
+
+      case 'index':
+        var result = <String, Map<String, dynamic>>{};
+        for (int i = 0; i < rows.length; i++) {
+          var rowMap = <String, dynamic>{};
+          for (int j = 0; j < _columns.length; j++) {
+            rowMap[_columns[j].toString()] = rows[i][j];
+          }
+          result[i.toString()] = rowMap;
+        }
+        return result;
+
+      case 'columns':
+        var result = <String, List<dynamic>>{};
+        for (var col in _columns) {
+          result[col.toString()] = this[col].toList();
+        }
+        return result;
+
+      case 'values':
+        return rows.map((row) => List<dynamic>.from(row)).toList();
+
+      default:
+        // Default to records format
+        return rows.map<Map<String, dynamic>>((row) {
+          var rowMap = <String, dynamic>{};
+          for (int i = 0; i < _columns.length; i++) {
+            rowMap[_columns[i].toString()] = row[i];
+          }
+          return rowMap;
+        }).toList();
+    }
+  }
+
+  /// Constructs a DataFrame from an Excel file.
+  ///
+  /// This method uses the new [FileReader] infrastructure for robust Excel parsing.
+  ///
+  /// Parameters:
+  /// - `path`: Path to the Excel file (.xlsx, .xls).
+  /// - `sheetName`: Name of sheet to read (default: first sheet).
+  /// - `hasHeader`: Whether first row is header (default: true).
+  /// - `skipRows`: Number of rows to skip (default: 0).
+  /// - `maxRows`: Maximum rows to read (default: all).
+  /// - `columnNames`: Custom column names when no header.
+  /// - `options`: Additional Excel parsing options.
+  ///
+  /// Returns:
+  /// A `Future<DataFrame>` that completes with the newly created DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Read first sheet
+  /// final df = await DataFrame.fromExcel(path: 'data.xlsx');
+  ///
+  /// // Read specific sheet
+  /// final df = await DataFrame.fromExcel(
+  ///   path: 'data.xlsx',
+  ///   sheetName: 'Sales',
+  ///   skipRows: 1,
+  /// );
+  /// ```
+  ///
+  /// See also:
+  /// - [FileReader.readExcel] for more Excel reading options
+  /// - [FileReader.readAllExcelSheets] for reading all sheets
+  /// - [toExcel] for writing DataFrames to Excel files
+  static Future<DataFrame> fromExcel({
+    required String path,
+    String? sheetName,
+    bool hasHeader = true,
+    int? skipRows,
+    int? maxRows,
+    List<String>? columnNames,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileReader.readExcel(
+      path,
+      sheetName: sheetName,
+      hasHeader: hasHeader,
+      skipRows: skipRows,
+      maxRows: maxRows,
+      columnNames: columnNames,
+      options: options,
+    );
+  }
+
+  /// Constructs a DataFrame from an HDF5 file.
+  ///
+  /// This method uses the new [FileReader] infrastructure for HDF5 parsing.
+  ///
+  /// Parameters:
+  /// - `path`: Path to the HDF5 file (.h5, .hdf5).
+  /// - `dataset`: Path to dataset within the file (default: '/data').
+  /// - `options`: Additional HDF5 parsing options.
+  ///
+  /// Returns:
+  /// A `Future<DataFrame>` that completes with the newly created DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Read default dataset
+  /// final df = await DataFrame.fromHDF5(path: 'data.h5');
+  ///
+  /// // Read specific dataset
+  /// final df = await DataFrame.fromHDF5(
+  ///   path: 'data.h5',
+  ///   dataset: '/measurements/temperature',
+  /// );
+  /// ```
+  ///
+  /// See also:
+  /// - [FileReader.readHDF5] for more HDF5 reading options
+  /// - [FileReader.inspectHDF5] for examining file structure
+  static Future<DataFrame> fromHDF5({
+    required String path,
+    String? dataset,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileReader.readHDF5(
+      path,
+      dataset: dataset,
+      options: options,
+    );
+  }
+
+  /// Constructs a DataFrame from a Parquet file.
+  ///
+  /// This method uses the new [FileReader] infrastructure for Parquet parsing.
+  ///
+  /// **Note:** This is a basic implementation. For production use with real
+  /// Parquet files, integrate a proper Parquet library.
+  ///
+  /// Parameters:
+  /// - `path`: Path to the Parquet file (.parquet, .pq).
+  /// - `options`: Additional Parquet parsing options.
+  ///
+  /// Returns:
+  /// A `Future<DataFrame>` that completes with the newly created DataFrame.
+  ///
+  /// Example:
+  /// ```dart
+  /// final df = await DataFrame.fromParquet(path: 'data.parquet');
+  /// ```
+  ///
+  /// See also:
+  /// - [FileReader.readParquet] for more Parquet reading options
+  /// - [toParquet] for writing DataFrames to Parquet files
+  static Future<DataFrame> fromParquet({
+    required String path,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileReader.readParquet(path, options: options);
+  }
+
+  /// Writes the DataFrame to a CSV file.
+  ///
+  /// This method uses the new [FileWriter] infrastructure for robust CSV writing.
+  ///
+  /// Parameters:
+  /// - `path`: Path where the CSV file will be saved.
+  /// - `fieldDelimiter`: Field separator character (default: ',').
+  /// - `textDelimiter`: Text quote character (default: '"').
+  /// - `includeHeader`: Include header row (default: true).
+  /// - `includeIndex`: Include row index column (default: false).
+  /// - `eol`: Line ending character (default: '\n').
+  /// - `options`: Additional CSV writing options.
+  ///
+  /// Returns:
+  /// A `Future<void>` that completes when the file has been written.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Write CSV file
+  /// await df.toCSV(path: 'output.csv');
+  ///
+  /// // Write semicolon-separated file
+  /// await df.toCSV(
+  ///   path: 'output.csv',
+  ///   fieldDelimiter: ';',
+  /// );
+  ///
+  /// // Write with index column
+  /// await df.toCSV(
+  ///   path: 'output.csv',
+  ///   includeIndex: true,
+  /// );
+  /// ```
+  ///
+  /// See also:
+  /// - [FileWriter.writeCsv] for more CSV writing options
+  /// - [fromCSV] for reading CSV files
+  Future<void> toCSV({
+    required String path,
+    String fieldDelimiter = ',',
+    String textDelimiter = '"',
+    bool includeHeader = true,
+    bool includeIndex = false,
+    String? eol,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileWriter.writeCsv(
+      this,
+      path,
+      fieldDelimiter: fieldDelimiter,
+      textDelimiter: textDelimiter,
+      includeHeader: includeHeader,
+      includeIndex: includeIndex,
+      eol: eol,
+      options: options,
+    );
+  }
+
+  /// Writes the DataFrame to an Excel file.
+  ///
+  /// This method uses the new [FileWriter] infrastructure for robust Excel writing.
+  ///
+  /// Parameters:
+  /// - `path`: Path where the Excel file will be saved.
+  /// - `sheetName`: Name of the sheet to create (default: 'Sheet1').
+  /// - `includeHeader`: Include header row (default: true).
+  /// - `includeIndex`: Include row index column (default: false).
+  /// - `options`: Additional Excel writing options.
+  ///
+  /// Returns:
+  /// A `Future<void>` that completes when the file has been written.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Write Excel file
+  /// await df.toExcel(path: 'output.xlsx');
+  ///
+  /// // Write with custom sheet name
+  /// await df.toExcel(
+  ///   path: 'output.xlsx',
+  ///   sheetName: 'MyData',
+  /// );
+  ///
+  /// // Write with index column
+  /// await df.toExcel(
+  ///   path: 'output.xlsx',
+  ///   includeIndex: true,
+  /// );
+  /// ```
+  ///
+  /// See also:
+  /// - [FileWriter.writeExcel] for more Excel writing options
+  /// - [FileWriter.writeExcelSheets] for writing multiple sheets
+  /// - [fromExcel] for reading Excel files
+  Future<void> toExcel({
+    required String path,
+    String sheetName = 'Sheet1',
+    bool includeHeader = true,
+    bool includeIndex = false,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileWriter.writeExcel(
+      this,
+      path,
+      sheetName: sheetName,
+      includeHeader: includeHeader,
+      includeIndex: includeIndex,
+      options: options,
+    );
+  }
+
+  /// Writes the DataFrame to a Parquet file.
+  ///
+  /// This method uses the new [FileWriter] infrastructure for Parquet writing.
+  ///
+  /// **Note:** This is a basic implementation. For production use with real
+  /// Parquet files, integrate a proper Parquet library.
+  ///
+  /// Parameters:
+  /// - `path`: Path where the Parquet file will be saved.
+  /// - `compression`: Compression method (default: 'none').
+  /// - `includeIndex`: Include row index column (default: false).
+  /// - `options`: Additional Parquet writing options.
+  ///
+  /// Returns:
+  /// A `Future<void>` that completes when the file has been written.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Write Parquet file
+  /// await df.toParquet(path: 'output.parquet');
+  ///
+  /// // Write with compression
+  /// await df.toParquet(
+  ///   path: 'output.parquet',
+  ///   compression: 'gzip',
+  /// );
+  /// ```
+  ///
+  /// See also:
+  /// - [FileWriter.writeParquet] for more Parquet writing options
+  /// - [fromParquet] for reading Parquet files
+  Future<void> toParquet({
+    required String path,
+    String compression = 'none',
+    bool includeIndex = false,
+    Map<String, dynamic>? options,
+  }) async {
+    return FileWriter.writeParquet(
+      this,
+      path,
+      compression: compression,
+      includeIndex: includeIndex,
+      options: options,
+    );
   }
 
   /// Export the data to matrix

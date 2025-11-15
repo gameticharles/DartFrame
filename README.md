@@ -102,6 +102,7 @@ For comprehensive documentation on specific classes and their functionalities, p
 - **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
 
 ### I/O Documentation
+- **[CSV & Excel I/O Guide](./doc/csv_excel_io.md)**: Complete guide to reading and writing CSV and Excel files with examples
 - **[HDF5 Reading Guide](./example/README_hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
 
 You can also find additional runnable examples in the `example` directory of the repository.
@@ -187,27 +188,36 @@ print(df.head());
 print(df.describe());
 ```
 
-### Reading HDF5 Files
+### Reading and Writing Files
 
-DartFrame includes built-in support for reading HDF5 files:
+DartFrame supports multiple file formats including CSV, Excel, and HDF5:
 
 ```dart
-// Read a dataset from an HDF5 file
-final df = await FileReader.readHDF5(
-  'data.h5',
-  dataset: '/mydata',
-);
+// CSV Operations
+final dfCsv = await FileReader.readCsv('data.csv');
+await FileWriter.writeCsv(dfCsv, 'output.csv');
 
-// Inspect file structure
-final info = await HDF5Reader.inspect('data.h5');
-print('Available datasets: ${info['datasets']}');
+// Excel Operations
+final dfExcel = await FileReader.readExcel('data.xlsx', sheetName: 'Sheet1');
+await FileWriter.writeExcel(dfExcel, 'output.xlsx', sheetName: 'Results');
 
-// Read attributes (metadata)
-final attrs = await HDF5Reader.readAttributes(
-  'data.h5',
-  dataset: '/mydata',
-);
-print('Units: ${attrs['units']}');
+// Multi-sheet operations
+final allSheets = await FileReader.readAllExcelSheets('workbook.xlsx');
+final salesData = allSheets['Sales'];
+final inventoryData = allSheets['Inventory'];
+
+// Write multiple sheets
+await FileWriter.writeExcelSheets({
+  'Sales': salesData,
+  'Inventory': inventoryData,
+}, 'report.xlsx');
+
+// HDF5 Operations
+final dfHdf5 = await FileReader.readHDF5('data.h5', dataset: '/mydata');
+
+// Auto-detect format by extension
+final df = await FileReader.read('data.csv');
+await FileWriter.write(df, 'output.xlsx');
 ```
 
 For detailed examples and usage, please refer to the documentation in the `doc` folder and the examples in the `example` folder.

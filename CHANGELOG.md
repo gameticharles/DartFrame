@@ -1,145 +1,22 @@
 # 0.8.0
 
-- **[MAJOR FEATURE]** Comprehensive HDF5 (Hierarchical Data Format 5) file reading support
-  - **NEW**: Pure Dart implementation with no FFI dependencies - fully cross-platform compatible (Windows, macOS, Linux, Web, iOS, Android)
-  - **NEW**: `FileReader.readHDF5()` method for reading HDF5 datasets directly into DataFrames
-  - **NEW**: `HDF5Reader` class with inspection and metadata reading capabilities
-  - **NEW**: Support for HDF5 file versions 0, 1, 2, and 3
-  - **NEW**: Compatible with files from Python h5py, MATLAB v7.3, R, and other HDF5 tools
+- **[MAJOR FEATURE]** Enhanced File I/O Support with Web Compatibility
+  - **NEW**: Full CSV support using `csv` package (v6.0.0) - read/write with custom delimiters, headers, encoding
+  - **NEW**: Full Excel support using `excel` package (v4.0.6) - read/write .xlsx/.xls files with multi-sheet operations
+  - **NEW**: Multi-sheet Excel operations - `readAllExcelSheets()` and `writeExcelSheets()` for working with entire workbooks
+  - **NEW**: Platform-agnostic FileIO abstraction - works on desktop, mobile, and web without code changes
+  - **NEW**: Binary file support - `readBytesFromFile()` and `writeBytesToFile()` for Excel and other binary formats
+  - **ENHANCEMENT**: All file readers/writers now use FileIO for cross-platform compatibility
+  - **WEB**: Full web browser support - upload files for processing, download results
+  - Comprehensive documentation with examples for all file formats
 
-- **[FEATURE]** HDF5 Data Type Support - Comprehensive coverage of all major HDF5 datatypes
-  - **NEW**: Numeric types: int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64
-  - **NEW**: String types: fixed-length strings (ASCII and UTF-8)
-  - **NEW**: Variable-length strings with global heap support
-  - **NEW**: Variable-length arrays (vlen) for numeric data with global heap support
-  - **NEW**: Compound types (structs) with multiple fields and nested structures
-  - **NEW**: Array types with multi-dimensional array support
-  - **NEW**: Enum types (enumerated values)
-  - **NEW**: Reference types (object references)
-  - **NEW**: Opaque types with tag information and hex string representation
-  - **NEW**: Bitfield types returning Uint8List for bit manipulation
-  - **NEW**: Boolean arrays with dedicated `readAsBoolean()` method for uint8 → boolean conversion
-  - **NEW**: Time datatype (class 2) with automatic DateTime conversion (rare but fully supported)
-  - **NEW**: Integer timestamp support with `readAsDateTime()` helper method
-    - Auto-detects seconds vs milliseconds since Unix epoch
-    - Supports forced unit specification ('seconds', 'milliseconds', 'auto')
-    - Handles common scientific data timestamp formats
-
-- **[FEATURE]** HDF5 Storage Layouts and Compression
-  - **NEW**: Contiguous storage layout support
-  - **NEW**: Chunked storage with B-tree v1 indexing
-  - **NEW**: Compact storage for small datasets
-  - **NEW**: Gzip (deflate) compression support
-  - **NEW**: LZF compression support
-  - **NEW**: Shuffle filter support for improved compression
-  - **NEW**: Filter pipeline support for multiple compression stages
-
-- **[FEATURE]** HDF5 File Navigation and Structure
-  - **NEW**: Group hierarchy navigation (old-style and new-style symbol tables)
-  - **NEW**: Soft links (symbolic links within HDF5 files)
-  - **NEW**: Hard links (multiple names for same object)
-  - **NEW**: External links (links to objects in other HDF5 files)
-  - **NEW**: Circular link detection for safe navigation
-  - **NEW**: `Hdf5File.open()` for direct file access
-  - **NEW**: `Hdf5File.listAll()` for recursive file structure listing
-  - **NEW**: `Hdf5File.getObjectType()` for determining object types (dataset/group)
-  - **NEW**: `HDF5Reader.inspect()` for file metadata inspection
-  - **NEW**: `HDF5Reader.listDatasets()` for listing available datasets
-
-- **[FEATURE]** HDF5 Attributes and Metadata
-  - **NEW**: Read attributes from datasets and groups
-  - **NEW**: `HDF5Reader.readAttributes()` for accessing dataset metadata
-  - **NEW**: `Dataset.attributes` property for attribute access
-  - **NEW**: `Dataset.getAttribute()` method for specific attribute retrieval
-  - **NEW**: `Dataset.listAttributes()` for listing all attribute names
-  - **NEW**: Support for all attribute data types (strings, numbers, arrays, compounds)
-
-- **[FEATURE]** Multi-dimensional Dataset Support (3D+)
-  - **NEW**: Support for 3D, 4D, 5D, and higher-dimensional datasets
-  - **NEW**: Automatic flattening to 1D with shape preservation
-  - **NEW**: Shape information stored in `_shape` column (e.g., "2x3x4")
-  - **NEW**: Dimension count stored in `_ndim` column
-  - **NEW**: Data stored in row-major (C-style) order for easy reshaping
-  - **NEW**: Complete example with `reshape3D()` and `reshape4D()` helper functions
-  - **NEW**: Full backward compatibility - 1D and 2D datasets work exactly as before
-  - **REMOVED**: Previous limitation that threw errors for 3D+ datasets
-
-- **[FEATURE]** HDF5 Dataset Operations
-  - **NEW**: `Dataset.inspect()` method for dataset metadata without reading data
-  - **NEW**: `Dataset.readSlice()` for reading dataset subsets
-  - **NEW**: `Dataset.readChunked()` stream for processing large datasets in chunks
-  - **NEW**: `Dataset.shape` property for dataset dimensions
-  - **NEW**: Support for dataset slicing with start, end, and step parameters
-
-- **[FEATURE]** HDF5 Error Handling and Diagnostics
-  - **NEW**: Comprehensive error hierarchy with `Hdf5Error` base class
-  - **NEW**: `FileNotFoundError` for missing files
-  - **NEW**: `InvalidHdf5SignatureError` for invalid HDF5 files
-  - **NEW**: `UnsupportedFeatureError` for unsupported HDF5 features
-  - **NEW**: `DatasetNotFoundError` for missing datasets
-  - **NEW**: `GroupNotFoundError` for missing groups
-  - **NEW**: `CorruptedFileError` for file integrity issues
-  - **NEW**: `DataReadError` for data reading failures
-  - **NEW**: `CircularLinkError` for circular link detection
-  - **NEW**: `UnsupportedDatatypeError` for unsupported data types
-  - **NEW**: Debug mode with `HDF5Reader.setDebugMode()` for verbose logging
-  - **NEW**: Detailed error messages with file path, object path, and context
-
-- **[FEATURE]** HDF5 Documentation and Examples
-  - **NEW**: Comprehensive 1200+ line HDF5 guide (`doc/hdf5.md`)
-  - **NEW**: Basic usage examples for common workflows
-  - **NEW**: Advanced examples for complex data types
-  - **NEW**: Troubleshooting guide with common issues and solutions
-  - **NEW**: Performance optimization tips
-  - **NEW**: Complete API reference
-  - **NEW**: Example files in `example/` directory:
-    - `hdf5_basic_reading.dart` - Basic dataset reading
-    - `hdf5_attributes.dart` - Working with attributes
-    - `hdf5_multidimensional.dart` - Multi-dimensional datasets with reshape helpers
-    - `test_chunked_reading.dart` - Chunked dataset reading
-    - `test_compression.dart` - Compressed dataset reading
-    - `test_caching.dart` - Metadata caching and streaming
-  - **NEW**: Python scripts for generating test data in `scripts/` directory
-
-- **[ARCHITECTURE]** HDF5 Implementation Details
-  - Pure Dart implementation with no native dependencies
-  - Efficient binary parsing with `ByteReader` class
-  - Global heap support for variable-length data
-  - B-tree v1 implementation for chunked dataset indexing
-  - Chunk calculator and assembler for efficient chunked data reading
-  - Filter pipeline for decompression and data transformation
-  - Object header parsing for dataset and group metadata
-  - Dataspace parsing for dataset dimensions
-  - Datatype parsing for all HDF5 type classes (0-10)
-  - Symbol table parsing for group navigation
-  - Link message parsing for soft/hard/external links
-
-- **[COMPATIBILITY]** HDF5 File Format Compatibility
-  - HDF5 file format versions 0, 1, 2, 3
-  - Python h5py generated files
-  - MATLAB v7.3 MAT-files (HDF5-based)
-  - R hdf5r package files
-  - C/C++ HDF5 library files
-  - Julia HDF5.jl package files
-  - Files with mixed old-style and new-style groups
-
-- **[TESTING]** Comprehensive HDF5 Test Coverage
-  - Integration tests for multi-dimensional datasets
-  - Tests for all data types (numeric, string, compound, enum, array, vlen, opaque, bitfield, reference, time)
-  - Tests for compression (gzip, lzf, shuffle)
-  - Tests for chunked storage and B-tree indexing
-  - Tests for links (soft, hard, external)
-  - Tests for attributes and metadata
-  - Tests for error handling and edge cases
-  - Python scripts for generating test data
-
-- **[PERFORMANCE]** HDF5 Performance Optimizations
-  - Efficient binary parsing with minimal allocations
-  - Lazy loading of dataset data
-  - Metadata caching for repeated access
-  - Chunked reading for large datasets
-  - Stream-based processing for memory efficiency
-  - Global heap caching to avoid re-reading
+- **[MAJOR FEATURE]** HDF5 File Support - Pure Dart implementation
+  - **NEW**: Read HDF5 datasets with `FileReader.readHDF5()` - compatible with Python h5py, MATLAB v7.3, R
+  - **NEW**: All major datatypes supported (numeric, strings, compounds, arrays, enums, variable-length, timestamps)
+  - **NEW**: Multi-dimensional datasets (3D+) with automatic flattening and shape preservation
+  - **NEW**: Compression support (gzip, lzf, shuffle filter) and chunked storage with B-tree indexing
+  - **NEW**: Group navigation, attributes, metadata, and dataset slicing
+  - **NEW**: Cross-platform compatible (Windows, macOS, Linux, Web, iOS, Android) - no FFI dependencies
 
 # 0.7.0
 

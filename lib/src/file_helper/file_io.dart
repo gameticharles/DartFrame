@@ -19,14 +19,14 @@ abstract class FileIOBase {
   /// Example usage (desktop):
   /// ```
   /// var fileIO = FileIO();
-  /// fileIO.saveToFile("/path/to/file.txt", "This is some content.");
+  /// await fileIO.saveToFile("/path/to/file.txt", "This is some content.");
   /// ```
   /// Example usage (web):
   /// ```
   /// var fileIO = FileIO();
-  /// fileIO.saveToFile("This is some content.", "file.txt");
+  /// await fileIO.saveToFile("This is some content.", "file.txt");
   /// ```
-  void saveToFile(String pathOrData, String dataOrFileName);
+  Future<void> saveToFile(String pathOrData, String dataOrFileName);
 
   /// Reads the content from a file.
   ///
@@ -77,4 +77,56 @@ abstract class FileIOBase {
   /// sink.close();
   /// ```
   dynamic writeFileAsStream(dynamic pathOrData);
+
+  /// Reads bytes from a file.
+  ///
+  /// This method returns a `Future<List<int>>` which completes with the bytes of the file.
+  /// Useful for reading binary files like Excel, images, etc.
+  ///
+  /// Example usage (desktop):
+  /// ```
+  /// var fileIO = FileIO();
+  /// var bytes = await fileIO.readBytesFromFile("/path/to/file.xlsx");
+  /// ```
+  Future<List<int>> readBytesFromFile(dynamic pathOrUploadInput);
+
+  /// Writes bytes to a file.
+  ///
+  /// This method writes binary data to a file.
+  /// Useful for writing binary files like Excel, images, etc.
+  ///
+  /// Example usage (desktop):
+  /// ```
+  /// var fileIO = FileIO();
+  /// await fileIO.writeBytesToFile("/path/to/file.xlsx", bytes);
+  /// ```
+  Future<void> writeBytesToFile(String path, List<int> bytes);
+
+  /// Checks if a file exists.
+  ///
+  /// Returns true if the file exists, false otherwise.
+  /// On web, this always returns false as file system access is not available.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// if (await fileIO.fileExists("/path/to/file.txt")) {
+  ///   print("File exists");
+  /// }
+  /// ```
+  Future<bool> fileExists(String path);
+
+  /// Deletes a file at the specified path.
+  ///
+  /// Returns true if the file was successfully deleted, false otherwise.
+  /// On web, this is a no-op and always returns false.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// if (await fileIO.deleteFile("/path/to/file.txt")) {
+  ///   print("File deleted");
+  /// }
+  /// ```
+  Future<bool> deleteFile(String path);
 }
