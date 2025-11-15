@@ -521,8 +521,7 @@ class GroupBy {
 
   /// Apply an aggregation function to a list of values.
   dynamic _applyAggFunc(List<dynamic> values, String func) {
-    var numericValues =
-        values.whereType<num>().map((v) => v as num).toList();
+    var numericValues = values.whereType<num>().map((v) => v).toList();
 
     switch (func) {
       case 'sum':

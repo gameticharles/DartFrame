@@ -1,3 +1,81 @@
+# 0.8.3
+
+- **[MAJOR FEATURE]** Comprehensive String Operations Extension
+  - **NEW**: Pattern extraction methods - `str.extract()`, `str.extractall()`, `str.findall()` for regex-based text processing
+  - **NEW**: String padding and justification - `str.pad()`, `str.center()`, `str.ljust()`, `str.rjust()`, `str.zfill()` for text alignment
+  - **NEW**: String slicing and manipulation - `str.slice()`, `str.get()` for advanced substring operations
+  - **NEW**: String concatenation and repetition - `str.cat()`, `str.repeat()` for text composition
+  - **NEW**: String type checking methods - `str.isalnum()`, `str.isalpha()`, `str.isdigit()`, `str.isspace()`, `str.islower()`, `str.isupper()`, `str.istitle()`, `str.isnumeric()`, `str.isdecimal()` for character validation
+  - **COMPATIBILITY**: Pandas-like string accessor API for familiar text operations
+
+- **[MAJOR FEATURE]** Enhanced Categorical Data Operations
+  - **NEW**: `cat.reorderCategories()` - Reorder category levels with ordering control
+  - **NEW**: `cat.addCategories()` - Add new categories to existing categorical data
+  - **NEW**: `cat.removeCategories()` - Remove unused categories with validation
+  - **NEW**: `cat.renameCategories()` - Rename categories using mapping dictionaries
+  - **NEW**: `cat.setCategories()` - Set categories with recode and rename modes
+  - **NEW**: `cat.asOrdered()` / `cat.asUnordered()` - Convert between ordered and unordered categorical types
+  - **NEW**: `cat.min()` / `cat.max()` - Min/max operations for ordered categories
+  - **NEW**: `cat.memoryUsage()` - Memory usage analysis and optimization metrics for categorical storage
+  - **ENHANCEMENT**: All categorical operations integrated with CategoricalAccessor interface
+
+- **[FEATURE]** DataFrame Duplicate Handling and Selection Methods
+  - **NEW**: `duplicated()` - Identify duplicate rows with configurable subset and keep options
+  - **NEW**: `dropDuplicates()` - Remove duplicate rows from DataFrame
+  - **NEW**: `nlargest()` - Select N rows with largest values in specified column
+  - **NEW**: `nsmallest()` - Select N rows with smallest values in specified column
+
+- **[FEATURE]** Functional Programming Extensions
+  - **NEW**: `apply()` - Apply function along axis (rows or columns) with flexible operation support
+  - **NEW**: `applymap()` - Element-wise function application across entire DataFrame
+  - **NEW**: `agg()` - Aggregate with multiple functions simultaneously for complex aggregations
+  - **NEW**: `transform()` - Transform values while preserving DataFrame structure
+  - **NEW**: `pipe()` - Apply chainable functions for method composition
+
+- **[MAJOR FEATURE]** GroupBy Enhancements with Advanced Operations
+  - **NEW**: `GroupBy` class providing chainable API for grouped operations
+  - **NEW**: `groupBy2()` - Returns GroupBy object for method chaining and advanced groupby workflows
+  - **NEW**: Transform operations - `transform()`, `transformMean()`, `transformSum()` for group-wise transformations
+  - **NEW**: Filter operations - `filter()` method for group-wise filtering based on conditions
+  - **NEW**: Cumulative operations - `cumsum()`, `cumprod()`, `cummax()`, `cummin()` for cumulative calculations within groups
+  - **NEW**: Row selection - `nth()`, `head()`, `tail()` for selecting specific rows within groups
+  - **NEW**: `NamedAgg` class for named aggregations with multiple function support
+  - **NEW**: `pipe()` for method chaining and custom group operations
+  - **ARCHITECTURE**: Seamless integration with existing groupBy functionality
+
+- **[MAJOR FEATURE]** Advanced Time Series Operations (12 new methods)
+  - **NEW**: Shift operations - `shift()`, `lag()`, `lead()` for time series data alignment
+  - **NEW**: Time index operations - `tshift()` for shifting by time period, `asfreq()` for frequency conversion
+  - **NEW**: Time-based filtering - `atTime()`, `betweenTime()` for time window selection, `first()`, `last()` for period endpoints
+  - **NEW**: Timezone operations - `tzLocalize()` for adding timezone info, `tzConvert()` for timezone conversion, `tzNaive()` for removing timezone
+  - **COMPATIBILITY**: Pandas-like API for seamless time series workflows
+
+- **[FEATURE]** Enhanced Resampling Operations
+  - **NEW**: `resampleOHLC()` - Open, High, Low, Close resampling for OHLC data aggregation
+  - **NEW**: `resampleNunique()` - Count unique values per resampling period
+  - **NEW**: `resampleWithOffset()` - Resampling with custom time offset support
+  - **ENHANCEMENT**: Advanced time series data transformations with period-based aggregation
+
+- **[FEATURE]** Advanced Data Slicing Methods (6 new methods)
+  - **NEW**: `slice()` - Flexible slicing with step parameter support
+  - **NEW**: `sliceByLabel()` - Label-based range slicing for index-based selection
+  - **NEW**: `sliceByPosition()` - Combined position and range slicing operations
+  - **NEW**: `sliceByLabelWithStep()` - Label-based slicing with step increments
+  - **NEW**: `everyNthRow()` / `everyNthColumn()` - Convenience methods for sampling every nth element
+  - **NEW**: `reverseRows()` / `reverseColumns()` - Row and column reversal operations
+
+- **[FEATURE]** Expression Evaluation and Querying
+  - **NEW**: `eval()` - Evaluate string expressions for computed columns and values
+  - **NEW**: `query()` - Query DataFrame using intuitive string expressions with variable binding
+  - **ENHANCEMENT**: Chainable expression evaluation for complex data transformations
+
+- **[FEATURE]** MultiIndex and Advanced Indexing Support
+  - **NEW**: `MultiIndex` - Hierarchical indexing for multi-level row/column structures
+  - **NEW**: `DatetimeIndex` - Timezone-aware datetime indexing with frequency support
+  - **NEW**: `TimedeltaIndex` - Time difference indexing for duration-based operations
+  - **NEW**: `PeriodIndex` - Time period indexing for period-based time series
+  - **ARCHITECTURE**: Native support for multi-dimensional hierarchical data structures
+
 # 0.8.2
 
 - **[FIX]** Code fix
