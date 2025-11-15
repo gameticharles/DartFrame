@@ -1,3 +1,9 @@
+# 0.8.2
+
+- **[FIX]** Code fix
+- **[Fixed]** Doc Strings.
+- **[IMPROVEMENT]** Improved dart format.
+
 # 0.8.1
 
 - **[FIX]** Code fix

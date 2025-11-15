@@ -31,7 +31,7 @@ Future<void> main(List<String> args) async {
   //'test/fixtures/chunked_string_compound_test.h5'
   // 'example/data/hdf5_test.h5'
   // 'example/data/test_compressed.h5'
-  //
+  // 'example/data/processdata.h5'
   final filePath = args.isNotEmpty ? args[0] : 'example/data/hdf5_test.h5';
 
   print('╔═══════════════════════════════════════════════════════════╗');
@@ -120,7 +120,10 @@ class UniversalHDF5Reader {
     print('   Version: ${sb.version}');
     print('   Offset Size: ${sb.offsetSize} bytes');
     print('   Length Size: ${sb.lengthSize} bytes');
-    print('   HDF5 Start Offset: ${sb.hdf5StartOffset}');
+    print('   HDF5 start offset: ${sb.hdf5StartOffset}');
+    print(
+        '   Root group address: 0x${sb.rootGroupObjectHeaderAddress.toRadixString(16)}');
+
     if (sb.freeSpaceVersion != 0 ||
         sb.rootGroupVersion != 0 ||
         sb.sharedHeaderVersion != 0) {
