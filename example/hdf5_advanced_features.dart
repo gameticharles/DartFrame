@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// HDF5 Advanced Features Examples
@@ -35,7 +34,7 @@ Future<void> example1CompressedData() async {
 
   final filePath = 'example/data/test_compressed.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('Compressed test file not found: $filePath');
     print('Note: Create using create_compressed_hdf5.py\n');
     return;
@@ -82,7 +81,7 @@ Future<void> example2ChunkedData() async {
 
   final filePath = 'example/data/test_chunked.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('Chunked test file not found: $filePath');
     print('Note: Create using create_chunked_hdf5.py\n');
     return;
@@ -131,7 +130,7 @@ Future<void> example3DebugMode() async {
 
   final filePath = 'example/data/test1.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('Test file not found: $filePath\n');
     return;
   }
@@ -169,7 +168,7 @@ Future<void> example4MatlabFiles() async {
 
   final filePath = 'example/data/processdata.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('MATLAB test file not found: $filePath');
     print('');
     print('DartFrame can read MATLAB v7.3 MAT-files:');

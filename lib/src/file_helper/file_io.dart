@@ -116,6 +116,20 @@ abstract class FileIOBase {
   /// ```
   Future<bool> fileExists(String path);
 
+  /// Checks if a file exists synchronously.
+  ///
+  /// Returns true if the file exists, false otherwise.
+  /// On web, this always returns false as file system access is not available.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// if (fileIO.fileExistsSync("/path/to/file.txt")) {
+  ///   print("File exists");
+  /// }
+  /// ```
+  bool fileExistsSync(String path);
+
   /// Deletes a file at the specified path.
   ///
   /// Returns true if the file was successfully deleted, false otherwise.

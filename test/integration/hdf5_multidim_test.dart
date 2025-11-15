@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
 
@@ -9,7 +8,7 @@ void main() {
       // Create one with Python first if needed
       final testFile = 'test_data/test_3d.h5';
 
-      if (!File(testFile).existsSync()) {
+      if (!FileIO().fileExistsSync(testFile)) {
         print('Skipping test - $testFile not found');
         print('Create with: python3 scripts/create_multidim_test_data.py');
         return;
@@ -40,7 +39,7 @@ void main() {
     test('Read 4D dataset with shape information', () async {
       final testFile = 'test_data/test_4d.h5';
 
-      if (!File(testFile).existsSync()) {
+      if (!FileIO().fileExistsSync(testFile)) {
         print('Skipping test - $testFile not found');
         print('Create with: python3 scripts/create_multidim_test_data.py');
         return;
@@ -67,14 +66,14 @@ void main() {
       final testFile1D = 'test_data/test_1d.h5';
       final testFile2D = 'test_data/test_2d.h5';
 
-      if (File(testFile1D).existsSync()) {
+      if (FileIO().fileExistsSync(testFile1D)) {
         final df1d = await FileReader.readHDF5(testFile1D, dataset: '/data');
         expect(df1d.columns.contains('data'), isTrue);
         // 1D datasets should not have shape columns
         expect(df1d.columns.contains('_shape'), isFalse);
       }
 
-      if (File(testFile2D).existsSync()) {
+      if (FileIO().fileExistsSync(testFile2D)) {
         final df2d = await FileReader.readHDF5(testFile2D, dataset: '/data');
         expect(df2d.columns.length, greaterThan(1));
         // 2D datasets should not have shape columns

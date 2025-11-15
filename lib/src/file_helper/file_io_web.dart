@@ -140,6 +140,12 @@ class FileIO implements FileIOBase {
   }
 
   @override
+  bool fileExistsSync(String path) {
+    // File system access is not available in web environments
+    return false;
+  }
+
+  @override
   Future<bool> deleteFile(String path) async {
     // File deletion is not supported in web environments
     // (files are downloaded to user's system, not stored by the app)

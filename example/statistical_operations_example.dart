@@ -157,11 +157,23 @@ void main() async {
   final rollingStd = rolling.std();
 
   print('3-Month Rolling Average:');
-  print(rollingMean[['Month', 'Sales', 'Profit']]);
+  // Select specific columns from rolling mean result
+  final rollingMeanSubset = DataFrame.fromMap({
+    'Month': salesData['Month'].data,
+    'Sales_MA': rollingMean['Sales'].data,
+    'Profit_MA': rollingMean['Profit'].data,
+  });
+  print(rollingMeanSubset);
   print('');
 
   print('3-Month Rolling Standard Deviation:');
-  print(rollingStd[['Month', 'Sales', 'Profit']]);
+  // Select specific columns from rolling std result
+  final rollingStdSubset = DataFrame.fromMap({
+    'Month': salesData['Month'].data,
+    'Sales_Std': rollingStd['Sales'].data,
+    'Profit_Std': rollingStd['Profit'].data,
+  });
+  print(rollingStdSubset);
   print('');
 
   // 5. Groupby Operations with Advanced Statistics
@@ -194,12 +206,39 @@ void main() async {
   print('6. CUMULATIVE STATISTICS');
   print('=' * 40);
 
-  salesData['CumSales'] = salesData['Sales'].cumsum();
-  salesData['CumProfit'] = salesData['Profit'].cumsum();
-  salesData['RunningAvgSales'] = salesData['Sales'].expanding().mean();
+  // Calculate cumulative sums manually
+  final salesData6 = salesData['Sales'].data.cast<num>();
+  final profitData6 = salesData['Profit'].data.cast<num>();
+
+  final cumSales = <num>[];
+  final cumProfit = <num>[];
+  final runningAvgSales = <double>[];
+
+  num salesSum = 0;
+  num profitSum = 0;
+
+  for (int i = 0; i < salesData6.length; i++) {
+    salesSum += salesData6[i];
+    profitSum += profitData6[i];
+    cumSales.add(salesSum);
+    cumProfit.add(profitSum);
+    runningAvgSales.add(salesSum / (i + 1));
+  }
+
+  salesData['CumSales'] = Series(cumSales, name: 'CumSales');
+  salesData['CumProfit'] = Series(cumProfit, name: 'CumProfit');
+  salesData['RunningAvgSales'] =
+      Series(runningAvgSales, name: 'RunningAvgSales');
 
   print('Cumulative and Running Statistics:');
-  print(salesData[['Month', 'Sales', 'CumSales', 'RunningAvgSales']]);
+  // Select specific columns for display
+  final cumStatsSubset = DataFrame.fromMap({
+    'Month': salesData['Month'].data,
+    'Sales': salesData['Sales'].data,
+    'CumSales': salesData['CumSales'].data,
+    'RunningAvgSales': salesData['RunningAvgSales'].data,
+  });
+  print(cumStatsSubset);
   print('');
 
   // 7. Percentile Analysis
@@ -258,7 +297,12 @@ void main() async {
 
   if (outliers.rowCount > 0) {
     print('Outliers detected:');
-    print(outliers[['Month', 'Sales']]);
+    // Select specific columns for display
+    final outliersSubset = DataFrame.fromMap({
+      'Month': outliers['Month'].data,
+      'Sales': outliers['Sales'].data,
+    });
+    print(outliersSubset);
   } else {
     print('No outliers detected in sales data');
   }
@@ -281,11 +325,17 @@ void main() async {
   salesData['MoM_Growth'] = Series(momGrowth, name: 'MoM_Growth');
 
   print('Month-over-Month Growth Analysis:');
-  print(salesData[['Month', 'Sales', 'MoM_Growth']]);
+  // Select specific columns for display
+  final growthSubset = DataFrame.fromMap({
+    'Month': salesData['Month'].data,
+    'Sales': salesData['Sales'].data,
+    'MoM_Growth': salesData['MoM_Growth'].data,
+  });
+  print(growthSubset);
   print('');
 
   print('Growth Statistics:');
-  final growthSeries = salesData['MoM_Growth'];
+  final growthSeries = salesData['MoM_Growth'] as Series;
   print('Average Growth: ${growthSeries.mean().toStringAsFixed(2)}%');
   print('Growth Std Dev: ${growthSeries.std().toStringAsFixed(2)}%');
   print('Max Growth: ${growthSeries.max().toStringAsFixed(2)}%');

@@ -18,8 +18,7 @@ void main() async {
   ];
 
   for (final filePath in testFiles) {
-    final file = File(filePath);
-    if (!file.existsSync()) {
+    if (!FileIO().fileExistsSync(filePath)) {
       print('\nSkipping $filePath (file not found)');
       continue;
     }

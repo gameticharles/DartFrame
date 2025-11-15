@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// HDF5 Attribute Reading Examples
@@ -31,12 +30,6 @@ Future<void> example1BasicAttributes() async {
   print('-' * 50);
 
   final filePath = 'example/data/test_attributes.h5';
-
-  if (!File(filePath).existsSync()) {
-    print('File not found: $filePath');
-    print('Note: Create test file with attributes using Python h5py\n');
-    return;
-  }
 
   try {
     // Read attributes from a dataset
@@ -81,7 +74,7 @@ Future<void> example2AttributeMetadata() async {
   // Example of how you might use attributes
   final filePath = 'example/data/test_attributes.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('Example file not found. Here\'s how you would use attributes:\n');
     print('```dart');
     print(
@@ -132,7 +125,7 @@ Future<void> example3MissingAttributes() async {
   ];
 
   for (final filePath in testFiles) {
-    if (!File(filePath).existsSync()) {
+    if (!FileIO().fileExistsSync(filePath)) {
       continue;
     }
 

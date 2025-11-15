@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// Example demonstrating how to export HDF5 structure to JSON
@@ -19,10 +18,10 @@ void main() async {
   final jsonString = encoder.convert(structure);
 
   // Save to file
-  final outputFile = File('example/data/structure.json');
-  await outputFile.writeAsString(jsonString);
+  final outputFile = 'example/data/structure.json';
+  await FileIO().saveToFile(outputFile, jsonString);
 
-  print('File structure exported to: ${outputFile.path}');
+  print('File structure exported to: $outputFile');
   print('Total objects: ${structure.length}');
 
   // Show a sample of the JSON

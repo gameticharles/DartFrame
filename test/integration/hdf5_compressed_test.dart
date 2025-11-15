@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
 
@@ -16,7 +15,7 @@ void main() {
     final testFile = 'example/data/test_compressed.h5';
 
     setUp(() {
-      if (!File(testFile).existsSync()) {
+      if (!FileIO().fileExistsSync(testFile)) {
         throw StateError(
           'Test file not found: $testFile\n'
           'Run: python create_compressed_hdf5.py',

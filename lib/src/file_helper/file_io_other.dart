@@ -81,6 +81,12 @@ class FileIO implements FileIOBase {
   }
 
   @override
+  bool fileExistsSync(String path) {
+    var file = File(path);
+    return file.existsSync();
+  }
+
+  @override
   Future<bool> deleteFile(String path) async {
     try {
       var file = File(path);

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// HDF5 Group Navigation Examples
@@ -32,7 +31,7 @@ Future<void> example1InspectFile() async {
 
   final filePath = 'example/data/test1.h5';
 
-  if (!File(filePath).existsSync()) {
+  if (!FileIO().fileExistsSync(filePath)) {
     print('File not found: $filePath\n');
     return;
   }
@@ -66,7 +65,7 @@ Future<void> example2ListDatasets() async {
   ];
 
   for (final filePath in testFiles) {
-    if (!File(filePath).existsSync()) {
+    if (!FileIO().fileExistsSync(filePath)) {
       print('$filePath: Not found');
       continue;
     }
@@ -108,7 +107,7 @@ Future<void> example3NestedDatasets() async {
   for (final testCase in testCases) {
     final (description, filePath, datasetPath) = testCase;
 
-    if (!File(filePath).existsSync()) {
+    if (!FileIO().fileExistsSync(filePath)) {
       print('$description: File not found');
       continue;
     }

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// Basic HDF5 Reading Examples
@@ -36,7 +35,7 @@ Future<void> example1BasicReading() async {
     // The dataset parameter specifies the path to the dataset within the file
     final df = await FileReader.readHDF5(
       'example/data/test1.h5',
-      dataset: '/data', // Path to dataset in HDF5 file
+      dataset: '/Unnamed', // Path to dataset in HDF5 file
     );
 
     print('Successfully read dataset!');
@@ -98,7 +97,7 @@ Future<void> example3DataTypes() async {
   for (final testCase in testCases) {
     final (description, filePath, dataset) = testCase;
 
-    if (!File(filePath).existsSync()) {
+    if (!FileIO().fileExistsSync(filePath)) {
       print('$description: File not found, skipping');
       continue;
     }

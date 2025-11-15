@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dartframe/dartframe.dart';
 
 /// Example demonstrating metadata caching and streaming features
@@ -7,11 +6,11 @@ Future<void> main() async {
   // Use test_chunked.h5 as it has good data for demonstrating caching
   final testFile = 'example/data/test_chunked.h5';
 
-  if (!await File(testFile).exists()) {
+  if (!FileIO().fileExistsSync(testFile)) {
     print('Test file not found: $testFile');
     print('Trying alternative file...');
     final altFile = 'example/data/test_simple.h5';
-    if (await File(altFile).exists()) {
+    if (FileIO().fileExistsSync(altFile)) {
       print('Using $altFile instead\n');
       return _runDemo(altFile);
     }

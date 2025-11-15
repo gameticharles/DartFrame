@@ -38,6 +38,12 @@ class FileIO implements FileIOBase {
   }
 
   @override
+  bool fileExistsSync(String path) {
+    throw UnsupportedError(
+        'Cannot check file existence without dart:io or dart:html.');
+  }
+
+  @override
   Future<bool> deleteFile(String path) {
     throw UnsupportedError(
         'Cannot delete a file without dart:io or dart:html.');
