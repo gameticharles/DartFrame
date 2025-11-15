@@ -502,4 +502,133 @@ class Group {
 
     return info;
   }
+
+  /// Inspect internal HDF5 structures used by this group (for debugging)
+  ///
+  /// Returns a map containing internal structure information:
+  /// - `linkInfo`: LinkInfo message data (if present)
+  /// - `fractalHeap`: FractalHeap information (if used for links)
+  /// - `btreeV2`: B-Tree V2 information (if used for indexing)
+  /// - `symbolTable`: Symbol table information (for old-style groups)
+  ///
+  /// This is primarily useful for debugging, understanding HDF5 file structure,
+  /// or implementing advanced HDF5 features.
+  ///
+  /// Example:
+  /// ```dart
+  /// final internal = await group.inspectInternalStructures(reader);
+  /// if (internal.containsKey('fractalHeap')) {
+  ///   print('Fractal Heap: ${internal['fractalHeap']}');
+  /// }
+  /// ```
+  Future<Map<String, dynamic>> inspectInternalStructures(
+      ByteReader reader) async {
+    final info = <String, dynamic>{};
+
+    // Check for LinkInfo (new-style groups)
+    final linkInfoMsg = header.messages.firstWhere(
+      (m) => m.type == msgTypeLinkInfo,
+      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+    );
+
+    if (linkInfoMsg.data != null) {
+      final linkInfo = linkInfoMsg.data as LinkInfo;
+      info['linkInfo'] = {
+        'version': linkInfo.version,
+        'maximumCreationIndex': linkInfo.maximumCreationIndex,
+        'fractalHeapAddress':
+            '0x${linkInfo.fractalHeapAddress.toRadixString(16)}',
+        'v2BtreeAddress': '0x${linkInfo.v2BtreeAddress.toRadixString(16)}',
+      };
+
+      // Read FractalHeap if present
+      if (linkInfo.fractalHeapAddress != 0) {
+        try {
+          final adjustedHeapAddress = linkInfo.fractalHeapAddress + _hdf5Offset;
+          final heap = await FractalHeap.read(reader, adjustedHeapAddress);
+          info['fractalHeap'] = {
+            'address': '0x${heap.address.toRadixString(16)}',
+            'version': heap.version,
+            'heapIdLength': heap.heapIdLength,
+            'maxHeapSize': heap.maxHeapSize,
+            'startingBlockSize': heap.startingBlockSize,
+            'maxDirectBlockSize': heap.maxDirectBlockSize,
+            'tableWidth': heap.tableWidth,
+            'startingNumRows': heap.startingNumRows,
+            'currentNumRows': heap.currentNumRows,
+            'rootBlockAddress': '0x${heap.rootBlockAddress.toRadixString(16)}',
+            // Flags
+            'idWrapped': heap.idWrapped,
+            'directBlocksChecksummed': heap.directBlocksChecksummed,
+            // Object counts
+            'numManagedObjectsInHeap': heap.numManagedObjectsInHeap,
+            'numHugeObjectsInHeap': heap.numHugeObjectsInHeap,
+            'numTinyObjectsInHeap': heap.numTinyObjectsInHeap,
+            // Size tracking
+            'maxSizeOfManagedObjects': heap.maxSizeOfManagedObjects,
+            'sizeOfHugeObjectsInHeap': heap.sizeOfHugeObjectsInHeap,
+            'sizeOfTinyObjectsInHeap': heap.sizeOfTinyObjectsInHeap,
+            // Space management
+            'amountOfFreeSpaceInManagedBlocks':
+                heap.amountOfFreeSpaceInManagedBlocks,
+            'amountOfManagedSpaceInHeap': heap.amountOfManagedSpaceInHeap,
+            'amountOfAllocatedManagedSpaceInHeap':
+                heap.amountOfAllocatedManagedSpaceInHeap,
+            // Advanced
+            'nextHugeObjectId': heap.nextHugeObjectId,
+            'offsetOfDirectBlockAllocationIterator':
+                heap.offsetOfDirectBlockAllocationIterator,
+            'btreeAddressOfHugeObjects':
+                '0x${heap.btreeAddressOfHugeObjects.toRadixString(16)}',
+            'addressOfManagedBlockFreeSpaceManager':
+                '0x${heap.addressOfManagedBlockFreeSpaceManager.toRadixString(16)}',
+          };
+        } catch (e) {
+          info['fractalHeapError'] = e.toString();
+        }
+      }
+
+      // Read BTreeV2 if present
+      if (linkInfo.v2BtreeAddress != 0) {
+        try {
+          final adjustedBtreeAddress = linkInfo.v2BtreeAddress + _hdf5Offset;
+          final btree = await BTreeV2.read(reader, adjustedBtreeAddress);
+          info['btreeV2'] = {
+            'address': '0x${btree.address.toRadixString(16)}',
+            'version': btree.version,
+            'type': btree.type,
+            'nodeSize': btree.nodeSize,
+            'recordSize': btree.recordSize,
+            'depth': btree.depth,
+            'rootNodeAddress': '0x${btree.rootNodeAddress.toRadixString(16)}',
+            'numRecordsInRoot': btree.numRecordsInRoot,
+            // Split/merge thresholds
+            'splitPercent': btree.splitPercent,
+            'mergePercent': btree.mergePercent,
+            // Total records
+            'totalNumRecords': btree.totalNumRecords,
+          };
+        } catch (e) {
+          info['btreeV2Error'] = e.toString();
+        }
+      }
+    }
+
+    // Check for SymbolTable (old-style groups)
+    final symbolTableMsg = header.messages.firstWhere(
+      (m) => m.type == msgTypeSymbolTable,
+      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+    );
+
+    if (symbolTableMsg.data != null) {
+      final symbolTable = symbolTableMsg.data as SymbolTableMessage;
+      info['symbolTable'] = {
+        'btreeAddress': '0x${symbolTable.btreeAddress.toRadixString(16)}',
+        'localHeapAddress':
+            '0x${symbolTable.localHeapAddress.toRadixString(16)}',
+      };
+    }
+
+    return info;
+  }
 }

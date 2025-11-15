@@ -167,6 +167,22 @@ class Hdf5File {
   /// ```
   Group get root => _rootGroup;
 
+  /// Gets the superblock containing file metadata
+  ///
+  /// The superblock contains important file-level information including:
+  /// - HDF5 version information
+  /// - Offset and length sizes
+  /// - File addresses and structure
+  /// - Version numbers for various components
+  ///
+  /// Example:
+  /// ```dart
+  /// final file = await Hdf5File.open('data.h5');
+  /// print('HDF5 Version: ${file.superblock.version}');
+  /// print('Offset Size: ${file.superblock.offsetSize} bytes');
+  /// ```
+  Superblock get superblock => _superblock;
+
   /// Gets a dataset by its path in the HDF5 file
   ///
   /// Navigates through the file hierarchy to find and return the specified dataset.
@@ -1399,7 +1415,7 @@ class Hdf5File {
     // Adjust address by HDF5 start offset
     final adjustedAddress = address + _superblock.hdf5StartOffset;
 
-    // TODO: Parse region selection information from remaining bytes
+    // TO DO: Parse region selection information from remaining bytes
     // This would include hyperslab selection, point selection, etc.
 
     return {

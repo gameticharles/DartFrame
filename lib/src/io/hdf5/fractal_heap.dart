@@ -15,6 +15,33 @@ class FractalHeap {
   final int rootBlockAddress;
   final int currentNumRows;
 
+  // Flags
+  final bool idWrapped;
+  final bool directBlocksChecksummed;
+
+  // Object management
+  final int maxSizeOfManagedObjects;
+  final int numManagedObjectsInHeap;
+  final int numHugeObjectsInHeap;
+  final int numTinyObjectsInHeap;
+
+  // Huge object tracking
+  final int nextHugeObjectId;
+  final int sizeOfHugeObjectsInHeap;
+
+  // Tiny object tracking
+  final int sizeOfTinyObjectsInHeap;
+
+  // Space management
+  final int amountOfFreeSpaceInManagedBlocks;
+  final int amountOfManagedSpaceInHeap;
+  final int amountOfAllocatedManagedSpaceInHeap;
+  final int offsetOfDirectBlockAllocationIterator;
+
+  // Addresses for advanced features
+  final int btreeAddressOfHugeObjects;
+  final int addressOfManagedBlockFreeSpaceManager;
+
   // Cached data
   final Map<int, List<int>> _objectCache = {};
 
@@ -29,6 +56,21 @@ class FractalHeap {
     required this.startingNumRows,
     required this.rootBlockAddress,
     required this.currentNumRows,
+    required this.idWrapped,
+    required this.directBlocksChecksummed,
+    required this.maxSizeOfManagedObjects,
+    required this.numManagedObjectsInHeap,
+    required this.numHugeObjectsInHeap,
+    required this.numTinyObjectsInHeap,
+    required this.nextHugeObjectId,
+    required this.sizeOfHugeObjectsInHeap,
+    required this.sizeOfTinyObjectsInHeap,
+    required this.amountOfFreeSpaceInManagedBlocks,
+    required this.amountOfManagedSpaceInHeap,
+    required this.amountOfAllocatedManagedSpaceInHeap,
+    required this.offsetOfDirectBlockAllocationIterator,
+    required this.btreeAddressOfHugeObjects,
+    required this.addressOfManagedBlockFreeSpaceManager,
   });
 
   /// Reads a fractal heap header
@@ -115,6 +157,25 @@ class FractalHeap {
       startingNumRows: startingNumRows,
       rootBlockAddress: rootBlockAddress.toInt(),
       currentNumRows: currentNumRows,
+      idWrapped: idWrapped,
+      directBlocksChecksummed: directBlocksChecksummed,
+      maxSizeOfManagedObjects: maxSizeOfManagedObjects,
+      numManagedObjectsInHeap: numManagedObjectsInHeap.toInt(),
+      numHugeObjectsInHeap: numHugeObjectsInHeap.toInt(),
+      numTinyObjectsInHeap: numTinyObjectsInHeap.toInt(),
+      nextHugeObjectId: nextHugeObjectId.toInt(),
+      sizeOfHugeObjectsInHeap: sizeOfHugeObjectsInHeap.toInt(),
+      sizeOfTinyObjectsInHeap: sizeOfTinyObjectsInHeap.toInt(),
+      amountOfFreeSpaceInManagedBlocks:
+          amountOfFreeSpaceInManagedBlocks.toInt(),
+      amountOfManagedSpaceInHeap: amountOfManagedSpaceInHeap.toInt(),
+      amountOfAllocatedManagedSpaceInHeap:
+          amountOfAllocatedManagedSpaceInHeap.toInt(),
+      offsetOfDirectBlockAllocationIterator:
+          offsetOfDirectBlockAllocationIterator.toInt(),
+      btreeAddressOfHugeObjects: btreeAddressOfHugeObjects.toInt(),
+      addressOfManagedBlockFreeSpaceManager:
+          addressOfManagedBlockFreeSpaceManager.toInt(),
     );
   }
 
@@ -206,6 +267,10 @@ class FractalHeap {
 
     // Skip checksum
     await reader.readUint32();
+
+    hdf5DebugLog('Direct block: version=$blockVersion, '
+        'heapHeaderAddress=0x${heapHeaderAddress.toRadixString(16)}, '
+        'blockOffset=$blockOffset');
 
     // Calculate object position in block
     // The offset in the heap ID is relative to the start of the heap data

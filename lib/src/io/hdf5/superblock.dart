@@ -20,6 +20,17 @@ class Superblock {
   final int
       hdf5StartOffset; // Offset where HDF5 data starts (e.g., 512 for MATLAB)
 
+  // Version information
+  final int freeSpaceVersion;
+  final int rootGroupVersion;
+  final int sharedHeaderVersion;
+
+  // Additional addresses (version 0/1 only)
+  final int? freeSpaceInfoAddress;
+  final int? driverInfoBlockAddress;
+  final int? rootGroupSymbolTableAddress;
+  final int? rootGroupCacheType;
+
   Superblock({
     required this.version,
     required this.offsetSize,
@@ -33,6 +44,13 @@ class Superblock {
     required this.endOfFileAddress,
     required this.rootGroupObjectHeaderAddress,
     required this.hdf5StartOffset,
+    required this.freeSpaceVersion,
+    required this.rootGroupVersion,
+    required this.sharedHeaderVersion,
+    this.freeSpaceInfoAddress,
+    this.driverInfoBlockAddress,
+    this.rootGroupSymbolTableAddress,
+    this.rootGroupCacheType,
   });
 
   static Future<Superblock> read(ByteReader reader, {String? filePath}) async {
@@ -93,11 +111,27 @@ class Superblock {
     if (version == 0 || version == 1) {
       hdf5DebugLog('Reading superblock version $version');
       return await _readVersion0(
-          reader, offsetSize, lengthSize, version, validOffset, filePath);
+          reader,
+          offsetSize,
+          lengthSize,
+          version,
+          validOffset,
+          filePath,
+          freeSpaceVersion,
+          rootGroupVersion,
+          sharedHeaderVersion);
     } else if (version == 2 || version == 3) {
       hdf5DebugLog('Reading superblock version $version');
       return await _readVersion2(
-          reader, offsetSize, lengthSize, version, validOffset, filePath);
+          reader,
+          offsetSize,
+          lengthSize,
+          version,
+          validOffset,
+          filePath,
+          freeSpaceVersion,
+          rootGroupVersion,
+          sharedHeaderVersion);
     } else {
       throw UnsupportedVersionError(
         filePath: filePath,
@@ -114,6 +148,9 @@ class Superblock {
     int version,
     int hdf5StartOffset,
     String? filePath,
+    int freeSpaceVersion,
+    int rootGroupVersion,
+    int sharedHeaderVersion,
   ) async {
     final groupLeafNodeK = await reader.readUint16();
     final groupInternalNodeK = await reader.readUint16();
@@ -153,6 +190,13 @@ class Superblock {
       endOfFileAddress: endOfFileAddress,
       rootGroupObjectHeaderAddress: rootGroupObjectHeaderAddress,
       hdf5StartOffset: hdf5StartOffset,
+      freeSpaceVersion: freeSpaceVersion,
+      rootGroupVersion: rootGroupVersion,
+      sharedHeaderVersion: sharedHeaderVersion,
+      freeSpaceInfoAddress: freeSpaceInfoAddress,
+      driverInfoBlockAddress: driverInfoBlockAddress,
+      rootGroupSymbolTableAddress: rootGroupSymbolTableAddress,
+      rootGroupCacheType: rootGroupCacheType,
     );
   }
 
@@ -163,6 +207,9 @@ class Superblock {
     int version,
     int hdf5StartOffset,
     String? filePath,
+    int freeSpaceVersion,
+    int rootGroupVersion,
+    int sharedHeaderVersion,
   ) async {
     reader.seek(12);
 
@@ -197,6 +244,14 @@ class Superblock {
       endOfFileAddress: endOfFileAddress,
       rootGroupObjectHeaderAddress: rootGroupObjectHeaderAddress,
       hdf5StartOffset: hdf5StartOffset,
+      freeSpaceVersion: freeSpaceVersion,
+      rootGroupVersion: rootGroupVersion,
+      sharedHeaderVersion: sharedHeaderVersion,
+      // Version 2/3 doesn't have these fields
+      freeSpaceInfoAddress: null,
+      driverInfoBlockAddress: null,
+      rootGroupSymbolTableAddress: null,
+      rootGroupCacheType: null,
     );
   }
 

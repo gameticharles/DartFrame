@@ -126,7 +126,7 @@ class Dataset<T> {
       throw DataReadError(
         filePath: filePath,
         objectPath: objectPath,
-        reason: 'Failed to read dataset data',
+        reason: 'Failed to read dataset data: ${e.toString()}',
         originalError: e,
       );
     }
@@ -254,7 +254,6 @@ class Dataset<T> {
     if (datatype.isEnum &&
         datatype.enumInfo != null &&
         datatype.baseType != null) {
-      final enumInfo = datatype.enumInfo!;
       final baseType = datatype.baseType!;
 
       // Read the underlying integer value
@@ -594,7 +593,7 @@ class Dataset<T> {
         if (elementSize == 4) {
           final testFloat = await reader.readFloat32();
           reader.seek(testPos);
-          final testInt = await reader.readInt32();
+          await reader.readInt32();
           reader.seek(testPos);
 
           // If the float value is reasonable and different from the int value,
@@ -678,7 +677,6 @@ class Dataset<T> {
     if (fieldType.isEnum &&
         fieldType.enumInfo != null &&
         fieldType.baseType != null) {
-      final enumInfo = fieldType.enumInfo!;
       final baseType = fieldType.baseType!;
 
       int value;
@@ -705,6 +703,28 @@ class Dataset<T> {
 
       // Return just the integer value for enum fields in compounds
       return value;
+    }
+
+    // Handle nested compound fields (class=6)
+    if (fieldType.isCompound && fieldType.compoundInfo != null) {
+      final compoundInfo = fieldType.compoundInfo!;
+      final nestedRecord = <String, dynamic>{};
+
+      for (final nestedField in compoundInfo.fields) {
+        // Seek to the correct position for this nested field
+        final fieldPosition =
+            reader.position - fieldType.size + nestedField.offset;
+        reader.seek(fieldPosition);
+
+        // Recursively read the nested field value
+        final fieldValue = await _readFieldValue(reader, nestedField.datatype);
+        nestedRecord[nestedField.name] = fieldValue;
+      }
+
+      // Seek past the entire nested compound
+      reader.seek(reader.position - fieldType.size + fieldType.size);
+
+      return nestedRecord;
     }
 
     // Handle numeric fields
@@ -918,7 +938,7 @@ class Dataset<T> {
     }
 
     // For now, read the entire dataset and slice it
-    // TODO: Optimize for chunked datasets to only read necessary chunks
+    // To be worked: Optimize for chunked datasets to only read necessary chunks
     final allData = await readData(reader);
 
     return _sliceData(allData, normalizedStart, normalizedEnd, normalizedStep);

@@ -12,6 +12,13 @@ class BTreeV2 {
   final int rootNodeAddress;
   final int numRecordsInRoot;
 
+  // Split/merge thresholds (as percentages)
+  final int splitPercent;
+  final int mergePercent;
+
+  // Total number of records in the entire tree
+  final int totalNumRecords;
+
   BTreeV2({
     required this.address,
     required this.version,
@@ -21,6 +28,9 @@ class BTreeV2 {
     required this.depth,
     required this.rootNodeAddress,
     required this.numRecordsInRoot,
+    required this.splitPercent,
+    required this.mergePercent,
+    required this.totalNumRecords,
   });
 
   /// Reads a V2 B-tree header
@@ -65,7 +75,7 @@ class BTreeV2 {
 
     hdf5DebugLog('V2 B-tree: type=$type, depth=$depth, '
         'rootNodeAddress=0x${rootNodeAddress.toRadixString(16)}, '
-        'numRecordsInRoot=$numRecordsInRoot');
+        'numRecordsInRoot=$numRecordsInRoot, totalNumRecords=$totalNumRecords');
 
     return BTreeV2(
       address: address,
@@ -76,6 +86,9 @@ class BTreeV2 {
       depth: depth,
       rootNodeAddress: rootNodeAddress.toInt(),
       numRecordsInRoot: numRecordsInRoot,
+      splitPercent: splitPercent,
+      mergePercent: mergePercent,
+      totalNumRecords: totalNumRecords.toInt(),
     );
   }
 
@@ -116,8 +129,10 @@ class BTreeV2 {
         );
       }
 
-      final version = await reader.readUint8();
-      final type = await reader.readUint8();
+      final nodeVersion = await reader.readUint8();
+      final nodeType = await reader.readUint8();
+
+      hdf5DebugLog('Leaf node: version=$nodeVersion, type=$nodeType');
 
       // Read records
       // For type 5 (link name index), each record is:
@@ -142,8 +157,10 @@ class BTreeV2 {
         );
       }
 
-      final version = await reader.readUint8();
-      final type = await reader.readUint8();
+      final nodeVersion = await reader.readUint8();
+      final nodeType = await reader.readUint8();
+
+      hdf5DebugLog('Internal node: version=$nodeVersion, type=$nodeType');
 
       // Read child pointers and recursively process
       // This is simplified - full implementation would read all records and child pointers

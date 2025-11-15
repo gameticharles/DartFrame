@@ -70,6 +70,8 @@ class Hdf5Datatype<T> {
   final ReferenceInfo? referenceInfo;
   final String? tag; // Opaque type identifier
   final Hdf5Datatype? baseType; // For array/vlen types
+  final int?
+      filePosition; // Position in file where this datatype was read (for debugging)
 
   Hdf5Datatype({
     required this.dataclass,
@@ -82,6 +84,7 @@ class Hdf5Datatype<T> {
     this.referenceInfo,
     this.tag,
     this.baseType,
+    this.filePosition,
   });
 
   // Predefined atomic types
@@ -138,7 +141,8 @@ class Hdf5Datatype<T> {
     // Version 0 is a legacy format that's similar to version 1
     // We'll treat it as version 1 for simplicity
     if (version > 3) {
-      throw Exception('Unsupported datatype version: $version. '
+      throw Exception(
+          'Unsupported datatype version: $version at position $startPos. '
           'Only versions 0-3 are supported.');
     }
 
@@ -197,6 +201,7 @@ class Hdf5Datatype<T> {
         dataclass: dataclass,
         size: size,
         endian: endian,
+        filePosition: startPos,
         stringInfo: StringInfo(
           paddingType: paddingType,
           characterSet: characterSet,
@@ -208,7 +213,8 @@ class Hdf5Datatype<T> {
     // Handle compound datatypes
     if (classId == 6) {
       return await _readCompoundType(
-          reader, version, classBitField1, classBitField2, size, endian);
+          reader, version, classBitField1, classBitField2, size, endian,
+          startPos: startPos);
     }
 
     // Handle variable-length datatypes
@@ -218,24 +224,28 @@ class Hdf5Datatype<T> {
         dataclass: dataclass,
         size: size,
         endian: endian,
+        filePosition: startPos,
         baseType: baseType,
       );
     }
 
     // Handle array datatypes
     if (classId == 10) {
-      return await _readArrayType(reader, version, size, endian);
+      return await _readArrayType(reader, version, size, endian,
+          startPos: startPos);
     }
 
     // Handle enum datatypes
     if (classId == 8) {
       return await _readEnumType(
-          reader, version, classBitField1, classBitField2, size, endian);
+          reader, version, classBitField1, classBitField2, size, endian,
+          startPos: startPos);
     }
 
     // Handle reference datatypes
     if (classId == 7) {
-      return await _readReferenceType(reader, classBitField1, size, endian);
+      return await _readReferenceType(reader, classBitField1, size, endian,
+          startPos: startPos);
     }
 
     // Handle opaque datatypes
@@ -250,6 +260,7 @@ class Hdf5Datatype<T> {
         dataclass: dataclass,
         size: size,
         endian: endian,
+        filePosition: startPos,
         tag: tag,
       );
     }
@@ -259,6 +270,7 @@ class Hdf5Datatype<T> {
       dataclass: dataclass,
       size: size,
       endian: endian,
+      filePosition: startPos,
     );
   }
 
@@ -268,8 +280,9 @@ class Hdf5Datatype<T> {
     int classBitField1,
     int classBitField2,
     int size,
-    Endian endian,
-  ) async {
+    Endian endian, {
+    int? startPos,
+  }) async {
     // Number of members encoded differently by version
     int numMembers;
     if (version < 3) {
@@ -328,6 +341,7 @@ class Hdf5Datatype<T> {
       dataclass: Hdf5DatatypeClass.compound,
       size: size, // Use actual size from message, not calculated
       endian: endian,
+      filePosition: startPos,
       compoundInfo: CompoundInfo(fields: fields),
     );
   }
@@ -336,8 +350,9 @@ class Hdf5Datatype<T> {
     ByteReader reader,
     int version,
     int size,
-    Endian endian,
-  ) async {
+    Endian endian, {
+    int? startPos,
+  }) async {
     // Array datatype structure (version 1 and later)
     // Version 1: dimensionality (1 byte), reserved (3 bytes), dimension sizes (4 bytes each), permutation, base type
     // Version 2: dimensionality (1 byte), reserved (3 bytes), dimension sizes (4 bytes each), base type
@@ -363,6 +378,7 @@ class Hdf5Datatype<T> {
         dataclass: Hdf5DatatypeClass.array,
         size: size,
         endian: endian,
+        filePosition: startPos,
         baseType: baseType,
         arrayInfo: ArrayInfo(dimensions: dimensions),
       );
@@ -383,6 +399,7 @@ class Hdf5Datatype<T> {
         dataclass: Hdf5DatatypeClass.array,
         size: size,
         endian: endian,
+        filePosition: startPos,
         baseType: baseType,
         arrayInfo: ArrayInfo(dimensions: dimensions),
       );
@@ -397,8 +414,9 @@ class Hdf5Datatype<T> {
     int classBitField1,
     int classBitField2,
     int size,
-    Endian endian,
-  ) async {
+    Endian endian, {
+    int? startPos,
+  }) async {
     // Enum datatype structure:
     // - Number of members (2 bytes)
     // - Base datatype (integer type)
@@ -467,6 +485,7 @@ class Hdf5Datatype<T> {
       dataclass: Hdf5DatatypeClass.enumType,
       size: size,
       endian: endian,
+      filePosition: startPos,
       baseType: baseType,
       enumInfo: EnumInfo(members: members),
     );
@@ -476,8 +495,9 @@ class Hdf5Datatype<T> {
     ByteReader reader,
     int classBitField1,
     int size,
-    Endian endian,
-  ) async {
+    Endian endian, {
+    int? startPos,
+  }) async {
     // Reference datatype structure:
     // classBitField1 contains the reference type
     // 0 = object reference
@@ -498,6 +518,7 @@ class Hdf5Datatype<T> {
       dataclass: Hdf5DatatypeClass.reference,
       size: size,
       endian: endian,
+      filePosition: startPos,
       referenceInfo: ReferenceInfo(type: refType),
     );
   }
