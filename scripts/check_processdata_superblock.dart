@@ -1,16 +1,15 @@
-import 'dart:io';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/superblock.dart';
+import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('🔬 Checking processdata.h5 superblock\n');
 
-  final file = File('example/data/processdata.h5');
-  final raf = await file.open();
+  final fileIO = FileIO();
+  final filePath = 'example/data/processdata.h5';
+  final raf = await fileIO.openRandomAccess(filePath);
   final reader = ByteReader(raf);
 
   try {
-    final superblock = await Superblock.read(reader, filePath: file.path);
+    final superblock = await Superblock.read(reader, filePath: filePath);
 
     print('📋 Superblock Information:');
     print('   Version: ${superblock.version}');

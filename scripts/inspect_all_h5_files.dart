@@ -1,5 +1,4 @@
-import 'dart:io';
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
+import 'package:dartframe/dartframe.dart';
 
 /// Recursively print the structure of a group
 Future<void> printGroupStructure(
@@ -97,7 +96,7 @@ void main() async {
   var failCount = 0;
 
   for (final filePath in h5Files) {
-    if (await File(filePath).exists()) {
+    if (await FileIO().fileExists(filePath)) {
       try {
         await inspectFile(filePath);
         successCount++;

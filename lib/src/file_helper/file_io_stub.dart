@@ -48,4 +48,21 @@ class FileIO implements FileIOBase {
     throw UnsupportedError(
         'Cannot delete a file without dart:io or dart:html.');
   }
+
+  @override
+  Future<RandomAccessFileBase> openRandomAccess(dynamic pathOrUploadInput) {
+    throw UnsupportedError(
+        'Cannot open file for random access without dart:io or dart:html.');
+  }
+
+  @override
+  String getParentPath(String path) {
+    throw UnsupportedError(
+        'Cannot get parent path without dart:io or dart:html.');
+  }
+
+  @override
+  String resolvePath(String basePath, String relativePath) {
+    throw UnsupportedError('Cannot resolve path without dart:io or dart:html.');
+  }
 }

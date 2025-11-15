@@ -10,7 +10,7 @@ documentation: "https://github.com/gameticharles/DartFrame/blob/main/doc/datafra
 
 # Add regular dependencies here.
 dependencies:
-  archive: ^3.6.1
+  archive: ^4.0.7
   intl: ^0.20.2
   web: ^1.1.1
   r_tree: ^3.0.1

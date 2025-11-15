@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:typed_data';
+import '../../file_helper/file_io.dart';
 import 'superblock.dart';
 import 'byte_reader.dart';
 import 'group.dart';
@@ -10,14 +10,17 @@ import 'metadata_cache.dart';
 
 /// HDF5 file reader with pure Dart implementation
 class Hdf5File {
-  final File _file;
-  late final RandomAccessFile _raf;
+  final String _filePath;
+  late final RandomAccessFileBase _raf;
   late final Superblock _superblock;
   late final Group _rootGroup;
   late final MetadataCache _cache;
   final Map<String, Hdf5File> _externalFiles = {}; // Cache for external files
 
-  Hdf5File._(this._file);
+  // Static FileIO instance - shared across all Hdf5File instances
+  static final FileIO _fileIO = FileIO();
+
+  Hdf5File._(this._filePath);
 
   /// Opens an HDF5 file for reading
   ///
@@ -25,7 +28,9 @@ class Hdf5File {
   /// The file must exist and be a valid HDF5 file.
   ///
   /// Parameters:
-  /// - [path]: Path to the HDF5 file to open
+  /// - [pathOrData]: On desktop, pass the file path as a String.
+  ///                 On web, pass HTMLInputElement or Uint8List containing the file data.
+  /// - [fileName]: Optional file name for error messages (used mainly on web, defaults to pathOrData if String)
   ///
   /// Returns a [Hdf5File] instance that can be used to read datasets and groups.
   ///
@@ -34,32 +39,63 @@ class Hdf5File {
   /// - [UnsupportedVersionError] if the HDF5 version is not supported
   /// - [CorruptedFileError] if the file is corrupted or invalid
   ///
-  /// Example:
+  /// Example (desktop):
   /// ```dart
   /// final file = await Hdf5File.open('data.h5');
   /// // ... use the file
   /// await file.close();
   /// ```
-  static Future<Hdf5File> open(String path) async {
-    hdf5DebugLog('Opening HDF5 file: $path');
+  ///
+  /// Example (web with file input):
+  /// ```dart
+  /// final inputElement = document.querySelector('#fileInput') as HTMLInputElement;
+  /// final file = await Hdf5File.open(inputElement, fileName: 'data.h5');
+  /// // ... use the file
+  /// await file.close();
+  /// ```
+  ///
+  /// Example (web with bytes):
+  /// ```dart
+  /// final bytes = Uint8List(...);
+  /// final file = await Hdf5File.open(bytes, fileName: 'data.h5');
+  /// // ... use the file
+  /// await file.close();
+  /// ```
+  static Future<Hdf5File> open(
+    dynamic pathOrData, {
+    String? fileName,
+  }) async {
+    // Determine the file name for logging and error messages
+    final String effectiveFileName;
+    final bool isFilePath = pathOrData is String;
 
-    final file = File(path);
-    if (!await file.exists()) {
+    if (fileName != null) {
+      effectiveFileName = fileName;
+    } else if (isFilePath) {
+      effectiveFileName = pathOrData;
+    } else {
+      effectiveFileName = 'uploaded_file.h5';
+    }
+
+    hdf5DebugLog('Opening HDF5 file: $effectiveFileName');
+
+    // Check if file exists (only for file paths on desktop)
+    if (isFilePath && !await _fileIO.fileExists(pathOrData)) {
       throw FileAccessError(
-        filePath: path,
+        filePath: effectiveFileName,
         reason: 'File not found',
       );
     }
 
-    final hdf5File = Hdf5File._(file);
+    final hdf5File = Hdf5File._(effectiveFileName);
     try {
-      await hdf5File._initialize();
+      await hdf5File._initialize(pathOrData);
     } catch (e) {
       if (e is Hdf5Error) {
         rethrow;
       }
       throw FileAccessError(
-        filePath: path,
+        filePath: effectiveFileName,
         reason: 'Failed to open file',
         originalError: e,
       );
@@ -67,16 +103,15 @@ class Hdf5File {
     return hdf5File;
   }
 
-  Future<void> _initialize() async {
-    _raf = await _file.open();
+  Future<void> _initialize(dynamic pathOrUploadInput) async {
+    _raf = await _fileIO.openRandomAccess(pathOrUploadInput);
     final reader = ByteReader(_raf);
-    final filePath = _file.path;
 
     // Initialize metadata cache
     _cache = MetadataCache();
 
     try {
-      _superblock = await Superblock.read(reader, filePath: filePath);
+      _superblock = await Superblock.read(reader, filePath: _filePath);
       _cache.cacheSuperblock(_superblock);
 
       // Adjust addresses by HDF5 start offset (e.g., 512 for MATLAB files)
@@ -86,7 +121,7 @@ class Hdf5File {
       hdf5DebugLog(
           'Reading root group at address 0x${rootAddress.toRadixString(16)}');
       _rootGroup = await Group.read(reader, rootAddress,
-          hdf5Offset: _superblock.hdf5StartOffset, filePath: filePath);
+          hdf5Offset: _superblock.hdf5StartOffset, filePath: _filePath);
       _cache.cacheRootGroup(_rootGroup);
     } catch (e) {
       await _raf.close();
@@ -159,7 +194,7 @@ class Hdf5File {
   /// ```
   Future<Dataset> dataset(String path) async {
     hdf5DebugLog('Accessing dataset: $path');
-    final filePath = _file.path;
+    final filePath = _filePath;
 
     if (path == '/') {
       throw NotADatasetError(
@@ -242,7 +277,7 @@ class Hdf5File {
     String currentPath,
     Set<String> visitedLinks,
   ) async {
-    final filePath = _file.path;
+    final filePath = _filePath;
     final fullPath =
         currentPath == '/' ? '/$childName' : '$currentPath/$childName';
 
@@ -321,7 +356,7 @@ class Hdf5File {
       // Relative path - resolve relative to current location
       if (currentPath == null) {
         throw UnsupportedFeatureError(
-          filePath: _file.path,
+          filePath: _filePath,
           feature: 'Relative soft links without context',
           details: 'Relative path: $targetPath',
         );
@@ -376,7 +411,7 @@ class Hdf5File {
     // Check for circular links
     if (visitedLinks.contains(fullPath)) {
       throw CircularLinkError(
-        filePath: _file.path,
+        filePath: _filePath,
         linkPath: fullPath,
         visitedPaths: visitedLinks.toList(),
       );
@@ -410,7 +445,7 @@ class Hdf5File {
         return targetGroup.getChildAddress(targetParts.last);
       } else {
         throw UnsupportedFeatureError(
-          filePath: _file.path,
+          filePath: _filePath,
           feature: 'Relative soft links',
           details: 'Relative path: $targetPath',
         );
@@ -426,7 +461,7 @@ class Hdf5File {
       // For datasets in external files, we need to get the address from the external file
       // This is more complex, so for now we'll throw an error with a better message
       throw UnsupportedFeatureError(
-        filePath: _file.path,
+        filePath: _filePath,
         feature: 'External links to datasets',
         details:
             'External link to ${link.externalFilePath}:${link.externalObjectPath}. '
@@ -446,13 +481,12 @@ class Hdf5File {
     Set<String> visitedLinks,
   ) async {
     // Resolve external file path relative to current file
-    final currentDir = _file.parent.path;
-    final externalFile = File('$currentDir/$externalFilePath');
+    final resolvedPath = _fileIO.resolvePath(_filePath, externalFilePath);
 
-    if (!await externalFile.exists()) {
-      // Try absolute path
-      final absoluteFile = File(externalFilePath);
-      if (!await absoluteFile.exists()) {
+    // Check if file exists
+    if (!await _fileIO.fileExists(resolvedPath)) {
+      // Try the path as-is (might be absolute)
+      if (!await _fileIO.fileExists(externalFilePath)) {
         throw FileAccessError(
           filePath: externalFilePath,
           reason: 'External file not found',
@@ -460,14 +494,18 @@ class Hdf5File {
       }
     }
 
+    // Use the resolved path or original if it exists
+    final finalPath = await _fileIO.fileExists(resolvedPath)
+        ? resolvedPath
+        : externalFilePath;
+
     // Check if we already have this file open
-    final externalPath = externalFile.path;
-    if (!_externalFiles.containsKey(externalPath)) {
-      hdf5DebugLog('Opening external file: $externalPath');
-      _externalFiles[externalPath] = await Hdf5File.open(externalPath);
+    if (!_externalFiles.containsKey(finalPath)) {
+      hdf5DebugLog('Opening external file: $finalPath');
+      _externalFiles[finalPath] = await Hdf5File.open(finalPath);
     }
 
-    final extFile = _externalFiles[externalPath]!;
+    final extFile = _externalFiles[finalPath]!;
 
     // Navigate to the target object in the external file
     return await extFile.group(externalObjectPath);
@@ -598,7 +636,7 @@ class Hdf5File {
   /// ```
   Future<String> getObjectType(String path) async {
     hdf5DebugLog('Getting object type for: $path');
-    final filePath = _file.path;
+    final filePath = _filePath;
 
     if (path == '/') return 'group';
 
@@ -1280,7 +1318,7 @@ class Hdf5File {
       List<int> referenceData) async {
     if (referenceData.length < 8) {
       throw UnsupportedFeatureError(
-        filePath: _file.path,
+        filePath: _filePath,
         feature: 'Object reference resolution',
         details: 'Reference data too short: ${referenceData.length} bytes',
       );
@@ -1297,7 +1335,7 @@ class Hdf5File {
     // Read the object header to determine type
     final reader = ByteReader(_raf);
     final header = await ObjectHeader.read(reader, adjustedAddress,
-        filePath: _file.path, hdf5Offset: _superblock.hdf5StartOffset);
+        filePath: _filePath, hdf5Offset: _superblock.hdf5StartOffset);
     final objectType = header.determineObjectType();
 
     String typeString;
@@ -1346,7 +1384,7 @@ class Hdf5File {
       List<int> referenceData) async {
     if (referenceData.length < 8) {
       throw UnsupportedFeatureError(
-        filePath: _file.path,
+        filePath: _filePath,
         feature: 'Region reference resolution',
         details: 'Reference data too short: ${referenceData.length} bytes',
       );
@@ -1403,15 +1441,15 @@ class Hdf5File {
 
     if (type == 'dataset') {
       return await Dataset.read(reader, address,
-          filePath: _file.path,
+          filePath: _filePath,
           offsetSize: _superblock.offsetSize,
           hdf5Offset: _superblock.hdf5StartOffset);
     } else if (type == 'group') {
       return await Group.read(reader, address,
-          hdf5Offset: _superblock.hdf5StartOffset, filePath: _file.path);
+          hdf5Offset: _superblock.hdf5StartOffset, filePath: _filePath);
     } else {
       throw UnsupportedFeatureError(
-        filePath: _file.path,
+        filePath: _filePath,
         feature: 'Reading referenced object of type: $type',
       );
     }

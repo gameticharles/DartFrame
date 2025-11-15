@@ -100,4 +100,59 @@ class FileIO implements FileIOBase {
       return false;
     }
   }
+
+  @override
+  Future<RandomAccessFileBase> openRandomAccess(dynamic path) async {
+    var file = File(path);
+    var raf = await file.open();
+    return _RandomAccessFileWrapper(raf);
+  }
+
+  @override
+  String getParentPath(String path) {
+    var file = File(path);
+    return file.parent.path;
+  }
+
+  @override
+  String resolvePath(String basePath, String relativePath) {
+    // Use dart:io's path resolution
+    var baseDir = File(basePath).parent;
+    var resolved = File('${baseDir.path}/$relativePath');
+    return resolved.path;
+  }
+}
+
+/// Wrapper for dart:io RandomAccessFile to implement RandomAccessFileBase
+class _RandomAccessFileWrapper implements RandomAccessFileBase {
+  final RandomAccessFile _raf;
+  int _position = 0;
+
+  _RandomAccessFileWrapper(this._raf);
+
+  @override
+  int get position => _position;
+
+  @override
+  Future<void> setPosition(int position) async {
+    await _raf.setPosition(position);
+    _position = position;
+  }
+
+  @override
+  Future<List<int>> read(int bytes) async {
+    final data = await _raf.read(bytes);
+    _position += data.length;
+    return data;
+  }
+
+  @override
+  Future<int> length() async {
+    return await _raf.length();
+  }
+
+  @override
+  Future<void> close() async {
+    await _raf.close();
+  }
 }

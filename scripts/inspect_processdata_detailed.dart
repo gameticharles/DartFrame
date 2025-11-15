@@ -1,19 +1,17 @@
-import 'dart:io';
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/object_header.dart';
+import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('═' * 80);
   print('🔬 Detailed Inspection: example/data/processdata.h5');
   print('═' * 80);
 
-  final file = File('example/data/processdata.h5');
-  final raf = await file.open();
+  final fileIO = FileIO();
+  final filePath = 'example/data/processdata.h5';
+  final raf = await fileIO.openRandomAccess(filePath);
   final reader = ByteReader(raf);
 
   try {
-    final hdf5File = await Hdf5File.open('example/data/processdata.h5');
+    final hdf5File = await Hdf5File.open(filePath);
 
     try {
       final rootChildren = hdf5File.list('/');
@@ -38,7 +36,7 @@ void main() async {
         try {
           // Read object header
           final header =
-              await ObjectHeader.read(reader, address, filePath: file.path);
+              await ObjectHeader.read(reader, address, filePath: filePath);
 
           print('📋 Object Header:');
           print('   Version: ${header.version}');

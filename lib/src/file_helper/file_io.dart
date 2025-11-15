@@ -4,6 +4,29 @@ export 'file_io_stub.dart'
     if (dart.library.js_interop) 'file_io_web.dart'
     if (dart.library.io) 'file_io_other.dart';
 
+/// Abstract interface for random access file operations
+///
+/// Provides platform-independent random access to file data.
+/// On desktop platforms, this wraps dart:io's RandomAccessFile.
+/// On web platforms, this operates on in-memory Uint8List data.
+abstract class RandomAccessFileBase {
+  /// Gets the current position in the file
+  int get position;
+
+  /// Sets the byte position in the file
+  Future<void> setPosition(int position);
+
+  /// Reads up to [bytes] bytes from the current position
+  /// Returns the actual bytes read (may be less than requested at EOF)
+  Future<List<int>> read(int bytes);
+
+  /// Gets the length of the file in bytes
+  Future<int> length();
+
+  /// Closes the file and releases resources
+  Future<void> close();
+}
+
 /// A class to provide file input/output operations.
 ///
 /// Implementations of this class should provide means
@@ -143,4 +166,51 @@ abstract class FileIOBase {
   /// }
   /// ```
   Future<bool> deleteFile(String path);
+
+  /// Opens a file for random access reading.
+  ///
+  /// On desktop, this opens the file using dart:io's RandomAccessFile.
+  /// On web, this loads the entire file into memory and provides random access to it.
+  ///
+  /// Parameters:
+  /// - [pathOrUploadInput]: On desktop, pass the file path as a String.
+  ///                        On web, pass the HTMLInputElement or Uint8List data.
+  ///
+  /// Returns a RandomAccessFileBase implementation for the platform.
+  ///
+  /// Example usage (desktop):
+  /// ```
+  /// var fileIO = FileIO();
+  /// var raf = await fileIO.openRandomAccess("/path/to/file.dat");
+  /// await raf.setPosition(100);
+  /// var bytes = await raf.read(50);
+  /// await raf.close();
+  /// ```
+  Future<RandomAccessFileBase> openRandomAccess(dynamic pathOrUploadInput);
+
+  /// Gets the parent directory path of a file.
+  ///
+  /// On desktop, returns the actual parent directory path.
+  /// On web, returns an empty string (no file system concept).
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// var parentPath = fileIO.getParentPath("/path/to/file.txt");
+  /// // Returns: "/path/to"
+  /// ```
+  String getParentPath(String path);
+
+  /// Resolves a relative path against a base path.
+  ///
+  /// On desktop, properly resolves relative paths using file system semantics.
+  /// On web, performs simple string-based path resolution.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// var resolved = fileIO.resolvePath("/base/path", "../other/file.txt");
+  /// // Returns: "/base/other/file.txt"
+  /// ```
+  String resolvePath(String basePath, String relativePath);
 }

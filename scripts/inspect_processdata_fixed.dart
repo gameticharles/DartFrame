@@ -1,21 +1,18 @@
-import 'dart:io';
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/object_header.dart';
-import 'package:dartframe/src/io/hdf5/superblock.dart';
+import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('═' * 80);
   print('🔬 Detailed Inspection: example/data/processdata.h5');
   print('═' * 80);
 
-  final file = File('example/data/processdata.h5');
-  final raf = await file.open();
+  final fileIO = FileIO();
+  final filePath = 'example/data/processdata.h5';
+  final raf = await fileIO.openRandomAccess(filePath);
   final reader = ByteReader(raf);
 
   try {
     // Read superblock to get offset
-    final superblock = await Superblock.read(reader, filePath: file.path);
+    final superblock = await Superblock.read(reader, filePath: filePath);
     final hdf5Offset = superblock.hdf5StartOffset;
 
     print('\n📋 File Information:');
@@ -23,7 +20,7 @@ void main() async {
     print('   Superblock version: ${superblock.version}');
     print('   Offset size: ${superblock.offsetSize} bytes\n');
 
-    final hdf5File = await Hdf5File.open('example/data/processdata.h5');
+    final hdf5File = await Hdf5File.open(filePath);
 
     try {
       final rootChildren = hdf5File.list('/');
@@ -50,7 +47,7 @@ void main() async {
         try {
           // Read object header with adjusted address
           final header = await ObjectHeader.read(reader, adjustedAddress,
-              filePath: file.path);
+              filePath: filePath);
 
           print('\n📋 Object Header:');
           print('   Version: ${header.version}');

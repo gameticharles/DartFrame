@@ -151,4 +151,95 @@ class FileIO implements FileIOBase {
     // (files are downloaded to user's system, not stored by the app)
     return false;
   }
+
+  @override
+  Future<RandomAccessFileBase> openRandomAccess(dynamic uploadInput) async {
+    Uint8List bytes;
+
+    if (uploadInput is Uint8List) {
+      // Already have the bytes
+      bytes = uploadInput;
+    } else if (uploadInput is HTMLInputElement) {
+      // Read from file input
+      bytes = Uint8List.fromList(await readBytesFromFile(uploadInput));
+    } else {
+      throw ArgumentError(
+          'On web, openRandomAccess requires HTMLInputElement or Uint8List');
+    }
+
+    return _InMemoryRandomAccessFile(bytes);
+  }
+
+  @override
+  String getParentPath(String path) {
+    // On web, there's no real file system, so we do simple string manipulation
+    final lastSlash = path.lastIndexOf('/');
+    if (lastSlash > 0) {
+      return path.substring(0, lastSlash);
+    }
+    return '';
+  }
+
+  @override
+  String resolvePath(String basePath, String relativePath) {
+    // Simple path resolution for web (no real file system)
+    final baseDir = getParentPath(basePath);
+    if (baseDir.isEmpty) {
+      return relativePath;
+    }
+
+    // Handle relative path components
+    final parts = relativePath.split('/');
+    final baseParts = baseDir.split('/').where((p) => p.isNotEmpty).toList();
+
+    for (final part in parts) {
+      if (part == '..') {
+        if (baseParts.isNotEmpty) {
+          baseParts.removeLast();
+        }
+      } else if (part != '.' && part.isNotEmpty) {
+        baseParts.add(part);
+      }
+    }
+
+    return baseParts.isEmpty ? '' : '/${baseParts.join('/')}';
+  }
+}
+
+/// In-memory implementation of RandomAccessFileBase for web platform
+class _InMemoryRandomAccessFile implements RandomAccessFileBase {
+  final Uint8List _bytes;
+  int _position = 0;
+
+  _InMemoryRandomAccessFile(this._bytes);
+
+  @override
+  int get position => _position;
+
+  @override
+  Future<void> setPosition(int position) async {
+    if (position < 0 || position > _bytes.length) {
+      throw RangeError(
+          'Position $position is out of range [0, ${_bytes.length}]');
+    }
+    _position = position;
+  }
+
+  @override
+  Future<List<int>> read(int bytes) async {
+    final endPosition = (_position + bytes).clamp(0, _bytes.length);
+    final result = _bytes.sublist(_position, endPosition);
+    _position = endPosition;
+    return result;
+  }
+
+  @override
+  Future<int> length() async {
+    return _bytes.length;
+  }
+
+  @override
+  Future<void> close() async {
+    // No-op for in-memory file
+  }
 }

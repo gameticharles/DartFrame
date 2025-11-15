@@ -1,4 +1,4 @@
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
+import 'package:dartframe/dartframe.dart';
 
 Future<void> diagnoseDataset(Hdf5File file, String path) async {
   print('\n  🔍 Diagnosing: $path');

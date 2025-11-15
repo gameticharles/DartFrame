@@ -1,20 +1,37 @@
-import 'dart:io';
 import 'dart:typed_data';
+import '../../file_helper/file_io.dart';
 
 /// Efficient byte reader for HDF5 files with random access support
 class ByteReader {
-  final RandomAccessFile? _file;
+  final RandomAccessFileBase? _file;
   final Uint8List? _bytes;
   final Endian endian;
   int _position = 0;
 
-  ByteReader(RandomAccessFile file, {this.endian = Endian.little})
+  ByteReader(RandomAccessFileBase file, {this.endian = Endian.little})
       : _file = file,
         _bytes = null;
 
   ByteReader.fromBytes(Uint8List bytes, {this.endian = Endian.little})
       : _file = null,
         _bytes = bytes;
+
+  /// Creates a ByteReader from a file path
+  ///
+  /// This is a convenience factory that opens the file using FileIO
+  /// and creates a ByteReader from it.
+  ///
+  /// Example:
+  /// ```dart
+  /// final reader = await ByteReader.open('data.h5');
+  /// // ... use reader
+  /// ```
+  static Future<ByteReader> open(String filePath,
+      {Endian endian = Endian.little}) async {
+    final fileIO = FileIO();
+    final raf = await fileIO.openRandomAccess(filePath);
+    return ByteReader(raf, endian: endian);
+  }
 
   Future<Uint8List> _readRaw(int length) async {
     if (_file != null) {

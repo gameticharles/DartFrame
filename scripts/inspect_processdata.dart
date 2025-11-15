@@ -1,7 +1,4 @@
-import 'dart:io';
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/object_header.dart';
+import 'package:dartframe/dartframe.dart';
 
 Future<void> inspectDataset(Hdf5File file, String path,
     {bool detailed = false}) async {
@@ -68,7 +65,9 @@ Future<void> inspectDataset(Hdf5File file, String path,
       if (address != null) {
         print('  🔍 Object address: 0x${address.toRadixString(16)}');
 
-        final raf = await File('example/data/processdata.h5').open();
+        final fileIO = FileIO();
+        final raf =
+            await fileIO.openRandomAccess('example/data/processdata.h5');
         final reader = ByteReader(raf);
 
         try {

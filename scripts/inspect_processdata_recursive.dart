@@ -1,4 +1,4 @@
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
+import 'package:dartframe/dartframe.dart';
 
 Future<void> inspectObject(Hdf5File file, String path, {int indent = 0}) async {
   final indentStr = '  ' * indent;

@@ -1,12 +1,11 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
+import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('🔬 Debugging RangeError in detail\n');
 
-  final hdf5File = await Hdf5File.open('example/data/hdf5_test.h5');
+  final filePath = 'example/data/hdf5_test.h5';
+  final hdf5File = await Hdf5File.open(filePath);
 
   try {
     final arraysGroup = await hdf5File.group('/arrays');
@@ -15,8 +14,8 @@ void main() async {
     print('Address: 0x${address?.toRadixString(16)}');
 
     if (address != null) {
-      final file = File('example/data/hdf5_test.h5');
-      final raf = await file.open();
+      final fileIO = FileIO();
+      final raf = await fileIO.openRandomAccess(filePath);
       final reader = ByteReader(raf);
 
       try {

@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:test/test.dart';
+import 'package:dartframe/src/file_helper/file_io.dart';
 import 'package:dartframe/src/io/hdf5/hdf5_file.dart';
 import 'package:dartframe/src/io/hdf5/byte_reader.dart';
 
@@ -13,9 +13,10 @@ void main() {
   group('HDF5 Chunked Dataset Reading', () {
     late String testFile;
 
-    setUp(() {
+    setUp(() async {
       testFile = 'example/data/test_chunked.h5';
-      if (!File(testFile).existsSync()) {
+      final fileIO = FileIO();
+      if (!await fileIO.fileExists(testFile)) {
         throw StateError(
           'Test file not found: $testFile. Run create_chunked_hdf5.py first.',
         );
@@ -61,20 +62,18 @@ void main() {
 
       // Test that we can read data from chunked datasets
       final dataset1d = await hdf5File.dataset('/chunked_1d');
-      final data1d =
-          await dataset1d.readData(ByteReader(await File(testFile).open()));
+      final data1d = await dataset1d.readData(await ByteReader.open(testFile));
       expect(data1d.length, equals(20),
           reason: '1D dataset should have 20 elements');
 
       final dataset2d = await hdf5File.dataset('/chunked_2d');
-      final data2d =
-          await dataset2d.readData(ByteReader(await File(testFile).open()));
+      final data2d = await dataset2d.readData(await ByteReader.open(testFile));
       expect(data2d.length, equals(60),
           reason: '2D dataset should have 60 elements');
 
       final datasetLarge = await hdf5File.dataset('/chunked_large');
       final dataLarge =
-          await datasetLarge.readData(ByteReader(await File(testFile).open()));
+          await datasetLarge.readData(await ByteReader.open(testFile));
       expect(dataLarge.length, equals(100),
           reason: 'Large dataset should have 100 elements');
 
@@ -87,22 +86,20 @@ void main() {
 
       // Test different chunk sizes work (chunks=(5,))
       final dataset1d = await hdf5File.dataset('/chunked_1d');
-      final data1d =
-          await dataset1d.readData(ByteReader(await File(testFile).open()));
+      final data1d = await dataset1d.readData(await ByteReader.open(testFile));
       expect(data1d, isNotEmpty);
       expect(data1d.length, equals(20));
 
       // Test 2D chunks (chunks=(2, 3))
       final dataset2d = await hdf5File.dataset('/chunked_2d');
-      final data2d =
-          await dataset2d.readData(ByteReader(await File(testFile).open()));
+      final data2d = await dataset2d.readData(await ByteReader.open(testFile));
       expect(data2d, isNotEmpty);
       expect(data2d.length, equals(60));
 
       // Test larger 2D chunks (chunks=(3, 3))
       final datasetLarge = await hdf5File.dataset('/chunked_large');
       final dataLarge =
-          await datasetLarge.readData(ByteReader(await File(testFile).open()));
+          await datasetLarge.readData(await ByteReader.open(testFile));
       expect(dataLarge, isNotEmpty);
       expect(dataLarge.length, equals(100));
 
@@ -120,8 +117,7 @@ void main() {
       expect(dataset.datatype.size, equals(2)); // int16
 
       // Read data
-      final data =
-          await dataset.readData(ByteReader(await File(testFile).open()));
+      final data = await dataset.readData(await ByteReader.open(testFile));
 
       // Verify correct number of elements
       expect(data.length, equals(24),
@@ -136,8 +132,7 @@ void main() {
       final hdf5File = await Hdf5File.open(testFile);
       final dataset = await hdf5File.dataset('/chunked_large');
 
-      final data =
-          await dataset.readData(ByteReader(await File(testFile).open()));
+      final data = await dataset.readData(await ByteReader.open(testFile));
 
       // Verify all data is present
       expect(data.length, equals(100),
@@ -161,14 +156,11 @@ void main() {
       final datasetLarge = await hdf5File.dataset('/chunked_large');
       final dataset3d = await hdf5File.dataset('/chunked_3d');
 
-      final data1d =
-          await dataset1d.readData(ByteReader(await File(testFile).open()));
-      final data2d =
-          await dataset2d.readData(ByteReader(await File(testFile).open()));
+      final data1d = await dataset1d.readData(await ByteReader.open(testFile));
+      final data2d = await dataset2d.readData(await ByteReader.open(testFile));
       final dataLarge =
-          await datasetLarge.readData(ByteReader(await File(testFile).open()));
-      final data3d =
-          await dataset3d.readData(ByteReader(await File(testFile).open()));
+          await datasetLarge.readData(await ByteReader.open(testFile));
+      final data3d = await dataset3d.readData(await ByteReader.open(testFile));
 
       // Verify all datasets read correctly
       expect(data1d.length, equals(20));
@@ -185,8 +177,7 @@ void main() {
       final dataset = await hdf5File.dataset('/chunked_2d');
 
       // Reading the data exercises the B-tree navigation
-      final data =
-          await dataset.readData(ByteReader(await File(testFile).open()));
+      final data = await dataset.readData(await ByteReader.open(testFile));
 
       // If B-tree navigation fails, this would throw an exception
       expect(data, isNotNull);
@@ -201,18 +192,15 @@ void main() {
 
       // Test that assembled arrays have correct total size
       final dataset1d = await hdf5File.dataset('/chunked_1d');
-      final data1d =
-          await dataset1d.readData(ByteReader(await File(testFile).open()));
+      final data1d = await dataset1d.readData(await ByteReader.open(testFile));
       expect(data1d.length, equals(dataset1d.shape[0]));
 
       final dataset2d = await hdf5File.dataset('/chunked_2d');
-      final data2d =
-          await dataset2d.readData(ByteReader(await File(testFile).open()));
+      final data2d = await dataset2d.readData(await ByteReader.open(testFile));
       expect(data2d.length, equals(dataset2d.shape[0] * dataset2d.shape[1]));
 
       final dataset3d = await hdf5File.dataset('/chunked_3d');
-      final data3d =
-          await dataset3d.readData(ByteReader(await File(testFile).open()));
+      final data3d = await dataset3d.readData(await ByteReader.open(testFile));
       expect(data3d.length,
           equals(dataset3d.shape[0] * dataset3d.shape[1] * dataset3d.shape[2]));
 

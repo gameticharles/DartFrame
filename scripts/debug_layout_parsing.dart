@@ -1,18 +1,17 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:dartframe/src/io/hdf5/byte_reader.dart';
-import 'package:dartframe/src/io/hdf5/superblock.dart';
+import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('🔬 Debugging layout parsing for processdata.h5\n');
 
-  final file = File('example/data/processdata.h5');
-  final raf = await file.open();
+  final fileIO = FileIO();
+  final filePath = 'example/data/processdata.h5';
+  final raf = await fileIO.openRandomAccess(filePath);
   final reader = ByteReader(raf);
 
   try {
     // Read superblock
-    final superblock = await Superblock.read(reader, filePath: file.path);
+    final superblock = await Superblock.read(reader, filePath: filePath);
     final hdf5Offset = superblock.hdf5StartOffset;
 
     print('HDF5 offset: $hdf5Offset\n');
