@@ -3,6 +3,7 @@
 The `Series` class in DartFrame represents a one-dimensional labeled array, similar to a column in a spreadsheet or a single vector of data. It's a fundamental building block for `DataFrame`.
 
 ## Table of Contents
+
 - [Series Class Documentation](#series-class-documentation)
   - [Table of Contents](#table-of-contents)
   - [Creating a Series](#creating-a-series)
@@ -13,14 +14,14 @@ The `Series` class in DartFrame represents a one-dimensional labeled array, simi
     - [2. Name (`series.name`)](#2-name-seriesname)
     - [3. Length (`series.length`)](#3-length-serieslength)
     - [4. Index (`series.index`)](#4-index-seriesindex)
-    - [5. Element-wise Access and Modification (`[]`, `[]=`)](#5-element-wise-access-and-modification---)
+    - [5. Element-wise Access and Modification (`[]`, `[]=`)](#5-element-wise-access-and-modification--)
   - [Operations](#operations)
     - [Arithmetic Operations](#arithmetic-operations)
       - [Addition (`+`)](#addition-)
       - [Subtraction (`-`)](#subtraction--)
-      - [Multiplication (`*`)](#multiplication--)
-      - [Division (`/`)](#division--)
-      - [Integer Division (`~/`)](#integer-division--)
+      - [Multiplication (`*`)](#multiplication-)
+      - [Division (`/`)](#division-)
+      - [Integer Division (`~/`)](#integer-division-)
       - [Modulo (`%`)](#modulo-)
     - [Bitwise Operations](#bitwise-operations)
       - [XOR (`^`)](#xor-)
@@ -33,8 +34,27 @@ The `Series` class in DartFrame represents a one-dimensional labeled array, simi
       - [`str.startswith(pattern)`, `str.endswith(pattern)`](#strstartswithpattern-strendswithpattern)
       - [`str.contains(pattern)`](#strcontainspattern)
       - [`str.replace(pattern, replacement)`](#strreplacepattern-replacement)
-      - [`str.split(pattern, n)`](#strsplitpattern-n)
-      - [`str.match(regex)`](#strmatchregex)
+        - [`str.split(pattern, n)`](#strsplitpattern-n)
+        - [`str.match(regex)`](#strmatchregex)
+        - [`str.extract(pattern)` - Extract Capture Groups](#strextractpattern---extract-capture-groups)
+        - [`str.extractall(pattern)` - Extract All Matches](#strextractallpattern---extract-all-matches)
+        - [`str.findall(pattern)` - Find All Occurrences](#strfindallpattern---find-all-occurrences)
+        - [`str.pad(width, side, fillchar)` - Pad Strings](#strpadwidth-side-fillchar---pad-strings)
+        - [`str.center(width, fillchar)` - Center Strings](#strcenterwidth-fillchar---center-strings)
+        - [`str.ljust(width, fillchar)` - Left-Justify](#strljustwidth-fillchar---left-justify)
+        - [`str.rjust(width, fillchar)` - Right-Justify](#strrjustwidth-fillchar---right-justify)
+        - [`str.zfill(width)` - Zero-Fill](#strzfillwidth---zero-fill)
+        - [`str.slice(start, stop, step)` - Slice Substrings](#strslicestart-stop-step---slice-substrings)
+        - [`str.sliceReplace(start, stop, repl)` - Replace Slice](#strslicereplacestart-stop-repl---replace-slice)
+        - [`str.cat(others, sep, na_rep)` - Concatenate Strings](#strcatothers-sep-na_rep---concatenate-strings)
+        - [`str.repeat(repeats)` - Repeat Strings](#strrepeatrepeats---repeat-strings)
+        - [`str.isalnum()` - Check Alphanumeric](#strisalnum---check-alphanumeric)
+        - [`str.isalpha()` - Check Alphabetic](#strisalpha---check-alphabetic)
+        - [`str.isdigit()` - Check Digits](#strisdigit---check-digits)
+        - [`str.isspace()` - Check Whitespace](#strisspace---check-whitespace)
+        - [`str.islower()` / `str.isupper()` / `str.istitle()` - Check Case](#strislower--strisupper--stristitle---check-case)
+        - [`str.isnumeric()` / `str.isdecimal()` - Check Numeric](#strisnumeric--strisdecimal---check-numeric)
+        - [`str.get(i)` - Extract Element from Lists](#strgeti---extract-element-from-lists)
     - [DateTime Accessor (`series.dt.*`)](#datetime-accessor-seriesdt)
       - [`dt.year`, `dt.month`, `dt.day`](#dtyear-dtmonth-dtday)
       - [`dt.hour`, `dt.minute`, `dt.second`](#dthour-dtminute-dtsecond)
@@ -44,11 +64,18 @@ The `Series` class in DartFrame represents a one-dimensional labeled array, simi
       - [`dt.date`](#dtdate)
     - [DateTime Conversions](#datetime-conversions)
       - [`series.toDatetime()`](#seriestodatetime)
+    - [Numeric Conversion (`toNumeric()`)](#numeric-conversion-tonumeric)
+  - [Advanced Statistical Operations](#advanced-statistical-operations)
+    - [Enhanced Statistical Methods](#enhanced-statistical-methods)
+    - [Interpolation Methods](#interpolation-methods)
+    - [Categorical Data Operations](#categorical-data-operations)
+    - [String Accessor Enhancements](#string-accessor-enhancements)
+    - [DateTime Accessor Enhancements](#datetime-accessor-enhancements)
   - [Statistical Methods](#statistical-methods)
     - [1. `nunique()`](#1-nunique)
     - [2. `valueCounts()`](#2-valuecounts)
     - [3. `unique()`](#3-unique)
-    - [3. Basic Statistics (`count()`, `sum()`, `mean()`, etc.)](#3-basic-statistics-count-sum-mean-etc)
+    - [4. Basic Statistics (`count()`, `sum()`, `mean()`, `median()`, `std()`, `min()`, `max()`, `quantile()`, `abs()`, `round()`, `clip()`)](#4-basic-statistics-count-sum-mean-median-std-min-max-quantile-abs-round-clip)
   - [Missing Data Handling](#missing-data-handling)
     - [1. `isna()`](#1-isna)
     - [2. `notna()`](#2-notna)
@@ -66,23 +93,41 @@ The `Series` class in DartFrame represents a one-dimensional labeled array, simi
     - [1. `concatenate()`](#1-concatenate)
   - [Conversion to DataFrame](#conversion-to-dataframe)
     - [1. `toDataFrame()`](#1-todataframe)
+  - [Categorical Operations (`series.cat.*`)](#categorical-operations-seriescat)
+    - [Category Management](#category-management)
+      - [`cat.reorderCategories(newCategories, ordered, inplace)` - Reorder Categories](#catreordercategoriesnewcategories-ordered-inplace---reorder-categories)
+      - [`cat.addCategories(newCategories, inplace)` - Add New Categories](#cataddcategoriesnewcategories-inplace---add-new-categories)
+      - [`cat.removeCategories(removals, inplace)` - Remove Unused Categories](#catremovecategoriesremovals-inplace---remove-unused-categories)
+      - [`cat.renameCategories(renameMap, inplace)` - Rename Categories](#catrenamecategoriesrenamemap-inplace---rename-categories)
+      - [`cat.setCategories(newCategories, ordered, rename, inplace)` - Set Categories](#catsetcategoriesnewcategories-ordered-rename-inplace---set-categories)
+    - [Ordering](#ordering)
+      - [`cat.asOrdered(inplace)` - Convert to Ordered](#catasorderedinplace---convert-to-ordered)
+      - [`cat.asUnordered(inplace)` - Convert to Unordered](#catasunorderedinplace---convert-to-unordered)
+    - [Statistics \& Analysis](#statistics--analysis)
+      - [`cat.min()` / `cat.max()` - Min/Max for Ordered Categories](#catmin--catmax---minmax-for-ordered-categories)
+      - [`cat.memoryUsage()` - Memory Usage Analysis](#catmemoryusage---memory-usage-analysis)
   - [String Representation (`toString()`)](#string-representation-tostring)
 
 ## Creating a Series
 
 ### 1. Constructor (`Series()`)
+
 You can create a `Series` by providing a list of data and a name for the series.
 
 **Syntax:**
+
 ```dart
 Series(List<dynamic> data, {required String name, List<dynamic>? index});
 ```
+
 **Parameters:**
+
 - `data`: A `List` containing the data points of the series.
 - `name`: A `String` that gives a name to the Series (e.g., 'Age', 'Price').
 - `index`: (Optional) A `List` to use as the index for the Series. If not provided, a default integer index (0, 1, 2, ...) will be generated.
 
 **Example:**
+
 ```dart
 // Series with integer data and default index
 var numericSeries = Series([10, 20, 30, 40], name: 'Counts');
@@ -117,9 +162,11 @@ var seriesWithNulls = Series([1, null, 3], name: 'HasNulls');
 ```
 
 ### 2. Generating DateTime Series (`dateRange()`)
+
 A top-level function `dateRange()` can be used to create a `Series` of `DateTime` objects.
 
 **Syntax:**
+
 ```dart
 Series dateRange({
   DateTime? start,
@@ -130,12 +177,15 @@ Series dateRange({
   String name = 'dateRange',
 })
 ```
+
 **Parameters:**
+
 - Requires exactly two of `start`, `end`, or `periods`.
 - `freq`: Frequency string. Only 'D' for daily is currently supported.
 - `normalize`: If `true`, sets the time part of start/end to midnight.
 
 **Example:**
+
 ```dart
 // Create a Series of 3 daily dates starting from 2023-01-01
 final dailyDates = dateRange(start: DateTime(2023, 1, 1), periods: 3);
@@ -145,36 +195,47 @@ final dailyDates = dateRange(start: DateTime(2023, 1, 1), periods: 3);
 final specificRange = dateRange(start: DateTime(2023,2,27), end: DateTime(2023,3,2));
 // specificRange.data includes dates from Feb 27 to Mar 2, 2023
 ```
+
 - **Error Handling**: Throws `ArgumentError` for invalid parameter combinations (e.g., only one of start/end/periods, negative periods, unsupported `freq`).
 - **Edge Cases**: `periods = 0` results in an empty Series. If `start` is after `end` with positive `periods`, it throws an error.
 
 ## Accessing and Modifying Data
 
 ### 1. Data (`series.data`)
+
 Access or assign the underlying `List<dynamic>` of the Series.
+
 - **Get data:** `series.data`
 - **Modify data:** `series.data[index] = newValue;` or `series.data = newList;`
   (Note: If the Series is part of a DataFrame, direct modification might not update the DataFrame. Use DataFrame methods.)
 
 ### 2. Name (`series.name`)
+
 Access or change the name of the Series.
+
 - **Get name:** `series.name`
 - **Set name:** `series.name = 'NewName';`
 
 ### 3. Length (`series.length`)
+
 Get the number of elements in the Series.
+
 - **Get length:** `series.length`
 
 ### 4. Index (`series.index`)
+
 Access or assign the index labels of the Series.
+
 - **Get index:** `series.index` (returns `List<dynamic>?`)
 - **Set index:** `series.index = ['x', 'y', 'z'];` (Length must match data length)
 
 ### 5. Element-wise Access and Modification (`[]`, `[]=`)
+
 The `[]` operator can be used for accessing elements, and `[]=` for modifying them.
 This supports single index, list of indices, or boolean Series for indexing.
 
 **Example:**
+
 ```dart
 var s = Series([10, 20, 30], name: 'MyData', index: ['x', 'y', 'z']);
 
@@ -247,9 +308,11 @@ print(sPos.at(0)); // Output: 100 (after modifications above)
 ## Operations
 
 ### Arithmetic Operations
+
 Series arithmetic operations are element-wise and support index alignment. If indexes don't align, the result will have a union of indexes, and non-overlapping positions will receive a missing value (default `null`, or the DataFrame's `replaceMissingValueWith` if the Series is part of one). Division by zero also results in a missing value.
 
 **Common Setup for Examples:**
+
 ```dart
 var s1 = Series([1, 2, 3, 4], name: 's1', index: ['a', 'b', 'c', 'd']);
 var s2 = Series([10, 20, 30, 40], name: 's2', index: ['a', 'b', 'c', 'd']);
@@ -281,6 +344,7 @@ final defaultMissingRep = null; // For standalone series or df with replaceMissi
 ```
 
 #### Addition (`+`)
+
 ```dart
 // Identical indexes
 var resultSameIdx = s1 + s2; 
@@ -317,6 +381,7 @@ var resultWithMiss = sMiss1 + s1;
 ```
 
 #### Subtraction (`-`)
+
 ```dart
 // Identical indexes
 var result = s1 - s2; // result.data: [-9, -18, -27, -36]
@@ -327,6 +392,7 @@ var resultOverlapSub = s1 - s3;
 ```
 
 #### Multiplication (`*`)
+
 ```dart
 // Identical indexes
 var result = s1 * s2; // result.data: [10, 40, 90, 160]
@@ -337,6 +403,7 @@ var resultOverlapMul = s1 * s3;
 ```
 
 #### Division (`/`)
+
 ```dart
 var sDiv1 = Series([10, 20, 30, 0], name: 'num', index: ['a', 'b', 'c', 'd']);
 var sDiv2 = Series([2, 0, 10, 5], name: 'den', index: ['a', 'b', 'c', 'd']);
@@ -356,6 +423,7 @@ var resultDivOverlap = sNumOverlap / sDenOverlap;
 ```
 
 #### Integer Division (`~/`)
+
 ```dart
 var sIDiv1 = Series([10, 21, 30], name: 'num');
 var sIDiv2 = Series([3, 5, 0], name: 'den'); // Division by zero at index 2
@@ -364,6 +432,7 @@ var result = sIDiv1 ~/ sIDiv2;
 ```
 
 #### Modulo (`%`)
+
 ```dart
 var sMod1 = Series([10, 21, 30], name: 'num');
 var sMod2 = Series([3, 5, 0], name: 'den'); // Modulo by zero at index 2
@@ -372,9 +441,11 @@ var result = sMod1 % sMod2;
 ```
 
 ### Bitwise Operations
+
 Similar to arithmetic operations, bitwise operations are element-wise and handle index alignment and missing values. These operations are typically applied to integer Series. Non-integer inputs or missing values will result in a missing value in the output.
 
 **Common Setup for Bitwise Examples:**
+
 ```dart
 var sBit1 = Series([1, 2, 3], name: 'sBit1', index: ['a', 'b', 'c']); // Binary: 01, 10, 11
 var sBit2 = Series([3, 1, 0], name: 'sBit2', index: ['a', 'b', 'c']); // Binary: 11, 01, 00
@@ -382,6 +453,7 @@ var sBit3Overlap = Series([2], name: 'sBit3Overlap', index: ['c']); // Binary: 1
 ```
 
 #### XOR (`^`)
+
 ```dart
 // Identical indexes
 var resultXor = sBit1 ^ sBit2; 
@@ -398,21 +470,25 @@ var resultXorOverlap = sBit1 ^ sBit3Overlap;
 ```
 
 #### AND (`&`)
+
 ```dart
 var resultAnd = sBit1 & sBit2; 
 // resultAnd.data: [1&3, 2&1, 3&0] -> [1, 0, 0]
 ```
 
 #### OR (`|`)
+
 ```dart
 var resultOr = sBit1 | sBit2; 
 // resultOr.data: [1|3, 2|1, 3|0] -> [3, 3, 3]
 ```
 
 ### String Operations (`series.str.*`)
+
 The `str` accessor provides a way to apply string functions element-wise. Non-string elements or missing values in the original Series typically result in a missing value in the output Series.
 
 **Setup for String Examples:**
+
 ```dart
 var s = Series([' Hello', 'World ', null, ' DartFrame ', 123], name: 'myStrings');
 var sBase = Series([' Hello', 'World ', ' DartFrame ', null, '  '], name: 'strings');
@@ -426,7 +502,9 @@ final defaultMissingRep = null; // Default missing representation
 ```
 
 #### `str.len()`
+
 Returns a Series of integers representing the length of each string.
+
 ```dart
 var result = sBase.str.len();
 // result.data: [6, 6, 11, defaultMissingRep, 2]
@@ -438,7 +516,9 @@ var result = sBase.str.len();
 ```
 
 #### `str.lower()`, `str.upper()`
+
 Converts strings to lowercase or uppercase.
+
 ```dart
 var lowerS = sBase.str.lower();
 // lowerS.data: [' hello', 'world ', ' dartframe ', defaultMissingRep, '  ']
@@ -449,14 +529,18 @@ var upperS = sBase.str.upper();
 ```
 
 #### `str.strip()`
+
 Removes leading and trailing whitespace from each string.
+
 ```dart
 var strippedS = sBase.str.strip();
 // strippedS.data: ['Hello', 'World', 'DartFrame', defaultMissingRep, '']
 ```
 
 #### `str.startswith(pattern)`, `str.endswith(pattern)`
+
 Checks if strings start or end with a `pattern`. Returns a boolean Series.
+
 ```dart
 var startsWithH = sBase.str.startswith(' H');
 // startsWithH.data: [true, false, false, defaultMissingRep, false]
@@ -467,7 +551,9 @@ var endsWithSpace = sBase.str.endswith(' ');
 ```
 
 #### `str.contains(pattern)`
+
 Checks if strings contain a `pattern` (String or RegExp). Returns a boolean Series.
+
 ```dart
 var containsWorld = sBase.str.contains('World');
 // containsWorld.data: [false, true, false, defaultMissingRep, false]
@@ -477,9 +563,11 @@ var containsRegex = sBase.str.contains(RegExp(r'[aA]rt')); // Contains 'art' or 
 ```
 
 #### `str.replace(pattern, replacement)`
+
 Replaces occurrences of `pattern` (String or RegExp) with `replacement` (String).
 If `pattern` is a String, only the first occurrence is replaced.
 If `pattern` is a RegExp with `global = true`, all occurrences are replaced.
+
 ```dart
 // Replace first occurrence of a string
 var replacedOnce = sBase.str.replace(' ', '_');
@@ -503,9 +591,12 @@ var replacedAllGlobal = sBase.str.replace(RegExp(r'\s+', global: true), '_'); //
 ```
 
 ##### `str.split(pattern, n)`
+
 Splits each string by the given `pattern` (String).
+
 - `n` (optional `int`): Maximum number of splits. If `n > 0`, the list will contain at most `n + 1` elements.
 - Returns a Series of `List<String>`. Non-strings/missing values result in the Series' missing value representation.
+
 ```dart
 var sToSplit = Series(['a-b-c', 'x-y', null, 'z'], name: 'split_series');
 var splitBasic = sToSplit.str.split('-'); 
@@ -517,10 +608,13 @@ var splitWithLimit = sToSplit.str.split('-', n: 1); // Max 1 split => 2 elements
 ```
 
 ##### `str.match(regex)`
+
 For each string, finds the first match of the `RegExp` pattern.
+
 - If the regex has a capture group, returns the content of the first captured group.
 - Otherwise, returns the full match.
 - If no match, or if the element is not a string or is a missing value, results in the Series' missing value representation.
+
 ```dart
 var sToMatch = Series(['apple1', 'banana2', 'orange', null, 'grape4'], name: 'match_series');
 
@@ -535,10 +629,222 @@ var resultGroup = sGroups.str.match(RegExp(r'item_(\d+)')); // Capture group for
 // resultGroup.data: ['123', defaultMissingRep, defaultMissingRep, defaultMissingRep]
 ```
 
+##### `str.extract(pattern)` - Extract Capture Groups
+
+Extracts regex capture groups from each string into a DataFrame.
+
+```dart
+var s = Series(['a1', 'b2', 'c3'], name: 'data');
+var result = s.str.extract(r'([a-z])(\d)');
+// Returns DataFrame with columns [0, 1] containing:
+// [['a', '1'], ['b', '2'], ['c', '3']]
+```
+
+##### `str.extractall(pattern)` - Extract All Matches
+
+Finds all matches of pattern in each string.
+
+```dart
+var s = Series(['a1b2', 'c3d4'], name: 'data');
+var result = s.str.extractall(r'\d');
+// Returns Series with [['1', '2'], ['3', '4']]
+```
+
+##### `str.findall(pattern)` - Find All Occurrences
+
+Finds all matches and returns them as lists.
+
+```dart
+var s = Series(['hello world', 'hi there'], name: 'text');
+var result = s.str.findall(r'\w+');
+// Returns Series with [['hello', 'world'], ['hi', 'there']]
+```
+
+##### `str.pad(width, side, fillchar)` - Pad Strings
+
+Pads strings to specified width.
+
+```dart
+var s = Series(['a', 'bb'], name: 'text');
+var left = s.str.pad(5);                    // ['    a', '   bb']
+var right = s.str.pad(5, side: 'right');    // ['a    ', 'bb   ']
+var custom = s.str.pad(5, fillchar: '*');   // ['****a', '***bb']
+```
+
+##### `str.center(width, fillchar)` - Center Strings
+
+Centers strings in field of given width.
+
+```dart
+var s = Series(['a', 'bb'], name: 'text');
+var centered = s.str.center(5);
+// Returns ['  a  ', ' bb  ']
+```
+
+##### `str.ljust(width, fillchar)` - Left-Justify
+
+Left-justifies strings.
+
+```dart
+var s = Series(['a', 'bb'], name: 'text');
+var left = s.str.ljust(5);
+// Returns ['a    ', 'bb   ']
+```
+
+##### `str.rjust(width, fillchar)` - Right-Justify
+
+Right-justifies strings.
+
+```dart
+var s = Series(['a', 'bb'], name: 'text');
+var right = s.str.rjust(5);
+// Returns ['    a', '   bb']
+```
+
+##### `str.zfill(width)` - Zero-Fill
+
+Pads numeric strings with zeros, handling signs correctly.
+
+```dart
+var s = Series(['1', '22', '333'], name: 'numbers');
+var padded = s.str.zfill(5);
+// Returns ['00001', '00022', '00333']
+
+var negative = Series(['-1', '+22'], name: 'signed');
+var padded2 = negative.str.zfill(5);
+// Returns ['-0001', '+0022']
+```
+
+##### `str.slice(start, stop, step)` - Slice Substrings
+
+Extracts substrings using Python-like slicing.
+
+```dart
+var s = Series(['abcdef', '123456'], name: 'text');
+var sliced = s.str.slice(1, 4);
+// Returns ['bcd', '234']
+
+var withStep = s.str.slice(0, null, step: 2);
+// Returns ['ace', '135']
+```
+
+##### `str.sliceReplace(start, stop, repl)` - Replace Slice
+
+Replaces a slice of string with new value.
+
+```dart
+var s = Series(['abcdef'], name: 'text');
+var replaced = s.str.sliceReplace(1, 4, 'XYZ');
+// Returns ['aXYZef']
+```
+
+##### `str.cat(others, sep, na_rep)` - Concatenate Strings
+
+Concatenates strings with separator.
+
+```dart
+var s1 = Series(['a', 'b'], name: 'first');
+var s2 = Series(['1', '2'], name: 'second');
+var concat = s1.str.cat(s2, sep: '-');
+// Returns ['a-1', 'b-2']
+
+// Concatenate with string
+var withStr = s1.str.cat('X', sep: '-');
+// Returns ['a-X', 'b-X']
+```
+
+##### `str.repeat(repeats)` - Repeat Strings
+
+Repeats each string n times.
+
+```dart
+var s = Series(['a', 'b'], name: 'text');
+var repeated = s.str.repeat(3);
+// Returns ['aaa', 'bbb']
+
+// Repeat with Series
+var repeats = Series([2, 3], name: 'reps');
+var varied = s.str.repeat(repeats);
+// Returns ['aa', 'bbb']
+```
+
+##### `str.isalnum()` - Check Alphanumeric
+
+Returns true if all characters are alphanumeric.
+
+```dart
+var s = Series(['abc123', 'abc', '123', 'ab-c'], name: 'text');
+var check = s.str.isalnum();
+// Returns [true, true, true, false]
+```
+
+##### `str.isalpha()` - Check Alphabetic
+
+Returns true if all characters are alphabetic.
+
+```dart
+var s = Series(['abc', 'abc123', '123'], name: 'text');
+var check = s.str.isalpha();
+// Returns [true, false, false]
+```
+
+##### `str.isdigit()` - Check Digits
+
+Returns true if all characters are digits.
+
+```dart
+var s = Series(['123', 'abc', '12a'], name: 'text');
+var check = s.str.isdigit();
+// Returns [true, false, false]
+```
+
+##### `str.isspace()` - Check Whitespace
+
+Returns true if all characters are whitespace.
+
+```dart
+var s = Series(['   ', 'a b', 'abc'], name: 'text');
+var check = s.str.isspace();
+// Returns [true, false, false]
+```
+
+##### `str.islower()` / `str.isupper()` / `str.istitle()` - Check Case
+
+Checks if strings are lowercase, uppercase, or titlecase.
+
+```dart
+var s = Series(['abc', 'ABC', 'Abc'], name: 'text');
+s.str.islower();  // [true, false, false]
+s.str.isupper();  // [false, true, false]
+s.str.istitle();  // [false, false, true]
+```
+
+##### `str.isnumeric()` / `str.isdecimal()` - Check Numeric
+
+Checks if strings can be parsed as numbers.
+
+```dart
+var s = Series(['123', '12.5', 'abc'], name: 'text');
+s.str.isnumeric();  // [true, true, false]  - Can parse as number
+s.str.isdecimal();  // [true, false, false] - Only digits
+```
+
+##### `str.get(i)` - Extract Element from Lists
+
+Extracts element at index i from each list.
+
+```dart
+var s = Series([['a', 'b'], ['c', 'd']], name: 'lists');
+var first = s.str.get(0);
+// Returns ['a', 'c']
+```
+
 ### DateTime Accessor (`series.dt.*`)
+
 The `dt` accessor provides access to datetime-like properties of Series data, assuming the Series contains `DateTime` objects. If an element is not a `DateTime` object or is a missing value, accessing these properties will result in the Series' missing value representation for that element.
 
 **Setup for DateTime Examples:**
+
 ```dart
 var dtSeries = Series([
   DateTime(2023, 10, 26, 14, 30, 15), 
@@ -556,7 +862,9 @@ final defaultMissingRep = null; // For standalone series context
 ```
 
 #### `dt.year`, `dt.month`, `dt.day`
+
 Extract the year, month (1-12), or day of the month (1-31).
+
 ```dart
 var years = dtSeries.dt.year;     // years.data: [2023, 2024, defaultMissingRep, defaultMissingRep]
 var months = dtSeries.dt.month;   // months.data: [10, 3, defaultMissingRep, defaultMissingRep]
@@ -565,7 +873,9 @@ var days = dtSeries.dt.day;       // days.data: [26, 1, defaultMissingRep, defau
 ```
 
 #### `dt.hour`, `dt.minute`, `dt.second`
+
 Extract the hour (0-23), minute (0-59), or second (0-59).
+
 ```dart
 var hours = dtSeries.dt.hour;     // hours.data: [14, 8, defaultMissingRep, defaultMissingRep]
 var minutes = dtSeries.dt.minute; // minutes.data: [30, 5, defaultMissingRep, defaultMissingRep]
@@ -573,14 +883,18 @@ var seconds = dtSeries.dt.second; // seconds.data: [15, 0, defaultMissingRep, de
 ```
 
 #### `dt.millisecond`, `dt.microsecond`
+
 Extract the millisecond (0-999) or microsecond (0-999) component.
+
 ```dart
 var millis = dtSeries.dt.millisecond; // millis.data: [500, 0, defaultMissingRep, defaultMissingRep]
 var micros = dtSeries.dt.microsecond; // micros.data: [250, 0, defaultMissingRep, defaultMissingRep]
 ```
 
 #### `dt.weekday`
+
 Returns the day of the week (Monday=1, ..., Sunday=7).
+
 ```dart
 // dt1 (2023-10-26) is a Thursday (4). dt2 (2024-03-01) is a Friday (5).
 var weekdays = dtSeries.dt.weekday; 
@@ -588,7 +902,9 @@ var weekdays = dtSeries.dt.weekday;
 ```
 
 #### `dt.dayofyear`
+
 Returns the ordinal day of the year (1-366).
+
 ```dart
 var sDoy = Series([DateTime(2023,1,1), DateTime(2023,2,1), null], name: 'doyTest');
 var doy = sDoy.dt.dayofyear; 
@@ -596,7 +912,9 @@ var doy = sDoy.dt.dayofyear;
 ```
 
 #### `dt.date`
+
 Returns a Series of `DateTime` objects with the time component set to midnight (00:00:00.000000).
+
 ```dart
 var datesOnly = dtSeries.dt.date;
 // datesOnly.data: [DateTime(2023,10,26), DateTime(2024,3,1), defaultMissingRep, defaultMissingRep]
@@ -606,19 +924,22 @@ var datesOnly = dtSeries.dt.date;
 ### DateTime Conversions
 
 #### `series.toDatetime()`
+
 Converts Series elements to `DateTime` objects. It can parse strings in various formats, including ISO 8601, and can also convert numeric timestamps (milliseconds since epoch) to `DateTime`.
 
 **Syntax**: `Series toDatetime({String errors = 'raise', String? format, bool inferDatetimeFormat = false})`
+
 - `errors`: Defines behavior for parsing errors:
-    - `'raise'` (default): Throws `FormatException` if an element cannot be parsed.
-    - `'coerce'`: Sets unparseable values to the Series' missing value representation (e.g., `null` or a custom marker if part of a DataFrame).
-    - `'ignore'`: Keeps original unparseable values in the Series.
+  - `'raise'` (default): Throws `FormatException` if an element cannot be parsed.
+  - `'coerce'`: Sets unparseable values to the Series' missing value representation (e.g., `null` or a custom marker if part of a DataFrame).
+  - `'ignore'`: Keeps original unparseable values in the Series.
 - `format` (optional `String?`): A specific `DateFormat` string (e.g., `'dd/MM/yyyy HH:mm'`) to use for parsing. If provided, `inferDatetimeFormat` is ignored.
 - `inferDatetimeFormat` (default `false`): If `true` and `format` is `null`, attempts to infer the datetime format from a list of common patterns for each string element.
 
 **Returns:** A new `Series` where elements are `DateTime` objects or missing values.
 
 **Examples:**
+
 ```dart
 // 1. From ISO 8601 strings
 final sIso = Series(['2023-10-26', '2024-03-01T14:30:00', null], name: 'iso_dates');
@@ -667,23 +988,27 @@ final sEmptyDt = Series<String>([], name: 'empty_dt_series');
 final rEmptyDt = sEmptyDt.toDatetime();
 // rEmptyDt.data: []
 ```
+
 - If the Series is part of a DataFrame with a custom `replaceMissingValueWith` (e.g., `missingMarker`), `'coerce'` will use that marker for unparseable items.
 
 ### Numeric Conversion (`toNumeric()`)
+
 Converts Series elements to numeric types (`int` or `double`).
 
 **Syntax**: `Series toNumeric({String errors = 'raise', String? downcast})`
+
 - `errors`: Defines behavior for parsing errors:
-    - `'raise'` (default): Throws `FormatException` if an element cannot be converted to a number.
-    - `'coerce'`: Sets unparseable values to the Series' missing value representation.
-    - `'ignore'`: Keeps original unparseable values.
+  - `'raise'` (default): Throws `FormatException` if an element cannot be converted to a number.
+  - `'coerce'`: Sets unparseable values to the Series' missing value representation.
+  - `'ignore'`: Keeps original unparseable values.
 - `downcast` (optional `String?`): If specified, attempts to cast to a more specific numeric type:
-    - `'integer'`: Converts to `int` if possible (e.g., "1.0" becomes `int 1`). If a float cannot be losslessly converted to int (e.g., "2.5"), it's handled by `errors` (e.g., becomes missing if `errors='coerce'`).
-    - `'float'`: Converts to `double` (e.g., "1" becomes `double 1.0`).
+  - `'integer'`: Converts to `int` if possible (e.g., "1.0" becomes `int 1`). If a float cannot be losslessly converted to int (e.g., "2.5"), it's handled by `errors` (e.g., becomes missing if `errors='coerce'`).
+  - `'float'`: Converts to `double` (e.g., "1" becomes `double 1.0`).
 
 **Returns:** A new `Series` with numeric data or missing values.
 
 **Examples:**
+
 ```dart
 // 1. Basic string to int/double conversion
 final sStrNums = Series(['1', '2.5', '3', '4.00'], name: 'str_to_num');
@@ -745,6 +1070,7 @@ DartFrame Series now includes comprehensive statistical operations that provide 
 Series now supports advanced statistical operations including skewness, kurtosis, and more sophisticated quantile calculations.
 
 **Example:**
+
 ```dart
 final s = Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], name: 'data');
 
@@ -766,6 +1092,7 @@ Series rollingStd = rolling.std();
 Fill missing values using various interpolation techniques.
 
 **Example:**
+
 ```dart
 final s = Series([1.0, null, null, 4.0, 5.0], name: 'data');
 
@@ -792,6 +1119,7 @@ Series limitedInterp = s.interpolate(
 Work with categorical data for memory efficiency and specialized operations.
 
 **Example:**
+
 ```dart
 final s = Series(['A', 'B', 'A', 'C', 'B', 'A'], name: 'categories');
 
@@ -815,6 +1143,7 @@ bool isOrdered = categorical.ordered;
 Enhanced string operations with more pandas-like functionality.
 
 **Example:**
+
 ```dart
 final s = Series(['Hello World', 'Python Programming', 'Data Science'], name: 'text');
 
@@ -833,6 +1162,7 @@ DataFrame split = s.str.split(' ', expand: true);
 Enhanced datetime operations for time series analysis.
 
 **Example:**
+
 ```dart
 final dates = Series([
   DateTime(2023, 1, 15, 10, 30),
@@ -858,7 +1188,9 @@ Series minusHours = dates.dt.subtractHours(2);
 ## Statistical Methods
 
 ### 1. `nunique()`
+
 Counts the number of distinct non-missing values in the Series.
+
 ```dart
 var s = Series([1, 2, 2, 3, null, 1], name: 'mySeries');
 // s.nunique() is 3 (distinct values are 1, 2, 3; null is ignored)
@@ -892,9 +1224,11 @@ var sAllNullUnique = Series([null, null, null], name: 'all_null_unique');
 ```
 
 ### 2. `valueCounts()`
+
 Returns a Series containing counts (or proportions) of unique values. The resulting Series is sorted by frequency in descending order by default.
 
 **Syntax**: `Series valueCounts({bool normalize = false, bool sort = true, bool ascending = false, bool dropna = true})`
+
 - `normalize` (default `false`): If `true`, returns proportions instead of frequencies.
 - `sort` (default `true`): If `true`, sorts the result by frequency.
 - `ascending` (default `false`): If `true` and `sort` is `true`, sorts frequencies in ascending order.
@@ -903,6 +1237,7 @@ Returns a Series containing counts (or proportions) of unique values. The result
 **Returns:** A new `Series` where the index contains unique values from the original Series and data contains their frequencies/proportions. The name of the resulting Series is typically `originalName_value_counts`.
 
 **Example:**
+
 ```dart
 var s = Series(['a', 'b', 'a', 'c', 'a', 'b', null, 'd', null], name: 'letters');
 final defaultMissingRep = null;
@@ -952,6 +1287,7 @@ var countsAllMissingKeep = sAllMissingVc.valueCounts(dropna: false);
 ```
 
 ### 3. `unique()`
+
 Returns a list of unique values in the Series, preserving the order of their first appearance. Missing values (including `null` and the specific DataFrame's `replaceMissingValueWith` marker, if applicable) are treated as distinct values and will be included if present.
 
 **Syntax:** `List<dynamic> unique()`
@@ -959,6 +1295,7 @@ Returns a list of unique values in the Series, preserving the order of their fir
 **Returns:** A `List<dynamic>` containing the unique values from the Series in order of appearance.
 
 **Example:**
+
 ```dart
 var s = Series([2, 1, 3, 2, null, 1, null, 'a', true], name: 'items');
 // s.unique() is [2, 1, 3, null, 'a', true]
@@ -978,9 +1315,11 @@ var sAllSameU = Series([7, 7, 7], name: 'all_same_u');
 ```
 
 ### 4. Basic Statistics (`count()`, `sum()`, `mean()`, `median()`, `std()`, `min()`, `max()`, `quantile()`, `abs()`, `round()`, `clip()`)
+
 These methods perform calculations, typically ignoring missing values (both default `null` or custom markers defined by a parent DataFrame's `replaceMissingValueWith`). Non-numeric values are also usually skipped for arithmetic statistics.
 
 **Common Setup for Stat Examples:**
+
 ```dart
 final sNumeric = Series([1.0, 2.5, null, 4.0, 5.5, 2.5], name: 'numbers');
 final sEmpty = Series<double>([], name: 'empty_series');
@@ -994,20 +1333,25 @@ final sAllMissing = Series<double>([null, null], name: 'all_missing');
 ```
 
 - **`count()`**: Number of non-missing values.
+
   ```dart
   // sNumeric.count() is 4
   // sEmpty.count() is 0
   // sAllMissing.count() is 0
   // sCustomNumeric.count() is 3 (if -999.0 is missing marker)
   ```
+
 - **`sum()`**: Sum of non-missing numeric values.
+
   ```dart
   // sNumeric.sum() is 14.5 (1.0 + 2.5 + 4.0 + 5.5 + 2.5)
   // sEmpty.sum() is 0.0
   // sAllMissing.sum() is 0.0
   // sCustomNumeric.sum() is 9.0 (1.0 + 3.0 + 5.0)
   ```
+
 - **`mean()`**: Average of non-missing numeric values.
+
   ```dart
   // sNumeric.mean() is 2.9 (14.5 / 5 valid elements: 1.0, 2.5, 4.0, 5.5, 2.5) -> Mistake in manual calc, should be 14.5/5 = 2.9. Test file says 14.5/4 for sNumeric = 3.625. Let's recheck series_stats_test.dart for sNumeric.
   // The `series_stats_test.dart` for `Series([1.0, 2.5, null, 4.0, 5.5, 2.5], name: 's_numeric')`
@@ -1020,60 +1364,79 @@ final sAllMissing = Series<double>([null, null], name: 'all_missing');
   // sEmpty.mean() is double.nan
   // sAllMissing.mean() is double.nan
   ```
+
 - **`median()`**: Median of non-missing numeric values.
+
   ```dart
   // For sStatsTestNumeric (data: [1.0, 2.5, 2.5, 4.0, 5.5] when sorted) -> median is 2.5
   // sStatsTestNumeric.median() is 2.5
   // sEmpty.median() is double.nan
   ```
+
 - **`std()`**: Standard deviation of non-missing numeric values. (Sample standard deviation, `ddof=1` by default).
+
   ```dart
   // sStatsTestNumeric.std() is approx 1.7219 (calculated from [1.0, 2.5, 2.5, 4.0, 5.5])
   // sEmpty.std() is double.nan
   ```
+
 - **`min()`**: Minimum of non-missing numeric values.
+
   ```dart
   // sStatsTestNumeric.min() is 1.0
   // sEmpty.min() is double.nan
   ```
+
 - **`max()`**: Maximum of non-missing numeric values.
+
   ```dart
   // sStatsTestNumeric.max() is 5.5
   // sEmpty.max() is double.nan
   ```
+
 - **`quantile(q)`**: Value at the given quantile (0 <= q <= 1).
+
   ```dart
   // sStatsTestNumeric.quantile(0.5) is 2.5 (median)
   // sStatsTestNumeric.quantile(0.25) is 2.5 (linear interpolation between 1.0, 2.5, 2.5, 4.0, 5.5)
   // Test file for ([0,1,2,3,4,5,6,7,8,9,10]) q=0.1 is 1.0, q=0.95 is 9.5
   // sEmpty.quantile(0.5) is double.nan
   ```
+
 - **`abs()`**: Absolute value for each numeric element. Returns a new Series.
+
   ```dart
   final sWithNeg = Series([-1.0, 2.5, null, -4.0], name: 's_neg');
   // sWithNeg.abs().data is [1.0, 2.5, null, 4.0]
   ```
+
 - **`round({int decimals = 0})`**: Rounds numeric values to a given number of `decimals`. Returns a new Series.
+
   ```dart
   final sToRound = Series([1.23, 2.789, null, 3.5], name: 's_round');
   // sToRound.round().data is [1.0, 3.0, null, 4.0] (decimals=0)
   // sToRound.round(decimals: 1).data is [1.2, 2.8, null, 3.5]
   ```
+
 - **`clip({num? lower, num? upper})`**: Trims values at input thresholds. Returns a new Series.
+
   ```dart
   final sToClip = Series([0, 1, 2, 3, 4, 5, null], name: 's_clip');
   // sToClip.clip(lower: 1, upper: 4).data is [1, 1, 2, 3, 4, 4, null]
   // sToClip.clip(lower: 2).data is [2, 2, 2, 3, 4, 5, null] (no upper limit)
   // sToClip.clip(upper: 3).data is [0, 1, 2, 3, 3, 3, null] (no lower limit)
   ```
+
 - For methods returning a single value (like `sum`, `mean`), if the Series is empty or contains only missing values, they typically return `0.0` for `sum`, and `double.nan` for `mean`, `median`, `std`, `min`, `max`, `quantile`. `count` returns `0`.
 
 ## Missing Data Handling
 
 ### 1. `isna()`
+
 Returns a boolean Series indicating `true` for elements that are missing values.
 A value is considered missing if it is `null` or matches the parent DataFrame's `replaceMissingValueWith` marker (if any), as determined by the internal `_isMissing` helper.
 **Example:**
+
 ```dart
 var s = Series([1, null, 3], name: 'data_with_null');
 print(s.isna());
@@ -1101,12 +1464,15 @@ var sAllMissing = Series([null, null], name: 'all_null_is');
 var sEmptyIsNa = Series<int>([], name: 'empty_isna');
 // sEmptyIsNa.isna().data is []
 ```
+
 - Handles various data types and empty Series correctly. The name of the resulting Series is suffixed with `_isna`.
 
 ### 2. `notna()`
+
 Returns a boolean Series indicating `true` for elements that are NOT missing values (inverse of `isna()`).
 The name of the resulting Series is suffixed with `_notna`.
 **Example:**
+
 ```dart
 var s = Series([1, null, 3], name: 'data_with_null');
 // s.notna().data is [true, false, true]
@@ -1119,21 +1485,25 @@ var s = Series([1, null, 3], name: 'data_with_null');
 ```
 
 ### 3. `fillna()`
+
 Fills missing values in the Series using a specified value or method.
+
 - Missing values are identified if they are `null` or equal to the parent DataFrame's `replaceMissingValueWith` marker (if the Series is part of a DataFrame).
 - The original Series is not modified; a new Series with filled values is returned.
 - The returned Series preserves the name and index of the original Series.
 
 **Syntax:** `Series fillna({dynamic value, String? method})`
+
 - `value` (optional `dynamic`): The value to use for filling missing entries.
 - `method` (optional `String?`): The method to use for filling. Must be one of `'ffill'` or `'bfill'`.
-    - `'ffill'` (forward fill): Propagates the last valid observation forward to fill the gap.
-    - `'bfill'` (backward fill): Uses the next valid observation to fill the gap.
+  - `'ffill'` (forward fill): Propagates the last valid observation forward to fill the gap.
+  - `'bfill'` (backward fill): Uses the next valid observation to fill the gap.
 - **Important**: You must provide either `value` or `method`, but not both. If both are provided, or neither, an `ArgumentError` is thrown. An invalid `method` string also throws an `ArgumentError`.
 
 **Returns:** A new `Series` with missing values filled.
 
 **Example:**
+
 ```dart
 var s = Series([1.0, null, null, 4.0, 5.0, null], name: 'data');
 
@@ -1180,17 +1550,20 @@ var sEmptyFill = Series<double>([], name: 'empty_fill');
 ## Sorting and Ordering
 
 ### 1. `sort_values()`
+
 Returns a new `Series` with its data sorted. The original `Series` remains unchanged. The index of the new `Series` is adjusted to correspond to the sorted data.
 
 **Syntax:** `Series sort_values({bool ascending = true, String naPosition = 'last'})`
+
 - `ascending` (default `true`): If `true`, sorts in ascending order. Otherwise, sorts in descending order.
 - `naPosition` (default `'last'`): Determines the placement of missing values.
-    - `'first'`: Missing values are placed at the beginning.
-    - `'last'`: Missing values are placed at the end.
+  - `'first'`: Missing values are placed at the beginning.
+  - `'last'`: Missing values are placed at the end.
 
 **Returns:** A new `Series` with sorted values and a correspondingly sorted index.
 
 **Example:**
+
 ```dart
 var s = Series([30, 10, null, 20], name: 'values', index: ['a', 'b', 'c', 'd']);
 print(s.sort_values());
@@ -1238,14 +1611,17 @@ var sNonComparable = Series([10, 'apple', 5, 'banana'], name: 'non_comp_sort');
 ```
 
 ### 2. `sort_index()`
+
 Returns a new `Series` sorted by its index labels. The original `Series` remains unchanged. The data elements are reordered according to the sorted index.
 
 **Syntax:** `Series sort_index({bool ascending = true})`
+
 - `ascending` (default `true`): If `true`, sorts the index in ascending order. Otherwise, sorts in descending order.
 
 **Returns:** A new `Series` with data and index reordered based on the sorted index labels.
 
 **Example:**
+
 ```dart
 // Sorting by string index
 var sIdxStr = Series([10, 20, 5], name: 'data_str_idx', index: ['c', 'a', 'b']);
@@ -1284,14 +1660,17 @@ var sEmptySortIdx = Series<int>([], name: 'empty_sort_idx', index:[]).sort_index
 ## Function Application
 
 ### 1. `apply()`
+
 Applies a user-defined function to each element in the Series. The provided function is responsible for handling any missing values.
 
 **Syntax:** `Series apply(Function(dynamic) func)`
+
 - `func`: A function that takes a single `dynamic` argument (an element from the Series) and returns a `dynamic` transformed value.
 
 **Returns:** A new `Series` with the transformed data, preserving the original `name` and `index` (copied). The original `Series` is not modified.
 
 **Example:**
+
 ```dart
 var s = Series([1, 2, 3, 4], name: 'numbers');
 var sSquared = s.apply((x) => x * x);
@@ -1330,14 +1709,17 @@ var resultEmptyApply = sEmptyApply.apply((x) => x * 2);
 ## Membership Checking
 
 ### 1. `isin()`
+
 Checks whether each element in the Series is contained in a given iterable of `values`.
 
 **Syntax:** `Series isin(Iterable<dynamic> values)`
+
 - `values`: An `Iterable<dynamic>` of values to check for. For performance, if `values` is large, it is recommended to pass a `Set`.
 
 **Returns:** A boolean `Series` showing whether each element in the Series matches an element in `values`. Missing values in the Series result in `false` unless the missing value representation itself is in `values`. The new Series name is suffixed with `_isin`.
 
 **Example:**
+
 ```dart
 var s = Series([1, 2, 3, null, 4, 1], name: 'data');
 var checkValuesList = [1, 4, null]; // Check for 1, 4, or null
@@ -1383,19 +1765,22 @@ var sEmptyIsin = Series<int>([], name: 'empty_isin_src');
 ## Reshaping and Indexing
 
 ### 1. `reset_index()`
+
 Returns a new `Series` or `DataFrame` with a reset index.
 
 **Syntax:** `dynamic reset_index({dynamic level, bool drop = false, String? name, bool inplace = false})`
+
 - `level` (Currently ignored): For `MultiIndex`.
 - `drop` (default `false`):
-    - If `true`, the current index is discarded, and a new `Series` is returned with a default integer index.
-    - If `false`, the current index is converted into a column in a new `DataFrame`. The original Series data becomes another column.
+  - If `true`, the current index is discarded, and a new `Series` is returned with a default integer index.
+  - If `false`, the current index is converted into a column in a new `DataFrame`. The original Series data becomes another column.
 - `name` (optional `String?`): If `drop` is `false`, this is the name for the new column containing the original index values. Defaults to `'index'`.
 - `inplace` (Currently ignored): Always returns a new object.
 
 **Returns:** A `Series` if `drop` is `true`, or a `DataFrame` if `drop` is `false`.
 
 **Example:**
+
 ```dart
 var s = Series([10, 20, 30], name: 'myValues', index: ['x', 'y', 'z']);
 
@@ -1442,6 +1827,7 @@ var dfEmptyResetDropFalse = sEmptyReset.reset_index(drop: false, name: 'idx');
 ## Other Operations
 
 ### 1. `concatenate()`
+
 *(This method is typically found on the `DataFrame` class for combining multiple Series or DataFrames. Direct `Series.concatenate(otherSeries)` is not a standard method in this library based on the provided test files. Series are usually concatenated by first placing them into DataFrames or by using `List.addAll` on their data if indexes are not a concern.)*
 <!-- 
 Conceptual example (if it were available):
@@ -1453,11 +1839,13 @@ Series sVertical = s1.concatenate(s2); // sVertical.data is [1, 2, 3, 4]
 ## Conversion to DataFrame
 
 ### 1. `toDataFrame()`
+
 Converts the Series into a `DataFrame` with a single column. The column in the new DataFrame will be named after the original Series' `name`. The DataFrame will have a default integer index; the Series' original index is not preserved as the DataFrame's index in the current implementation.
 
 **Returns:** A new `DataFrame` instance.
 
 **Example:**
+
 ```dart
 var s = Series([10, 20, 30], name: 'MyColumn', index: ['x', 'y', 'z']);
 DataFrame df = s.toDataFrame();
@@ -1478,10 +1866,149 @@ DataFrame dfFromEmptyS = sEmptyToDf.toDataFrame();
 // dfFromEmptyS.rowCount is 0
 ```
 
+## Categorical Operations (`series.cat.*`)
+
+The `cat` accessor provides categorical data type functionality for Series.
+
+### Category Management
+
+#### `cat.reorderCategories(newCategories, ordered, inplace)` - Reorder Categories
+
+Reorders the categories without changing data values.
+
+```dart
+var s = Series(['a', 'b', 'c', 'a'], name: 'data');
+s.astype('category');
+
+s.cat!.reorderCategories(['c', 'b', 'a']);
+print(s.cat!.categories); // ['c', 'b', 'a']
+```
+
+#### `cat.addCategories(newCategories, inplace)` - Add New Categories
+
+Adds new categories to the categorical.
+
+```dart
+var s = Series(['a', 'b'], name: 'data');
+s.astype('category');
+
+s.cat!.addCategories(['c', 'd']);
+print(s.cat!.categories); // ['a', 'b', 'c', 'd']
+```
+
+#### `cat.removeCategories(removals, inplace)` - Remove Unused Categories
+
+Removes categories that are not currently in use.
+
+```dart
+var s = Series(['a', 'b'], name: 'data');
+s.astype('category', categories: ['a', 'b', 'c', 'd']);
+
+s.cat!.removeCategories(['c', 'd']);
+print(s.cat!.categories); // ['a', 'b']
+```
+
+#### `cat.renameCategories(renameMap, inplace)` - Rename Categories
+
+Renames categories using a map.
+
+```dart
+var s = Series(['a', 'b', 'c'], name: 'data');
+s.astype('category');
+
+s.cat!.renameCategories({'a': 'A', 'b': 'B'});
+print(s.cat!.categories); // ['A', 'B', 'c']
+print(s.data); // ['A', 'B', 'c']
+```
+
+#### `cat.setCategories(newCategories, ordered, rename, inplace)` - Set Categories
+
+Sets categories with two modes: recode (default) or rename.
+
+```dart
+// Recode mode: values not in new categories become null
+var s = Series(['a', 'b', 'c'], name: 'data');
+s.astype('category');
+
+s.cat!.setCategories(['a', 'b', 'd']);
+print(s.data); // ['a', 'b', null]
+
+// Rename mode: replaces category labels
+var s2 = Series(['a', 'b', 'c'], name: 'data');
+s2.astype('category');
+
+s2.cat!.setCategories(['x', 'y', 'z'], rename: true);
+print(s2.data); // ['x', 'y', 'z']
+```
+
+### Ordering
+
+#### `cat.asOrdered(inplace)` - Convert to Ordered
+
+Converts categorical to ordered, enabling min/max operations.
+
+```dart
+var s = Series(['low', 'high', 'medium'], name: 'priority');
+s.astype('category', categories: ['low', 'medium', 'high']);
+
+s.cat!.asOrdered();
+print(s.cat!.ordered); // true
+```
+
+#### `cat.asUnordered(inplace)` - Convert to Unordered
+
+Converts categorical to unordered.
+
+```dart
+var s = Series(['low', 'high', 'medium'], name: 'priority');
+s.astype('category', ordered: true);
+
+s.cat!.asUnordered();
+print(s.cat!.ordered); // false
+```
+
+### Statistics & Analysis
+
+#### `cat.min()` / `cat.max()` - Min/Max for Ordered Categories
+
+Returns minimum/maximum category value (only for ordered categoricals).
+
+```dart
+var s = Series(['medium', 'high', 'low', 'high'], name: 'priority');
+s.astype('category', categories: ['low', 'medium', 'high'], ordered: true);
+
+print(s.cat!.min()); // 'low'
+print(s.cat!.max()); // 'high'
+```
+
+#### `cat.memoryUsage()` - Memory Usage Analysis
+
+Analyzes memory usage and efficiency of categorical storage.
+
+```dart
+var s = Series(repeatedData, name: 'data');
+s.astype('category');
+
+var usage = s.cat!.memoryUsage();
+print('Total memory: ${usage['total']} bytes');
+print('Savings: ${usage['savings_percent']}%');
+```
+
+Returns a map with:
+
+- `codes` - Memory used by integer codes (bytes)
+- `categories` - Memory used by category labels (bytes)
+- `total` - Total memory usage (bytes)
+- `object_equivalent` - Estimated memory if stored as object dtype
+- `savings` - Memory saved by using categorical (bytes)
+- `savings_percent` - Percentage of memory saved
+
 ## String Representation (`toString()`)
+
 Provides a formatted string representation of the Series, including its index (if any), data, name, length, and data type (`dtype`). The output is designed for easy readability.
 
 **Example:**
+
 ```dart
 // Numeric series with default index
 final sNumeric = Series([1, 2, 3], name: 'nums');

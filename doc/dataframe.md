@@ -2669,3 +2669,415 @@ var verticalCleanIndex = df1.concatenate([df2], ignoreIndex: true);
 // 2  5  6
 // 3  7  8
 ```
+
+## Functional Programming
+
+### 1. `apply(func, axis, resultType)` - Apply Function Along Axis
+Apply a function to columns or rows of the DataFrame.
+
+```dart
+var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [4, 5, 6]});
+
+// Apply to columns (axis=0)
+var colSums = df.apply((col) => (col as Series).sum(), axis: 0);
+// Returns Series: [6, 15]
+
+// Apply to rows (axis=1)
+var rowSums = df.apply((row) => (row as Series).sum(), axis: 1);
+// Returns Series: [5, 7, 9]
+```
+
+### 2. `applymap(func, naAction)` - Element-wise Application
+Apply a function to every element in the DataFrame.
+
+```dart
+var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [4, 5, 6]});
+
+// Square each element
+var squared = df.applymap((x) => x * x);
+// Returns DataFrame with all values squared
+
+// Convert to strings
+var strings = df.applymap((x) => 'Value: $x');
+
+// Handle nulls
+var df2 = DataFrame.fromMap({'A': [1, null, 3]});
+var result = df2.applymap((x) => x * 2, naAction: 'ignore');
+// Null values remain null
+```
+
+### 3. `agg(func, axis)` - Aggregate with Multiple Functions
+Aggregate data with single or multiple functions.
+
+```dart
+var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [4, 5, 6]});
+
+// Single function
+var sums = df.agg((col) => (col as Series).sum());
+// Returns Series: [6, 15]
+
+// Multiple functions
+var stats = df.agg([
+  (col) => (col as Series).sum(),
+  (col) => (col as Series).max(),
+]);
+// Returns DataFrame with 2 rows (one per function)
+
+// Per-column aggregation
+var mixed = df.agg({
+  'A': (col) => (col as Series).sum(),
+  'B': (col) => (col as Series).min(),
+});
+// Returns Series: [6, 4]
+```
+
+### 4. `transform(func, axis)` - Transform Values
+Transform data while preserving shape.
+
+```dart
+var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [4, 5, 6]});
+
+// Double each column
+var doubled = df.transform((col) {
+  return Series(
+    col.data.map((x) => x * 2).toList(),
+    name: col.name,
+  );
+});
+```
+
+### 5. `pipe(func)` - Apply Chainable Functions
+Enable method chaining for complex operations.
+
+```dart
+var df = DataFrame.fromMap({'A': [1, 2, 3], 'B': [4, 5, 6]});
+
+// Chain operations
+var result = df
+    .pipe((df) => df.applymap((x) => x * 2))
+    .pipe((df) => df.applymap((x) => x + 1));
+```
+
+## GroupBy Operations with Advanced Methods
+
+### 1. `groupBy2(columns)` - Returns GroupBy Object
+Get a GroupBy object for advanced grouped operations.
+
+```dart
+var df = DataFrame.fromMap({
+  'category': ['A', 'B', 'A', 'B'],
+  'value': [1, 2, 3, 4]
+});
+
+// Chain groupby operations
+var result = df.groupBy2(['category'])
+  .sum();
+```
+
+### 2. GroupBy Transform Operations
+Transform values within groups while maintaining shape.
+
+```dart
+var gb = df.groupBy2(['category']);
+
+// Transform within groups
+var normalized = gb.transform((group) {
+  return group.copy(); // Transform logic here
+});
+
+// Cumulative operations
+var cumsum = gb.cumsum(['value']);
+var cummax = gb.cummax();
+```
+
+### 3. GroupBy Filter and Row Selection
+Filter groups and select specific rows.
+
+```dart
+// Filter groups
+var filtered = gb.filter((g) => g.rowCount > 1);
+
+// Select nth row from each group
+var first = gb.nth(0);
+var last = gb.nth(-1);
+
+// Head and tail
+var top = gb.head(2);
+var bottom = gb.tail(1);
+```
+
+### 4. Named Aggregations
+Perform aggregations with custom output column names.
+
+```dart
+var result = df.groupBy2(['category']).agg({
+  'total_value': NamedAgg('value', 'sum'),
+  'avg_value': NamedAgg('value', 'mean'),
+});
+```
+
+## Advanced Slicing Operations
+
+### 1. `slice(start, end, step, axis)` - Slice with Step
+Slice with flexible step parameter.
+
+```dart
+var df = DataFrame.fromMap({
+  'A': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  'B': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+});
+
+// Every other row
+var result = df.slice(start: 0, end: 10, step: 2);
+// Returns rows 0, 2, 4, 6, 8
+
+// Reverse order
+var result = df.slice(start: 9, end: -1, step: -1);
+// Returns rows 9, 8, 7, ..., 0
+```
+
+### 2. `sliceByLabel(start, end, axis)` - Label-Based Slicing
+Slice by index labels (inclusive on both ends).
+
+```dart
+var df = DataFrame.fromMap(
+  {'value': [10, 20, 30, 40, 50]},
+  index: ['a', 'b', 'c', 'd', 'e']
+);
+
+// Slice from 'b' to 'd' (inclusive)
+var result = df.sliceByLabel(start: 'b', end: 'd');
+// Returns rows with index 'b', 'c', 'd'
+```
+
+### 3. Convenience Methods
+Convenient shortcuts for common slicing patterns.
+
+```dart
+// Every nth row
+var downsampled = df.everyNthRow(10);
+
+// Every nth column
+var selected = df.everyNthColumn(2);
+
+// Reverse rows/columns
+var reversed = df.reverseRows();
+var colReversed = df.reverseColumns();
+```
+
+## Expression Evaluation
+
+### 1. `eval(expr, inplace, resultColumn)` - Evaluate Expressions
+Evaluate string expressions in DataFrame context.
+
+```dart
+var df = DataFrame.fromMap({
+  'A': [1, 2, 3, 4],
+  'B': [10, 20, 30, 40],
+  'C': [5, 10, 15, 20]
+});
+
+// Simple arithmetic
+var result = df.eval('A + B');
+// Returns Series: [11, 22, 33, 44]
+
+// Complex expression with precedence
+var result2 = df.eval('(A + B) * C');
+// Returns Series: [55, 220, 495, 880]
+
+// Add as new column
+df.eval('A + B', inplace: true, resultColumn: 'Sum');
+// Adds column 'Sum' with values [11, 22, 33, 44]
+```
+
+### 2. `query(expr, inplace)` - Filter with Boolean Expression
+Filter DataFrame using boolean expressions.
+
+```dart
+var df = DataFrame.fromMap({
+  'A': [1, 2, 3, 4, 5],
+  'B': [10, 20, 30, 40, 50],
+  'C': [5, 10, 15, 20, 25]
+});
+
+// Simple comparison
+var result = df.query('A > 2');
+// Returns rows where A > 2
+
+// Complex boolean expression
+var result2 = df.query('A > 2 && B < 45');
+// Returns rows where A > 2 AND B < 45
+
+// Arithmetic in expression
+var result3 = df.query('A + B > 50');
+// Returns rows where A + B > 50
+```
+
+## Time Series Operations
+
+### 1. Shift Operations
+```dart
+// Shift data by periods
+var shifted = df.shift(1);  // Shift down, nulls at top
+var lagged = df.lag(2);     // Lag by 2 periods
+var led = df.lead(1);       // Lead by 1 period
+```
+
+### 2. Time-Based Filtering
+```dart
+var df = DataFrame.fromMap(
+  {'value': [1, 2, 3, 4, 5]},
+  index: [
+    DateTime(2024, 1, 1, 8, 0),
+    DateTime(2024, 1, 1, 10, 0),
+    DateTime(2024, 1, 1, 12, 0),
+    DateTime(2024, 1, 1, 14, 0),
+    DateTime(2024, 1, 1, 16, 0),
+  ],
+);
+
+// Select values at specific time
+var morning = df.atTime('09:00:00');
+
+// Select values between times
+var business = df.betweenTime('09:00:00', '17:00:00');
+
+// Select first/last periods
+var firstWeek = df.first('7D');
+var lastTenDays = df.last('10D');
+```
+
+### 3. Timezone Operations
+```dart
+// Localize timezone-naive DateTime index
+var dfUtc = df.tzLocalize('UTC');
+
+// Convert between timezones
+var dfNy = df.tzConvert('America/New_York');
+
+// Remove timezone information
+var dfNaive = df.tzNaive();
+```
+
+## Enhanced Resampling Operations
+
+### 1. `resampleOHLC(frequency)` - OHLC Resampling
+Resample with Open, High, Low, Close aggregation.
+
+```dart
+var prices = DataFrame.fromMap(
+  {'price': [100, 102, 98, 105, 103, 107]},
+  index: [DateTime(2024, 1, 1, 9, 0), /* ... */]
+);
+
+// Resample to daily OHLC
+var daily = prices.resampleOHLC('D', valueColumn: 'price');
+// Result columns: price_open, price_high, price_low, price_close
+```
+
+### 2. `resampleNunique(frequency)` - Count Unique Values
+Count unique values per period.
+
+```dart
+var events = DataFrame.fromMap({
+  'user_id': [1, 2, 1, 3, 2, 4],
+  'action': ['login', 'login', 'click', 'login', 'click', 'login']
+});
+
+// Count unique users per day
+var daily = events.resampleNunique('D');
+```
+
+### 3. `resampleWithOffset(frequency, offset)` - Offset Resampling
+Resample with time offset for custom periods.
+
+```dart
+// Resample to daily starting at 6 AM instead of midnight
+var daily = df.resampleWithOffset('D', offset: '6H', aggFunc: 'mean');
+```
+
+## Duplicate Handling & Selection
+
+### 1. `duplicated()` and `dropDuplicates()`
+Identify and remove duplicate rows.
+
+```dart
+// Identify duplicates
+var mask = df.duplicated();  // Boolean Series
+
+// Remove duplicates
+var clean = df.dropDuplicates();
+
+// Keep first/last occurrence
+var keepFirst = df.dropDuplicates(keep: 'first');
+var keepLast = df.dropDuplicates(keep: 'last');
+```
+
+### 2. `nlargest()` and `nsmallest()`
+Get rows with N largest/smallest values.
+
+```dart
+// Get 5 rows with largest 'value'
+var top5 = df.nlargest(5, 'value');
+
+// Get 3 rows with smallest 'value'
+var bottom3 = df.nsmallest(3, 'value');
+```
+
+## MultiIndex and Advanced Indexing
+
+DartFrame supports hierarchical indexing and specialized index types:
+
+### 1. MultiIndex - Hierarchical Indexing
+```dart
+var idx = MultiIndex.fromArrays([
+  ['A', 'A', 'B', 'B'],
+  [1, 2, 1, 2]
+], names: ['letter', 'number']);
+
+// Access level values
+var letters = idx.getLevelValues(0);
+
+// Manipulate levels
+var swapped = idx.swapLevel(0, 1);
+var dropped = idx.dropLevel('number');
+```
+
+### 2. DatetimeIndex - Timezone-Aware Dates
+```dart
+var idx = DatetimeIndex([
+  DateTime(2024, 1, 1),
+  DateTime(2024, 1, 2),
+  DateTime(2024, 1, 3),
+], name: 'dates');
+
+// Timezone operations
+var tzIdx = idx.tzLocalize('UTC');
+var nyIdx = tzIdx.tzConvert('America/New_York');
+
+// Extract components
+var years = idx.year;
+var months = idx.month;
+var dayOfWeek = idx.dayOfWeek;
+```
+
+## Complete Example: Data Pipeline
+
+```dart
+// Load and clean data
+var df = await DataFrame.fromCSV(csv: csvData, hasHeader: true);
+
+// Transform using pipe and functional methods
+var result = df
+    .pipe((d) => d.dropDuplicates())  // Remove duplicates
+    .pipe((d) => d.applymap((x) => x?.toString().trim()))  // Clean strings
+    .pipe((d) => d.query('amount > 0'))  // Filter
+    .pipe((d) => d.groupBy2(['category']).sum())  // Aggregate
+    .pipe((d) => d.eval('total * 1.1', inplace: true, resultColumn: 'with_tax'));  // Calculate
+
+// Resample time series
+var timeSeries = df.pipe((d) => d.resampleWithOffset('D', '9H', aggFunc: 'mean'));
+
+// Export or display
+print(result);
+```
