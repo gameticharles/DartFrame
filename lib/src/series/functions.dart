@@ -44,39 +44,6 @@ extension SeriesFunctions on Series {
     }
   }
 
-  /// Calculate the cumulative sum of values in the series.
-  ///
-  /// Parameters:
-  /// - `skipna`: Whether to exclude NA/null values. If an entire row/column is NA, the result will be NA.
-  ///
-  /// Returns:
-
-  /// Find the index location of the maximum value in the series.
-  ///
-  /// Returns the index of the maximum value in the series.
-  /// Throws if the series is empty or contains only missing values.
-  int idxmax() {
-    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
-    num? maxValue;
-    int maxIndex = -1;
-
-    for (int i = 0; i < data.length; i++) {
-      final val = data[i];
-      if (val != missingRep && val is num) {
-        if (maxValue == null || val > maxValue) {
-          maxValue = val;
-          maxIndex = i;
-        }
-      }
-    }
-
-    if (maxIndex == -1) {
-      throw Exception(
-          "Cannot find idxmax of an empty series or series with all missing/non-numeric values.");
-    }
-    return maxIndex;
-  }
-
   /// Applies a function to each element of the series.
   ///
   /// This method allows you to transform or modify the values in a series

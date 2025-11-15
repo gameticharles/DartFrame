@@ -380,4 +380,296 @@ class CategoricalAccessor {
   bool contains(dynamic value) {
     return _series._categorical!.contains(value);
   }
+
+  /// Sets the categories to the specified list.
+  ///
+  /// This replaces all categories with the new list. Values not in the new
+  /// categories will become null/missing.
+  ///
+  /// Parameters:
+  ///   - `newCategories`: The new categories to set
+  ///   - `ordered`: Whether the categories should be ordered (default: current state)
+  ///   - `rename`: If true, renames categories; if false, recodes data (default: false)
+  ///   - `inplace`: Whether to modify this series in place (default: true)
+  ///
+  /// Returns:
+  ///   The Series (for method chaining)
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['a', 'b', 'c'], name: 'data');
+  /// s.astype('category');
+  /// s.cat.setCategories(['a', 'b', 'd']); // 'c' becomes null
+  /// ```
+  Series setCategories(List<dynamic> newCategories,
+      {bool? ordered, bool rename = false, bool inplace = true}) {
+    if (rename) {
+      // Rename mode: just replace category labels
+      if (newCategories.length != _series._categorical!._categories.length) {
+        throw ArgumentError(
+            'When rename=true, new categories must have same length as existing categories');
+      }
+
+      if (inplace) {
+        _series._categorical!._categories.clear();
+        _series._categorical!._categories.addAll(newCategories);
+        if (ordered != null) {
+          _series._categorical!._ordered = ordered;
+        }
+        _series._syncDataFromCategorical();
+        return _series;
+      } else {
+        final newSeries = Series(List.from(_series.data),
+            name: _series.name, index: List.from(_series.index));
+        newSeries._categorical = _Categorical.fromCodes(
+            _series._categorical!._codes, newCategories,
+            ordered: ordered ?? _series._categorical!._ordered);
+        newSeries._syncDataFromCategorical();
+        return newSeries;
+      }
+    } else {
+      // Recode mode: remap values to new categories
+      final newCodes = <int>[];
+
+      for (int i = 0; i < _series._categorical!._codes.length; i++) {
+        final code = _series._categorical!._codes[i];
+        if (code == -1) {
+          newCodes.add(-1);
+          continue;
+        }
+
+        final currentValue = _series._categorical!._categories[code];
+        final newIndex = newCategories.indexOf(currentValue);
+
+        if (newIndex == -1) {
+          // Value not in new categories, set to null
+          newCodes.add(-1);
+        } else {
+          newCodes.add(newIndex);
+        }
+      }
+
+      if (inplace) {
+        _series._categorical!._categories.clear();
+        _series._categorical!._categories.addAll(newCategories);
+        _series._categorical!._codes.clear();
+        _series._categorical!._codes.addAll(newCodes);
+        if (ordered != null) {
+          _series._categorical!._ordered = ordered;
+        }
+        _series._syncDataFromCategorical();
+        return _series;
+      } else {
+        final newSeries = Series(List.from(_series.data),
+            name: _series.name, index: List.from(_series.index));
+        newSeries._categorical = _Categorical.fromCodes(newCodes, newCategories,
+            ordered: ordered ?? _series._categorical!._ordered);
+        newSeries._syncDataFromCategorical();
+        return newSeries;
+      }
+    }
+  }
+
+  /// Converts the categorical to ordered.
+  ///
+  /// Parameters:
+  ///   - `inplace`: Whether todify this series in place (default: true)
+  ///
+  /// Returns:
+  ///   The Series (for method chaining)
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['low', 'high', 'medium'], name: 'priority');
+  /// s.astype('category');
+  /// s.cat.asOrdered();
+  /// print(s.cat.ordered); // true
+  /// ```
+  Series asOrdered({bool inplace = true}) {
+    if (inplace) {
+      _series._categorical!._ordered = true;
+      return _series;
+    } else {
+      final newSeries = Series(List.from(_series.data),
+          name: _series.name, index: List.from(_series.index));
+      newSeries._categorical = _Categorical.fromCodes(
+          _series._categorical!._codes, _series._categorical!._categories,
+          ordered: true);
+      newSeries._syncDataFromCategorical();
+      return newSeries;
+    }
+  }
+
+  /// Converts the categorical to unordered.
+  ///
+  /// Parameters:
+  ///   - `inplace`: Whether to modify this series in place (default: true)
+  ///
+  /// Returns:
+  ///   The Series (for method chaining)
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['low', 'high', 'medium'], name: 'priority');
+  /// s.astype('category');
+  /// s.cat.asOrdered();
+  /// s.cat.asUnordered();
+  /// print(s.cat.ordered); // false
+  /// ```
+  Series asUnordered({bool inplace = true}) {
+    if (inplace) {
+      _series._categorical!._ordered = false;
+      return _series;
+    } else {
+      final newSeries = Series(List.from(_series.data),
+          name: _series.name, index: List.from(_series.index));
+      newSeries._categorical = _Categorical.fromCodes(
+          _series._categorical!._codes, _series._categorical!._categories,
+          ordered: false);
+      newSeries._syncDataFromCategorical();
+      return newSeries;
+    }
+  }
+
+  /// Returns the minimum category value.
+  ///
+  /// Only works for ordered categoricals.
+  ///
+  /// Returns:
+  ///   The minimum category value
+  ///
+  /// Throws:
+  ///   - `StateError` if the categorical is not ordered
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['low', 'high', 'medium'], name: 'priority');
+  /// s.astype('category', categories: ['low', 'medium', 'high'], ordered: true);
+  /// print(s.cat.min()); // 'low'
+  /// ```
+  dynamic min() {
+    if (!_series._categorical!._ordered) {
+      throw StateError('Cannot get min of unordered categorical');
+    }
+
+    // Find the minimum code that's actually present in the data
+    int? minCode;
+    for (var code in _series._categorical!._codes) {
+      if (code != -1) {
+        if (minCode == null || code < minCode) {
+          minCode = code;
+        }
+      }
+    }
+
+    if (minCode == null) {
+      return null; // All values are null
+    }
+
+    return _series._categorical!._categories[minCode];
+  }
+
+  /// Returns the maximum category value.
+  ///
+  /// Only works for ordered categoricals.
+  ///
+  /// Returns:
+  ///   The maximum category value
+  ///
+  /// Throws:
+  ///   - `StateError` if the categorical is not ordered
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['low', 'high', 'medium'], name: 'priority');
+  /// s.astype('category', categories: ['low', 'medium', 'high'], ordered: true);
+  /// print(s.cat.max()); // 'high'
+  /// ```
+  dynamic max() {
+    if (!_series._categorical!._ordered) {
+      throw StateError('Cannot get max of unordered categorical');
+    }
+
+    // Find the maximum code that's actually present in the data
+    int? maxCode;
+    for (var code in _series._categorical!._codes) {
+      if (code != -1) {
+        if (maxCode == null || code > maxCode) {
+          maxCode = code;
+        }
+      }
+    }
+
+    if (maxCode == null) {
+      return null; // All values are null
+    }
+
+    return _series._categorical!._categories[maxCode];
+  }
+
+  /// Returns memory usage information for the categorical series.
+  ///
+  /// Returns a map with:
+  ///   - 'codes': Memory used by integer codes (bytes)
+  ///   - 'categories': Memory used by category labels (estimated bytes)
+  ///   - 'total': Total memory usage (bytes)
+  ///   - 'object_equivalent': Estimated memory if stored as object dtype (bytes)
+  ///   - 'savings': Memory saved by using categorical (bytes)
+  ///   - 'savings_percent': Percentage of memory saved
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series(['A', 'B', 'A', 'C'] * 1000, name: 'data');
+  /// s.astype('category');
+  /// var usage = s.cat.memoryUsage();
+  /// print('Savings: ${usage['savings_percent']}%');
+  /// ```
+  Map<String, dynamic> memoryUsage() {
+    // Calculate memory for codes (int = 8 bytes on 64-bit systems)
+    final codesMemory = _series._categorical!._codes.length * 8;
+
+    // Estimate memory for categories
+    // This is approximate - actual memory usage depends on string length and type
+    int categoriesMemory = 0;
+    for (var category in _series._categorical!._categories) {
+      if (category is String) {
+        // Approximate: 2 bytes per character + overhead
+        categoriesMemory += (category.length * 2) + 40;
+      } else if (category is int || category is double) {
+        categoriesMemory += 8;
+      } else {
+        categoriesMemory += 40; // Generic object overhead
+      }
+    }
+
+    final totalMemory = codesMemory + categoriesMemory;
+
+    // Estimate memory if stored as object dtype
+    int objectMemory = 0;
+    for (var value in _series.data) {
+      if (value is String) {
+        objectMemory += (value.toString().length * 2) + 40;
+      } else if (value is int || value is double) {
+        objectMemory += 8;
+      } else if (value == null) {
+        objectMemory += 8; // Null pointer
+      } else {
+        objectMemory += 40;
+      }
+    }
+
+    final savings = objectMemory - totalMemory;
+    final savingsPercent = objectMemory > 0
+        ? (savings / objectMemory * 100).toStringAsFixed(2)
+        : '0.00';
+
+    return {
+      'codes': codesMemory,
+      'categories': categoriesMemory,
+      'total': totalMemory,
+      'object_equivalent': objectMemory,
+      'savings': savings,
+      'savings_percent': savingsPercent,
+    };
+  }
 }

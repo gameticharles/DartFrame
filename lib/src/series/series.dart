@@ -12,6 +12,7 @@ part 'functions.dart';
 part 'statistics.dart';
 part 'interpolation.dart';
 part 'categorical.dart';
+part 'additional_functions.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///

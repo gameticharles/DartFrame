@@ -1297,7 +1297,10 @@ extension DataFrameFunctions on DataFrame {
       if (groupColumnIndices.length == 1) {
         groupKey = row[groupColumnIndices.first];
       } else {
-        groupKey = groupColumnIndices.map((idx) => row[idx]).toList();
+        // Use string representation for multi-column keys to ensure proper equality
+        var keyValues = groupColumnIndices.map((idx) => row[idx]).toList();
+        groupKey = keyValues
+            .toString(); // Convert to string for proper map key equality
       }
 
       groupsData.putIfAbsent(groupKey, () => []);
@@ -1318,6 +1321,59 @@ extension DataFrameFunctions on DataFrame {
     });
 
     return result;
+  }
+
+  /// Creates a GroupBy object for advanced groupby operations.
+  ///
+  /// This method returns a GroupBy object that provides pandas-like groupby functionality
+  /// including transform, filter, pipe, nth, head/tail, cumulative operations, and more.
+  ///
+  /// Parameters:
+  /// - `by`: A `String` (single column name) or `List<String>` (multiple column names)
+  ///   to group the DataFrame by.
+  ///
+  /// Returns:
+  /// A `GroupBy` object that can be used for various groupby operations.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   ['A', 1, 100],
+  ///   ['B', 2, 200],
+  ///   ['A', 3, 150],
+  /// ], columns: ['group', 'value', 'amount']);
+  ///
+  /// // Transform within groups
+  /// var normalized = df.groupBy2(['group']).transform((g) =>
+  ///   g.assign('normalized', g['value'].apply((v) => v / g['value'].sum()))
+  /// );
+  ///
+  /// // Filter groups
+  /// var filtered = df.groupBy2(['group']).filter((g) => g.rowCount > 1);
+  ///
+  /// // Get nth row from each group
+  /// var first = df.groupBy2(['group']).nth(0);
+  ///
+  /// // Cumulative operations
+  /// var cumsum = df.groupBy2(['group']).cumsum();
+  ///
+  /// // Multiple aggregations
+  /// var agg = df.groupBy2(['group']).agg({
+  ///   'value': ['sum', 'mean'],
+  ///   'amount': 'max'
+  /// });
+  /// ```
+  GroupBy groupBy2(dynamic by) {
+    List<String> groupColumnNames;
+    if (by is String) {
+      groupColumnNames = [by];
+    } else if (by is List<String>) {
+      groupColumnNames = by;
+    } else {
+      throw ArgumentError('`by` must be a String or List<String>');
+    }
+
+    return GroupBy(this, groupColumnNames);
   }
 
   /// Groups the DataFrame by specified columns and then applies aggregation functions.

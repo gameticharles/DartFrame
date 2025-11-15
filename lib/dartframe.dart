@@ -32,3 +32,7 @@ export 'src/utils/lists.dart';
 export 'src/utils/memory.dart';
 export 'src/utils/performance.dart';
 export 'src/utils/time_series.dart';
+
+// Index types
+export 'src/index/multi_index.dart';
+export 'src/index/datetime_index.dart';

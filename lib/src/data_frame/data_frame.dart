@@ -12,6 +12,16 @@ part 'statistics.dart';
 part 'rolling.dart';
 part 'reshaping.dart';
 part 'time_series.dart';
+part 'time_series_advanced.dart';
+part 'timezone_operations.dart';
+part 'resampling_enhanced.dart';
+part 'sampling_enhanced.dart';
+part 'duplicate_functions.dart';
+part 'functional_programming.dart';
+part 'expression_evaluation.dart';
+part 'multi_index_integration.dart';
+part 'advanced_slicing.dart';
+part 'groupby.dart';
 
 /// A class representing the shape of multi-dimensional data structures.
 ///
@@ -2028,8 +2038,8 @@ class DataFrame {
           message: null,
         );
       }
-      var series = Series<dynamic>(rows.map((row) => row[key]).toList(),
-          name: _columns[key], index: index);
+      Series series = Series(rows.map((row) => row[key]).toList(),
+          name: _columns[key].toString(), index: index);
       series.setParent(this, _columns[key].toString());
       return series;
     } else if (key is String) {
@@ -2037,7 +2047,7 @@ class DataFrame {
       if (columnIndex == -1) {
         throw ArgumentError.value(key, 'columnName', 'Column does not exist');
       }
-      var series = Series<dynamic>(rows.map((row) => row[columnIndex]).toList(),
+      Series series = Series(rows.map((row) => row[columnIndex]).toList(),
           name: key, index: index);
       series.setParent(this, key);
       return series;

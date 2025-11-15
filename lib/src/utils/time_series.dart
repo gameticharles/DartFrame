@@ -317,7 +317,7 @@ class FrequencyUtils {
   /// Validates if a frequency string is supported
   static bool isValidFrequency(String frequency) {
     final normalized = normalizeFrequency(frequency);
-    return ['D', 'H', 'M', 'Y'].contains(normalized);
+    return ['D', 'H', 'M', 'Y', 'W'].contains(normalized);
   }
 
   /// Gets the duration for a single period of the given frequency
@@ -349,6 +349,42 @@ class FrequencyUtils {
         return 'Yearly';
       default:
         return 'Unknown frequency: $frequency';
+    }
+  }
+
+  /// Adds periods to a DateTime based on frequency
+  static DateTime addPeriods(DateTime start, int periods, String frequency) {
+    switch (normalizeFrequency(frequency)) {
+      case 'D':
+        return start.add(Duration(days: periods));
+      case 'H':
+        return start.add(Duration(hours: periods));
+      case 'M':
+        return DateTime(
+          start.year,
+          start.month + periods,
+          start.day,
+          start.hour,
+          start.minute,
+          start.second,
+          start.millisecond,
+          start.microsecond,
+        );
+      case 'Y':
+        return DateTime(
+          start.year + periods,
+          start.month,
+          start.day,
+          start.hour,
+          start.minute,
+          start.second,
+          start.millisecond,
+          start.microsecond,
+        );
+      case 'W':
+        return start.add(Duration(days: periods * 7));
+      default:
+        throw ArgumentError('Unsupported frequency: $frequency');
     }
   }
 }
