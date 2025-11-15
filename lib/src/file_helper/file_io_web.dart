@@ -159,12 +159,16 @@ class FileIO implements FileIOBase {
     if (uploadInput is Uint8List) {
       // Already have the bytes
       bytes = uploadInput;
-    } else if (uploadInput is HTMLInputElement) {
-      // Read from file input
-      bytes = Uint8List.fromList(await readBytesFromFile(uploadInput));
     } else {
-      throw ArgumentError(
-          'On web, openRandomAccess requires HTMLInputElement or Uint8List');
+      // Assume it's an HTMLInputElement or similar file input
+      // Try to read bytes from it
+      try {
+        bytes = Uint8List.fromList(await readBytesFromFile(uploadInput));
+      } catch (e) {
+        throw ArgumentError(
+            'On web, openRandomAccess requires HTMLInputElement or Uint8List. '
+            'Received: ${uploadInput.runtimeType}');
+      }
     }
 
     return _InMemoryRandomAccessFile(bytes);
