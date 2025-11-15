@@ -495,7 +495,6 @@ class StringSeriesAccessor {
   Series cat(dynamic others, {String sep = '', String? naRep}) {
     if (others == null) {
       // Concatenate all strings in the series
-      final missingRep = _series._missingRepresentation;
       final validStrings = <String>[];
 
       for (var value in _series.data) {

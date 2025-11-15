@@ -175,7 +175,7 @@ extension DataFrameDuplicateFunctions on DataFrame {
   ///
   /// Parameters:
   /// - `n`: Number of rows to return.
-  /// - `columns`: Column name(s) to order by. Can be a String or List<String>.
+  /// - `columns`: Column name(s) to order by. Can be a String or `List<String>`.
   /// - `keep`: When there are duplicate values:
   ///   - 'first' (default): Prioritize the first occurrence.
   ///   - 'last': Prioritize the last occurrence.
@@ -268,7 +268,7 @@ extension DataFrameDuplicateFunctions on DataFrame {
   ///
   /// Parameters:
   /// - `n`: Number of rows to return.
-  /// - `columns`: Column name(s) to order by. Can be a String or List<String>.
+  /// - `columns`: Column name(s) to order by. Can be a String or `List<String>`.
   /// - `keep`: When there are duplicate values:
   ///   - 'first' (default): Prioritize the first occurrence.
   ///   - 'last': Prioritize the last occurrence.
