@@ -128,11 +128,13 @@ class Hdf5MemoryProfiler {
       for (final record in data) {
         final map = record as Map;
         for (final value in map.values) {
-          if (value is int)
+          if (value is int) {
             totalSize += 8;
-          else if (value is double)
+          } else if (value is double) {
             totalSize += 8;
-          else if (value is String) totalSize += value.length * 2;
+          } else if (value is String) {
+            totalSize += value.length * 2;
+          }
         }
       }
       return totalSize;

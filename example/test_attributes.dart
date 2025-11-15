@@ -76,6 +76,6 @@ void main() async {
     }
   }
 
-  print('\n' + '=' * 50);
+  print('\n${'=' * 50}');
   print('Attribute reading test complete');
 }

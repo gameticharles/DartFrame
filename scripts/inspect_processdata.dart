@@ -149,7 +149,7 @@ void main() async {
         await inspectObject(file, '/$child');
       }
 
-      print('\n' + '═' * 80);
+      print('\n${'═' * 80}');
       print('✅ Inspection complete');
       print('═' * 80);
     } finally {

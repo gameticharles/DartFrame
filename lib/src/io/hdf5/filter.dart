@@ -45,13 +45,11 @@ abstract class Filter {
 /// Deflate (gzip) compression filter
 class DeflateFilter extends Filter {
   DeflateFilter({
-    required int flags,
-    required List<int> clientData,
+    required super.flags,
+    required super.clientData,
   }) : super(
           id: FilterId.deflate,
-          flags: flags,
           name: 'deflate',
-          clientData: clientData,
         );
 
   @override
@@ -85,13 +83,11 @@ class DeflateFilter extends Filter {
 /// LZF compression filter
 class LzfFilter extends Filter {
   LzfFilter({
-    required int flags,
-    required List<int> clientData,
+    required super.flags,
+    required super.clientData,
   }) : super(
           id: FilterId.lzf,
-          flags: flags,
           name: 'lzf',
-          clientData: clientData,
         );
 
   @override
@@ -171,13 +167,11 @@ class LzfFilter extends Filter {
 /// Shuffle filter for numeric data
 class ShuffleFilter extends Filter {
   ShuffleFilter({
-    required int flags,
-    required List<int> clientData,
+    required super.flags,
+    required super.clientData,
   }) : super(
           id: FilterId.shuffle,
-          flags: flags,
           name: 'shuffle',
-          clientData: clientData,
         );
 
   @override
@@ -233,13 +227,11 @@ class ShuffleFilter extends Filter {
 /// Fletcher32 checksum filter
 class Fletcher32Filter extends Filter {
   Fletcher32Filter({
-    required int flags,
-    required List<int> clientData,
+    required super.flags,
+    required super.clientData,
   }) : super(
           id: FilterId.fletcher32,
-          flags: flags,
           name: 'fletcher32',
-          clientData: clientData,
         );
 
   @override
@@ -254,14 +246,11 @@ class Fletcher32Filter extends Filter {
 /// Generic unsupported filter
 class UnsupportedFilter extends Filter {
   UnsupportedFilter({
-    required int id,
-    required int flags,
-    required List<int> clientData,
+    required super.id,
+    required super.flags,
+    required super.clientData,
   }) : super(
-          id: id,
-          flags: flags,
           name: 'unsupported',
-          clientData: clientData,
         );
 
   @override

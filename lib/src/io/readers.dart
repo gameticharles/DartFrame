@@ -342,7 +342,7 @@ class FileReader {
   /// - `path`: Path to the Excel file
   ///
   /// ## Returns
-  /// A List<String> containing all sheet names in the workbook.
+  /// A `List<String>` containing all sheet names in the workbook.
   ///
   /// ## Example
   /// ```dart
@@ -473,7 +473,7 @@ class FileReader {
   /// - `path`: Path to the HDF5 file
   ///
   /// ## Returns
-  /// A List<String> containing dataset paths.
+  /// A `List<String>` containing dataset paths.
   ///
   /// ## Example
   /// ```dart

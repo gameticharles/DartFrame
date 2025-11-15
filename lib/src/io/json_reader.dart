@@ -50,7 +50,7 @@ import 'readers.dart';
 ///   - 'index': Object with index keys
 ///   - 'columns': Object with column arrays
 ///   - 'values': 2D array of values
-/// - `columns` (List<String>?): Column names for 'values' orientation
+/// - `columns` (`List<String>?`): Column names for 'values' orientation
 ///
 /// See also:
 /// - [JsonWriter] for writing JSON files
