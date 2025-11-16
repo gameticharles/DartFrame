@@ -94,6 +94,66 @@ extension SeriesAdditionalFunctions<T> on Series<T> {
     return Series(absData, name: '${name}_abs', index: index.toList());
   }
 
+  /// Trim values at input thresholds.
+  ///
+  /// Assigns values outside boundary to boundary values. This is useful for
+  /// limiting extreme values in your data.
+  ///
+  /// Parameters:
+  /// - `lower`: Minimum threshold value. Values below this will be set to this value.
+  /// - `upper`: Maximum threshold value. Values above this will be set to this value.
+  ///
+  /// At least one of `lower` or `upper` must be specified.
+  ///
+  /// Returns:
+  /// A new Series with clipped values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([1, 2, 3, 4, 5], name: 'values');
+  ///
+  /// // Clip values between 2 and 4
+  /// var clipped = s.clip(lower: 2, upper: 4);
+  /// print(clipped.data); // Output: [2, 2, 3, 4, 4]
+  ///
+  /// // Clip only lower bound
+  /// var clippedLower = s.clip(lower: 3);
+  /// print(clippedLower.data); // Output: [3, 3, 3, 4, 5]
+  ///
+  /// // Clip only upper bound
+  /// var clippedUpper = s.clip(upper: 3);
+  /// print(clippedUpper.data); // Output: [1, 2, 3, 3, 3]
+  /// ```
+  Series clip({num? lower, num? upper}) {
+    if (lower == null && upper == null) {
+      throw ArgumentError('Must specify at least one of lower or upper');
+    }
+
+    if (lower != null && upper != null && lower > upper) {
+      throw ArgumentError('lower must be less than or equal to upper');
+    }
+
+    final clippedData = data.map((value) {
+      if (_isMissing(value)) {
+        return value;
+      }
+
+      if (value is num) {
+        if (lower != null && value < lower) {
+          return lower;
+        } else if (upper != null && value > upper) {
+          return upper;
+        } else {
+          return value;
+        }
+      }
+
+      return value; // Non-numeric values remain unchanged
+    }).toList();
+
+    return Series(clippedData, name: '${name}_clipped', index: index.toList());
+  }
+
   /// Calculate the percentage change between consecutive elements.
   ///
   /// Computes the percentage change from the immediately previous row by default.

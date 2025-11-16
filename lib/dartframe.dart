@@ -28,6 +28,10 @@ export 'src/io/hdf5/object_header.dart';
 export 'src/io/hdf5/global_heap.dart';
 
 export 'src/utils/utils.dart';
+
+// Data type system
+export 'src/core/dtype.dart';
+export 'src/core/dtype_integration.dart';
 export 'src/utils/lists.dart';
 export 'src/utils/memory.dart';
 export 'src/utils/performance.dart';

@@ -372,29 +372,6 @@ extension SeriesStatistics on Series {
   /// in the series. Non-numeric elements will cause an exception.
   ///
   /// Example:
-  /// ```dart
-  /// var s = Series([-1, 2, -3, 4], name: 'numbers');
-  /// var abs_s = s.abs();
-  /// print(abs_s); // Output: numbers (Absolute): [1, 2, 3, 4]
-  /// ```
-  Series abs() {
-    if (data.isEmpty) {
-      return Series([], name: "$name (Absolute)");
-    }
-
-    List<dynamic> absValues = [];
-    for (var value in data) {
-      if (value is num) {
-        absValues.add(value.abs());
-      } else {
-        throw Exception(
-            "Cannot calculate absolute value of non-numeric data: $value");
-      }
-    }
-
-    return Series(absValues, name: "$name (Absolute)");
-  }
-
   /// Calculate the product of values in the series.
   ///
   /// Returns the product of all values in the series.

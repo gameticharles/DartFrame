@@ -205,7 +205,7 @@ void main() {
 
       group('corrAdvanced()', () {
         test('calculates Pearson correlation matrix', () {
-          var result = df.corrAdvanced(method: 'pearson');
+          var result = df.corr(method: 'pearson');
 
           // Diagonal should be 1.0 (perfect correlation with self)
           expect(result.iloc(0, 0), equals(1.0));
@@ -218,7 +218,7 @@ void main() {
         });
 
         test('calculates Spearman correlation matrix', () {
-          var result = df.corrAdvanced(method: 'spearman');
+          var result = df.corr(method: 'spearman');
 
           // Should also be perfect correlation for monotonic data
           expect(result.iloc(0, 0), equals(1.0));
@@ -226,12 +226,12 @@ void main() {
         });
 
         test('throws error for invalid method', () {
-          expect(() => df.corrAdvanced(method: 'invalid'), throwsArgumentError);
+          expect(() => df.corr(method: 'invalid'), throwsArgumentError);
         });
 
         test('handles non-numeric columns', () {
           // Should only include numeric columns in correlation matrix
-          var result = dfMixed.corrAdvanced();
+          var result = dfMixed.corr();
           expect(result.columns.length,
               equals(2)); // Only numeric and float columns
           expect(result.columns, contains('numeric'));
@@ -507,7 +507,7 @@ void main() {
           'col2'
         ]);
 
-        expect(() => textDf.corrAdvanced(), throwsArgumentError);
+        expect(() => textDf.corr(), throwsArgumentError);
         expect(() => textDf.cov(), throwsArgumentError);
       });
 

@@ -22,7 +22,7 @@ void main() {
       expect(df.variance(), isA<Series>());
 
       // Test correlation matrix
-      final corrMatrix = df.corrAdvanced();
+      final corrMatrix = df.corr();
       expect(corrMatrix, isA<DataFrame>());
       expect(corrMatrix.columns, equals(['A', 'B', 'C']));
       expect(corrMatrix.rowCount, equals(3));
@@ -246,7 +246,7 @@ void main() {
       // Test that new operations work on optimized DataFrame
       expect(optimized.std(), isA<Series>());
       expect(optimized.median(), isA<Series>());
-      expect(optimized.corrAdvanced(), isA<DataFrame>());
+      expect(optimized.corr(), isA<DataFrame>());
 
       // Test that reshaping works on optimized DataFrame
       final melted = optimized.melt(
@@ -279,7 +279,7 @@ void main() {
         'doubled': doubled.data,
       });
 
-      expect(df.corrAdvanced(), isA<DataFrame>());
+      expect(df.corr(), isA<DataFrame>());
       expect(df.describe(), isA<Map>());
     });
 
@@ -293,7 +293,7 @@ void main() {
       int callCount = 0;
       final cachedResult = CacheManager.cacheOperation('test_corr', () {
         callCount++;
-        return df.corrAdvanced();
+        return df.corr();
       });
 
       expect(cachedResult, isA<DataFrame>());
@@ -302,7 +302,7 @@ void main() {
       // Second call should use cache
       final cachedResult2 = CacheManager.cacheOperation('test_corr', () {
         callCount++;
-        return df.corrAdvanced();
+        return df.corr();
       });
 
       expect(callCount, equals(1)); // Should not increment
@@ -347,8 +347,7 @@ void main() {
       expect(() => df['nonexistent'], throwsA(isA<ArgumentError>()));
 
       // Test that new operations handle errors gracefully
-      expect(() => df.corrAdvanced(method: 'invalid'),
-          throwsA(isA<ArgumentError>()));
+      expect(() => df.corr(method: 'invalid'), throwsA(isA<ArgumentError>()));
 
       // Test that operations on empty DataFrame handle errors
       final emptyDf = DataFrame.empty();

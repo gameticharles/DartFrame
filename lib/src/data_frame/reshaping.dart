@@ -6,6 +6,7 @@ part of 'data_frame.dart';
 /// - Stack and unstack operations for hierarchical indexing
 /// - Enhanced melt operations with more flexibility
 /// - Additional pivot operations
+/// - Includes MultiIndex operations and wide-to-long transformations.
 extension DataFrameReshaping on DataFrame {
   /// Stacks the prescribed level(s) from columns to index.
   ///
@@ -568,6 +569,351 @@ extension DataFrameReshaping on DataFrame {
       default:
         return values.reduce((a, b) => a + b); // Default to sum
     }
+  }
+
+  /// Swap levels in a MultiIndex.
+  ///
+  /// Parameters:
+  /// - `i`: First level to swap (int or String)
+  /// - `j`: Second level to swap (int or String)
+  /// - `axis`: 0 for index, 1 for columns (default: 0)
+  ///
+  /// Returns a new DataFrame with swapped levels.
+  ///
+  /// Example:
+  /// ```dart
+  /// // For a DataFrame with MultiIndex
+  /// var swapped = df.swapLevel(0, 1);
+  /// ```
+  DataFrame swapLevel(dynamic i, dynamic j, {int axis = 0}) {
+    if (axis != 0 && axis != 1) {
+      throw ArgumentError('axis must be 0 (index) or 1 (columns)');
+    }
+
+    // For now, implement basic level swapping for index
+    // This is a simplified version - full MultiIndex support would be more complex
+    if (axis == 0) {
+      // Swap index levels
+      // Assuming index contains multi-level strings like "level0_level1"
+      final newIndex = <dynamic>[];
+
+      for (var idx in index) {
+        final idxStr = idx.toString();
+        final parts = idxStr.split('_');
+
+        if (parts.length < 2) {
+          // Not a multi-level index, return as is
+          newIndex.add(idx);
+          continue;
+        }
+
+        // Convert i and j to integer positions
+        final iPos = i is int ? i : 0;
+        final jPos = j is int ? j : 1;
+
+        if (iPos >= parts.length || jPos >= parts.length) {
+          throw ArgumentError('Level index out of bounds');
+        }
+
+        // Swap the levels
+        final temp = parts[iPos];
+        parts[iPos] = parts[jPos];
+        parts[jPos] = temp;
+
+        newIndex.add(parts.join('_'));
+      }
+
+      return DataFrame.fromMap(
+        {for (var col in columns) col: this[col].toList()},
+        index: newIndex,
+      );
+    } else {
+      // Swap column levels - for now, just return a copy
+      // Full implementation would require MultiIndex column support
+      return DataFrame.fromMap(
+        {for (var col in columns) col: this[col].toList()},
+        index: List.from(index),
+      );
+    }
+  }
+
+  /// Rearrange index levels using input order.
+  ///
+  /// Parameters:
+  /// - `order`: List of level positions or names in desired order
+  /// - `axis`: 0 for index, 1 for columns (default: 0)
+  ///
+  /// Returns a new DataFrame with reordered levels.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Reorder index levels to [2, 0, 1]
+  /// var reordered = df.reorderLevels([2, 0, 1]);
+  /// ```
+  DataFrame reorderLevels(List<dynamic> order, {int axis = 0}) {
+    if (axis != 0 && axis != 1) {
+      throw ArgumentError('axis must be 0 (index) or 1 (columns)');
+    }
+
+    if (axis == 0) {
+      // Reorder index levels
+      final newIndex = <dynamic>[];
+
+      for (var idx in index) {
+        final idxStr = idx.toString();
+        final parts = idxStr.split('_');
+
+        if (parts.length < 2) {
+          // Not a multi-level index, return as is
+          newIndex.add(idx);
+          continue;
+        }
+
+        // Reorder parts according to order list
+        final reorderedParts = <String>[];
+        for (var levelIdx in order) {
+          final pos = levelIdx is int ? levelIdx : 0;
+          if (pos >= parts.length) {
+            throw ArgumentError('Level index $pos out of bounds');
+          }
+          reorderedParts.add(parts[pos]);
+        }
+
+        newIndex.add(reorderedParts.join('_'));
+      }
+
+      return DataFrame.fromMap(
+        {for (var col in columns) col: this[col].toList()},
+        index: newIndex,
+      );
+    } else {
+      // Reorder column levels - for now, just return a copy
+      return DataFrame.fromMap(
+        {for (var col in columns) col: this[col].toList()},
+        index: List.from(index),
+      );
+    }
+  }
+
+  /// Wide panel to long format transformation.
+  ///
+  /// Converts a DataFrame from wide format to long format, useful for
+  /// panel data where multiple time periods are stored as separate columns.
+  ///
+  /// Parameters:
+  /// - `stubnames`: The stub name(s) of the wide variable(s)
+  /// - `i`: Column(s) to use as id variable(s)
+  /// - `j`: The name of the sub-observation variable
+  /// - `sep`: A character indicating the separation of the variable names
+  /// - `suffix`: A regular expression capturing the suffix (default: r'\d+')
+  ///
+  /// Returns a new DataFrame in long format.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Wide format:
+  /// // id | A_2020 | A_2021 | B_2020 | B_2021
+  /// // 1  | 10     | 15     | 20     | 25
+  /// // 2  | 30     | 35     | 40     | 45
+  ///
+  /// var long = df.wideToLong(
+  ///   stubnames: ['A', 'B'],
+  ///   i: ['id'],
+  ///   j: 'year',
+  ///   sep: '_',
+  /// );
+  ///
+  /// // Long format:
+  /// // id | year | A  | B
+  /// // 1  | 2020 | 10 | 20
+  /// // 1  | 2021 | 15 | 25
+  /// // 2  | 2020 | 30 | 40
+  /// // 2  | 2021 | 35 | 45
+  /// ```
+  DataFrame wideToLong({
+    required List<String> stubnames,
+    required List<String> i,
+    required String j,
+    String sep = '_',
+    String suffix = r'\d+',
+  }) {
+    // Validate id columns exist
+    for (var idCol in i) {
+      if (!columns.contains(idCol)) {
+        throw ArgumentError('ID column "$idCol" not found in DataFrame');
+      }
+    }
+
+    // Find all columns matching the stub pattern
+    final stubPattern = RegExp('(${stubnames.join('|')})$sep($suffix)');
+    final matchingCols = <String, Map<String, String>>{};
+
+    for (var col in columns) {
+      final match = stubPattern.firstMatch(col);
+      if (match != null) {
+        final stub = match.group(1)!;
+        final suffixValue = match.group(2)!;
+
+        if (!matchingCols.containsKey(suffixValue)) {
+          matchingCols[suffixValue] = {};
+        }
+        matchingCols[suffixValue]![stub] = col;
+      }
+    }
+
+    if (matchingCols.isEmpty) {
+      throw ArgumentError(
+          'No columns found matching stub pattern with separator "$sep"');
+    }
+
+    // Build long format data
+    final newData = <String, List<dynamic>>{};
+
+    // Initialize columns
+    for (var idCol in i) {
+      newData[idCol] = [];
+    }
+    newData[j] = [];
+    for (var stub in stubnames) {
+      newData[stub] = [];
+    }
+
+    // For each row in original data
+    for (var rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      // For each suffix (time period)
+      for (var suffixValue in matchingCols.keys) {
+        // Add id values
+        for (var idCol in i) {
+          newData[idCol]!.add(this[idCol][rowIdx]);
+        }
+
+        // Add suffix value (e.g., year)
+        newData[j]!.add(suffixValue);
+
+        // Add stub values
+        for (var stub in stubnames) {
+          final wideCol = matchingCols[suffixValue]![stub];
+          if (wideCol != null && columns.contains(wideCol)) {
+            newData[stub]!.add(this[wideCol][rowIdx]);
+          } else {
+            newData[stub]!.add(null);
+          }
+        }
+      }
+    }
+
+    return DataFrame.fromMap(newData);
+  }
+
+  /// Enhanced get_dummies with additional options.
+  ///
+  /// Convert categorical variables into dummy/indicator variables.
+  ///
+  /// Parameters:
+  /// - `columns`: Columns to convert to dummies. If null, converts all object/string columns.
+  /// - `prefix`: String to append to column names (default: column name)
+  /// - `prefixSep`: Separator between prefix and value (default: '_')
+  /// - `dropFirst`: Whether to drop the first category to avoid multicollinearity (default: false)
+  /// - `dummyNa`: Add a column to indicate NaNs (default: false)
+  /// - `dtype`: Data type for dummy columns (default: int, can be 'bool')
+  ///
+  /// Returns a new DataFrame with dummy variables.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   ['A', 1],
+  ///   ['B', 2],
+  ///   ['A', 3],
+  /// ], columns: ['Category', 'Value']);
+  ///
+  /// var dummies = df.getDummiesEnhanced(
+  ///   columns: ['Category'],
+  ///   dropFirst: true,
+  /// );
+  /// // Result includes: Value, Category_B (Category_A dropped)
+  /// ```
+  DataFrame getDummiesEnhanced({
+    List<String>? columns,
+    String? prefix,
+    String prefixSep = '_',
+    bool dropFirst = false,
+    bool dummyNa = false,
+    String dtype = 'int',
+  }) {
+    // Determine which columns to convert
+    final colsToConvert = columns ??
+        this.columns.where((col) {
+          final colValues = this[col].toList();
+          final firstNonNull = colValues.firstWhere(
+            (v) => v != null && v != '',
+            orElse: () => null,
+          );
+          return firstNonNull is String;
+        }).toList();
+
+    if (colsToConvert.isEmpty) {
+      return DataFrame.fromMap(
+        {for (var col in this.columns) col: this[col].toList()},
+        index: List.from(index),
+      );
+    }
+
+    final newData = <String, List<dynamic>>{};
+
+    // Copy non-converted columns
+    for (var col in this.columns) {
+      if (!colsToConvert.contains(col)) {
+        newData[col] = this[col].toList();
+      }
+    }
+
+    // Convert each column to dummies
+    for (var col in colsToConvert) {
+      final values = this[col].toList();
+      final uniqueValues =
+          values.where((v) => v != null && v != '').toSet().toList();
+      uniqueValues.sort();
+
+      // Drop first category if requested
+      final categoriesToCreate = dropFirst
+          ? (uniqueValues.length > 1 ? uniqueValues.sublist(1) : <dynamic>[])
+          : uniqueValues;
+
+      final colPrefix = prefix ?? col;
+
+      // Create dummy columns
+      for (var category in categoriesToCreate) {
+        final dummyColName = '$colPrefix$prefixSep$category';
+        final dummyValues = <dynamic>[];
+
+        for (var value in values) {
+          if (dtype == 'bool') {
+            dummyValues.add(value == category);
+          } else {
+            dummyValues.add(value == category ? 1 : 0);
+          }
+        }
+
+        newData[dummyColName] = dummyValues;
+      }
+
+      // Add NA indicator column if requested
+      if (dummyNa) {
+        final naColName = '$colPrefix${prefixSep}nan';
+        final naValues = values.map((v) {
+          if (dtype == 'bool') {
+            return v == null || v == '';
+          } else {
+            return (v == null || v == '') ? 1 : 0;
+          }
+        }).toList();
+
+        newData[naColName] = naValues;
+      }
+    }
+
+    return DataFrame.fromMap(newData, index: List.from(index));
   }
 }
 

@@ -104,70 +104,38 @@ class Series<T> {
   CategoricalAccessor? get cat =>
       isCategorical ? CategoricalAccessor(this) : null;
 
-  /// Converts the Series to a specific data type.
-  ///
-  /// Parameters:
-  ///   - `dtype`: The target data type ('category', 'int', 'float', 'string', 'datetime')
-  ///   - `categories`: For categorical conversion, optional explicit categories
-  ///   - `ordered`: For categorical conversion, whether categories are ordered
-  ///
-  /// Returns:
-  ///   The Series with converted data type (modifies in place)
-  Series astype(String dtype,
-      {List<dynamic>? categories, bool ordered = false}) {
-    switch (dtype.toLowerCase()) {
-      case 'category':
-        _categorical =
-            _Categorical(data, categories: categories, ordered: ordered);
-        _dtype = 'category';
-        _syncDataFromCategorical();
-        break;
-      case 'object':
-        _categorical = null;
-        _dtype = 'object';
-        break;
-      case 'int':
-        _categorical = null;
-        _dtype = 'int64';
-        // Convert data to int
-        data = data.map((value) {
-          if (_isMissing(value)) return null;
-          if (value is num) return value.toInt();
-          if (value is String) return int.tryParse(value);
-          return null;
-        }).toList() as List<T?>;
-        break;
-      case 'float':
-        _categorical = null;
-        _dtype = 'float64';
-        // Convert data to double
-        data = data.map((value) {
-          if (_isMissing(value)) return null;
-          if (value is num) return value.toDouble();
-          if (value is String) return double.tryParse(value);
-          return null;
-        }).toList() as List<T?>;
-        break;
-      case 'string':
-        _categorical = null;
-        _dtype = 'object';
-        // Convert data to string
-        data = data.map((value) {
-          if (_isMissing(value)) return null;
-          return value.toString();
-        }).toList() as List<T?>;
-        break;
-      default:
-        throw ArgumentError('Unsupported dtype: $dtype');
-    }
-    return this;
-  }
-
   /// Synchronizes the Series data with the categorical values
   void _syncDataFromCategorical() {
     if (_categorical != null) {
       data = _categorical!.values.cast<T?>();
     }
+  }
+
+  /// Converts this Series to categorical type.
+  ///
+  /// This is a public method that can be called from extensions.
+  ///
+  /// Parameters:
+  ///   - `categories`: Optional explicit categories
+  ///   - `ordered`: Whether categories are ordered
+  void toCategorical({List<dynamic>? categories, bool ordered = false}) {
+    _categorical = _Categorical(data, categories: categories, ordered: ordered);
+    _dtype = 'category';
+    _syncDataFromCategorical();
+  }
+
+  /// Sets the dtype of this Series.
+  ///
+  /// This is a public method that can be called from extensions.
+  void setDType(String dtype) {
+    _dtype = dtype;
+  }
+
+  /// Clears the categorical data.
+  ///
+  /// This is a public method that can be called from extensions.
+  void clearCategorical() {
+    _categorical = null;
   }
 
   /// Checks if the Series contains categorical-like data.

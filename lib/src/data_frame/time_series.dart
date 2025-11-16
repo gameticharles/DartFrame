@@ -2,6 +2,581 @@ part of 'data_frame.dart';
 
 /// Time series operations for DataFrame
 extension DataFrameTimeSeries on DataFrame {
+  /// Shift index by desired number of periods.
+  ///
+  /// Parameters:
+  /// - `periods`: Number of periods to shift (can be positive or negative)
+  /// - `freq`: Offset to use from the tseries module or time rule (not implemented yet)
+  /// - `axis`: Shift direction (0 for index/rows, 1 for columns)
+  /// - `fillValue`: Value to use for newly introduced missing values
+  ///
+  /// Returns:
+  /// DataFrame with shifted data
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, 2, 3, 4, 5],
+  ///   'B': [10, 20, 30, 40, 50]
+  /// });
+  ///
+  /// // Shift down by 1 period
+  /// var shifted = df.shift(1);
+  /// // First row will be null, data moves down
+  ///
+  /// // Shift up by 1 period
+  /// var shifted = df.shift(-1);
+  /// // Last row will be null, data moves up
+  /// ```
+  DataFrame shift(
+    int periods, {
+    int axis = 0,
+    dynamic fillValue,
+  }) {
+    if (axis != 0) {
+      throw UnimplementedError('Column shifting (axis=1) not yet implemented');
+    }
+
+    if (periods == 0) {
+      return DataFrame(
+        _data.map((row) => List.from(row)).toList(),
+        columns: columns,
+        index: index,
+        replaceMissingValueWith: replaceMissingValueWith,
+      );
+    }
+
+    final fill = fillValue ?? replaceMissingValueWith;
+    final newData = <List<dynamic>>[];
+
+    if (periods > 0) {
+      // Shift down (add nulls at the beginning)
+      for (int i = 0; i < periods && i < rowCount; i++) {
+        newData.add(List.filled(columns.length, fill));
+      }
+      for (int i = 0; i < rowCount - periods; i++) {
+        newData.add(List.from(_data[i]));
+      }
+    } else {
+      // Shift up (add nulls at the end)
+      final absPeriods = -periods;
+      for (int i = absPeriods; i < rowCount; i++) {
+        newData.add(List.from(_data[i]));
+      }
+      for (int i = 0; i < absPeriods && newData.length < rowCount; i++) {
+        newData.add(List.filled(columns.length, fill));
+      }
+    }
+
+    return DataFrame(
+      newData,
+      columns: columns,
+      index: index,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Lag values by n periods (equivalent to shift(n)).
+  ///
+  /// Parameters:
+  /// - `periods`: Number of periods to lag (default: 1)
+  /// - `fillValue`: Value to use for newly introduced missing values
+  ///
+  /// Returns:
+  /// DataFrame with lagged data
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({'A': [1, 2, 3, 4, 5]});
+  /// var lagged = df.lag(1);  // [null, 1, 2, 3, 4]
+  /// var lagged2 = df.lag(2); // [null, null, 1, 2, 3]
+  /// ```
+  DataFrame lag(int periods, {dynamic fillValue}) {
+    return shift(periods, fillValue: fillValue);
+  }
+
+  /// Lead values by n periods (equivalent to shift(-n)).
+  ///
+  /// Parameters:
+  /// - `periods`: Number of periods to lead (default: 1)
+  /// - `fillValue`: Value to use for newly introduced missing values
+  ///
+  /// Returns:
+  /// DataFrame with led data
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap({'A': [1, 2, 3, 4, 5]});
+  /// var led = df.lead(1);  // [2, 3, 4, 5, null]
+  /// var led2 = df.lead(2); // [3, 4, 5, null, null]
+  /// ```
+  DataFrame lead(int periods, {dynamic fillValue}) {
+    return shift(-periods, fillValue: fillValue);
+  }
+
+  /// Shift the time index, using the index's frequency if available.
+  ///
+  /// Parameters:
+  /// - `periods`: Number of periods to shift
+  /// - `freq`: Frequency string ('D', 'H', 'M', 'Y', etc.)
+  ///
+  /// Returns:
+  /// DataFrame with shifted time index
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1),
+  ///     DateTime(2024, 1, 2),
+  ///     DateTime(2024, 1, 3),
+  ///   ],
+  /// );
+  ///
+  /// // Shift index by 1 day
+  /// var shifted = df.tshift(1, freq: 'D');
+  /// ```
+  DataFrame tshift(int periods, {String? freq}) {
+    if (freq == null) {
+      throw ArgumentError('freq parameter is required for tshift');
+    }
+
+    if (!FrequencyUtils.isValidFrequency(freq)) {
+      throw ArgumentError('Invalid frequency: $freq');
+    }
+
+    // Check if index contains DateTime values
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('tshift requires a DateTime index');
+    }
+
+    final newIndex = <DateTime>[];
+    for (var idx in index) {
+      if (idx is DateTime) {
+        final shifted = FrequencyUtils.addPeriods(idx, periods, freq);
+        newIndex.add(shifted);
+      } else {
+        throw ArgumentError('All index values must be DateTime for tshift');
+      }
+    }
+
+    return DataFrame(
+      _data.map((row) => List.from(row)).toList(),
+      columns: columns,
+      index: newIndex,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Convert TimeSeries to specified frequency.
+  ///
+  /// Parameters:
+  /// - `freq`: Frequency string to convert to
+  /// - `method`: Fill method for missing values ('pad', 'backfill', 'nearest')
+  /// - `fillValue`: Value to use for missing values
+  ///
+  /// Returns:
+  /// DataFrame with new frequency
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1),
+  ///     DateTime(2024, 1, 3),
+  ///     DateTime(2024, 1, 5),
+  ///   ],
+  /// );
+  ///
+  /// // Convert to daily frequency
+  /// var daily = df.asfreq('D', method: 'pad');
+  /// ```
+  DataFrame asfreq(
+    String freq, {
+    String method = 'pad',
+    dynamic fillValue,
+  }) {
+    if (!FrequencyUtils.isValidFrequency(freq)) {
+      throw ArgumentError('Invalid frequency: $freq');
+    }
+
+    // Check if index contains DateTime values
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('asfreq requires a DateTime index');
+    }
+
+    final dateTimes = index.cast<DateTime>();
+    final startDate = dateTimes.first;
+    final endDate = dateTimes.last;
+
+    // Create new frequency index
+    final targetIndex = TimeSeriesIndex.dateRange(
+      start: startDate,
+      end: endDate,
+      frequency: freq,
+    );
+
+    final resultData = <List<dynamic>>[];
+
+    for (final targetDate in targetIndex.timestamps) {
+      final row = <dynamic>[];
+
+      // Find if this date exists in original index
+      final existingIndex = dateTimes.indexWhere(
+        (dt) => dt.isAtSameMomentAs(targetDate),
+      );
+
+      if (existingIndex >= 0) {
+        // Date exists, use original data
+        row.addAll(_data[existingIndex]);
+      } else {
+        // Date doesn't exist, fill using method
+        for (int colIdx = 0; colIdx < columns.length; colIdx++) {
+          final value = _fillValueForDate(
+            targetDate,
+            colIdx,
+            dateTimes,
+            method,
+            fillValue,
+          );
+          row.add(value);
+        }
+      }
+
+      resultData.add(row);
+    }
+
+    return DataFrame(
+      resultData,
+      columns: columns,
+      index: targetIndex.timestamps,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Select values at particular time of day.
+  ///
+  /// Parameters:
+  /// - `time`: Time to select (as TimeOfDay or string 'HH:MM:SS')
+  /// - `axis`: Not used (for pandas compatibility)
+  ///
+  /// Returns:
+  /// DataFrame with rows matching the specified time
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3, 4]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1, 9, 0),
+  ///     DateTime(2024, 1, 1, 12, 0),
+  ///     DateTime(2024, 1, 2, 9, 0),
+  ///     DateTime(2024, 1, 2, 15, 0),
+  ///   ],
+  /// );
+  ///
+  /// // Select all rows at 9:00 AM
+  /// var morning = df.atTime('09:00:00');
+  /// ```
+  DataFrame atTime(String time, {int axis = 0}) {
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('atTime requires a DateTime index');
+    }
+
+    final targetTime = _parseTime(time);
+    final filteredData = <List<dynamic>>[];
+    final filteredIndex = <DateTime>[];
+
+    for (int i = 0; i < index.length; i++) {
+      final dt = index[i] as DateTime;
+      if (dt.hour == targetTime.hour &&
+          dt.minute == targetTime.minute &&
+          dt.second == targetTime.second) {
+        filteredData.add(List.from(_data[i]));
+        filteredIndex.add(dt);
+      }
+    }
+
+    return DataFrame(
+      filteredData,
+      columns: columns,
+      index: filteredIndex,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Select values between particular times of day.
+  ///
+  /// Parameters:
+  /// - `startTime`: Start time (as string 'HH:MM:SS')
+  /// - `endTime`: End time (as string 'HH:MM:SS')
+  /// - `includeStart`: Include start time (default: true)
+  /// - `includeEnd`: Include end time (default: true)
+  ///
+  /// Returns:
+  /// DataFrame with rows between the specified times
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3, 4]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1, 9, 0),
+  ///     DateTime(2024, 1, 1, 12, 0),
+  ///     DateTime(2024, 1, 1, 15, 0),
+  ///     DateTime(2024, 1, 1, 18, 0),
+  ///   ],
+  /// );
+  ///
+  /// // Select rows between 10:00 and 16:00
+  /// var business = df.betweenTime('10:00:00', '16:00:00');
+  /// ```
+  DataFrame betweenTime(
+    String startTime,
+    String endTime, {
+    bool includeStart = true,
+    bool includeEnd = true,
+  }) {
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('betweenTime requires a DateTime index');
+    }
+
+    final start = _parseTime(startTime);
+    final end = _parseTime(endTime);
+
+    final filteredData = <List<dynamic>>[];
+    final filteredIndex = <DateTime>[];
+
+    for (int i = 0; i < index.length; i++) {
+      final dt = index[i] as DateTime;
+      final timeInSeconds = dt.hour * 3600 + dt.minute * 60 + dt.second;
+      final startInSeconds =
+          start.hour * 3600 + start.minute * 60 + start.second;
+      final endInSeconds = end.hour * 3600 + end.minute * 60 + end.second;
+
+      bool inRange = false;
+      if (includeStart && includeEnd) {
+        inRange =
+            timeInSeconds >= startInSeconds && timeInSeconds <= endInSeconds;
+      } else if (includeStart) {
+        inRange =
+            timeInSeconds >= startInSeconds && timeInSeconds < endInSeconds;
+      } else if (includeEnd) {
+        inRange =
+            timeInSeconds > startInSeconds && timeInSeconds <= endInSeconds;
+      } else {
+        inRange =
+            timeInSeconds > startInSeconds && timeInSeconds < endInSeconds;
+      }
+
+      if (inRange) {
+        filteredData.add(List.from(_data[i]));
+        filteredIndex.add(dt);
+      }
+    }
+
+    return DataFrame(
+      filteredData,
+      columns: columns,
+      index: filteredIndex,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Select first n periods of time series data.
+  ///
+  /// Parameters:
+  /// - `offset`: Time offset string (e.g., '3D', '2W', '1M')
+  ///
+  /// Returns:
+  /// DataFrame with first n periods
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3, 4, 5]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1),
+  ///     DateTime(2024, 1, 5),
+  ///     DateTime(2024, 1, 10),
+  ///     DateTime(2024, 1, 15),
+  ///     DateTime(2024, 1, 20),
+  ///   ],
+  /// );
+  ///
+  /// // Select first 7 days
+  /// var firstWeek = df.first('7D');
+  /// ```
+  DataFrame first(String offset) {
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('first requires a DateTime index');
+    }
+
+    final parsed = _parseOffset(offset);
+    final startDate = index.first as DateTime;
+    final endDate = FrequencyUtils.addPeriods(
+      startDate,
+      parsed['periods'] as int,
+      parsed['freq'] as String,
+    );
+
+    final filteredData = <List<dynamic>>[];
+    final filteredIndex = <DateTime>[];
+
+    for (int i = 0; i < index.length; i++) {
+      final dt = index[i] as DateTime;
+      if (dt.isBefore(endDate) || dt.isAtSameMomentAs(endDate)) {
+        filteredData.add(List.from(_data[i]));
+        filteredIndex.add(dt);
+      }
+    }
+
+    return DataFrame(
+      filteredData,
+      columns: columns,
+      index: filteredIndex,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Select last n periods of time series data.
+  ///
+  /// Parameters:
+  /// - `offset`: Time offset string (e.g., '3D', '2W', '1M')
+  ///
+  /// Returns:
+  /// DataFrame with last n periods
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame.fromMap(
+  ///   {'value': [1, 2, 3, 4, 5]},
+  ///   index: [
+  ///     DateTime(2024, 1, 1),
+  ///     DateTime(2024, 1, 5),
+  ///     DateTime(2024, 1, 10),
+  ///     DateTime(2024, 1, 15),
+  ///     DateTime(2024, 1, 20),
+  ///   ],
+  /// );
+  ///
+  /// // Select last 7 days
+  /// var lastWeek = df.last('7D');
+  /// ```
+  DataFrame last(String offset) {
+    if (index.isEmpty || index.first is! DateTime) {
+      throw ArgumentError('last requires a DateTime index');
+    }
+
+    final parsed = _parseOffset(offset);
+    final endDate = index.last as DateTime;
+    final startDate = FrequencyUtils.addPeriods(
+      endDate,
+      -(parsed['periods'] as int),
+      parsed['freq'] as String,
+    );
+
+    final filteredData = <List<dynamic>>[];
+    final filteredIndex = <DateTime>[];
+
+    for (int i = 0; i < index.length; i++) {
+      final dt = index[i] as DateTime;
+      if (dt.isAfter(startDate) || dt.isAtSameMomentAs(startDate)) {
+        filteredData.add(List.from(_data[i]));
+        filteredIndex.add(dt);
+      }
+    }
+
+    return DataFrame(
+      filteredData,
+      columns: columns,
+      index: filteredIndex,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Parse time string in format 'HH:MM:SS' or 'HH:MM'
+  DateTime _parseTime(String time) {
+    final parts = time.split(':');
+    if (parts.length < 2 || parts.length > 3) {
+      throw ArgumentError('Invalid time format. Use HH:MM:SS or HH:MM');
+    }
+
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    final second = parts.length == 3 ? int.parse(parts[2]) : 0;
+
+    return DateTime(2000, 1, 1, hour, minute, second);
+  }
+
+  /// Parse offset string like '3D', '2W', '1M'
+  Map<String, dynamic> _parseOffset(String offset) {
+    final match = RegExp(r'(\d+)([HDWMY])').firstMatch(offset);
+    if (match == null) {
+      throw ArgumentError(
+          'Invalid offset format. Use format like "3D", "2W", "1M"');
+    }
+
+    return {
+      'periods': int.parse(match.group(1)!),
+      'freq': match.group(2)!,
+    };
+  }
+
+  /// Fill value for a specific date using the specified method
+  dynamic _fillValueForDate(
+    DateTime targetDate,
+    int columnIndex,
+    List<DateTime> dateTimes,
+    String method,
+    dynamic fillValue,
+  ) {
+    final fill = fillValue ?? replaceMissingValueWith;
+
+    switch (method.toLowerCase()) {
+      case 'pad':
+      case 'ffill':
+        // Forward fill - use the last known value before targetDate
+        for (int i = dateTimes.length - 1; i >= 0; i--) {
+          if (dateTimes[i].isBefore(targetDate) ||
+              dateTimes[i].isAtSameMomentAs(targetDate)) {
+            return _data[i][columnIndex];
+          }
+        }
+        return fill;
+
+      case 'backfill':
+      case 'bfill':
+        // Backward fill - use the next known value after targetDate
+        for (int i = 0; i < dateTimes.length; i++) {
+          if (dateTimes[i].isAfter(targetDate) ||
+              dateTimes[i].isAtSameMomentAs(targetDate)) {
+            return _data[i][columnIndex];
+          }
+        }
+        return fill;
+
+      case 'nearest':
+        // Use the nearest value in time
+        int nearestIndex = 0;
+        Duration minDifference = (targetDate.difference(dateTimes[0])).abs();
+
+        for (int i = 1; i < dateTimes.length; i++) {
+          final difference = (targetDate.difference(dateTimes[i])).abs();
+          if (difference < minDifference) {
+            minDifference = difference;
+            nearestIndex = i;
+          }
+        }
+        return _data[nearestIndex][columnIndex];
+
+      default:
+        return fill;
+    }
+  }
+
   /// Resample time series data to a different frequency.
   ///
   /// This method provides functionality similar to pandas' resample() method,

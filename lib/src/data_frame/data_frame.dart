@@ -9,12 +9,10 @@ part 'accessors.dart';
 part 'functions.dart';
 part 'operations.dart';
 part 'statistics.dart';
-part 'rolling.dart';
 part 'reshaping.dart';
 part 'time_series.dart';
-part 'time_series_advanced.dart';
 part 'timezone_operations.dart';
-part 'resampling_enhanced.dart';
+part 'resampling.dart';
 part 'sampling_enhanced.dart';
 part 'duplicate_functions.dart';
 part 'functional_programming.dart';
@@ -22,6 +20,9 @@ part 'expression_evaluation.dart';
 part 'multi_index_integration.dart';
 part 'advanced_slicing.dart';
 part 'groupby.dart';
+part 'window_functions.dart';
+part 'export_formats.dart';
+part 'web_api.dart';
 
 /// A class representing the shape of multi-dimensional data structures.
 ///
@@ -1453,6 +1454,53 @@ class DataFrame {
     Map<String, dynamic>? options,
   }) async {
     return FileReader.readParquet(path, options: options);
+  }
+
+  /// Read HTML tables from a string.
+  ///
+  /// This is a convenience method that delegates to the web_api extension.
+  /// See [DataFrameWebAPI.readHtml] for full documentation.
+  static List<DataFrame> readHtml(
+    String html, {
+    dynamic match,
+    int header = 0,
+    int? indexCol,
+    List<int>? skiprows,
+    Map<String, String> attrs = const {},
+    bool parseNumbers = true,
+  }) {
+    // This will be implemented in the web_api extension
+    // We need to create a dummy DataFrame to access the extension method
+    return DataFrameWebAPI._readHtmlStatic(
+      html,
+      match: match,
+      header: header,
+      indexCol: indexCol,
+      skiprows: skiprows,
+      attrs: attrs,
+      parseNumbers: parseNumbers,
+    );
+  }
+
+  /// Read XML data into DataFrame.
+  ///
+  /// This is a convenience method that delegates to the web_api extension.
+  /// See [DataFrameWebAPI.readXml] for full documentation.
+  static DataFrame readXml(
+    String xml, {
+    String? xpath,
+    String rowName = 'row',
+    bool parseNumbers = true,
+    String attrPrefix = '@',
+  }) {
+    // This will be implemented in the web_api extension
+    return DataFrameWebAPI._readXmlStatic(
+      xml,
+      xpath: xpath,
+      rowName: rowName,
+      parseNumbers: parseNumbers,
+      attrPrefix: attrPrefix,
+    );
   }
 
   /// Writes the DataFrame to a CSV file.

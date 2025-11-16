@@ -765,121 +765,6 @@ extension DataFrameFunctions on DataFrame {
     return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
   }
 
-  /// Casts columns of the DataFrame to specified data types.
-  ///
-  /// Creates a new DataFrame with columns converted to the target types.
-  /// The original DataFrame is not modified.
-  ///
-  /// Parameters:
-  /// - `types`: A `Map<String, String>` where keys are column names and values are
-  ///   the target data type names. Supported type names are:
-  ///   - `'int'`: Converts to `int`.
-  ///   - `'double'`: Converts to `double`.
-  ///   - `'string'`: Converts to `String`.
-  ///   - `'bool'`: Converts to `bool`. For strings, "true" (case-insensitive) becomes `true`,
-  ///     others (like "false", "0", non-empty strings) might become `false` or throw
-  ///     depending on underlying parsing. For numbers, 0 becomes `false`, others `true`.
-  ///
-  /// Returns:
-  /// A new `DataFrame` with the specified columns cast to new types.
-  ///
-  /// Throws:
-  /// - `ArgumentError` if a specified column name does not exist.
-  /// - `ArgumentError` if an unsupported `typeName` is provided.
-  /// - `FormatException` or `TypeError` may occur during parsing if a value cannot be
-  ///   converted to the target type (e.g., parsing "abc" as `int`).
-  ///   In such cases, the original value is currently kept in the cell.
-  ///
-  /// Example:
-  /// ```dart
-  /// var df = DataFrame.fromRows([
-  ///   {'A': '10', 'B': '20.5', 'C': 'true', 'D': 'text'},
-  ///   {'A': '12', 'B': '30.0', 'C': 'FALSE', 'D': 'data'},
-  /// ]);
-  ///
-  /// var typedDf = df.astype({
-  ///   'A': 'int',
-  ///   'B': 'double',
-  ///   'C': 'bool',
-  ///   'D': 'string' // No change, but can be explicit
-  /// });
-  /// print(typedDf.rows[0]); // Example: [10, 20.5, true, text]
-  /// print(typedDf.rows[1][2].runtimeType); // Example: bool
-  /// ```
-  DataFrame astype(Map<String, String> types) {
-    final newData = _data.map((row) => List<dynamic>.from(row)).toList();
-    final newIndex = List<dynamic>.from(index);
-
-    types.forEach((colName, typeName) {
-      final colIdx = _columns.indexOf(colName);
-      if (colIdx == -1) {
-        throw ArgumentError('Column $colName does not exist');
-      }
-
-      for (var i = 0; i < newData.length; i++) {
-        final value = newData[i][colIdx];
-        if (value == null || value == replaceMissingValueWith) {
-          // Skip missing values
-          newData[i][colIdx] =
-              replaceMissingValueWith; // Ensure missing remains consistent
-          continue;
-        }
-
-        try {
-          switch (typeName.toLowerCase()) {
-            case 'int':
-              if (value is String) {
-                newData[i][colIdx] = int.tryParse(value) ?? value;
-              } else if (value is num) {
-                newData[i][colIdx] = value.toInt();
-              } else {
-                newData[i][colIdx] = int.tryParse(value.toString()) ?? value;
-              }
-              break;
-            case 'double':
-              if (value is String) {
-                newData[i][colIdx] = double.tryParse(value) ?? value;
-              } else if (value is num) {
-                newData[i][colIdx] = value.toDouble();
-              } else {
-                newData[i][colIdx] = double.tryParse(value.toString()) ?? value;
-              }
-              break;
-            case 'string':
-              newData[i][colIdx] = value.toString();
-              break;
-            case 'bool':
-              if (value is bool) {
-                newData[i][colIdx] = value;
-              } else if (value is String) {
-                if (value.toLowerCase() == 'true') {
-                  newData[i][colIdx] = true;
-                } else if (value.toLowerCase() == 'false') {
-                  newData[i][colIdx] = false;
-                } else {
-                  newData[i][colIdx] =
-                      value; // Keep original if not 'true'/'false'
-                }
-              } else if (value is num) {
-                newData[i][colIdx] = value != 0;
-              } else {
-                newData[i][colIdx] = value; // Keep original if not convertible
-              }
-              break;
-            default:
-              throw ArgumentError(
-                  'Unsupported type: $typeName for column $colName. Supported types: int, double, string, bool.');
-          }
-        } catch (e) {
-          // If conversion fails, keep the original value.
-          // Consider logging the error: print('Failed to convert value "$value" in column "$colName" to $typeName: $e');
-        }
-      }
-    });
-
-    return DataFrame._(List<dynamic>.from(_columns), newData, index: newIndex);
-  }
-
   /// Rounds numeric values in specified columns to a given number of decimal places.
   ///
   /// Creates a new DataFrame with rounded values. The original DataFrame is not modified.
@@ -911,8 +796,16 @@ extension DataFrameFunctions on DataFrame {
   /// // Round only column 'B' to 1 decimal place
   /// var dfRoundedB = df.round(1, columns: ['B']);
   /// print(dfRoundedB);
+  ///
+  /// // Round to integers (default)
+  /// var dfRoundedInt = df.round(0);
+  /// print(dfRoundedInt);
   /// ```
-  DataFrame round(int decimals, {List<String>? columns}) {
+  DataFrame round(dynamic decimals, {List<String>? columns}) {
+    final int decimals0 = decimals ?? 0;
+    if (decimals < 0) {
+      throw ArgumentError('decimals must be non-negative');
+    }
     final columnsToRound = columns?.map((c) => c.toString()).toList() ??
         _columns.map((c) => c.toString()).toList();
     final List<int> columnIndices = [];
@@ -939,7 +832,7 @@ extension DataFrameFunctions on DataFrame {
         if (colIdx < newData[i].length) {
           final value = newData[i][colIdx];
           if (value is double) {
-            final factor = pow(10, decimals);
+            final factor = pow(10, decimals0);
             newData[i][colIdx] = (value * factor).round() / factor;
           } else if (value is int) {
             // No rounding needed for int, but ensure it's copied correctly
@@ -3195,135 +3088,6 @@ extension DataFrameFunctions on DataFrame {
     }
 
     return resultDf;
-  }
-
-  /// Computes the pairwise correlation of numerical columns in the DataFrame.
-  ///
-  /// This method calculates the Pearson correlation coefficient between all pairs
-  /// of numerical columns. Non-numeric columns are ignored.
-  ///
-  /// Returns:
-  /// A new `DataFrame` representing the correlation matrix. The index and columns
-  /// of this matrix are the names of the numerical columns from the original DataFrame.
-  /// Each cell `(i, j)` in the matrix contains the correlation coefficient between
-  /// column `i` and column `j`.
-  ///
-  /// Throws:
-  /// - `StateError` if no numeric columns are found in the DataFrame.
-  ///
-  /// Note:
-  /// - The Pearson correlation coefficient ranges from -1 to +1.
-  /// - A value of +1 implies a perfect positive linear correlation.
-  /// - A value of -1 implies a perfect negative linear correlation.
-  /// - A value of 0 implies no linear correlation.
-  /// - If a column has no variance (all values are the same), correlation with it will be 0 or NaN.
-  /// - `double.nan` is returned if correlation cannot be computed (e.g., due to insufficient data or zero variance).
-  ///
-  /// Example:
-  /// ```dart
-  /// var df = DataFrame.fromMap({
-  ///   'A': [1, 2, 3, 4, 5],
-  ///   'B': [5, 4, 3, 2, 1],
-  ///   'C': [2, 4, 5, 4, 2],
-  ///   'D': ['x', 'y', 'z', 'p', 'q'] // Non-numeric
-  /// });
-  ///
-  /// var corrMatrix = df.corr();
-  /// print(corrMatrix);
-  /// // Output (example, exact floating point values might vary slightly):
-  /// //          A         B         C
-  /// // A   1.000000 -1.000000  0.000000
-  /// // B  -1.000000  1.000000  0.000000
-  /// // C   0.000000  0.000000  1.000000
-  /// ```
-  DataFrame corr() {
-    final List<String> numericColumnNames = [];
-    final List<int> numericIndices = [];
-
-    for (var i = 0; i < _columns.length; i++) {
-      // Check if the column is likely numeric by inspecting its first non-null value's type
-      // This is a heuristic; a more robust way would be to have dtype info per column.
-      dynamic firstNonNullValue;
-      for (var row in _data) {
-        if (row[i] != null && row[i] != replaceMissingValueWith) {
-          firstNonNullValue = row[i];
-          break;
-        }
-      }
-      if (firstNonNullValue is num) {
-        numericColumnNames.add(_columns[i].toString());
-        numericIndices.add(i);
-      }
-    }
-
-    if (numericColumnNames.isEmpty) {
-      throw StateError('No numeric columns found for correlation calculation.');
-    }
-
-    final List<List<dynamic>> correlationData = [];
-    final List<dynamic> correlationIndex =
-        List<dynamic>.from(numericColumnNames);
-
-    for (var i = 0; i < numericIndices.length; i++) {
-      final List<dynamic> rowData = [];
-      final colIndex1 = numericIndices[i];
-      final col1Data =
-          _data.map((row) => row[colIndex1]).whereType<num>().toList();
-
-      for (var j = 0; j < numericIndices.length; j++) {
-        final colIndex2 = numericIndices[j];
-        final col2Data =
-            _data.map((row) => row[colIndex2]).whereType<num>().toList();
-
-        final correlation = _calculateCorrelation(col1Data, col2Data);
-        rowData.add(correlation);
-      }
-      correlationData.add(rowData);
-    }
-    return DataFrame._(List<dynamic>.from(numericColumnNames), correlationData,
-        index: correlationIndex);
-  }
-
-  /// Private helper to calculate Pearson correlation coefficient between two lists of numbers.
-  ///
-  /// Parameters:
-  /// - `x`: The first `List<num>`.
-  /// - `y`: The second `List<num>`.
-  ///
-  /// Returns:
-  /// The Pearson correlation coefficient as a `double`. Returns `double.nan` if
-  /// correlation cannot be computed (e.g., lists are different lengths, empty, or have zero variance).
-  double _calculateCorrelation(List<num> x, List<num> y) {
-    if (x.length != y.length || x.isEmpty) {
-      return double
-          .nan; // Cannot compute correlation if lengths differ or lists are empty
-    }
-
-    final n = x.length;
-
-    // Calculate means
-    final xMean = x.reduce((a, b) => a + b) / n;
-    final yMean = y.reduce((a, b) => a + b) / n;
-
-    // Calculate covariance and variances
-    double covariance = 0;
-    double xVariance = 0;
-    double yVariance = 0;
-
-    for (var i = 0; i < n; i++) {
-      final xDiff = x[i] - xMean;
-      final yDiff = y[i] - yMean;
-
-      covariance += xDiff * yDiff;
-      xVariance += xDiff * xDiff;
-      yVariance += yDiff * yDiff;
-    }
-
-    if (xVariance == 0 || yVariance == 0) {
-      return 0; // No variation in at least one variable
-    }
-
-    return covariance / (sqrt(xVariance) * sqrt(yVariance));
   }
 
   /// Bins a numeric column into discrete intervals.

@@ -65,7 +65,7 @@ void main() {
       expect(df.variance(), isA<Series>());
 
       // Test correlation matrix
-      final corrMatrix = df.corrAdvanced();
+      final corrMatrix = df.corr();
       expect(corrMatrix, isA<DataFrame>());
       expect(corrMatrix.columns, equals(['A', 'B', 'C']));
       expect(corrMatrix.rowCount, equals(3));

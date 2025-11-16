@@ -1,3 +1,261 @@
+# 0.8.4
+
+- **[MAJOR FEATURE]** Window Functions - Exponentially Weighted Moving (EWM) Operations
+  - **NEW**: `DataFrame.ewm()` - Create exponentially weighted window with span, alpha, halflife, or com parameters
+  - **NEW**: `ewm().mean()` - Exponentially weighted moving average for smoothing time series data
+  - **NEW**: `ewm().std()` - Exponentially weighted moving standard deviation for volatility analysis
+  - **NEW**: `ewm().var_()` - Exponentially weighted moving variance for risk measurement
+  - **NEW**: `ewm().corr()` - Exponentially weighted moving correlation (pairwise and with other DataFrame)
+  - **NEW**: `ewm().cov()` - Exponentially weighted moving covariance (pairwise and with other DataFrame)
+  - **ENHANCEMENT**: Support for adjustWeights and ignoreNA parameters for flexible weighting schemes
+  - **COMPATIBILITY**: Pandas-like API for familiar exponential smoothing workflows
+
+- **[MAJOR FEATURE]** Window Functions - Expanding Window Operations
+  - **NEW**: `DataFrame.expanding()` - Create expanding window with minPeriods parameter
+  - **NEW**: `expanding().mean()` - Expanding mean (cumulative average) for running statistics
+  - **NEW**: `expanding().sum()` - Expanding sum (cumulative sum) for accumulation analysis
+  - **NEW**: `expanding().std()` - Expanding standard deviation for growing window volatility
+  - **NEW**: `expanding().min()` - Expanding minimum (running minimum) for tracking lowest values
+  - **NEW**: `expanding().max()` - Expanding maximum (running maximum) for tracking highest values
+  - **ENHANCEMENT**: All expanding operations support minPeriods parameter for minimum observation requirements
+
+- **[FEATURE]** DataFrame Statistical Methods - Data Manipulation Operations
+  - **NEW**: `DataFrame.clip()` - Trim values at input thresholds with lower/upper bounds for outlier control
+  - **NEW**: `DataFrame.abs()` - Compute absolute values for all numeric columns
+  - **NEW**: `DataFrame.pctChange()` - Calculate percentage change between consecutive rows for growth analysis
+  - **NEW**: `DataFrame.diff()` - Calculate first discrete difference between consecutive rows
+  - **NEW**: `DataFrame.idxmax()` - Return index labels of maximum values for each column
+  - **NEW**: `DataFrame.idxmin()` - Return index labels of minimum values for each column
+  - **NEW**: `DataFrame.qcut()` - Quantile-based discretization for specified columns into equal-sized bins
+  - **ENHANCEMENT**: Enhanced `DataFrame.round()` with parameter validation and error handling
+
+- **[FEATURE]** Series Statistical Methods
+  - **NEW**: `Series.clip()` - Trim values at input thresholds with lower/upper bounds
+  - **FIX**: Resolved duplicate `abs()` method causing ambiguity errors in Series extensions
+  - **FIX**: Fixed Series extension methods not working on `Series<dynamic>` by proper type handling
+
+- **[MAJOR FEATURE]** GroupBy Enhancements - Advanced Aggregation and Operations
+  - **NEW**: `DataFrame.groupBy2()` - Create GroupBy object for advanced operations with chainable API
+  - **NEW**: `GroupBy.transform()` - Transform values within groups while maintaining original DataFrame shape
+  - **NEW**: `GroupBy.filter()` - Filter entire groups based on conditions for group-level selection
+  - **NEW**: `GroupBy.pipe()` - Apply chainable functions for method chaining and custom operations
+  - **NEW**: `GroupBy.nth()` - Get nth row from each group (supports negative indexing)
+  - **NEW**: `GroupBy.head()` / `GroupBy.tail()` - Get first/last n rows from each group
+  - **NEW**: Cumulative Operations within Groups:
+    - `GroupBy.cumsum()` - Cumulative sum within each group for running totals
+    - `GroupBy.cumprod()` - Cumulative product within each group
+    - `GroupBy.cummax()` - Cumulative maximum within each group
+    - `GroupBy.cummin()` - Cumulative minimum within each group
+  - **NEW**: Flexible Aggregation with Enhanced `GroupBy.agg()`:
+    - Single function mode: `agg('sum')` for simple aggregations
+    - Multiple functions mode: `agg(['sum', 'mean', 'count'])` for multiple statistics
+    - Column-specific mode: `agg({'col1': 'sum', 'col2': ['mean', 'max']})` for targeted aggregations
+    - Named aggregations mode: `agg({'total': NamedAgg('amount', 'sum')})` for custom column names
+  - **NEW**: `NamedAgg` class for custom aggregation column names and multiple function support
+  - **NEW**: Convenience aggregation methods: `sum()`, `mean()`, `count()`, `min()`, `max()`, `std()`, `var_()`, `first()`, `last()`
+  - **NEW**: Utility methods: `ngroups` property, `size()` method, `groups` property for group inspection
+  - **FIX**: Fixed list equality issue in `groupBy()` when using multiple columns - now uses string representation for proper map key equality
+  - **ARCHITECTURE**: Lazy evaluation in GroupBy operations for memory efficiency
+
+- **[FEATURE]** Advanced Slicing Methods (Previously Implemented)
+  - **NEW**: `DataFrame.slice()` - Slice with step parameter (forward and reverse slicing)
+  - **NEW**: `DataFrame.sliceByLabel()` - Label-based range slicing (inclusive endpoints)
+  - **NEW**: `DataFrame.sliceByPosition()` - Combined position slicing with step parameter
+  - **NEW**: `DataFrame.sliceByLabelWithStep()` - Label + step combination for flexible slicing
+  - **NEW**: `DataFrame.everyNthRow()` / `DataFrame.everyNthColumn()` - Convenience sampling methods
+  - **NEW**: `DataFrame.reverseRows()` / `DataFrame.reverseColumns()` - Simple reversal operations
+
+- **[ENHANCEMENT]** Method Chaining Support
+  - All new operations return DataFrames/Series for seamless method chaining
+  - Example: `df.clip(lower: 0, upper: 100).abs().round(2)` for fluent API usage
+  - Consistent API design across all statistical and manipulation methods
+
+- **[ENHANCEMENT]** Null Value Handling
+  - Consistent null value handling across all new operations
+  - Null values are preserved appropriately in all transformations
+  - Graceful handling of edge cases (empty DataFrames, single rows, mixed types)
+
+- **[ENHANCEMENT]** Performance Optimizations
+  - Efficient O(n) and O(n*m) implementations for all new methods
+  - Lazy evaluation in GroupBy operations for reduced memory footprint
+  - Memory-efficient implementations suitable for large datasets (1000+ rows tested)
+  - Performance targets: < 1 second for typical operations
+
+- **[ENHANCEMENT]** Error Handling
+  - Comprehensive parameter validation with descriptive error messages
+  - Proper type checking and conversion for mixed data types
+  - Clear error messages for invalid operations and edge cases
+
+- **[MAJOR FEATURE]** Data Type System - Nullable Types and Type Management
+  - **NEW**: Comprehensive DType system with nullable integer, boolean, and string types
+    - `Int8DType`, `Int16DType`, `Int32DType`, `Int64DType` - Nullable integer types with range validation (-128 to 127, -32768 to 32767, etc.)
+    - `BooleanDType` - Nullable boolean with flexible string parsing ('true', 'yes', '1', 'false', 'no', '0')
+    - `StringDType` - Nullable string with optional max length constraints
+    - `Float32DType`, `Float64DType` - Nullable float types with NaN handling
+    - `DateTimeDType` - Nullable datetime with string and timestamp parsing
+    - `ObjectDType` - Generic object type for mixed data
+  - **NEW**: `DTypeRegistry` - Custom data type registration system
+    - `register(name, constructor)` - Register custom types with string names
+    - `get(name)` - Retrieve registered types by name
+    - Built-in type lookup with fallback to custom types
+    - Type validation and management
+  - **NEW**: `DTypes` convenience class - Easy type creation
+    - `DTypes.int8()`, `DTypes.int16()`, `DTypes.int32()`, `DTypes.int64()` - Integer type constructors
+    - `DTypes.float32()`, `DTypes.float64()` - Float type constructors
+    - `DTypes.boolean()`, `DTypes.string()`, `DTypes.datetime()` - Other type constructors
+    - All types support nullable/non-nullable variants via `nullable` parameter
+  - **NEW**: `DataFrame.dtypesDetailed` - Automatic type inference
+    - Detects optimal types based on data content and value ranges
+    - Chooses smallest integer type that fits the data range (Int8 for [-128, 127], etc.)
+    - Handles nullable vs non-nullable type detection
+    - Smart string parsing: infers numeric types from parsable strings (e.g., '123' → Int8DType)
+  - **NEW**: `DataFrame.astype()` - Enhanced type conversion with categorical support
+    - Convert columns to specific DType objects: `df.astype({'col': DTypes.int32()})`
+    - Support for Map<String, DType> and Map<String, String> formats
+    - Error handling modes: 'raise', 'ignore', 'coerce' for flexible conversion
+    - **CATEGORICAL SUPPORT**: `df.astype({'col': 'category'})` delegates to existing categorical system
+    - Automatic fallback for categorical and other existing types
+    - Full compatibility with existing `astype()` behavior
+  - **NEW**: `DataFrame.inferDTypes()` - Automatic type optimization
+    - Infer and convert to optimal types automatically
+    - Downcast options: 'integer', 'float', 'all' for memory optimization
+    - Smart string-to-number inference for data cleaning
+    - Reduces memory usage by selecting smallest appropriate types
+  - **NEW**: `DataFrame.memoryUsageByDType()` - Memory usage analysis
+    - Calculate memory usage per column based on dtype
+    - Fixed-size type calculations (Int8=1 byte, Int16=2 bytes, etc.)
+    - Variable-size type estimation for strings and objects
+    - Returns Map<String, int> of column names to bytes
+  - **NEW**: `Series.dtypeInfo` - Series type information
+    - Get DType information for Series data
+    - Automatic type inference with range-based integer selection
+    - Avoids conflict with existing `dtype` property
+  - **NEW**: `Series.astype()` - Series type conversion with categorical support
+    - Convert Series to specific DType: `s.astype(DTypes.int8())`
+    - **CATEGORICAL SUPPORT**: `s.astype('category', categories: [...], ordered: true)`
+    - In-place conversion for categorical type (modifies original Series)
+    - Returns new Series for other type conversions
+    - Support for 'int', 'float', 'string', 'object' string names
+    - Error handling: 'raise', 'ignore', 'coerce' modes
+    - Full compatibility with existing categorical system
+  - **NEW**: `Series.memoryUsageByDType()` - Series memory analysis
+    - Calculate memory usage based on inferred dtype
+    - Range-based integer type detection for accurate estimates
+  - **NEW**: Series public methods for dtype management
+    - `toCategorical(categories, ordered)` - Convert to categorical type
+    - `setDType(dtype)` - Set dtype string identifier
+    - `clearCategorical()` - Clear categorical data
+  - **ENHANCEMENT**: Smart Type Inference
+    - Parses string content to infer numeric types: `['1', '2', '3']` → Int8DType
+    - Range-based integer type selection: values [1,2,3] → Int8, [1000,2000] → Int16
+    - Automatic detection of parsable integers and floats in string data
+  - **ENHANCEMENT**: Robust Error Handling
+    - All numeric and datetime types throw `FormatException` for unparsable strings
+    - Proper exception propagation with 'raise' error mode
+    - Null coercion with 'coerce' error mode
+    - Value preservation with 'ignore' error mode
+  - **COMPATIBILITY**: Works alongside existing type system
+    - Categorical conversion delegates to existing `_Categorical` implementation
+    - No breaking changes to existing DataFrame/Series behavior
+    - Extension-based implementation for clean separation of concerns
+  - **PERFORMANCE**: Memory-efficient type storage and conversion
+    - Optimal type selection reduces memory footprint
+    - Efficient conversion algorithms
+    - Lazy evaluation where appropriate
+  - **VALIDATION**: Comprehensive type validation and range checking
+    - Integer range validation (Int8: -128 to 127, Int16: -32768 to 32767, etc.)
+    - Type compatibility checks
+    - Null handling for nullable types
+  - **TESTING**: 52 comprehensive tests (22 dtype + 30 categorical)
+    - Full integration testing with DataFrame and Series
+    - Categorical compatibility testing
+    - Error handling and edge case coverage
+    - Memory usage calculation verification
+
+- **[DOCUMENTATION]** Comprehensive Documentation Added
+  - `WINDOW_FUNCTIONS_SUMMARY.md` - Complete window functions documentation with examples
+  - `EWM_CORR_COV_SUMMARY.md` - EWM correlation and covariance documentation
+  - `GROUPBY_ENHANCEMENTS_SUMMARY.md` - GroupBy operations documentation with use cases
+  - `ADVANCED_SLICING_SUMMARY.md` - Advanced slicing documentation
+  - `CLIP_ABS_SUMMARY.md` - DataFrame operations documentation
+  - `SERIES_CLIP_SUMMARY.md` - Series clip documentation
+  - `DATAFRAME_COMPLETE_METHODS_SUMMARY.md` - Complete statistical methods documentation
+  - `example/window_functions_example.dart` - Window functions usage examples
+  - `example/dataframe_operations_example.dart` - DataFrame operations examples
+  - `example/series_clip_example.dart` - Series clip usage examples
+  - `example/dtype_example.dart` - Comprehensive DType system examples with 10 usage scenarios
+
+- **[TESTING]** Comprehensive Test Coverage - 221+ New Tests Added
+  - 47 tests for window functions (`test/window_functions_test.dart`)
+  - 47 tests for GroupBy operations (`test/groupby_enhanced_test.dart`)
+  - 44 tests for advanced slicing (`test/advanced_slicing_test.dart`)
+  - 36 tests for DataFrame operations (`test/dataframe_operations_test.dart`)
+  - 28 tests for missing DataFrame methods (`test/dataframe_missing_methods_test.dart`)
+  - 19 tests for Series clip (`test/series_clip_test.dart`)
+  - Edge case coverage: empty DataFrames/Series, single row/column, mixed types, null values
+  - Large dataset performance validation (1000+ rows)
+
+- **[FEATURE]** Export Formats - Multiple Output Formats
+  - **NEW**: `toLatex()` - Export DataFrame to LaTeX table format
+    - Support for captions, labels, and position specifiers
+    - Automatic escaping of special LaTeX characters
+    - Longtable environment for multi-page tables
+    - Custom column format strings
+    - Bold headers and configurable styling
+  - **NEW**: `toMarkdown()` - Export DataFrame to Markdown table format
+    - GitHub-flavored markdown (pipe format)
+    - Grid and simple table formats
+    - Column alignment options (left, center, right)
+    - Float formatting for numeric precision
+    - Maximum column width for truncation
+  - **NEW**: `toStringFormatted()` - Enhanced formatted string representation
+    - Intelligent truncation for large DataFrames
+    - Configurable max rows and columns
+    - Float formatting support
+    - Shape information footer
+    - Pandas-like display with ellipsis
+  - **NEW**: `toRecords()` - Convert DataFrame to list of record maps
+    - Optional index inclusion
+    - Custom index column naming
+    - Perfect for JSON serialization
+    - Row-by-row iteration support
+  - **COMPATIBILITY**: Pandas-like API for familiar export workflows
+
+- **[FEATURE]** Web & API - HTML and XML Support
+  - **NEW**: `toHtml()` - Export DataFrame to HTML table format
+    - CSS classes and table ID support
+    - Notebook styling for Jupyter-like display
+    - Configurable borders and alignment
+    - Automatic HTML entity escaping
+    - Truncation for large DataFrames
+    - Dimension display footer
+  - **NEW**: `toXml()` - Export DataFrame to XML format
+    - Custom root and row element names
+    - Attribute and element column modes
+    - XML entity escaping
+    - Pretty print with indentation
+    - Index inclusion control
+  - **NEW**: `DataFrame.readHtml()` - Read HTML tables from string
+    - Automatic table detection and parsing
+    - Header row specification
+    - Numeric value parsing
+    - HTML entity decoding
+    - Multiple table support
+  - **NEW**: `DataFrame.readXml()` - Read XML data into DataFrame
+    - Custom row element selection
+    - Attribute extraction with prefix
+    - Numeric value parsing
+    - XML entity decoding
+    - Flexible column detection
+  - **COMPATIBILITY**: Round-trip support for HTML and XML formats
+
+- **[API COMPLETENESS]** Feature Parity Achievement
+  - DataFrame and Series now have complete statistical method coverage
+  - All 11 statistical methods implemented for both DataFrame and Series
+  - Pandas-like API with consistent method signatures across all operations
+  - Full support for method chaining and functional programming patterns
+  - Complete export format support for documentation and reporting
+
 # 0.8.3
 
 - **[MAJOR FEATURE]** Comprehensive String Operations Extension

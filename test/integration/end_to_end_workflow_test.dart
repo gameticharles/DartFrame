@@ -40,7 +40,7 @@ void main() {
       expect(stats, isA<Map>());
 
       // Correlation analysis
-      final corrMatrix = df.corrAdvanced();
+      final corrMatrix = df.corr();
       expect(corrMatrix, isA<DataFrame>());
 
       // Step 5: Rolling statistics (using DataFrame rolling)
@@ -110,7 +110,7 @@ void main() {
       // Statistical computations
       final statsStopwatch = Stopwatch()..start();
       final stats = df.describe();
-      final corr = df.select(['value1', 'value2']).corrAdvanced();
+      final corr = df.select(['value1', 'value2']).corr();
       statsStopwatch.stop();
 
       expect(stats, isA<Map>());
