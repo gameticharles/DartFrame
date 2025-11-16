@@ -12,6 +12,13 @@ export 'src/io/json_reader.dart';
 export 'src/io/csv_reader.dart';
 export 'src/io/excel_reader.dart';
 
+// Smart Loader and Data Sources
+export 'src/io/smart_loader.dart';
+export 'src/io/data_source.dart';
+export 'src/io/file_source.dart';
+export 'src/io/http_source.dart';
+export 'src/io/scientific_datasets.dart';
+
 // HDF5 Advanced API - for users who need low-level access
 export 'src/io/hdf5/hdf5_file.dart';
 export 'src/io/hdf5/hdf5_error.dart';

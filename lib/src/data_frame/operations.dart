@@ -374,7 +374,7 @@ extension DataFrameOperations on DataFrame {
   ///
   /// Parameters:
   /// - `columns`: Column name (String) or list of column names to discretize
-  /// - `q`: Number of quantiles (int) or array of quantiles (List<num>)
+  /// - `q`: Number of quantiles (int) or array of quantiles (`List<num>`)
   /// - `labels`: Labels for the resulting bins. If false, returns integer indicators.
   ///   If null, labels are constructed from bin edges.
   /// - `precision`: Precision for bin labels (default: 3)

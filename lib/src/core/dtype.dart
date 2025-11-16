@@ -1,7 +1,7 @@
 /// Data type system for DartFrame.
 ///
 /// Provides nullable types, extension types, and custom dtype registration.
-library dtype;
+library;
 
 /// Base class for all DartFrame data types.
 abstract class DType {
@@ -354,7 +354,7 @@ class StringDType extends DType {
       return null;
     }
     final str = value.toString();
-    if (_maxLength != null && str.length > _maxLength!) {
+    if (_maxLength != null && str.length > _maxLength) {
       throw ArgumentError(
           'String length ${str.length} exceeds maximum $_maxLength');
     }
@@ -365,7 +365,7 @@ class StringDType extends DType {
   bool isValid(dynamic value) {
     if (value == null) return _nullable;
     if (value is! String) return false;
-    if (_maxLength != null && value.length > _maxLength!) return false;
+    if (_maxLength != null && value.length > _maxLength) return false;
     return true;
   }
 

@@ -458,7 +458,7 @@ extension SeriesDType<T> on Series<T> {
 
   /// Get memory usage with dtype information.
   int memoryUsageByDType() {
-    final dtypeObj = this.dtypeInfo;
+    final dtypeObj = dtypeInfo;
     final values = toList();
 
     if (dtypeObj.itemSize != null) {

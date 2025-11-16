@@ -496,7 +496,7 @@ class ExponentialWeightedWindow {
     List<String> colNames = [];
     for (var thisCol in _df.columns) {
       for (var otherCol in other.columns) {
-        colNames.add('${thisCol}_${otherCol}');
+        colNames.add('${thisCol}_$otherCol');
       }
     }
 

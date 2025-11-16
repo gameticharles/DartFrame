@@ -211,13 +211,13 @@ This document outlines missing features compared to pandas and strategies for ad
 
 #### Database Support
 
-- [x] read_sql_query() - Read SQL query results ✅ (via database.dart)
-- [x] read_sql_table() - Read entire SQL table ✅ (via database.dart)
-- [x] to_sql() - Write to SQL database ✅ (via database.dart)
-- [ ] SQL connection pooling
-- [ ] Parameterized queries
-- [ ] Transaction support
-- [ ] Batch inserts
+- [x] read_sql_query() - Read SQL query results ✅
+- [x] read_sql_table() - Read entire SQL table ✅
+- [x] to_sql() - Write to SQL database ✅
+- [x] SQL connection pooling ✅
+- [x] Parameterized queries ✅
+- [x] Transaction support ✅
+- [x] Batch inserts ✅
 
 #### File Format Support
 

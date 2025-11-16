@@ -283,7 +283,7 @@ extension DataFrameExportFormats on DataFrame {
 
     // Footer with shape info
     buffer.writeln();
-    buffer.writeln('[${rowCount} rows x ${columns.length} columns]');
+    buffer.writeln('[$rowCount rows x ${columns.length} columns]');
 
     return buffer.toString();
   }

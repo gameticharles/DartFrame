@@ -16,6 +16,11 @@ dependencies:
   r_tree: ^3.0.1
   excel: ^4.0.6
   csv: ^6.0.0
+  http: ^1.2.0
+  # Database packages
+  postgres: ^3.0.2
+  sqlite3: ^2.4.6
+  mysql_client: ^0.0.27
 
 dev_dependencies:
   benchmark_harness: ^2.3.1

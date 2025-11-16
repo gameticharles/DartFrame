@@ -62,7 +62,7 @@ class JsonReader implements DataReader {
       final fileIO = FileIO();
       final content = await fileIO.readFromFile(path);
 
-      return _parseJsonContent(content, options);
+      return parseJsonContent(content, options);
     } catch (e) {
       throw JsonReadError('Failed to read JSON file: $e');
     }
@@ -70,11 +70,11 @@ class JsonReader implements DataReader {
 
   /// Parses JSON content string into a DataFrame.
   ///
-  /// This internal method handles the conversion of JSON data to DataFrame
+  /// This method handles the conversion of JSON data to DataFrame
   /// based on the specified orientation.
   ///
   /// Throws [JsonReadError] if parsing fails.
-  DataFrame _parseJsonContent(String content, Map<String, dynamic>? options) {
+  DataFrame parseJsonContent(String content, Map<String, dynamic>? options) {
     try {
       final orient = options?['orient'] as String? ?? 'records';
       final dynamic jsonData = json.decode(content);

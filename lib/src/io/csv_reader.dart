@@ -52,7 +52,7 @@ class CsvReader implements DataReader {
       final fileIO = FileIO();
       final content = await fileIO.readFromFile(path);
 
-      return _parseCsvContent(content, options);
+      return parseCsvContent(content, options);
     } catch (e) {
       throw CsvReadError('Failed to read CSV file: $e');
     }
@@ -60,12 +60,12 @@ class CsvReader implements DataReader {
 
   /// Parses CSV content string into a DataFrame.
   ///
-  /// This internal method handles the actual CSV parsing logic using the
+  /// This method handles the actual CSV parsing logic using the
   /// csv package's CsvToListConverter. It processes options, extracts headers,
   /// and builds the DataFrame structure.
   ///
   /// Throws [CsvReadError] if parsing fails.
-  DataFrame _parseCsvContent(String content, Map<String, dynamic>? options) {
+  DataFrame parseCsvContent(String content, Map<String, dynamic>? options) {
     try {
       // Parse options
       final fieldDelimiter = options?['fieldDelimiter'] as String? ?? ',';

@@ -23,6 +23,7 @@ part 'groupby.dart';
 part 'window_functions.dart';
 part 'export_formats.dart';
 part 'web_api.dart';
+part 'smart_loader.dart';
 
 /// A class representing the shape of multi-dimensional data structures.
 ///
@@ -1212,6 +1213,62 @@ class DataFrame {
       missingDataIndicator: missingDataIndicator,
       formatData: formatData,
     );
+  }
+
+  /// Reads data from a URI and returns a DataFrame.
+  ///
+  /// This static method provides a pandas-like API for loading data from
+  /// various sources with automatic source detection.
+  ///
+  /// ## Supported Sources
+  /// - Local files: `'data.csv'`, `'file:///path/to/data.json'`
+  /// - HTTP/HTTPS: `'https://example.com/data.csv'`
+  /// - Scientific datasets: `'dataset://iris'`, `'dataset://mnist/train'`
+  /// - Databases: `'sqlite://db.sqlite?table=users'`
+  ///
+  /// ## Parameters
+  /// - `uri`: URI string or path to the data source
+  /// - `options`: Source-specific and format-specific options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Local file
+  /// final df = await DataFrame.read('data.csv');
+  ///
+  /// // HTTP URL
+  /// final df = await DataFrame.read('https://example.com/data.json');
+  ///
+  /// // Scientific dataset
+  /// final df = await DataFrame.read('dataset://iris');
+  ///
+  /// // Database
+  /// final df = await DataFrame.read('sqlite://db.sqlite?table=users');
+  ///
+  /// // With options
+  /// final df = await DataFrame.read('data.csv', options: {
+  ///   'fieldDelimiter': ';',
+  ///   'skipRows': 1,
+  /// });
+  /// ```
+  static Future<DataFrame> read(
+    String uri, {
+    Map<String, dynamic>? options,
+  }) async {
+    return await SmartLoader.read(uri, options: options);
+  }
+
+  /// Inspects a data source without loading all data.
+  ///
+  /// Returns metadata about the source such as size, format, columns, etc.
+  ///
+  /// ## Example
+  /// ```dart
+  /// final info = await DataFrame.inspect('data.csv');
+  /// print('Size: ${info['size']} bytes');
+  /// print('Format: ${info['format']}');
+  /// ```
+  static Future<Map<String, dynamic>> inspect(String uri) async {
+    return await SmartLoader.inspect(uri);
   }
 
   /// Converts the DataFrame to JSON format or writes it to a JSON file.
