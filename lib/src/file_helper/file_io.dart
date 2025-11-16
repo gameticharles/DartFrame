@@ -213,4 +213,87 @@ abstract class FileIOBase {
   /// // Returns: "/base/other/file.txt"
   /// ```
   String resolvePath(String basePath, String relativePath);
+
+  /// Gets file statistics (size, modified time, etc.).
+  ///
+  /// On desktop, returns actual file system statistics.
+  /// On web, returns null as file system access is not available.
+  ///
+  /// Returns a FileStats object containing:
+  /// - size: File size in bytes
+  /// - modified: Last modified timestamp
+  /// - accessed: Last accessed timestamp (may be null on some platforms)
+  /// - changed: Last changed timestamp (may be null on some platforms)
+  /// - type: File type (file, directory, link, etc.)
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// var stats = await fileIO.getFileStats("/path/to/file.txt");
+  /// if (stats != null) {
+  ///   print("File size: ${stats.size} bytes");
+  ///   print("Modified: ${stats.modified}");
+  /// }
+  /// ```
+  Future<FileStats?> getFileStats(String path);
+
+  /// Gets file statistics synchronously.
+  ///
+  /// On desktop, returns actual file system statistics.
+  /// On web, returns null as file system access is not available.
+  ///
+  /// Example usage:
+  /// ```
+  /// var fileIO = FileIO();
+  /// var stats = fileIO.getFileStatsSync("/path/to/file.txt");
+  /// if (stats != null) {
+  ///   print("File size: ${stats.size} bytes");
+  /// }
+  /// ```
+  FileStats? getFileStatsSync(String path);
+}
+
+/// File statistics information
+///
+/// Contains metadata about a file including size, timestamps, and type.
+class FileStats {
+  /// File size in bytes
+  final int size;
+
+  /// Last modified timestamp
+  final DateTime modified;
+
+  /// Last accessed timestamp (may be null on some platforms)
+  final DateTime? accessed;
+
+  /// Last changed timestamp (may be null on some platforms)
+  final DateTime? changed;
+
+  /// File type (file, directory, link, notFound)
+  final FileType type;
+
+  /// File mode/permissions (Unix-style, may be null on Windows)
+  final int? mode;
+
+  FileStats({
+    required this.size,
+    required this.modified,
+    this.accessed,
+    this.changed,
+    required this.type,
+    this.mode,
+  });
+
+  @override
+  String toString() {
+    return 'FileStats(size: $size, modified: $modified, type: $type)';
+  }
+}
+
+/// File type enumeration
+enum FileType {
+  file,
+  directory,
+  link,
+  notFound,
 }

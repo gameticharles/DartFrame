@@ -65,4 +65,16 @@ class FileIO implements FileIOBase {
   String resolvePath(String basePath, String relativePath) {
     throw UnsupportedError('Cannot resolve path without dart:io or dart:html.');
   }
+
+  @override
+  Future<FileStats?> getFileStats(String path) {
+    throw UnsupportedError(
+        'Cannot get file stats without dart:io or dart:html.');
+  }
+
+  @override
+  FileStats? getFileStatsSync(String path) {
+    throw UnsupportedError(
+        'Cannot get file stats without dart:io or dart:html.');
+  }
 }

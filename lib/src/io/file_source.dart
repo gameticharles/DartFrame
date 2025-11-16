@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io' as io;
+import 'package:dartframe/dartframe.dart';
+
 import '../data_frame/data_frame.dart';
 import 'data_source.dart';
 import 'readers.dart';
@@ -45,8 +46,7 @@ class FileDataSource extends DataSource {
       final path = _uriToPath(uri);
 
       // Check if file exists
-      final file = io.File(path);
-      if (!await file.exists()) {
+      if (!await FileIO().fileExists(path)) {
         throw DataSourceError('File not found: $path');
       }
 
@@ -93,18 +93,18 @@ class FileDataSource extends DataSource {
   Future<Map<String, dynamic>> inspect(Uri uri) async {
     try {
       final path = _uriToPath(uri);
-      final file = io.File(path);
+      final file = FileIO();
 
-      if (!await file.exists()) {
+      if (!await file.fileExists(path)) {
         throw DataSourceError('File not found: $path');
       }
 
-      final stat = await file.stat();
+      final stat = file.getFileStatsSync(path);
       final extension = _getFileExtension(path);
 
       return {
         'path': path,
-        'size': stat.size,
+        'size': stat!.size,
         'modified': stat.modified.toIso8601String(),
         'extension': extension,
         'format': _detectFormat(path),

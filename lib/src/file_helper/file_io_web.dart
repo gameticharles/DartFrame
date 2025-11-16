@@ -208,6 +208,18 @@ class FileIO implements FileIOBase {
 
     return baseParts.isEmpty ? '' : '/${baseParts.join('/')}';
   }
+
+  @override
+  Future<FileStats?> getFileStats(String path) async {
+    // File system access is not available in web environments
+    return null;
+  }
+
+  @override
+  FileStats? getFileStatsSync(String path) {
+    // File system access is not available in web environments
+    return null;
+  }
 }
 
 /// In-memory implementation of RandomAccessFileBase for web platform

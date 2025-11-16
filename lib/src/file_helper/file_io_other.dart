@@ -121,6 +121,62 @@ class FileIO implements FileIOBase {
     var resolved = File('${baseDir.path}/$relativePath');
     return resolved.path;
   }
+
+  @override
+  Future<FileStats?> getFileStats(String path) async {
+    try {
+      final file = File(path);
+      final stat = await file.stat();
+
+      return FileStats(
+        size: stat.size,
+        modified: stat.modified,
+        accessed: stat.accessed,
+        changed: stat.changed,
+        type: _convertFileSystemEntityType(stat.type),
+        mode: stat.mode,
+      );
+    } catch (e) {
+      // Return null if file doesn't exist or can't be accessed
+      return null;
+    }
+  }
+
+  @override
+  FileStats? getFileStatsSync(String path) {
+    try {
+      final file = File(path);
+      final stat = file.statSync();
+
+      return FileStats(
+        size: stat.size,
+        modified: stat.modified,
+        accessed: stat.accessed,
+        changed: stat.changed,
+        type: _convertFileSystemEntityType(stat.type),
+        mode: stat.mode,
+      );
+    } catch (e) {
+      // Return null if file doesn't exist or can't be accessed
+      return null;
+    }
+  }
+
+  /// Convert dart:io FileSystemEntityType to our FileType enum
+  FileType _convertFileSystemEntityType(FileSystemEntityType type) {
+    switch (type) {
+      case FileSystemEntityType.file:
+        return FileType.file;
+      case FileSystemEntityType.directory:
+        return FileType.directory;
+      case FileSystemEntityType.link:
+        return FileType.link;
+      case FileSystemEntityType.notFound:
+        return FileType.notFound;
+      default:
+        return FileType.notFound;
+    }
+  }
 }
 
 /// Wrapper for dart:io RandomAccessFile to implement RandomAccessFileBase
