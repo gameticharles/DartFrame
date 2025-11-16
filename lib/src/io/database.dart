@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:postgres/postgres.dart' as pg;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
-import 'package:mysql_client/mysql_client.dart' as mysql;
 import '../data_frame/data_frame.dart';
 
 /// Abstract base class for database connections
@@ -396,136 +395,136 @@ class PostgreSQLConnection implements DatabaseConnection {
   }
 }
 
-/// MySQL database connection implementation using mysql_client package
-class MySQLConnection implements DatabaseConnection {
-  final String _connectionString;
-  mysql.MySQLConnection? _connection;
-  bool _isConnected = false;
+// /// MySQL database connection implementation using mysql_client package
+// class MySQLConnection implements DatabaseConnection {
+//   final String _connectionString;
+//   mysql.MySQLConnection? _connection;
+//   bool _isConnected = false;
 
-  MySQLConnection(this._connectionString);
+//   MySQLConnection(this._connectionString);
 
-  @override
-  String get databaseType => 'mysql';
+//   @override
+//   String get databaseType => 'mysql';
 
-  String get connectionString => _connectionString;
+//   String get connectionString => _connectionString;
 
-  Future<void> connect() async {
-    try {
-      if (_connectionString.isEmpty) {
-        throw DatabaseConnectionError('Connection string cannot be empty');
-      }
+//   Future<void> connect() async {
+//     try {
+//       if (_connectionString.isEmpty) {
+//         throw DatabaseConnectionError('Connection string cannot be empty');
+//       }
 
-      final uri = Uri.parse(_connectionString);
-      if (uri.scheme != 'mysql') {
-        throw DatabaseConnectionError(
-            'Invalid MySQL connection string: $_connectionString');
-      }
+//       final uri = Uri.parse(_connectionString);
+//       if (uri.scheme != 'mysql') {
+//         throw DatabaseConnectionError(
+//             'Invalid MySQL connection string: $_connectionString');
+//       }
 
-      // Parse connection details
-      final userInfo = uri.userInfo.split(':');
-      final username = userInfo.isNotEmpty ? userInfo[0] : 'root';
-      final password = userInfo.length > 1 ? userInfo[1] : '';
-      final database =
-          uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'mysql';
+//       // Parse connection details
+//       final userInfo = uri.userInfo.split(':');
+//       final username = userInfo.isNotEmpty ? userInfo[0] : 'root';
+//       final password = userInfo.length > 1 ? userInfo[1] : '';
+//       final database =
+//           uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'mysql';
 
-      _connection = await mysql.MySQLConnection.createConnection(
-        host: uri.host.isEmpty ? 'localhost' : uri.host,
-        port: uri.port == 0 ? 3306 : uri.port,
-        userName: username,
-        password: password,
-        databaseName: database,
-      );
+//       _connection = await mysql.MySQLConnection.createConnection(
+//         host: uri.host.isEmpty ? 'localhost' : uri.host,
+//         port: uri.port == 0 ? 3306 : uri.port,
+//         userName: username,
+//         password: password,
+//         databaseName: database,
+//       );
 
-      await _connection!.connect();
-      _isConnected = true;
-    } catch (e) {
-      throw DatabaseConnectionError('Failed to connect to MySQL: $e');
-    }
-  }
+//       await _connection!.connect();
+//       _isConnected = true;
+//     } catch (e) {
+//       throw DatabaseConnectionError('Failed to connect to MySQL: $e');
+//     }
+//   }
 
-  @override
-  Future<DataFrame> query(String sql, {List<dynamic>? parameters}) async {
-    if (!_isConnected || _connection == null) {
-      await connect();
-    }
+//   @override
+//   Future<DataFrame> query(String sql, {List<dynamic>? parameters}) async {
+//     if (!_isConnected || _connection == null) {
+//       await connect();
+//     }
 
-    try {
-      final result = await _connection!.execute(sql);
-      return _mysqlResultToDataFrame(result);
-    } catch (e) {
-      throw DatabaseQueryError('MySQL query failed: $e');
-    }
-  }
+//     try {
+//       final result = await _connection!.execute(sql);
+//       return _mysqlResultToDataFrame(result);
+//     } catch (e) {
+//       throw DatabaseQueryError('MySQL query failed: $e');
+//     }
+//   }
 
-  @override
-  Future<int> execute(String sql, {List<dynamic>? parameters}) async {
-    if (!_isConnected || _connection == null) {
-      await connect();
-    }
+//   @override
+//   Future<int> execute(String sql, {List<dynamic>? parameters}) async {
+//     if (!_isConnected || _connection == null) {
+//       await connect();
+//     }
 
-    try {
-      final result = await _connection!.execute(sql);
-      return result.affectedRows.toInt();
-    } catch (e) {
-      throw DatabaseQueryError('MySQL execute failed: $e');
-    }
-  }
+//     try {
+//       final result = await _connection!.execute(sql);
+//       return result.affectedRows.toInt();
+//     } catch (e) {
+//       throw DatabaseQueryError('MySQL execute failed: $e');
+//     }
+//   }
 
-  @override
-  Future<List<int>> executeBatch(
-      String sql, List<List<dynamic>> parametersList) async {
-    if (!_isConnected || _connection == null) {
-      await connect();
-    }
+//   @override
+//   Future<List<int>> executeBatch(
+//       String sql, List<List<dynamic>> parametersList) async {
+//     if (!_isConnected || _connection == null) {
+//       await connect();
+//     }
 
-    try {
-      final results = <int>[];
-      for (var _ in parametersList) {
-        final result = await _connection!.execute(sql);
-        results.add(result.affectedRows.toInt());
-      }
-      return results;
-    } catch (e) {
-      throw DatabaseQueryError('MySQL batch execute failed: $e');
-    }
-  }
+//     try {
+//       final results = <int>[];
+//       for (var _ in parametersList) {
+//         final result = await _connection!.execute(sql);
+//         results.add(result.affectedRows.toInt());
+//       }
+//       return results;
+//     } catch (e) {
+//       throw DatabaseQueryError('MySQL batch execute failed: $e');
+//     }
+//   }
 
-  @override
-  Future<DatabaseTransaction> beginTransaction() async {
-    throw UnimplementedError('Transactions not yet implemented for MySQL');
-  }
+//   @override
+//   Future<DatabaseTransaction> beginTransaction() async {
+//     throw UnimplementedError('Transactions not yet implemented for MySQL');
+//   }
 
-  @override
-  Future<void> close() async {
-    if (_connection != null) {
-      await _connection!.close();
-      _connection = null;
-    }
-    _isConnected = false;
-  }
+//   @override
+//   Future<void> close() async {
+//     if (_connection != null) {
+//       await _connection!.close();
+//       _connection = null;
+//     }
+//     _isConnected = false;
+//   }
 
-  @override
-  Future<bool> isConnected() async {
-    return _isConnected && _connection != null;
-  }
+//   @override
+//   Future<bool> isConnected() async {
+//     return _isConnected && _connection != null;
+//   }
 
-  DataFrame _mysqlResultToDataFrame(mysql.IResultSet result) {
-    final columns = result.cols.map((col) => col.name).toList();
-    final data = <String, List<dynamic>>{};
+//   DataFrame _mysqlResultToDataFrame(mysql.IResultSet result) {
+//     final columns = result.cols.map((col) => col.name).toList();
+//     final data = <String, List<dynamic>>{};
 
-    for (final col in columns) {
-      data[col] = [];
-    }
+//     for (final col in columns) {
+//       data[col] = [];
+//     }
 
-    for (final row in result.rows) {
-      for (int i = 0; i < columns.length; i++) {
-        data[columns[i]]!.add(row.colAt(i));
-      }
-    }
+//     for (final row in result.rows) {
+//       for (int i = 0; i < columns.length; i++) {
+//         data[columns[i]]!.add(row.colAt(i));
+//       }
+//     }
 
-    return DataFrame.fromMap(data);
-  }
-}
+//     return DataFrame.fromMap(data);
+//   }
+// }
 
 /// Database reader and writer utility class
 class DatabaseReader {
@@ -539,8 +538,8 @@ class DatabaseReader {
       case 'postgresql':
       case 'postgres':
         return PostgreSQLConnection(connectionString);
-      case 'mysql':
-        return MySQLConnection(connectionString);
+      // case 'mysql':
+      //   return MySQLConnection(connectionString);
       default:
         throw UnsupportedDatabaseError(
             'Unsupported database type: ${uri.scheme}');

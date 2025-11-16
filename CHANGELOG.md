@@ -1,3 +1,8 @@
+# 0.8.5
+
+- **[FIX]** Removed MySQL since it caused plaform issues
+
+
 # 0.8.4
 
 - **[MAJOR FEATURE]** Window Functions - Exponentially Weighted Moving (EWM) Operations
@@ -241,29 +246,6 @@
     - `DATABASE_SETUP.md` - Comprehensive setup guide
   - **COMPATIBILITY**: Pandas-like API for familiar usage patterns
 
-- **[DOCUMENTATION]** Comprehensive Documentation Added
-  - `WINDOW_FUNCTIONS_SUMMARY.md` - Complete window functions documentation with examples
-  - `EWM_CORR_COV_SUMMARY.md` - EWM correlation and covariance documentation
-  - `GROUPBY_ENHANCEMENTS_SUMMARY.md` - GroupBy operations documentation with use cases
-  - `ADVANCED_SLICING_SUMMARY.md` - Advanced slicing documentation
-  - `CLIP_ABS_SUMMARY.md` - DataFrame operations documentation
-  - `SERIES_CLIP_SUMMARY.md` - Series clip documentation
-  - `DATAFRAME_COMPLETE_METHODS_SUMMARY.md` - Complete statistical methods documentation
-  - `example/window_functions_example.dart` - Window functions usage examples
-  - `example/dataframe_operations_example.dart` - DataFrame operations examples
-  - `example/series_clip_example.dart` - Series clip usage examples
-  - `example/dtype_example.dart` - Comprehensive DType system examples with 10 usage scenarios
-
-- **[TESTING]** Comprehensive Test Coverage - 221+ New Tests Added
-  - 47 tests for window functions (`test/window_functions_test.dart`)
-  - 47 tests for GroupBy operations (`test/groupby_enhanced_test.dart`)
-  - 44 tests for advanced slicing (`test/advanced_slicing_test.dart`)
-  - 36 tests for DataFrame operations (`test/dataframe_operations_test.dart`)
-  - 28 tests for missing DataFrame methods (`test/dataframe_missing_methods_test.dart`)
-  - 19 tests for Series clip (`test/series_clip_test.dart`)
-  - Edge case coverage: empty DataFrames/Series, single row/column, mixed types, null values
-  - Large dataset performance validation (1000+ rows)
-
 - **[FEATURE]** Export Formats - Multiple Output Formats
   - **NEW**: `toLatex()` - Export DataFrame to LaTeX table format
     - Support for captions, labels, and position specifiers
@@ -317,13 +299,6 @@
     - XML entity decoding
     - Flexible column detection
   - **COMPATIBILITY**: Round-trip support for HTML and XML formats
-
-- **[API COMPLETENESS]** Feature Parity Achievement
-  - DataFrame and Series now have complete statistical method coverage
-  - All 11 statistical methods implemented for both DataFrame and Series
-  - Pandas-like API with consistent method signatures across all operations
-  - Full support for method chaining and functional programming patterns
-  - Complete export format support for documentation and reporting
 
 # 0.8.3
 

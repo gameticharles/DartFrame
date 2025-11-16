@@ -237,14 +237,14 @@ void main() async {
       PostgreSQLConnection('postgresql://user:pass@localhost:5432/mydb');
   print('  Database type: ${pgConn.databaseType}');
 
-  // MySQL
-  print('MySQL:');
-  final mysqlConn = MySQLConnection('mysql://user:pass@localhost:3306/mydb');
-  print('  Database type: ${mysqlConn.databaseType}');
+  // // MySQL
+  // print('MySQL:');
+  // final mysqlConn = MySQLConnection('mysql://user:pass@localhost:3306/mydb');
+  // print('  Database type: ${mysqlConn.databaseType}');
 
   await sqliteConn.close();
   await pgConn.close();
-  await mysqlConn.close();
+  // await mysqlConn.close();
   print('');
 
   // Example 10: Error Handling
