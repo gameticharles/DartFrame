@@ -4,34 +4,9 @@ This document outlines missing features compared to pandas and strategies for ad
 
 ## 📊 Implementation Status Summary
 
-### ✅ Already Implemented (Major Features)
-- **Statistical Operations**: median, mode, quantile, std, variance, skew, kurtosis, corr (pearson/spearman), cov
-- **Rolling Window Operations**: Full suite (mean, sum, std, var, min, max, median, quantile, corr, cov, skew, kurt, apply)
-- **Reshaping**: stack, unstack, melt, pivot, pivot_table, transpose, explode, getDummies
-- **Time Series**: resample, upsample, downsample with interpolation
-- **I/O**: CSV, JSON, Excel (read/write), HDF5 (read), SQL database support, chunked reading
-- **Data Manipulation**: sample, rank, round, bin/discretization, apply functions, filter, select
-- **Missing Data**: fillna (forward/backward fill), dropna, isna, notna, interpolation
-- **Categorical**: Basic categorical dtype with .cat accessor
-- **Groupby**: Basic groupby with aggregations
-- **Joining**: merge, join, concat with multiple join types
-
-### ✅ Just Implemented (Quick Wins)
-1. ~~**duplicated() / drop_duplicates()**~~ ✅ **DONE** - DataFrame duplicate detection and removal
-2. ~~**nlargest() / nsmallest()**~~ ✅ **DONE** - For both DataFrame and Series
-3. ~~**idxmax() / idxmin()**~~ ✅ **ALREADY IMPLEMENTED** - Both were already in series/functions.dart
-4. ~~**abs() for Series**~~ ✅ **ALREADY IMPLEMENTED** - Found in series/statistics.dart
-5. ~~**pct_change() / diff()**~~ ✅ **ALREADY IMPLEMENTED** - Found in series/statistics.dart
-
-**Summary**: Implemented 4 new methods (duplicated, dropDuplicates, nlargest, nsmallest) and discovered 5 methods were already implemented!
-
 ### 🔴 High Priority Missing Features
-- MultiIndex support
-- Duplicate detection and removal
-- Advanced groupby (transform, filter, pipe)
+
 - Window functions (rank, row_number, dense_rank)
-- Time series shift/lag operations
-- String operations enhancements
 - Visualization/plotting
 
 ---
@@ -41,6 +16,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 1. Core Data Structures & Indexing
 
 #### MultiIndex & Advanced Indexing
+
 - [x] MultiIndex (hierarchical indexing) support ✅
 - [x] DatetimeIndex with timezone awareness ✅
 - [x] TimedeltaIndex for time differences ✅
@@ -50,6 +26,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] Label-based slicing with ranges ✅
 
 #### Index Operations
+
 - [x] Index.get_level_values() ✅
 - [x] Index.set_names() ✅
 - [x] Index.droplevel() ✅
@@ -59,6 +36,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 2. Statistical & Mathematical Operations
 
 #### Window Functions
+
 - [ ] Exponential weighted functions (ewm)
   - [ ] ewm().mean()
   - [ ] ewm().std()
@@ -87,6 +65,7 @@ This document outlines missing features compared to pandas and strategies for ad
   - [x] rolling().apply() ✅
 
 #### Statistical Methods
+
 - [x] rank() - Compute numerical data ranks ✅
 - [x] pct_change() - Percentage change between elements ✅
 - [x] diff() - First discrete difference ✅
@@ -102,6 +81,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 3. Data Manipulation
 
 #### GroupBy Enhancements
+
 - [x] groupby().transform() - Transform values within groups ✅
 - [x] groupby().filter() - Filter groups based on conditions ✅
 - [x] groupby().pipe() - Apply chainable functions ✅
@@ -112,6 +92,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] Named aggregations ✅
 
 #### Window Functions (SQL-style)
+
 - [ ] rank() with methods (average, min, max, first, dense)
 - [ ] dense_rank()
 - [ ] row_number()
@@ -119,6 +100,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] cumulative distribution
 
 #### Reshaping Operations
+
 - [x] explode() - Transform list-like elements to rows ✅
 - [x] transpose() - Swap rows and columns ✅
 - [ ] swaplevel() - Swap levels in MultiIndex
@@ -132,12 +114,14 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] pivot_table() - Aggregated pivot ✅
 
 #### Duplicate Handling
+
 - [x] duplicated() - Return boolean Series denoting duplicates ✅
 - [x] drop_duplicates() - Remove duplicate rows ✅
 - [x] keep parameter (first, last, False) ✅
 - [x] subset parameter for specific columns ✅
 
 #### Sampling & Selection
+
 - [x] sample() - Random sampling ✅
   - [x] n parameter (number of items) ✅
   - [x] frac parameter (fraction of items) ✅
@@ -150,6 +134,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 4. Time Series Operations
 
 #### Time-based Operations
+
 - [x] shift() - Shift index by desired number of periods ✅
 - [x] lag() / lead() - Lag or lead values ✅
 - [x] tshift() - Shift time index ✅
@@ -161,6 +146,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] tail() - Last n rows ✅
 
 #### Frequency & Period Handling
+
 - [x] Period and frequency conversion ✅ (via asfreq)
 - [ ] Business day calendars
 - [ ] Holiday calendars
@@ -168,11 +154,13 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] Week/month/quarter/year end frequencies
 
 #### Timezone Support
+
 - [x] tz_localize() - Localize timezone-naive index ✅
 - [x] tz_convert() - Convert timezone-aware index ✅
 - [x] Timezone-aware datetime operations ✅
 
 #### Resampling Enhancements
+
 - [x] More aggregation methods (ohlc, nunique) ✅
 - [x] Upsampling with interpolation ✅
 - [x] Downsampling with custom functions ✅
@@ -185,6 +173,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 5. String Operations (Series.str)
 
 #### String Methods
+
 - [x] str.len() - String length ✅ (already implemented)
 - [x] str.lower() / upper() - Case conversion ✅ (already implemented)
 - [x] str.strip() - Remove whitespace ✅ (already implemented)
@@ -195,6 +184,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] str.match() - Regex matching ✅ (already implemented)
 
 #### Newly Implemented String Methods ✅
+
 - [x] str.extract() - Extract capture groups from regex ✅
 - [x] str.extractall() - Extract all matches ✅
 - [x] str.findall() - Find all occurrences ✅
@@ -213,12 +203,14 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] str.get() - Extract element from lists ✅
 
 #### Not Implemented (Low Priority)
+
 - [ ] str.normalize() - Unicode normalization (requires unicode package)
 - [ ] str.encode() / decode() - Encode/decode strings (requires codec support)
 
 ### 6. I/O Operations
 
 #### Database Support
+
 - [x] read_sql_query() - Read SQL query results ✅ (via database.dart)
 - [x] read_sql_table() - Read entire SQL table ✅ (via database.dart)
 - [x] to_sql() - Write to SQL database ✅ (via database.dart)
@@ -228,6 +220,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] Batch inserts
 
 #### File Format Support
+
 - [x] CSV - Read/Write ✅
 - [x] JSON - Read/Write ✅
 - [x] Excel - Read/Write ✅
@@ -246,6 +239,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] SPSS (.sav) format
 
 #### Web & API
+
 - [ ] read_html() - Read HTML tables
 - [ ] to_html() - Export to HTML
 - [ ] read_clipboard() - Read from clipboard
@@ -254,12 +248,14 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] to_xml() - Export to XML
 
 #### Export Formats
+
 - [ ] to_latex() - Export to LaTeX tables
 - [ ] to_markdown() - Export to Markdown tables
 - [ ] to_string() - Formatted string representation
 - [ ] to_records() - Convert to record array
 
 #### Advanced I/O Options
+
 - [x] Compression support (gzip for HDF5) ✅
 - [ ] Encoding detection
 - [x] Chunked reading for CSV ✅
@@ -270,6 +266,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 7. Visualization
 
 #### Built-in Plotting
+
 - [ ] plot() - General plotting interface
 - [ ] plot.line() - Line plots
 - [ ] plot.bar() - Bar plots
@@ -283,6 +280,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] plot.pie() - Pie charts
 
 #### Styling
+
 - [ ] style.format() - Format values
 - [ ] style.highlight_max() / min()
 - [ ] style.background_gradient()
@@ -294,6 +292,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 8. Performance & Memory
 
 #### Optimization
+
 - [ ] Sparse data structures (SparseDataFrame, SparseSeries)
 - [ ] Memory profiling (memory_usage())
 - [ ] Query optimization
@@ -302,6 +301,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] SIMD operations for numeric data
 
 #### Categorical Enhancements
+
 - [x] Categorical data type support ✅
 - [x] Series.astype('category') ✅
 - [x] Categorical accessor (.cat) ✅
@@ -315,6 +315,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] cat.memoryUsage() - Memory usage comparison ✅
 
 #### Data Types
+
 - [ ] Nullable integer dtype (Int8, Int16, Int32, Int64)
 - [ ] Nullable boolean dtype (boolean)
 - [ ] Nullable string dtype (string)
@@ -324,6 +325,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 9. Advanced Features
 
 #### Functional Programming
+
 - [x] pipe() - Apply chainable functions ✅
 - [x] apply() - Apply function to DataFrame ✅
 - [x] applyToColumn() - Apply to specific column ✅
@@ -334,16 +336,19 @@ This document outlines missing features compared to pandas and strategies for ad
 - [x] transform() - Transform values ✅
 
 #### Expression Evaluation
+
 - [x] eval() - Evaluate string expressions ✅
 - [x] query() - Query DataFrame with boolean expression ✅
 - [ ] numexpr integration for fast evaluation (not applicable in Dart)
 
 #### Custom Accessors
+
 - [ ] Custom accessor registration
 - [ ] Extension type system
 - [ ] Plugin architecture for custom methods
 
 #### Metadata
+
 - [ ] attrs - Dictionary for global metadata
 - [ ] flags - Flags for DataFrame properties
 - [ ] info() enhancements (memory usage, null counts)
@@ -351,6 +356,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ### 10. Data Validation & Quality
 
 #### Validation
+
 - [ ] assert_frame_equal() - Test DataFrame equality
 - [ ] assert_series_equal() - Test Series equality
 - [ ] Testing utilities
@@ -358,6 +364,7 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] Data type validation
 
 #### Data Quality
+
 - [ ] Outlier detection methods
 - [ ] Data profiling (summary statistics)
 - [ ] Missing data patterns analysis
@@ -369,6 +376,7 @@ This document outlines missing features compared to pandas and strategies for ad
 ## Data Source Integration Strategy
 
 ### Architecture Principles
+
 1. **Keep core library lightweight** - No bloat in main package
 2. **Plugin-based architecture** - Easy to extend
 3. **Lazy loading** - Load adapters only when needed
@@ -413,6 +421,7 @@ class DataSourceRegistry {
 ```
 
 **Tasks:**
+
 - [ ] Create DataSource abstract class
 - [ ] Implement DataSourceRegistry
 - [ ] Add registration mechanism
@@ -424,6 +433,7 @@ class DataSourceRegistry {
 Create separate packages that depend on dartframe:
 
 **Package Structure:**
+
 ```
 dartframe_sql/          # Database connectors
   - PostgreSQL
@@ -464,6 +474,7 @@ dartframe_bigdata/      # Big data integration
 ```
 
 **Tasks:**
+
 - [ ] Create package templates
 - [ ] Set up CI/CD for companion packages
 - [ ] Create dartframe_sql package
@@ -515,6 +526,7 @@ await DataFrame.read('file:///path/to/data.csv');
 ```
 
 **Tasks:**
+
 - [ ] Implement SmartLoader class
 - [ ] Add URI parsing and validation
 - [ ] Implement HTTP/HTTPS loader
@@ -562,6 +574,7 @@ await for (final chunk in StreamingDataFrame().readChunked('large_file.csv')) {
 ```
 
 **Tasks:**
+
 - [ ] Implement StreamingDataFrame class
 - [ ] Add chunked reading for CSV
 - [ ] Add chunked reading for JSON
@@ -625,6 +638,7 @@ final df = await DataFrame.fromConfig('my_api', params: {'endpoint': '/users'});
 ```
 
 **Tasks:**
+
 - [ ] Implement DataSourceConfig class
 - [ ] Add YAML config parsing
 - [ ] Add environment variable substitution
@@ -671,6 +685,7 @@ final df = await pipeline.load('data.json');
 ```
 
 **Tasks:**
+
 - [ ] Implement DataTransformer interface
 - [ ] Implement DataPipeline class
 - [ ] Create common transformers (normalization, parsing, etc.)
@@ -704,6 +719,7 @@ class NativeParquetReader {
 ```
 
 **Tasks:**
+
 - [ ] Research FFI requirements for Parquet
 - [ ] Research FFI requirements for Arrow
 - [ ] Create FFI bindings generator
@@ -718,6 +734,7 @@ class NativeParquetReader {
 Foster a community ecosystem:
 
 **Tasks:**
+
 - [ ] Create pub.dev topic tag `dartframe-source`
 - [ ] Maintain curated list in documentation
 - [ ] Create plugin template repository
@@ -734,6 +751,7 @@ Foster a community ecosystem:
 Comprehensive documentation for data sources:
 
 **Tasks:**
+
 - [ ] Create "Data Sources" documentation section
 - [ ] Add examples for common APIs (GitHub, Twitter, etc.)
 - [ ] Add examples for cloud providers (AWS, GCP, Azure)
@@ -750,28 +768,21 @@ Comprehensive documentation for data sources:
 ## Priority Matrix
 
 ### High Priority (Next 3-6 months)
+
 1. Plugin architecture implementation
 2. Companion packages (dartframe_sql, dartframe_cloud)
 3. URL-based data loading
 4. Documentation & examples
-5. Duplicate handling (duplicated, drop_duplicates) ⚠️ **EASIEST TO IMPLEMENT**
-6. ~~Sample() method for random sampling~~ ✅ **DONE**
-7. Enhanced groupby operations
-8. nlargest() / nsmallest() ⚠️ **VERY EASY**
-9. idxmax() / idxmin() ⚠️ **VERY EASY**
-10. abs() for Series ⚠️ **VERY EASY**
-11. pct_change() and diff() ⚠️ **EASY**
 
 ### Medium Priority (6-12 months)
+
 1. Stream-based reading for large files
-2. Time series enhancements (shift, lag, lead)
-3. Window functions (rank, row_number)
-4. String operations enhancements
-5. Statistical methods (pct_change, diff, clip)
-6. MultiIndex support
-7. Parquet format (full implementation)
+2. Window functions (rank, row_number)
+3. String operations enhancements
+4. Parquet format (full implementation)
 
 ### Low Priority (12+ months)
+
 1. Configuration-based sources
 2. Middleware/interceptor pattern
 3. FFI bridge for native libraries
@@ -785,6 +796,7 @@ Comprehensive documentation for data sources:
 ## Contributing Guidelines
 
 ### For Core Features
+
 1. Open an issue to discuss the feature
 2. Reference this TODO document
 3. Follow existing code style
@@ -793,6 +805,7 @@ Comprehensive documentation for data sources:
 6. Add examples
 
 ### For Data Source Plugins
+
 1. Use the plugin template
 2. Follow naming convention: `dartframe_<source_type>`
 3. Implement DataSource interface
@@ -802,6 +815,7 @@ Comprehensive documentation for data sources:
 7. Add to community showcase
 
 ### Testing Requirements
+
 - Unit tests for all new features
 - Integration tests for data sources
 - Performance benchmarks for critical paths
@@ -812,6 +826,7 @@ Comprehensive documentation for data sources:
 ## Version Planning
 
 ### v0.9.0 (Current → Next Minor)
+
 - [ ] Plugin architecture
 - [ ] URL-based loading
 - [ ] duplicated() / drop_duplicates()
@@ -819,6 +834,7 @@ Comprehensive documentation for data sources:
 - [ ] Enhanced documentation
 
 ### v1.0.0 (Stable Release)
+
 - [ ] All high-priority features complete
 - [ ] Comprehensive test coverage (>90%)
 - [ ] Complete documentation
@@ -827,17 +843,20 @@ Comprehensive documentation for data sources:
 - [ ] Migration guide from pandas
 
 ### v1.1.0
+
 - [ ] Stream-based reading
 - [ ] Time series enhancements
 - [ ] Window functions
 - [ ] MultiIndex support
 
 ### v1.2.0
+
 - [ ] Visualization support
 - [ ] Advanced statistical methods
 - [ ] Expression evaluation
 
 ### v2.0.0 (Future)
+
 - [ ] Breaking changes if needed
 - [ ] Major performance improvements
 - [ ] Advanced features (sparse, extension types)
@@ -847,6 +866,7 @@ Comprehensive documentation for data sources:
 ## Performance Goals
 
 ### Benchmarks to Achieve
+
 - [ ] Read 1M rows CSV in < 2 seconds
 - [ ] GroupBy aggregation on 1M rows in < 1 second
 - [ ] Join two 100K row DataFrames in < 500ms
@@ -854,6 +874,7 @@ Comprehensive documentation for data sources:
 - [ ] Streaming read 10M rows with < 100MB memory
 
 ### Optimization Strategies
+
 - [ ] Implement column-oriented storage
 - [ ] Use typed lists where possible
 - [ ] Implement lazy evaluation
@@ -866,6 +887,7 @@ Comprehensive documentation for data sources:
 ## Documentation Improvements
 
 ### Needed Documentation
+
 - [ ] Complete API reference
 - [ ] Tutorial series (beginner to advanced)
 - [ ] Cookbook with common recipes
@@ -878,6 +900,7 @@ Comprehensive documentation for data sources:
 - [ ] Plugin development guide
 
 ### Documentation Structure
+
 ```
 docs/
 ├── getting-started/
@@ -911,6 +934,7 @@ docs/
 ## Community & Ecosystem
 
 ### Community Building
+
 - [ ] Set up Discord/Slack community
 - [ ] Create GitHub Discussions
 - [ ] Regular blog posts
@@ -919,6 +943,7 @@ docs/
 - [ ] Social media presence
 
 ### Ecosystem Development
+
 - [ ] Plugin marketplace
 - [ ] Example projects repository
 - [ ] Integration with popular Dart frameworks
@@ -938,5 +963,5 @@ docs/
 
 ---
 
-**Last Updated:** 2024-11-15
-**Next Review:** 2025-02-15
+**Last Updated:** 2025-11-15
+**Next Review:** 2025-11-18
