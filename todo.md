@@ -527,14 +527,14 @@ await DataFrame.read('file:///path/to/data.csv');
 
 **Tasks:**
 
-- [ ] Implement SmartLoader class
-- [ ] Add URI parsing and validation
-- [ ] Implement HTTP/HTTPS loader
-- [ ] Implement file:// loader
-- [ ] Add DataFrame.read() convenience method
-- [ ] Add DataFrame.write() convenience method
+- [x] Implement SmartLoader class
+- [x] Add URI parsing and validation
+- [x] Implement HTTP/HTTPS loader
+- [x] Implement file:// loader
+- [x] Add DataFrame.read() convenience method
+- [x] Add DataFrame.write() convenience method
 - [ ] Document supported URI schemes
-- [ ] Add examples for common sources
+- [x] Add examples for common sources
 
 #### 4. Stream-Based Reading (MEDIUM PRIORITY)
 

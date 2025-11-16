@@ -124,47 +124,6 @@ Then, run:
 dart pub get
 ```
 
-## What's New in Latest Version
-
-### 🎉 **Pandas Feature Parity Update**
-
-This major update brings DartFrame closer to pandas functionality with comprehensive enhancements:
-
-#### **Advanced Statistical Operations**
-- Added `median()`, `mode()`, `quantile()`, `skew()`, `kurtosis()` methods
-- Implemented correlation and covariance analysis with `corr()` and `cov()`
-- Rolling window operations with `rolling()` for time series analysis
-
-#### **Enhanced Data Manipulation**
-- `melt()` operations for wide-to-long data transformation
-- `stack()` and `unstack()` for hierarchical data reshaping
-- Advanced pivot tables with multiple aggregation functions
-- Improved merge operations with multiple join types
-
-#### **Missing Data Handling**
-- Interpolation methods: linear, polynomial, and spline
-- Advanced fill operations with `ffill()` and `bfill()` with limits
-- Missing data pattern analysis tools
-
-#### **Performance & I/O Improvements**
-- Memory optimization utilities
-- Vectorized operations for better performance
-- Support for Parquet, Excel, and HDF5 formats
-- Database connectivity for SQL operations
-- Chunked reading for large files
-
-#### **Time Series & Categorical Data**
-- Time series resampling and frequency conversion
-- Categorical data type with memory optimization
-- Enhanced datetime operations and indexing
-
-See the [examples](./example/) directory for comprehensive demonstrations of these new features.
-
----
-
-```bash
-dart pub get
-```
 
 ## Quick Start
 
