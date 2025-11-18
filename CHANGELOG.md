@@ -1,5 +1,57 @@
 # 0.8.5
 
+- **[MAJOR FEATURE]** HDF5 File Support - Advanced Features and Web Compatibility
+  - **NEW**: Full web browser support for reading HDF5 files via `Hdf5File.open()` which now accepts `Uint8List` and HTML `InputElement`s in addition to file paths.
+  - **NEW**: Support for Header Continuation Blocks, allowing the reader to correctly parse object headers that span multiple locations in the file.
+  - **NEW**: Link Resolution - `Hdf5File` can now navigate and resolve:
+    - **Soft Links:** Symbolic links to other objects within the same file.
+    - **External Links:** Links to datasets and groups in other HDF5 files.
+    - **Circular Link Detection:** Prevents infinite loops when resolving links.
+  - **NEW**: Added `Hdf5File.listRecursive()`, `getStructure()`, and `printTree()` methods for comprehensive, user-friendly inspection of the entire file hierarchy, including attributes and metadata.
+  - **NEW**: Added `Hdf5File.getSummaryStats()` for a statistical overview of file contents (dataset counts, types, compression, etc.).
+  - **NEW**: Implemented `Hdf5File.resolveObjectReference()` and `resolveRegionReference()` to handle HDF5's reference datatypes.
+  - **ENHANCEMENT**: `Hdf5File.dataset()` and `Hdf5File.group()` are now more robust, correctly handling link navigation.
+  - **ENHANCEMENT**: Added `MetadataCache` to `Hdf5File` to cache superblocks, groups, and other metadata, improving performance when accessing the same objects multiple times.
+
+- **[FEATURE]** HDF5 Datatype and Attribute Enhancements
+  - **NEW**: Support for additional HDF5 datatypes:
+    - **Enum Types:** Reads enumerated types, including member names and values.
+    - **Array Types:** Parses array datatypes and their dimensions.
+    - **Opaque Types:** Handles opaque data with optional tags.
+    - **Reference Types:** Correctly identifies object and region references.
+  - **NEW**: Support for Variable-Length (vlen) strings stored in `LocalHeap`. Attributes and datasets with vlen strings can now be read correctly.
+  - **FIX**: `Hdf5Attribute.read()` now gracefully handles and skips attributes with unsupported datatypes instead of throwing an error, improving compatibility with diverse HDF5 files.
+  - **ARCHITECTURE**: `Hdf5Datatype.read()` refactored to recursively parse complex and nested types like compounds, arrays, and enums.
+
+- **[FEATURE]** HDF5 Data Layout and Storage Support
+  - **ENHANCEMENT**: `ObjectHeader` message parsing is more robust, correctly handling different message versions and alignments.
+  - **ENHANCEMENT**: `DataLayout` parsing now supports more versions and variations, including:
+    - Version 3, 2, and 1 layouts for `Contiguous`, `Chunked`, and `Compact` storage.
+    - Special cases for MATLAB-generated files (layout class 3).
+    - `Single Chunk` layout (version 2 and 4).
+  - **FIX**: Correctly calculates chunk dimensions by removing the element size from the dimension list in version 1 and 3 chunked layouts.
+
+- **[FEATURE]** HDF5 Writer-Side Implementation
+  - **NEW**: `LocalHeapWriter` for creating and managing local heaps used for object names in groups.
+  - **NEW**: `GlobalHeapWriter` for creating global heap collections to store variable-length data.
+  - **NEW**: `Hdf5Attribute.write()` and `Hdf5Attribute.scalar()` for creating and writing attribute messages.
+  - **NEW**: `ObjectHeader.write()` for constructing and writing object headers with various messages.
+  - **NEW**: `Superblock.write()` and `Superblock.create()` for generating version 0 superblocks for new HDF5 files.
+  - **ARCHITECTURE**: Foundational writer components (`ByteWriter`, `Hdf5Datatype.write()`, etc.) have been added, paving the way for full HDF5 file writing capabilities.
+
+- **[FEATURE]** DataFrame I/O Enhancements
+  - **NEW**: `DataFrame.read()` static method, a pandas-like universal reader that uses `SmartLoader` to automatically detect and load data from various URI schemes (file, http, etc.).
+  - **NEW**: `DataFrame.inspect()` static method to get metadata from a data source without loading the entire file.
+  - **ENHANCEMENT**: `DataFrame.fromCSV()` and `DataFrame.fromJson()` now use the new `FileIO` and `FileReader` backend, supporting both file paths and string content seamlessly and enabling web compatibility.
+  - **BREAKING CHANGE**: In `DataFrame.fromCSV()` and `DataFrame.fromJson()`, the `fieldDelimiter` parameter in `fromCSV` was renamed to `delimiter` for consistency.
+
+- **[FIX]** General Fixes & Refinements
+  - **FIX**: `LocalHeap` reader now correctly handles both `HEAP` (version 0) and `GCOL` (version 1) signatures and determines the data segment address accordingly.
+  - **FIX**: `Superblock` reader now correctly detects the HDF5 signature at various file offsets (e.g., 0 for standard, 512 for MATLAB) to properly locate the start of HDF5 data.
+  - **FIX**: Resolved an issue in `DataFrame.[]=` (column assignment) where creating a new column on an empty DataFrame with a `Series` that had a non-default index would not correctly adopt the new index.
+
+# 0.8.5
+
 - **[FIX]** Removed MySQL since it caused plaform issues
 
 

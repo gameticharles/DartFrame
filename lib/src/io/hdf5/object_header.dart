@@ -1,24 +1,43 @@
 import 'dart:typed_data';
 
 import 'byte_reader.dart';
+import 'byte_writer.dart';
 import 'datatype.dart';
 import 'dataspace.dart';
 import 'filter.dart';
 import 'attribute.dart';
 import 'hdf5_error.dart';
 
-const msgTypeNil = 0x0000;
-const msgTypeDataspace = 0x0001;
-const msgTypeLinkInfo = 0x0002;
-const msgTypeDatatype = 0x0003;
-const msgTypeFillValue = 0x0005;
-const msgTypeFilterPipeline = 0x000B;
-const msgTypeDataLayout = 0x0008;
-const msgTypeGroupInfo = 0x000A;
-const msgTypeAttribute = 0x000C;
-const msgTypeHeaderContinuation = 0x0010;
-const msgTypeSymbolTable = 0x0011;
-const msgTypeLink = 0x0016;
+/// HDF5 object header message types
+enum MessageType {
+  nil(0x0000),
+  dataspace(0x0001),
+  linkInfo(0x0002),
+  datatype(0x0003),
+  fillValue(0x0005),
+  dataLayout(0x0008),
+  groupInfo(0x000A),
+  filterPipeline(0x000B),
+  attribute(0x000C),
+  headerContinuation(0x0010),
+  symbolTable(0x0011),
+  link(0x0016);
+
+  final int id;
+  const MessageType(this.id);
+
+  static MessageType fromId(int id) {
+    try {
+      return values.firstWhere((t) => t.id == id);
+    } catch (e) {
+      // Return nil for unknown types
+      return MessageType.nil;
+    }
+  }
+
+  @override
+  String toString() => '0x${id.toRadixString(16).padLeft(4, '0')}';
+}
 
 /// Link types
 enum LinkType {
@@ -125,9 +144,9 @@ class ObjectHeader {
           await ObjectHeaderMessage.read(reader, version, filePath: filePath);
 
       // Handle continuation blocks
-      if (msg.type == msgTypeHeaderContinuation && msg.data != null) {
+      if (msg.type == MessageType.headerContinuation && msg.data != null) {
         continuationBlocks.add(msg.data as _ContinuationBlock);
-      } else if (msg.type != msgTypeNil) {
+      } else if (msg.type != MessageType.nil) {
         // Don't add NIL messages, but continue reading
         messages.add(msg);
       }
@@ -157,9 +176,9 @@ class ObjectHeader {
             await ObjectHeaderMessage.read(reader, version, filePath: filePath);
 
         // Handle nested continuation blocks
-        if (msg.type == msgTypeHeaderContinuation && msg.data != null) {
+        if (msg.type == MessageType.headerContinuation && msg.data != null) {
           continuationBlocks.add(msg.data as _ContinuationBlock);
-        } else if (msg.type != msgTypeNil) {
+        } else if (msg.type != MessageType.nil) {
           messages.add(msg);
         }
       }
@@ -170,8 +189,9 @@ class ObjectHeader {
 
   Hdf5Datatype? findDatatype() {
     final msg = messages.firstWhere(
-      (m) => m.type == msgTypeDatatype,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.datatype,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (msg.data == null) return null;
     return msg.data as Hdf5Datatype;
@@ -179,8 +199,9 @@ class ObjectHeader {
 
   Hdf5Dataspace? findDataspace() {
     final msg = messages.firstWhere(
-      (m) => m.type == msgTypeDataspace,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.dataspace,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (msg.data == null) return null;
     return msg.data as Hdf5Dataspace;
@@ -188,8 +209,9 @@ class ObjectHeader {
 
   DataLayout? findDataLayout() {
     final msg = messages.firstWhere(
-      (m) => m.type == msgTypeDataLayout,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.dataLayout,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (msg.data == null) return null;
     return msg.data as DataLayout;
@@ -197,8 +219,9 @@ class ObjectHeader {
 
   FilterPipeline? findFilterPipeline() {
     final msg = messages.firstWhere(
-      (m) => m.type == msgTypeFilterPipeline,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.filterPipeline,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (msg.data == null) return null;
     return msg.data as FilterPipeline;
@@ -206,8 +229,9 @@ class ObjectHeader {
 
   SymbolTableMessage? findSymbolTable() {
     final msg = messages.firstWhere(
-      (m) => m.type == msgTypeSymbolTable,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.symbolTable,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (msg.data == null) return null;
     return msg.data as SymbolTableMessage;
@@ -218,7 +242,7 @@ class ObjectHeader {
   /// Filters out null attributes (those with unsupported datatypes)
   List<Hdf5Attribute> findAttributes() {
     return messages
-        .where((m) => m.type == msgTypeAttribute && m.data != null)
+        .where((m) => m.type == MessageType.attribute && m.data != null)
         .map((m) => m.data as Hdf5Attribute)
         .toList();
   }
@@ -228,7 +252,7 @@ class ObjectHeader {
   /// Returns a list of LinkMessage objects representing hard, soft, or external links
   List<LinkMessage> findLinks() {
     return messages
-        .where((m) => m.type == msgTypeLink && m.data != null)
+        .where((m) => m.type == MessageType.link && m.data != null)
         .map((m) => m.data as LinkMessage)
         .toList();
   }
@@ -236,8 +260,9 @@ class ObjectHeader {
   /// Find the local heap address from the symbol table message
   int? findLocalHeapAddress() {
     final symbolTableMsg = messages.firstWhere(
-      (m) => m.type == msgTypeSymbolTable && m.data != null,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.symbolTable && m.data != null,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
     if (symbolTableMsg.data == null) return null;
     return (symbolTableMsg.data as SymbolTableMessage).localHeapAddress;
@@ -256,13 +281,14 @@ class ObjectHeader {
   ///
   /// Returns the object type or unknown if it cannot be determined
   Hdf5ObjectType determineObjectType() {
-    final hasDatatype = messages.any((m) => m.type == msgTypeDatatype);
-    final hasDataspace = messages.any((m) => m.type == msgTypeDataspace);
-    final hasDataLayout = messages.any((m) => m.type == msgTypeDataLayout);
+    final hasDatatype = messages.any((m) => m.type == MessageType.datatype);
+    final hasDataspace = messages.any((m) => m.type == MessageType.dataspace);
+    final hasDataLayout = messages.any((m) => m.type == MessageType.dataLayout);
 
-    final hasSymbolTable = messages.any((m) => m.type == msgTypeSymbolTable);
-    final hasLinkInfo = messages.any((m) => m.type == msgTypeLinkInfo);
-    final hasGroupInfo = messages.any((m) => m.type == msgTypeGroupInfo);
+    final hasSymbolTable =
+        messages.any((m) => m.type == MessageType.symbolTable);
+    final hasLinkInfo = messages.any((m) => m.type == MessageType.linkInfo);
+    final hasGroupInfo = messages.any((m) => m.type == MessageType.groupInfo);
 
     // Dataset: must have datatype, dataspace, and layout
     if (hasDatatype && hasDataspace && hasDataLayout) {
@@ -293,20 +319,175 @@ class ObjectHeader {
       case Hdf5ObjectType.group:
         return 'Group';
       case Hdf5ObjectType.unknown:
-        final messageTypes = messages
-            .map((m) => '0x${m.type.toRadixString(16).padLeft(4, '0')}')
-            .join(', ');
+        final messageTypes = messages.map((m) => m.type.toString()).join(', ');
         return 'Unknown (messages: $messageTypes)';
+    }
+  }
+
+  /// Write this object header as HDF5 bytes
+  ///
+  /// Returns the header bytes following HDF5 object header format.
+  /// Supports both version 1 and version 2 formats.
+  ///
+  /// Parameters:
+  /// - [endian]: Byte order (default: little-endian)
+  ///
+  /// Examples:
+  /// ```dart
+  /// // Create object header with messages
+  /// final messages = [
+  ///   ObjectHeaderMessage(type: MessageType.datatype, data: datatypeMsg, flags: 0),
+  ///   ObjectHeaderMessage(type: MessageType.dataspace, data: dataspaceMsg, flags: 0),
+  ///   ObjectHeaderMessage(type: MessageType.dataLayout, data: layoutMsg, flags: 0),
+  /// ];
+  /// final header = ObjectHeader(version: 1, messages: messages);
+  /// final bytes = header.write();
+  /// ```
+  List<int> write({Endian endian = Endian.little}) {
+    final writer = ByteWriter(endian: endian);
+    writeTo(writer);
+    return writer.bytes;
+  }
+
+  /// Write this object header to a ByteWriter
+  ///
+  /// This method writes the object header directly to an existing ByteWriter,
+  /// useful when building a complete HDF5 file.
+  ///
+  /// Parameters:
+  /// - [writer]: The ByteWriter to write to
+  void writeTo(ByteWriter writer) {
+    if (messages.isEmpty) {
+      throw ArgumentError('Messages list cannot be empty');
+    }
+
+    if (version == 1) {
+      _writeVersion1(writer);
+    } else if (version == 2) {
+      _writeVersion2(writer);
+    } else {
+      throw UnsupportedVersionError(
+        component: 'object header write',
+        version: version,
+      );
+    }
+  }
+
+  /// Write version 1 object header
+  void _writeVersion1(ByteWriter writer) {
+    // Calculate total header size (excluding the first 16 bytes of header prefix)
+    final headerSize = _calculateHeaderSize();
+
+    // Write object header prefix (version 1)
+    writer.writeUint8(1); // Version 1
+    writer.writeUint8(0); // Reserved
+
+    // Number of header messages
+    writer.writeUint16(messages.length);
+
+    // Object reference count (not used, set to 0)
+    writer.writeUint32(0);
+
+    // Object header size (size of all messages, not including this 16-byte prefix)
+    writer.writeUint32(headerSize);
+
+    // Reserved/alignment (4 bytes)
+    writer.writeUint32(0);
+
+    // Write each message
+    for (final message in messages) {
+      _writeMessage(writer, message);
+    }
+  }
+
+  /// Write version 2 object header
+  void _writeVersion2(ByteWriter writer) {
+    // Version 2 has a different structure
+    // Signature (4 bytes): 'OHDR'
+    writer.writeBytes([0x4F, 0x48, 0x44, 0x52]); // 'OHDR'
+
+    // Version (1 byte)
+    writer.writeUint8(2);
+
+    // Flags (1 byte) - 0 for simple case
+    writer.writeUint8(0);
+
+    // Access time, modification time, change time, birth time (optional, based on flags)
+    // For simplicity, we'll skip these (flags = 0 means they're not present)
+
+    // Maximum number of compact attributes (2 bytes) - optional
+    // Maximum number of dense attributes (2 bytes) - optional
+    // We'll skip these for simplicity
+
+    // Size of chunk 0 (variable size based on flags, we'll use 4 bytes)
+    final headerSize = _calculateHeaderSize();
+    writer.writeUint32(headerSize);
+
+    // Write each message
+    for (final message in messages) {
+      _writeMessage(writer, message);
+    }
+  }
+
+  /// Calculate the total size of the header (excluding the prefix)
+  int _calculateHeaderSize() {
+    int totalSize = 0;
+    for (final message in messages) {
+      // Message header: 2 (type) + 2 (size) + 1 (flags) + 3 (reserved) = 8 bytes
+      // Message data: aligned to 8 bytes
+      final dataSize = (message.data as List<int>).length;
+      final alignedDataSize = ((dataSize + 7) ~/ 8) * 8;
+      totalSize += 8 + alignedDataSize;
+    }
+    return totalSize;
+  }
+
+  /// Write a single message with its header
+  void _writeMessage(ByteWriter writer, ObjectHeaderMessage message) {
+    // Write message header (8 bytes)
+    writer.writeUint16(message.type.id); // Message type
+    writer.writeUint16(message.data.length); // Data size
+    writer.writeUint8(message.flags); // Flags
+    writer.writeUint8(0); // Reserved
+    writer.writeUint8(0); // Reserved
+    writer.writeUint8(0); // Reserved
+
+    // Write message data
+    writer.writeBytes(message.data);
+
+    // Align to 8-byte boundary
+    writer.alignTo(8);
+  }
+
+  /// Calculate the total size of this object header when written
+  ///
+  /// This includes both the header prefix and all messages.
+  /// Useful for pre-calculating file offsets.
+  ///
+  /// Returns the total size in bytes.
+  int calculateSize() {
+    if (version == 1) {
+      // Version 1: 16-byte prefix + messages
+      return 16 + _calculateHeaderSize();
+    } else if (version == 2) {
+      // Version 2: 6-byte base (signature + version + flags) + 4-byte chunk size + messages
+      return 10 + _calculateHeaderSize();
+    } else {
+      throw UnsupportedError('Unsupported object header version: $version');
     }
   }
 }
 
 /// Individual message within an object header
+///
+/// Used for both reading and writing object header messages.
+/// This class unifies the functionality of reading parsed messages
+/// and creating messages for writing.
 class ObjectHeaderMessage {
-  final int type;
+  final MessageType type;
   final int size;
   final int flags;
-  final dynamic data;
+  final dynamic data; // Parsed data (for reading) or raw bytes (for writing)
 
   ObjectHeaderMessage({
     required this.type,
@@ -315,9 +496,41 @@ class ObjectHeaderMessage {
     this.data,
   });
 
+  /// Create a message for writing with raw byte data
+  ///
+  /// Example:
+  /// ```dart
+  /// final msg = ObjectHeaderMessage.forWriting(
+  ///   type: MessageType.datatype,
+  ///   data: datatypeBytes,
+  /// );
+  /// ```
+  factory ObjectHeaderMessage.forWriting({
+    required MessageType type,
+    required List<int> data,
+    int flags = 0,
+  }) {
+    return ObjectHeaderMessage(
+      type: type,
+      size: data.length,
+      flags: flags,
+      data: data,
+    );
+  }
+
+  /// Calculate the total size of this message including header
+  int get totalSize {
+    // Message header: 2 (type) + 2 (size) + 1 (flags) + 3 (reserved) = 8 bytes
+    // Message data: aligned to 8 bytes
+    final dataSize = data is List<int> ? (data as List<int>).length : size;
+    final alignedDataSize = ((dataSize + 7) ~/ 8) * 8;
+    return 8 + alignedDataSize;
+  }
+
   static Future<ObjectHeaderMessage> read(ByteReader reader, int ohVersion,
       {String? filePath}) async {
-    final type = await reader.readUint16();
+    final typeId = await reader.readUint16();
+    final type = MessageType.fromId(typeId);
     final size = await reader.readUint16();
     final flags = await reader.readUint8();
     await reader.readBytes(3); // reserved
@@ -329,17 +542,17 @@ class ObjectHeaderMessage {
 
     dynamic data;
 
-    if (type == msgTypeDatatype) {
+    if (type == MessageType.datatype) {
       data = await _readDatatype(messageReader);
-    } else if (type == msgTypeDataspace) {
+    } else if (type == MessageType.dataspace) {
       data = await Hdf5Dataspace.read(messageReader);
-    } else if (type == msgTypeLinkInfo) {
+    } else if (type == MessageType.linkInfo) {
       data = await _readLinkInfo(messageReader);
-    } else if (type == msgTypeDataLayout) {
+    } else if (type == MessageType.dataLayout) {
       data = await _readDataLayout(messageReader);
-    } else if (type == msgTypeFilterPipeline) {
+    } else if (type == MessageType.filterPipeline) {
       data = await FilterPipeline.read(messageReader, size);
-    } else if (type == msgTypeAttribute) {
+    } else if (type == MessageType.attribute) {
       try {
         data = await Hdf5Attribute.read(
           messageReader,
@@ -352,11 +565,11 @@ class ObjectHeaderMessage {
         hdf5DebugLog('Skipping attribute with unsupported datatype: $e');
         data = null;
       }
-    } else if (type == msgTypeSymbolTable) {
+    } else if (type == MessageType.symbolTable) {
       data = await _readSymbolTable(messageReader);
-    } else if (type == msgTypeHeaderContinuation) {
+    } else if (type == MessageType.headerContinuation) {
       data = await _readContinuation(messageReader);
-    } else if (type == msgTypeLink) {
+    } else if (type == MessageType.link) {
       try {
         data = await _readLinkMessage(messageReader);
       } catch (e) {
@@ -762,6 +975,9 @@ class ObjectHeaderMessage {
     );
   }
 }
+
+/// Legacy alias for backward compatibility with writer code
+typedef HeaderMessage = ObjectHeaderMessage;
 
 /// Link information for group navigation
 class LinkInfo {

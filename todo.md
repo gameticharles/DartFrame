@@ -263,33 +263,8 @@ This document outlines missing features compared to pandas and strategies for ad
 - [ ] Memory mapping for large files
 - [ ] Streaming I/O
 
-### 7. Visualization
 
-#### Built-in Plotting
-
-- [ ] plot() - General plotting interface
-- [ ] plot.line() - Line plots
-- [ ] plot.bar() - Bar plots
-- [ ] plot.barh() - Horizontal bar plots
-- [ ] plot.hist() - Histograms
-- [ ] plot.box() - Box plots
-- [ ] plot.kde() - Kernel density estimation
-- [ ] plot.area() - Area plots
-- [ ] plot.scatter() - Scatter plots
-- [ ] plot.hexbin() - Hexagonal bin plots
-- [ ] plot.pie() - Pie charts
-
-#### Styling
-
-- [ ] style.format() - Format values
-- [ ] style.highlight_max() / min()
-- [ ] style.background_gradient()
-- [ ] style.bar() - Data bars
-- [ ] style.set_properties() - CSS properties
-- [ ] style.applymap() - Element-wise styling
-- [ ] style.apply() - Column/row-wise styling
-
-### 8. Performance & Memory
+### 7. Performance & Memory
 
 #### Optimization
 

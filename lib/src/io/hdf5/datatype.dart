@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:convert';
 
 import 'byte_reader.dart';
+import 'byte_writer.dart';
 
 /// HDF5 datatype class enumeration
 enum Hdf5DatatypeClass {
@@ -640,6 +641,143 @@ class Hdf5Datatype<T> {
 
   @override
   int get hashCode => Object.hash(dataclass, size, endian, tag);
+
+  /// Write this datatype as an HDF5 message
+  ///
+  /// Returns the message bytes following HDF5 datatype message format version 1.
+  /// Currently supports float64 and int64 types.
+  ///
+  /// Parameters:
+  /// - [endian]: Byte order (default: uses datatype's endian setting)
+  ///
+  /// Examples:
+  /// ```dart
+  /// // Write float64 datatype
+  /// final float64Type = Hdf5Datatype.float64;
+  /// final bytes1 = float64Type.write();
+  ///
+  /// // Write int64 datatype
+  /// final int64Type = Hdf5Datatype.int64;
+  /// final bytes2 = int64Type.write();
+  ///
+  /// // Write with explicit endianness
+  /// final bytes3 = float64Type.write(endian: Endian.big);
+  /// ```
+  ///
+  /// Throws [UnsupportedError] for unsupported datatypes.
+  List<int> write({Endian? endian}) {
+    final effectiveEndian = endian ?? this.endian;
+
+    if (dataclass == Hdf5DatatypeClass.float && size == 8) {
+      return _writeFloat64(endian: effectiveEndian);
+    } else if (dataclass == Hdf5DatatypeClass.integer && size == 8) {
+      return _writeInt64(endian: effectiveEndian);
+    } else {
+      throw UnsupportedError(
+          'Unsupported datatype: $dataclass with size $size. '
+          'Currently supported: float64, int64');
+    }
+  }
+
+  //// Write a float64 (IEEE 754 double precision) datatype message
+  ///
+  /// Returns the message bytes following HDF5 datatype message format version 1:
+  /// - Class and version (1 byte): class=1 (floating point), version=1
+  /// - Class bit fields (3 bytes): endianness and padding info
+  /// - Size (4 bytes): 8 bytes for float64
+  /// - Bit offset (2 bytes): 0
+  /// - Bit precision (2 bytes): 64
+  /// - Exponent location (1 byte): 52
+  /// - Exponent size (1 byte): 11
+  /// - Mantissa location (1 byte): 0
+  /// - Mantissa size (1 byte): 52
+  /// - Exponent bias (4 bytes): 1023
+  List<int> _writeFloat64({required Endian endian}) {
+    final writer = ByteWriter(endian: endian);
+
+    // Class and version: class=1 (floating point), version=1
+    final classAndVersion = (1 << 4) | 1; // version 1, class 1
+    writer.writeUint8(classAndVersion);
+
+    // Class bit field 1: byte order and padding
+    // Bit 0: 0=little-endian, 1=big-endian
+    // Bits 1-3: padding type (0=zero padding)
+    // Bits 4-7: mantissa normalization (2=implied 1)
+    final classBitField1 = (endian == Endian.little ? 0 : 1) | (2 << 4);
+    writer.writeUint8(classBitField1);
+
+    // Class bit field 2: sign location (63 for float64)
+    writer.writeUint8(63);
+
+    // Class bit field 3: reserved
+    writer.writeUint8(0);
+
+    // Size in bytes (version 1: size comes first)
+    writer.writeUint32(8);
+
+    // Bit offset (always 0 for standard types)
+    writer.writeUint16(0);
+
+    // Bit precision (64 bits for float64)
+    writer.writeUint16(64);
+
+    // Exponent location (bit 52)
+    writer.writeUint8(52);
+
+    // Exponent size (11 bits)
+    writer.writeUint8(11);
+
+    // Mantissa location (bit 0)
+    writer.writeUint8(0);
+
+    // Mantissa size (52 bits)
+    writer.writeUint8(52);
+
+    // Exponent bias (1023 for IEEE 754 double)
+    writer.writeUint32(1023);
+
+    return writer.bytes;
+  }
+
+  /// Write an int64 (signed 64-bit integer) datatype message
+  ///
+  /// Returns the message bytes following HDF5 datatype message format version 1:
+  /// - Class and version (1 byte): class=0 (integer), version=1
+  /// - Class bit fields (3 bytes): endianness and sign info
+  /// - Size (4 bytes): 8 bytes for int64
+  /// - Bit offset (2 bytes): 0
+  /// - Bit precision (2 bytes): 64
+  List<int> _writeInt64({required Endian endian}) {
+    final writer = ByteWriter(endian: endian);
+
+    // Class and version: class=0 (integer), version=1
+    final classAndVersion = (1 << 4) | 0; // version 1, class 0
+    writer.writeUint8(classAndVersion);
+
+    // Class bit field 1: byte order and padding
+    // Bit 0: 0=little-endian, 1=big-endian
+    // Bits 1-2: padding type (0=zero padding)
+    // Bit 3: sign (1=signed)
+    final classBitField1 = (endian == Endian.little ? 0 : 1) | (1 << 3);
+    writer.writeUint8(classBitField1);
+
+    // Class bit field 2: reserved
+    writer.writeUint8(0);
+
+    // Class bit field 3: reserved
+    writer.writeUint8(0);
+
+    // Size in bytes (version 1: size comes first)
+    writer.writeUint32(8);
+
+    // Bit offset (always 0 for standard types)
+    writer.writeUint16(0);
+
+    // Bit precision (64 bits for int64)
+    writer.writeUint16(64);
+
+    return writer.bytes;
+  }
 }
 
 /// String-specific datatype information

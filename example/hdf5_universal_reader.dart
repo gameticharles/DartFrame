@@ -32,7 +32,7 @@ Future<void> main(List<String> args) async {
   // 'example/data/hdf5_test.h5'
   // 'example/data/test_compressed.h5'
   // 'example/data/processdata.h5'
-  final filePath = args.isNotEmpty ? args[0] : 'example/data/hdf5_test.h5';
+  final filePath = args.isNotEmpty ? args[0] : 'example/data/processdata.h5';
 
   print('╔═══════════════════════════════════════════════════════════╗');
   print('║        Universal HDF5 File Reader & Analyzer              ║');

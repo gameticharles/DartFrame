@@ -3,6 +3,7 @@ library;
 import 'dart:typed_data';
 import '../series/series.dart';
 import '../data_frame/data_frame.dart';
+import '../storage/storage_backend.dart';
 
 /// Memory optimization utilities for DartFrame.
 ///
@@ -515,4 +516,170 @@ extension SeriesMemoryOptimization on Series {
   /// Converts this Series to a typed array.
   Series toTypedArray(String dataType) =>
       MemoryOptimizer.toTypedArray(this, dataType);
+}
+
+/// Memory monitor for NDArray and DataCube
+/// Tracks memory usage across all storage backends
+class MemoryMonitor {
+  static final List<StorageBackend> _backends = [];
+  static int _maxMemoryBytes = 1024 * 1024 * 1024; // 1GB default
+  static final List<MemoryEvent> _events = [];
+
+  /// Register a storage backend for monitoring
+  static void registerBackend(StorageBackend backend) {
+    if (!_backends.contains(backend)) {
+      _backends.add(backend);
+    }
+  }
+
+  /// Unregister a storage backend
+  static void unregisterBackend(StorageBackend backend) {
+    _backends.remove(backend);
+  }
+
+  /// Get current memory usage across all backends
+  static int get currentUsage {
+    return _backends.fold(0, (sum, backend) => sum + backend.memoryUsage);
+  }
+
+  /// Get maximum allowed memory
+  static int get maxUsage => _maxMemoryBytes;
+
+  /// Set maximum allowed memory
+  static set maxUsage(int bytes) {
+    _maxMemoryBytes = bytes;
+  }
+
+  /// Get memory usage as percentage (0.0 to 1.0)
+  static double get usagePercent => currentUsage / _maxMemoryBytes;
+
+  /// Check if memory pressure is high
+  static bool get isHighPressure => usagePercent > 0.8;
+
+  /// Check if memory pressure is critical
+  static bool get isCriticalPressure => usagePercent > 0.95;
+
+  /// Check memory pressure and trigger cleanup if needed
+  static void checkMemoryPressure() {
+    if (isCriticalPressure) {
+      _emitEvent(MemoryEventType.criticalPressure);
+      cleanup(aggressive: true);
+    } else if (isHighPressure) {
+      _emitEvent(MemoryEventType.highPressure);
+      cleanup(aggressive: false);
+    }
+  }
+
+  /// Cleanup memory by unloading backends
+  static Future<void> cleanup({bool aggressive = false}) async {
+    final threshold = aggressive ? 0.5 : 0.8;
+
+    // Sort backends by last access time (oldest first)
+    final sortedBackends = List<StorageBackend>.from(_backends);
+
+    for (final backend in sortedBackends) {
+      if (usagePercent <= threshold) break;
+
+      if (!backend.isInMemory) continue;
+
+      await backend.unload();
+      _emitEvent(MemoryEventType.backendUnloaded);
+    }
+  }
+
+  /// Get memory statistics
+  static MemoryStats get stats => MemoryStats(
+        currentUsage: currentUsage,
+        maxUsage: _maxMemoryBytes,
+        usagePercent: usagePercent,
+        backendCount: _backends.length,
+        isHighPressure: isHighPressure,
+        isCriticalPressure: isCriticalPressure,
+      );
+
+  /// Emit memory event
+  static void _emitEvent(MemoryEventType type) {
+    final event = MemoryEvent(
+      type: type,
+      timestamp: DateTime.now(),
+      memoryUsage: currentUsage,
+      usagePercent: usagePercent,
+    );
+    _events.add(event);
+
+    // Keep only last 100 events
+    if (_events.length > 100) {
+      _events.removeAt(0);
+    }
+  }
+
+  /// Get recent memory events
+  static List<MemoryEvent> get recentEvents => List.unmodifiable(_events);
+
+  /// Clear all registered backends (for testing)
+  static void clear() {
+    _backends.clear();
+    _events.clear();
+  }
+}
+
+/// Memory event types
+enum MemoryEventType {
+  highPressure,
+  criticalPressure,
+  backendUnloaded,
+  backendLoaded,
+}
+
+/// Memory event
+class MemoryEvent {
+  final MemoryEventType type;
+  final DateTime timestamp;
+  final int memoryUsage;
+  final double usagePercent;
+
+  const MemoryEvent({
+    required this.type,
+    required this.timestamp,
+    required this.memoryUsage,
+    required this.usagePercent,
+  });
+
+  @override
+  String toString() {
+    return 'MemoryEvent('
+        'type: $type, '
+        'time: $timestamp, '
+        'usage: ${(memoryUsage / 1024 / 1024).toStringAsFixed(1)}MB, '
+        'percent: ${(usagePercent * 100).toStringAsFixed(1)}%)';
+  }
+}
+
+/// Memory statistics
+class MemoryStats {
+  final int currentUsage;
+  final int maxUsage;
+  final double usagePercent;
+  final int backendCount;
+  final bool isHighPressure;
+  final bool isCriticalPressure;
+
+  const MemoryStats({
+    required this.currentUsage,
+    required this.maxUsage,
+    required this.usagePercent,
+    required this.backendCount,
+    required this.isHighPressure,
+    required this.isCriticalPressure,
+  });
+
+  @override
+  String toString() {
+    return 'MemoryStats('
+        'usage: ${(currentUsage / 1024 / 1024).toStringAsFixed(1)}MB / '
+        '${(maxUsage / 1024 / 1024).toStringAsFixed(1)}MB, '
+        'percent: ${(usagePercent * 100).toStringAsFixed(1)}%, '
+        'backends: $backendCount, '
+        'pressure: ${isCriticalPressure ? "CRITICAL" : isHighPressure ? "HIGH" : "NORMAL"})';
+  }
 }

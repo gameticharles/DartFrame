@@ -832,7 +832,7 @@ extension DataFrameFunctions on DataFrame {
         if (colIdx < newData[i].length) {
           final value = newData[i][colIdx];
           if (value is double) {
-            final factor = pow(10, decimals0);
+            final factor = pow(10, decimals0.toDouble());
             newData[i][colIdx] = (value * factor).round() / factor;
           } else if (value is int) {
             // No rounding needed for int, but ensure it's copied correctly
@@ -1700,8 +1700,8 @@ extension DataFrameFunctions on DataFrame {
 
       num std = 0;
       if (count > 1) {
-        num sumOfSquares = numericData.fold(
-            0, (prev, element) => prev + pow(element - mean, 2));
+        num sumOfSquares = numericData.fold<num>(
+            0, (prev, element) => prev + pow((element - mean).toDouble(), 2.0));
         num variance = sumOfSquares / (count - 1); // Sample standard deviation
         std = sqrt(variance);
       }

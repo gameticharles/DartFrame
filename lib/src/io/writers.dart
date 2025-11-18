@@ -4,6 +4,7 @@ import 'csv_writer.dart';
 import 'excel_writer.dart';
 import 'parquet_writer.dart';
 import 'json_writer.dart';
+import 'hdf5_writer.dart';
 
 /// Abstract base class for data writers.
 ///
@@ -16,6 +17,8 @@ import 'json_writer.dart';
 /// - [ExcelFileWriter] for Excel files
 /// - [JsonWriter] for JSON files
 /// - [ParquetWriter] for Parquet files (basic implementation)
+/// - [JsonWriter] for JSON files
+/// - [HDF5Writer] for HDF5 files
 abstract class DataWriter {
   /// Writes a DataFrame to the specified path.
   ///
@@ -49,6 +52,7 @@ abstract class DataWriter {
 /// - **Excel** (.xlsx, .xls): Excel workbooks using [ExcelFileWriter]
 /// - **JSON** (.json): JSON format using [JsonWriter]
 /// - **Parquet** (.parquet, .pq): Parquet columnar format (basic implementation)
+/// - **HDF5** (.h5, .hdf5): HDF5 binary format using [HDF5Writer]
 ///
 /// ## Features
 /// - Automatic format detection by file extension
@@ -96,6 +100,8 @@ class FileWriter {
     '.xls': ExcelFileWriter(),
     '.csv': CsvFileWriter(),
     '.json': JsonWriter(),
+    '.h5': HDF5Writer(),
+    '.hdf5': HDF5Writer(),
   };
 
   /// Writes a DataFrame to a file, automatically detecting format by extension.
@@ -108,6 +114,7 @@ class FileWriter {
   /// - .xlsx, .xls → Excel writer
   /// - .json → JSON writer
   /// - .parquet, .pq → Parquet writer
+  /// - .h5, .hdf5 → HDF5 writer
   ///
   /// ## Parameters
   /// - `df`: The DataFrame to write
@@ -370,6 +377,59 @@ class FileWriter {
     };
 
     await JsonWriter().write(df, path, options: mergedOptions);
+  }
+
+  /// Writes a DataFrame to an HDF5 file.
+  ///
+  /// Creates an HDF5 file compatible with Python (h5py, pandas), MATLAB, and R.
+  /// HDF5 is a binary format optimized for large numerical datasets.
+  ///
+  /// ## Parameters
+  /// - `df`: The DataFrame to write
+  /// - `path`: Path where the HDF5 file will be saved
+  /// - `dataset`: Dataset path within the HDF5 file (default: '/data')
+  /// - `attributes`: Optional metadata attributes to attach to the dataset
+  /// - `debug`: Enable debug logging (default: false)
+  /// - `options`: Additional writing options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Basic write
+  /// await FileWriter.writeHDF5(df, 'output.h5');
+  ///
+  /// // With custom dataset path
+  /// await FileWriter.writeHDF5(df, 'output.h5',
+  ///   dataset: '/measurements',
+  /// );
+  ///
+  /// // With attributes
+  /// await FileWriter.writeHDF5(df, 'output.h5',
+  ///   dataset: '/data',
+  ///   attributes: {
+  ///     'units': 'meters',
+  ///     'description': 'Temperature measurements',
+  ///     'version': 1,
+  ///   },
+  /// );
+  /// ```
+  ///
+  /// Throws [FileWriteError] if writing fails.
+  ///
+  /// See also:
+  /// - [HDF5Writer] for more HDF5-specific functionality
+  static Future<void> writeHDF5(DataFrame df, String path,
+      {String dataset = '/data',
+      Map<String, dynamic>? attributes,
+      bool debug = false,
+      Map<String, dynamic>? options}) async {
+    final mergedOptions = <String, dynamic>{
+      'dataset': dataset,
+      if (attributes != null) 'attributes': attributes,
+      'debug': debug,
+      ...?options,
+    };
+
+    await HDF5Writer().write(df, path, options: mergedOptions);
   }
 
   static String _getFileExtension(String path) {

@@ -58,8 +58,9 @@ class Group {
 
     // Try new-style link info first
     final linkInfoMsg = header.messages.firstWhere(
-      (m) => m.type == msgTypeLinkInfo,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.linkInfo,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
 
     if (linkInfoMsg.data != null) {
@@ -527,8 +528,9 @@ class Group {
 
     // Check for LinkInfo (new-style groups)
     final linkInfoMsg = header.messages.firstWhere(
-      (m) => m.type == msgTypeLinkInfo,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.linkInfo,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
 
     if (linkInfoMsg.data != null) {
@@ -616,8 +618,9 @@ class Group {
 
     // Check for SymbolTable (old-style groups)
     final symbolTableMsg = header.messages.firstWhere(
-      (m) => m.type == msgTypeSymbolTable,
-      orElse: () => ObjectHeaderMessage(type: 0, size: 0, flags: 0),
+      (m) => m.type == MessageType.symbolTable,
+      orElse: () =>
+          ObjectHeaderMessage(type: MessageType.nil, size: 0, flags: 0),
     );
 
     if (symbolTableMsg.data != null) {

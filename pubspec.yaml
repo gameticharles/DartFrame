@@ -18,8 +18,8 @@ dependencies:
   csv: ^6.0.0
   http: ^1.2.0
   # Database packages
-  postgres: ^3.0.2
-  sqlite3: ^2.4.6
+  postgres: ^3.5.9
+  sqlite3: ^3.0.1
 
 dev_dependencies:
   benchmark_harness: ^2.3.1
