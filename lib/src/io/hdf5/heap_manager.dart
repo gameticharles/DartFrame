@@ -67,7 +67,7 @@ class HeapManager {
   /// Returns:
   /// - For local heap: offset within the heap (int)
   /// - For global heap: heap ID (int)
-  /// - For fractal heap: heap ID (List<int>)
+  /// - For fractal heap: heap ID (`List<int>`)
   ///
   /// The return type is dynamic to accommodate different heap ID formats.
   dynamic allocate(HeapType type, List<int> data) {

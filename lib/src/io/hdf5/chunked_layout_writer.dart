@@ -334,7 +334,7 @@ class ChunkedLayoutWriter extends StorageLayoutWriter {
     }
 
     // Write B-tree
-    return await btreeWriter.writeChunkIndex(writer, entries);
+    return btreeWriter.writeChunkIndex(writer, entries);
   }
 
   /// Validate chunk dimensions

@@ -56,8 +56,52 @@ abstract class DartData {
 
   /// Data type of elements
   ///
-  /// Returns the Dart runtime type of the data.
+  /// For homogeneous structures (NDArray, DataCube, Series with single type):
+  ///   Returns the single type (e.g., int, double, String)
+  ///
+  /// For heterogeneous structures (DataFrame, Series with mixed types):
+  ///   Returns dynamic
+  ///
+  /// Example:
+  /// ```dart
+  /// var array = NDArray([1, 2, 3]);
+  /// print(array.dtype);  // int
+  ///
+  /// var df = DataFrame({'a': [1, 2], 'b': ['x', 'y']});
+  /// print(df.dtype);  // dynamic (heterogeneous)
+  /// ```
   Type get dtype => dynamic;
+
+  /// Whether this data structure is homogeneous (all elements same type)
+  ///
+  /// - NDArray, DataCube: Always true (designed for numeric operations)
+  /// - Series: True if all elements are the same type
+  /// - DataFrame: False (columns can have different types)
+  ///
+  /// Example:
+  /// ```dart
+  /// var array = NDArray([1, 2, 3]);
+  /// print(array.isHomogeneous);  // true
+  ///
+  /// var df = DataFrame({'a': [1, 2], 'b': ['x', 'y']});
+  /// print(df.isHomogeneous);  // false
+  /// ```
+  bool get isHomogeneous => true;
+
+  /// For heterogeneous structures, get type information per column/dimension
+  ///
+  /// Returns null for homogeneous structures or structures without named columns.
+  /// For DataFrame, returns a map of column names to their inferred types.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame({'a': [1, 2], 'b': ['x', 'y']});
+  /// print(df.columnTypes);  // {'a': int, 'b': String}
+  ///
+  /// var array = NDArray([1, 2, 3]);
+  /// print(array.columnTypes);  // null
+  /// ```
+  Map<String, Type>? get columnTypes => null;
 
   /// Metadata attributes (HDF5-style)
   ///
@@ -142,4 +186,13 @@ mixin DartDataMixin implements DartData {
 
   @override
   bool get isNotEmpty => size > 0;
+
+  @override
+  Type get dtype => dynamic;
+
+  @override
+  bool get isHomogeneous => true;
+
+  @override
+  Map<String, Type>? get columnTypes => null;
 }

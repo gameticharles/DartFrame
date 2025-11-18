@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:dartframe/dartframe.dart';
 
 /// Example demonstrating DataFrame compound writer functionality
@@ -122,7 +124,7 @@ void main() {
     print('    - ${field['name']}: ${field['type']} (size=${field['size']})');
   }
 
-  print('\n' + '=' * 50);
+  print('\n${'=' * 50}');
   print('Example completed successfully!');
   print('\nKey Features Demonstrated:');
   print('  ✓ Mixed datatype columns (int, string, float, bool)');

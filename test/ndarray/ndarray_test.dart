@@ -174,6 +174,153 @@ void main() {
     });
   });
 
+  group('Smart Slicing - Type Returns', () {
+    test('0D result returns Scalar', () {
+      final arr = NDArray([
+        [1, 2, 3],
+        [4, 5, 6]
+      ]);
+      final result = arr.slice([0, 1]);
+      expect(result, isA<Scalar>());
+      expect((result as Scalar).value, 2);
+    });
+
+    test('1D result returns NDArray with shape [n]', () {
+      final arr = NDArray([
+        [1, 2, 3],
+        [4, 5, 6]
+      ]);
+      final result = arr.slice([0, Slice.all()]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.ndim, 1);
+      expect(ndResult.shape.toList(), [3]);
+      expect(ndResult.getValue([0]), 1);
+      expect(ndResult.getValue([2]), 3);
+    });
+
+    test('2D result returns NDArray with shape [rows, cols]', () {
+      final arr = NDArray([
+        [
+          [1, 2],
+          [3, 4]
+        ],
+        [
+          [5, 6],
+          [7, 8]
+        ]
+      ]);
+      final result = arr.slice([0, Slice.all(), Slice.all()]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.ndim, 2);
+      expect(ndResult.shape.toList(), [2, 2]);
+      expect(ndResult.getValue([0, 0]), 1);
+      expect(ndResult.getValue([1, 1]), 4);
+    });
+
+    test('3D result returns DataCube', () {
+      final arr =
+          NDArray.generate([3, 4, 5], (i) => i[0] * 100 + i[1] * 10 + i[2]);
+      final result = arr.slice([Slice.all(), Slice.all(), Slice.all()]);
+      // DataCube should be returned for 3D
+      expect(result.ndim, 3);
+      expect(result.shape.toList(), [3, 4, 5]);
+    });
+
+    test('4D+ result returns NDArray', () {
+      final arr = NDArray.generate(
+          [2, 3, 4, 5], (i) => i[0] * 1000 + i[1] * 100 + i[2] * 10 + i[3]);
+      final result =
+          arr.slice([Slice.all(), Slice.all(), Slice.all(), Slice.all()]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.ndim, 4);
+      expect(ndResult.shape.toList(), [2, 3, 4, 5]);
+    });
+  });
+
+  group('Smart Slicing - Operator []', () {
+    test('operator [] with single index', () {
+      final arr = NDArray([
+        [1, 2, 3],
+        [4, 5, 6]
+      ]);
+      final result = arr[0];
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [3]);
+      expect(ndResult.getValue([0]), 1);
+      expect(ndResult.getValue([2]), 3);
+    });
+
+    test('operator [] with SliceSpec', () {
+      final arr = NDArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      final result = arr[Slice.range(2, 7)];
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [5]);
+      expect(ndResult.getValue([0]), 3);
+      expect(ndResult.getValue([4]), 7);
+    });
+
+    test('operator [] with step', () {
+      final arr = NDArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      final result = arr[Slice.range(0, 10, step: 2)];
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [5]);
+      expect(ndResult.getValue([0]), 1);
+      expect(ndResult.getValue([4]), 9);
+    });
+  });
+
+  group('Smart Slicing - Edge Cases', () {
+    test('slicing with null defaults to Slice.all()', () {
+      final arr = NDArray([
+        [1, 2, 3],
+        [4, 5, 6]
+      ]);
+      final result = arr.slice([0, null]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [3]);
+      expect(ndResult.getValue([0]), 1);
+    });
+
+    test('slicing preserves attributes', () {
+      final arr = NDArray([
+        [1, 2, 3],
+        [4, 5, 6]
+      ]);
+      arr.attrs['test'] = 'value';
+      arr.attrs['number'] = 42;
+
+      final result = arr.slice([0, Slice.all()]) as NDArray;
+      expect(result.attrs['test'], 'value');
+      expect(result.attrs['number'], 42);
+    });
+
+    test('slicing with negative indices', () {
+      final arr = NDArray([1, 2, 3, 4, 5]);
+      // Note: Negative indices should be handled by SliceSpec.resolve()
+      final result = arr.slice([Slice.range(0, 3)]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [3]);
+      expect(ndResult.getValue([0]), 1);
+      expect(ndResult.getValue([2]), 3);
+    });
+
+    test('empty slice result', () {
+      final arr = NDArray([1, 2, 3, 4, 5]);
+      final result = arr.slice([Slice.range(2, 2)]);
+      expect(result, isA<NDArray>());
+      final ndResult = result as NDArray;
+      expect(ndResult.shape.toList(), [0]);
+    });
+  });
+
   group('NDArray Reshape', () {
     test('reshape 1D to 2D', () {
       final arr = NDArray([1, 2, 3, 4, 5, 6]);

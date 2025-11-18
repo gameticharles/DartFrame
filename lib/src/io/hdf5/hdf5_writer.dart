@@ -5,7 +5,7 @@
 library;
 
 import '../../ndarray/ndarray.dart';
-import '../../datacube/datacube.dart';
+import '../../data_cube/datacube.dart';
 import '../../data_frame/data_frame.dart';
 import 'hdf5_error.dart';
 import 'hdf5_file_builder.dart';

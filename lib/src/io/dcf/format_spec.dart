@@ -6,6 +6,8 @@
 /// - Fast random access
 /// - Hierarchical groups
 /// - Rich metadata
+// ignore_for_file: constant_identifier_names
+
 library;
 
 /// DCF File Format Version

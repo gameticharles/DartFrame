@@ -117,13 +117,14 @@ bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {
 /// // Output:
 /// // Series(name: 0, index: [Name, Age, City], data: [Alice, 30, New York])
 /// ```
-class DataFrame {
+class DataFrame implements DartData {
   List<dynamic> _columns = List.empty(growable: true);
   List<dynamic> index = List.empty(growable: true);
   List<dynamic> _data = List.empty(growable: true);
   final bool allowFlexibleColumns;
   dynamic replaceMissingValueWith;
   List<dynamic> _missingDataIndicator = List.empty(growable: true);
+  Attributes? _attrs;
 
   /// Internal constructor for creating a DataFrame.
   ///
@@ -1596,6 +1597,7 @@ class DataFrame {
   /// print(df.shape[1]);      // Output: 2 (columns)
   /// print(df.shape.size);    // Output: 4 (total elements)
   /// ```
+  @override
   Shape get shape => Shape.fromRowsColumns(_data.length, _columns.length);
 
   /// Returns a `Series` representing the column specified by `key`.
@@ -2378,4 +2380,205 @@ class DataFrame {
   /// // r1  2
   /// ```
   DataFrameLocAccessor get loc => DataFrameLocAccessor(this);
+
+  // ============ DartData Interface Implementation ============
+
+  /// Number of dimensions (always 2 for DataFrame)
+  @override
+  int get ndim => 2;
+
+  /// Total number of elements (rows × columns)
+  @override
+  int get size => rowCount * columnCount;
+
+  /// Metadata attributes (HDF5-style)
+  @override
+  Attributes get attrs {
+    _attrs ??= Attributes();
+    return _attrs!;
+  }
+
+  /// Data type - DataFrame is heterogeneous, returns dynamic
+  @override
+  Type get dtype => dynamic;
+
+  /// DataFrame is always heterogeneous
+  @override
+  bool get isHomogeneous => false;
+
+  /// Get type information for each column
+  @override
+  Map<String, Type> get columnTypes {
+    final types = <String, Type>{};
+
+    for (var col in columns) {
+      final colName = col.toString();
+
+      if (rowCount == 0) {
+        types[colName] = dynamic;
+        continue;
+      }
+
+      // Find first non-null value to infer type
+      Type? inferredType;
+      final series = this[col];
+
+      for (var value in series.data) {
+        if (value != null && value != replaceMissingValueWith) {
+          inferredType = value.runtimeType;
+          break;
+        }
+      }
+
+      types[colName] = inferredType ?? dynamic;
+    }
+
+    return types;
+  }
+
+  /// Get value at multi-dimensional indices [row, column]
+  @override
+  dynamic getValue(List<int> indices) {
+    if (indices.length != 2) {
+      throw ArgumentError(
+          'DataFrame requires exactly 2 indices [row, column], got ${indices.length}');
+    }
+
+    final row = indices[0];
+    final col = indices[1];
+
+    if (row < 0 || row >= rowCount) {
+      throw RangeError('Row index $row out of range [0, $rowCount)');
+    }
+
+    if (col < 0 || col >= columnCount) {
+      throw RangeError('Column index $col out of range [0, $columnCount)');
+    }
+
+    return iloc(row, col);
+  }
+
+  /// Set value at multi-dimensional indices [row, column]
+  @override
+  void setValue(List<int> indices, dynamic value) {
+    if (indices.length != 2) {
+      throw ArgumentError(
+          'DataFrame requires exactly 2 indices [row, column], got ${indices.length}');
+    }
+
+    final row = indices[0];
+    final col = indices[1];
+
+    if (row < 0 || row >= rowCount) {
+      throw RangeError('Row index $row out of range [0, $rowCount)');
+    }
+
+    if (col < 0 || col >= columnCount) {
+      throw RangeError('Column index $col out of range [0, $columnCount)');
+    }
+
+    _data[row][col] = value;
+  }
+
+  /// Slice the DataFrame using DartData-style slicing
+  @override
+  DartData slice(List<dynamic> sliceSpec) {
+    if (sliceSpec.isEmpty || sliceSpec.length > 2) {
+      throw ArgumentError(
+          'DataFrame slice requires 1 or 2 specifications, got ${sliceSpec.length}');
+    }
+
+    // Normalize slice specifications
+    final rowSpec = sliceSpec.isNotEmpty ? sliceSpec[0] : Slice.all();
+    final colSpec = sliceSpec.length > 1 ? sliceSpec[1] : Slice.all();
+
+    // Convert to SliceSpec objects
+    final rowSlice = _normalizeSliceSpec(rowSpec, rowCount);
+    final colSlice = _normalizeSliceSpec(colSpec, columnCount);
+
+    // Check if both are single indices (returns Scalar)
+    if (rowSlice.isSingleIndex && colSlice.isSingleIndex) {
+      return Scalar(getValue([rowSlice.start!, colSlice.start!]));
+    }
+
+    // Get row and column indices
+    final rowIndices = _resolveSliceIndices(rowSlice, rowCount);
+    final colIndices = _resolveSliceIndices(colSlice, columnCount);
+
+    // Single row or single column returns Series
+    if (rowIndices.length == 1 && colIndices.length > 1) {
+      // Single row -> Series
+      final rowData =
+          colIndices.map((c) => getValue([rowIndices[0], c])).toList();
+      final colNames = colIndices.map((c) => columns[c]).toList();
+      return Series(rowData,
+          name: index[rowIndices[0]].toString(), index: colNames);
+    }
+
+    if (colIndices.length == 1 && rowIndices.length > 1) {
+      // Single column -> Series
+      final colData =
+          rowIndices.map((r) => getValue([r, colIndices[0]])).toList();
+      final rowLabels = rowIndices.map((r) => index[r]).toList();
+      return Series(colData,
+          name: columns[colIndices[0]].toString(), index: rowLabels);
+    }
+
+    // Multiple rows and columns -> DataFrame
+    final newData = rowIndices.map((r) {
+      return colIndices.map((c) => getValue([r, c])).toList();
+    }).toList();
+
+    final newColumns = colIndices.map((c) => columns[c]).toList();
+    final newIndex = rowIndices.map((r) => index[r]).toList();
+
+    return DataFrame(
+      newData,
+      columns: newColumns,
+      index: newIndex,
+      allowFlexibleColumns: allowFlexibleColumns,
+      replaceMissingValueWith: replaceMissingValueWith,
+    );
+  }
+
+  /// Normalize a slice specification to SliceSpec
+  SliceSpec _normalizeSliceSpec(dynamic spec, int dimSize) {
+    if (spec is SliceSpec) {
+      return spec;
+    } else if (spec is int) {
+      // Handle negative indices
+      final idx = spec < 0 ? dimSize + spec : spec;
+      return Slice.single(idx);
+    } else if (spec == null) {
+      return Slice.all();
+    } else {
+      throw ArgumentError('Invalid slice specification: $spec');
+    }
+  }
+
+  /// Resolve a SliceSpec to actual indices
+  List<int> _resolveSliceIndices(SliceSpec spec, int dimSize) {
+    if (spec.isSingleIndex) {
+      return [spec.start!];
+    }
+
+    final (start, stop, step) = spec.resolve(dimSize);
+    final indices = <int>[];
+
+    if (step > 0) {
+      for (int i = start; i < stop; i += step) {
+        if (i >= 0 && i < dimSize) {
+          indices.add(i);
+        }
+      }
+    } else {
+      for (int i = start; i > stop; i += step) {
+        if (i >= 0 && i < dimSize) {
+          indices.add(i);
+        }
+      }
+    }
+
+    return indices;
+  }
 }

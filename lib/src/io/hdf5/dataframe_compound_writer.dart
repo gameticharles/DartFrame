@@ -211,9 +211,7 @@ class DataFrameCompoundWriter {
     for (int i = 0; i < column.length; i++) {
       final value = column.data[i];
       if (value != null) {
-        if (sampleValue == null) {
-          sampleValue = value;
-        }
+        sampleValue ??= value;
 
         if (value is int) {
           hasInt = true;

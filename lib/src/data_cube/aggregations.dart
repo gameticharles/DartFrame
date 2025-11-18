@@ -185,16 +185,16 @@ extension DataCubeAggregations on DataCube {
     NDArray result;
     switch (operation.toLowerCase()) {
       case 'sum':
-        result = data.sumAxis(axis);
+        result = data.sum(axis: axis);
         break;
       case 'mean':
-        result = data.meanAxis(axis);
+        result = data.mean(axis: axis);
         break;
       case 'max':
-        result = data.maxAxis(axis);
+        result = data.max(axis: axis);
         break;
       case 'min':
-        result = data.minAxis(axis);
+        result = data.min(axis: axis);
         break;
       case 'std':
         result = _stdAxis(axis);
@@ -216,7 +216,7 @@ extension DataCubeAggregations on DataCube {
   /// Calculates standard deviation along an axis.
   NDArray _stdAxis(int axis) {
     // Calculate mean along axis
-    final meanResult = data.meanAxis(axis);
+    final meanResult = data.mean(axis: axis);
 
     // Calculate squared differences
     final squaredDiffs = NDArray.generate(data.shape.toList(), (indices) {
@@ -233,7 +233,7 @@ extension DataCubeAggregations on DataCube {
     });
 
     // Sum squared differences and divide by count
-    final sumSquaredDiffs = squaredDiffs.sumAxis(axis);
+    final sumSquaredDiffs = squaredDiffs.sum(axis: axis);
     final count = data.shape[axis];
 
     return sumSquaredDiffs.map((x) => (x as num) / count).sqrt();
@@ -241,7 +241,7 @@ extension DataCubeAggregations on DataCube {
 
   /// Calculates variance along an axis.
   NDArray _varianceAxis(int axis) {
-    final meanResult = data.meanAxis(axis);
+    final meanResult = data.mean(axis: axis);
 
     final squaredDiffs = NDArray.generate(data.shape.toList(), (indices) {
       final value = data.getValue(indices);
@@ -256,7 +256,7 @@ extension DataCubeAggregations on DataCube {
       return diff * diff;
     });
 
-    final sumSquaredDiffs = squaredDiffs.sumAxis(axis);
+    final sumSquaredDiffs = squaredDiffs.sum(axis: axis);
     final count = data.shape[axis];
 
     return sumSquaredDiffs.map((x) => (x as num) / count);

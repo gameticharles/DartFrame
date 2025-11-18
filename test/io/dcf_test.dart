@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:dartframe/src/ndarray/ndarray.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
 import 'package:dartframe/src/io/dcf/dcf_writer.dart';
 import 'package:dartframe/src/io/dcf/dcf_reader.dart';
 import 'package:dartframe/src/io/dcf/format_spec.dart';

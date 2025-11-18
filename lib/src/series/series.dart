@@ -4,6 +4,11 @@ import 'package:intl/intl.dart';
 import 'dart:math';
 
 import '../data_frame/data_frame.dart';
+import '../core/dart_data.dart';
+import '../core/shape.dart';
+import '../core/attributes.dart';
+import '../core/slice_spec.dart';
+import '../core/scalar.dart';
 
 part 'date_time_accessor.dart';
 part 'string_accessor.dart';
@@ -33,7 +38,7 @@ part 'additional_functions.dart';
 /// var stringSeries = Series<String>(['a', 'b', 'c'], name: 'Letters');
 /// print(stringSeries); // Outputs: Letters: [a, b, c]
 /// ```
-class Series<T> {
+class Series<T> implements DartData {
   /// The data of the series.
   ///
   /// This list holds the actual data points of the series. The generic type `T`
@@ -58,6 +63,9 @@ class Series<T> {
 
   /// The data type of the series (similar to pandas dtype)
   String _dtype = 'object';
+
+  /// Metadata attributes for DartData interface
+  Attributes? _attrs;
 
   /// Constructs a `Series` object with the given [data] and [name].
   ///
@@ -244,6 +252,7 @@ class Series<T> {
   /// cat.astype('category');
   /// print(s.dtype); // Outputs: String (but s.seriesDtype would be 'category')
   /// ```
+  @override
   Type get dtype {
     // If categorical, return the type of the category values
     if (isCategorical) {
@@ -1673,4 +1682,160 @@ class Series<T> {
   }
 
   List<dynamic> toList() => data;
+
+  // ============ DartData Interface Implementation ============
+
+  /// Number of dimensions (always 1 for Series)
+  @override
+  int get ndim => 1;
+
+  /// Total number of elements
+  @override
+  int get size => data.length;
+
+  /// Shape of the Series
+  @override
+  Shape get shape => Shape([data.length]);
+
+  /// Metadata attributes (HDF5-style)
+  @override
+  Attributes get attrs {
+    _attrs ??= Attributes();
+    return _attrs!;
+  }
+
+  /// Whether this data structure is homogeneous
+  @override
+  bool get isHomogeneous {
+    if (data.isEmpty) return true;
+
+    Type? firstType;
+
+    for (var value in data) {
+      if (value != null && !_isMissing(value)) {
+        if (firstType == null) {
+          firstType = value.runtimeType;
+        } else if (value.runtimeType != firstType) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /// For Series, columnTypes returns null since it's 1-dimensional
+  @override
+  Map<String, Type>? get columnTypes => null;
+
+  /// Get value at the specified index
+  @override
+  dynamic getValue(List<int> indices) {
+    if (indices.length != 1) {
+      throw ArgumentError(
+          'Series requires exactly 1 index, got ${indices.length}');
+    }
+
+    final idx = indices[0];
+
+    if (idx < 0 || idx >= data.length) {
+      throw RangeError('Index $idx out of range [0, ${data.length})');
+    }
+
+    return data[idx];
+  }
+
+  /// Set value at the specified index
+  @override
+  void setValue(List<int> indices, dynamic value) {
+    if (indices.length != 1) {
+      throw ArgumentError(
+          'Series requires exactly 1 index, got ${indices.length}');
+    }
+
+    final idx = indices[0];
+
+    if (idx < 0 || idx >= data.length) {
+      throw RangeError('Index $idx out of range [0, ${data.length})');
+    }
+
+    data[idx] = value as T?;
+  }
+
+  /// Slice the Series using DartData-style slicing
+  @override
+  DartData slice(List<dynamic> sliceSpec) {
+    if (sliceSpec.isEmpty || sliceSpec.length > 1) {
+      throw ArgumentError(
+          'Series slice requires exactly 1 specification, got ${sliceSpec.length}');
+    }
+
+    final spec = sliceSpec[0];
+
+    // Convert to SliceSpec
+    final sliceObj = _normalizeSliceSpec(spec, data.length);
+
+    // Check if single index (returns Scalar)
+    if (sliceObj.isSingleIndex) {
+      return Scalar(getValue([sliceObj.start!]));
+    }
+
+    // Get indices
+    final indices = _resolveSliceIndices(sliceObj, data.length);
+
+    // Create new Series with sliced data
+    final newData = indices.map((i) => data[i]).toList();
+    final newIndex = indices.map((i) => index[i]).toList();
+
+    return Series<T>(newData, name: name, index: newIndex);
+  }
+
+  /// Normalize a slice specification to SliceSpec
+  SliceSpec _normalizeSliceSpec(dynamic spec, int dimSize) {
+    if (spec is SliceSpec) {
+      return spec;
+    } else if (spec is int) {
+      // Handle negative indices
+      final idx = spec < 0 ? dimSize + spec : spec;
+      return Slice.single(idx);
+    } else if (spec == null) {
+      return Slice.all();
+    } else {
+      throw ArgumentError('Invalid slice specification: $spec');
+    }
+  }
+
+  /// Resolve a SliceSpec to actual indices
+  List<int> _resolveSliceIndices(SliceSpec spec, int dimSize) {
+    if (spec.isSingleIndex) {
+      return [spec.start!];
+    }
+
+    final (start, stop, step) = spec.resolve(dimSize);
+    final indices = <int>[];
+
+    if (step > 0) {
+      for (int i = start; i < stop; i += step) {
+        if (i >= 0 && i < dimSize) {
+          indices.add(i);
+        }
+      }
+    } else {
+      for (int i = start; i > stop; i += step) {
+        if (i >= 0 && i < dimSize) {
+          indices.add(i);
+        }
+      }
+    }
+
+    return indices;
+  }
+
+  /// Check if this Series is empty
+  @override
+  bool get isEmpty => data.isEmpty;
+
+  /// Check if this Series is not empty
+  @override
+  bool get isNotEmpty => data.isNotEmpty;
 }

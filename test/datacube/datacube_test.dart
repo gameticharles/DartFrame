@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
 import 'package:dartframe/src/data_frame/data_frame.dart';
 import 'package:dartframe/src/ndarray/ndarray.dart';
 import 'package:dartframe/src/core/slice_spec.dart';

@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
-import 'package:dartframe/src/datacube/aggregations.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
+import 'package:dartframe/src/data_cube/aggregations.dart';
 
 void main() {
   group('DataCube Aggregations - Depth', () {

@@ -4,7 +4,7 @@
 library;
 
 import '../../ndarray/ndarray.dart';
-import '../../datacube/datacube.dart';
+import '../../data_cube/datacube.dart';
 import '../dcf/dcf_reader.dart';
 import '../hdf5/hdf5_reader_extensions.dart';
 import 'format_converter.dart';

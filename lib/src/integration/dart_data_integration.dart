@@ -4,7 +4,7 @@ library;
 import '../core/dart_data.dart';
 import '../series/series.dart';
 import '../data_frame/data_frame.dart';
-import '../datacube/datacube.dart';
+import '../data_cube/datacube.dart';
 import '../ndarray/ndarray.dart';
 
 /// Extension providing conversion methods for DartData types (NDArray, DataCube).
@@ -82,7 +82,7 @@ extension DartDataConversion on DartData {
       return Series(data, name: 'flattened');
     }
 
-    throw ArgumentError('Cannot convert ${runtimeType} to Series. '
+    throw ArgumentError('Cannot convert $runtimeType to Series. '
         'Supported types: NDArray (1D, 2D, 3D), Series, DataFrame, DataCube');
   }
 
@@ -154,7 +154,7 @@ extension DartDataConversion on DartData {
       return cube.getFrame(0);
     }
 
-    throw ArgumentError('Cannot convert ${runtimeType} to DataFrame. '
+    throw ArgumentError('Cannot convert $runtimeType to DataFrame. '
         'Supported types: NDArray (1D, 2D, 3D), Series, DataFrame, DataCube');
   }
 
@@ -211,7 +211,7 @@ extension DartDataConversion on DartData {
       return DataCube.fromDataFrames([df]);
     }
 
-    throw ArgumentError('Cannot convert ${runtimeType} to DataCube. '
+    throw ArgumentError('Cannot convert $runtimeType to DataCube. '
         'Supported types: NDArray (1D, 2D, 3D), Series, DataFrame, DataCube');
   }
 
@@ -259,7 +259,7 @@ extension DartDataConversion on DartData {
       return cube.toNDArray();
     }
 
-    throw ArgumentError('Cannot convert ${runtimeType} to NDArray. '
+    throw ArgumentError('Cannot convert $runtimeType to NDArray. '
         'Supported types: NDArray, Series, DataFrame, DataCube');
   }
 }

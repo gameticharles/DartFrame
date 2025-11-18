@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
-import 'package:dartframe/src/datacube/io.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
+import 'package:dartframe/src/data_cube/io.dart';
 
 void main() {
   // Cleanup helper

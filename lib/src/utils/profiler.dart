@@ -19,17 +19,13 @@ library;
 class Profiler {
   static final Map<String, _ActiveOperation> _activeOperations = {};
   static final Map<String, ProfileEntry> _entries = {};
-  static bool _enabled = true;
-
-  /// Whether profiling is enabled. When disabled, start/stop become no-ops.
-  static bool get enabled => _enabled;
-  static set enabled(bool value) => _enabled = value;
+  static bool enabled = true;
 
   /// Start timing an operation with the given [name].
   ///
   /// Throws [StateError] if an operation with the same name is already active.
   static void start(String name) {
-    if (!_enabled) return;
+    if (!enabled) return;
 
     if (_activeOperations.containsKey(name)) {
       throw StateError('Operation "$name" is already started');
@@ -42,7 +38,7 @@ class Profiler {
   ///
   /// Throws [StateError] if the operation was not started.
   static void stop(String name) {
-    if (!_enabled) return;
+    if (!enabled) return;
 
     final active = _activeOperations.remove(name);
     if (active == null) {

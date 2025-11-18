@@ -132,7 +132,7 @@ void main() {
     test('arange with non-integer step', () {
       final arr = ArrayUtils.arange(0, 1, step: 0.3);
       expect(arr.shape.toList(), equals([4]));
-      final values = arr.toNestedList() as List;
+      final values = arr.toNestedList();
       expect(values.length, equals(4));
       expect(values[0], closeTo(0.0, 0.001));
       expect(values[1], closeTo(0.3, 0.001));
@@ -148,14 +148,14 @@ void main() {
 
     test('linspace includes both endpoints', () {
       final arr = ArrayUtils.linspace(0, 10, 11);
-      final values = arr.toNestedList() as List;
+      final values = arr.toNestedList();
       expect(values.first, equals(0.0));
       expect(values.last, equals(10.0));
     });
 
     test('linspace with negative range', () {
       final arr = ArrayUtils.linspace(-5, 5, 11);
-      final values = arr.toNestedList() as List;
+      final values = arr.toNestedList();
       expect(values.first, equals(-5.0));
       expect(values.last, equals(5.0));
       expect(values[5], closeTo(0.0, 0.001));
@@ -165,7 +165,7 @@ void main() {
   group('ArrayUtils - Random Generation', () {
     test('random creates array with values between 0 and 1', () {
       final arr = ArrayUtils.random([10]);
-      final values = arr.toNestedList() as List;
+      final values = arr.toNestedList();
 
       for (var val in values) {
         expect(val, greaterThanOrEqualTo(0.0));
@@ -195,7 +195,7 @@ void main() {
 
     test('randomNormal creates normally distributed values', () {
       final arr = ArrayUtils.randomNormal([1000], seed: 42);
-      final values = (arr.toNestedList() as List).cast<num>();
+      final values = (arr.toNestedList()).cast<num>();
 
       // Calculate mean and std
       final mean = values.reduce((a, b) => a + b) / values.length;
@@ -212,7 +212,7 @@ void main() {
     test('randomNormal with custom mean and std', () {
       final arr =
           ArrayUtils.randomNormal([1000], mean: 5.0, std: 2.0, seed: 42);
-      final values = (arr.toNestedList() as List).cast<num>();
+      final values = (arr.toNestedList()).cast<num>();
 
       final mean = values.reduce((a, b) => a + b) / values.length;
       final variance =

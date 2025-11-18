@@ -1,4 +1,6 @@
 /// I/O operations for DataCube.
+// ignore_for_file: unused_element
+
 library;
 
 import 'dart:convert';

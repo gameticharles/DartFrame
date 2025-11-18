@@ -16,7 +16,7 @@
 
 # DartFrame
 
-**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tool like Pandas. DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
+**DartFrame** is a robust, lightweight Dart library designed for data manipulation and analysis. Inspired by popular data science tools like Pandas and Numpy. DartFrame provides a DataFrame-like structure for handling tabular data, making it easy to clean, analyze, and transform data directly in your Dart applications.
 
 Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be found in the package called [geoengine](https://pub.dev/packages/geoengine) which utilizes this package and adds more spatial analysis capabilities.
 
@@ -103,7 +103,7 @@ For comprehensive documentation on specific classes and their functionalities, p
 
 ### I/O Documentation
 - **[CSV & Excel I/O Guide](./doc/csv_excel_io.md)**: Complete guide to reading and writing CSV and Excel files with examples
-- **[HDF5 Reading Guide](./example/README_hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
+- **[HDF5 Reading Guide](./example/hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
 
 You can also find additional runnable examples in the `example` directory of the repository.
 

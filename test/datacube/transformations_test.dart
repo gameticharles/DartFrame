@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
-import 'package:dartframe/src/datacube/transformations.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
+import 'package:dartframe/src/data_cube/transformations.dart';
 import 'package:dartframe/src/ndarray/ndarray.dart';
 
 void main() {

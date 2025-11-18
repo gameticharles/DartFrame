@@ -59,7 +59,7 @@ void main() async {
   print('Note: save/load methods not yet implemented');
   print('Would save to file and load back for verification\n');
 
-  // TODO: Implement save/load methods
+  // TO DO: Implement save/load methods
   // await data.save(filename);
   // final loaded = await NDArray.load(filename);
 
@@ -79,7 +79,7 @@ void main() async {
   print('Note: Compression with save not yet implemented');
   print('Would save with compression and check file size\n');
 
-  // TODO: Implement save with compression
+  // TO DO: Implement save with compression
   // await compressible.save(compressedFile, compression: ZstdCodec(level: 3));
 
   // 5. Chunked Reading

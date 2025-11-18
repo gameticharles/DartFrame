@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:dartframe/src/ndarray/ndarray.dart';
-import 'package:dartframe/src/datacube/datacube.dart';
+import 'package:dartframe/src/data_cube/datacube.dart';
 import 'package:dartframe/src/io/hdf5/hdf5_writer.dart'
     show HDF5WriterUtils, NDArrayHDF5Writer, DataCubeHDF5Writer;
 

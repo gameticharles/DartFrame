@@ -24,7 +24,7 @@ Future<void> main(List<String> args) async {
 
   try {
     // Phase 1: Read original file
-    print('${'═' * 60}');
+    print('═' * 60);
     print('PHASE 1: Reading Original File');
     print('${'═' * 60}\n');
 
@@ -38,7 +38,7 @@ Future<void> main(List<String> args) async {
     print('✓ Read ${originalData.length} dataset(s) from original file\n');
 
     // Phase 2: Write to new file
-    print('${'═' * 60}');
+    print('═' * 60);
     print('PHASE 2: Writing to New File');
     print('${'═' * 60}\n');
 
@@ -47,7 +47,7 @@ Future<void> main(List<String> args) async {
     print('✓ Wrote data to new file\n');
 
     // Phase 3: Read back the new file
-    print('${'═' * 60}');
+    print('═' * 60);
     print('PHASE 3: Reading New File');
     print('${'═' * 60}\n');
 
@@ -61,7 +61,7 @@ Future<void> main(List<String> args) async {
     print('✓ Read ${recreatedData.length} dataset(s) from recreated file\n');
 
     // Phase 4: Compare
-    print('${'═' * 60}');
+    print('═' * 60);
     print('PHASE 4: Comparing Files');
     print('${'═' * 60}\n');
 

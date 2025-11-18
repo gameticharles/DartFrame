@@ -155,12 +155,6 @@ extension NDArrayOperations on NDArray {
     });
   }
 
-  /// Sum along a specific axis (deprecated - use sum(axis: axis) instead).
-  @Deprecated('Use sum(axis: axis) instead')
-  NDArray sumAxis(int axis) {
-    return sum(axis: axis) as NDArray;
-  }
-
   /// Mean (average) of all elements or along a specific axis.
   ///
   /// If [axis] is null, returns the mean of all elements as a scalar.
@@ -176,12 +170,6 @@ extension NDArrayOperations on NDArray {
       }
       return total / values.length;
     });
-  }
-
-  /// Mean along a specific axis (deprecated - use mean(axis: axis) instead).
-  @Deprecated('Use mean(axis: axis) instead')
-  NDArray meanAxis(int axis) {
-    return mean(axis: axis) as NDArray;
   }
 
   /// Maximum value of all elements or along a specific axis.
@@ -203,18 +191,12 @@ extension NDArrayOperations on NDArray {
       num? maxVal;
       for (var v in values) {
         final numVal = v as num;
-        if (maxVal == null || numVal > maxVal!) {
+        if (maxVal == null || numVal > maxVal) {
           maxVal = numVal;
         }
       }
       return maxVal ?? double.nan;
     });
-  }
-
-  /// Maximum along a specific axis (deprecated - use max(axis: axis) instead).
-  @Deprecated('Use max(axis: axis) instead')
-  NDArray maxAxis(int axis) {
-    return max(axis: axis) as NDArray;
   }
 
   /// Minimum value of all elements or along a specific axis.
@@ -236,18 +218,12 @@ extension NDArrayOperations on NDArray {
       num? minVal;
       for (var v in values) {
         final numVal = v as num;
-        if (minVal == null || numVal < minVal!) {
+        if (minVal == null || numVal < minVal) {
           minVal = numVal;
         }
       }
       return minVal ?? double.nan;
     });
-  }
-
-  /// Minimum along a specific axis (deprecated - use min(axis: axis) instead).
-  @Deprecated('Use min(axis: axis) instead')
-  NDArray minAxis(int axis) {
-    return min(axis: axis) as NDArray;
   }
 
   /// Standard deviation of all elements or along a specific axis.

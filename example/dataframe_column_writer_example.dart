@@ -148,7 +148,7 @@ void main() async {
   print('  File size: ${bytes4.length} bytes');
 
   // Summary
-  print('\n\n' + '=' * 50);
+  print('\n\n${'=' * 50}');
   print('Summary');
   print('=' * 50);
   print('\nColumn-wise storage benefits:');

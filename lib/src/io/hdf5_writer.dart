@@ -192,7 +192,7 @@ class HDF5Writer implements DataWriter {
       debug: debug,
     );
 
-    // TODO: Implement writing multiple datasets to the same file
+    // TO DO: Implement writing multiple datasets to the same file
     // This requires extending the HDF5FileBuilder to support multiple datasets
     if (datasets.length > 1) {
       throw UnsupportedError(

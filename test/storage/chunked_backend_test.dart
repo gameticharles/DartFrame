@@ -1,6 +1,5 @@
 import 'package:test/test.dart';
 import 'package:dartframe/src/core/shape.dart';
-import 'package:dartframe/src/core/slice_spec.dart';
 import 'package:dartframe/src/storage/chunked_backend.dart';
 
 void main() {

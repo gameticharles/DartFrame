@@ -16,7 +16,7 @@ void main() {
       'value'
     ]);
 
-    var s2 = df['value'];
+    var s2 = df['value'] as Series;
     print('Series from DataFrame type: ${s2.runtimeType}');
     print('Series from DataFrame: $s2');
 
@@ -30,7 +30,7 @@ void main() {
 
     // Try explicit cast
     try {
-      Series s3 = s2 as Series;
+      Series s3 = s2;
       var result = s3.sum();
       print('Sum with cast: $result');
     } catch (e) {

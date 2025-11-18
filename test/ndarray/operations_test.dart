@@ -417,7 +417,7 @@ void main() {
           [1, 2, 3],
           [4, 5, 6]
         ]);
-        final result = arr.sumAxis(0);
+        final result = arr.sum(axis: 0);
         expect(result.shape.toList(), [3]);
         expect(result.getValue([0]), 5);
       });
@@ -427,7 +427,7 @@ void main() {
           [2, 4, 6],
           [8, 10, 12]
         ]);
-        final result = arr.meanAxis(0);
+        final result = arr.mean(axis: 0);
         expect(result.shape.toList(), [3]);
         expect(result.getValue([0]), 5);
       });
@@ -437,7 +437,7 @@ void main() {
           [1, 5, 3],
           [4, 2, 6]
         ]);
-        final result = arr.maxAxis(0);
+        final result = arr.max(axis: 0);
         expect(result.shape.toList(), [3]);
         expect(result.getValue([0]), 4);
       });
@@ -447,7 +447,7 @@ void main() {
           [1, 5, 3],
           [4, 2, 6]
         ]);
-        final result = arr.minAxis(0);
+        final result = arr.min(axis: 0);
         expect(result.shape.toList(), [3]);
         expect(result.getValue([0]), 1);
       });
@@ -482,7 +482,7 @@ void main() {
         [1, 2, 3],
         [4, 5, 6]
       ]);
-      final result = arr.sumAxis(0);
+      final result = arr.sum(axis: 0);
       expect(result.shape.toList(), [3]);
       expect(result.getValue([0]), 5);
       expect(result.getValue([1]), 7);
@@ -494,7 +494,7 @@ void main() {
         [1, 2, 3],
         [4, 5, 6]
       ]);
-      final result = arr.sumAxis(1);
+      final result = arr.sum(axis: 1);
       expect(result.shape.toList(), [2]);
       expect(result.getValue([0]), 6);
       expect(result.getValue([1]), 15);
@@ -505,7 +505,7 @@ void main() {
         [2, 4, 6],
         [8, 10, 12]
       ]);
-      final result = arr.meanAxis(0);
+      final result = arr.mean(axis: 0);
       expect(result.shape.toList(), [3]);
       expect(result.getValue([0]), 5);
       expect(result.getValue([1]), 7);
@@ -517,7 +517,7 @@ void main() {
         [1, 5, 3],
         [4, 2, 6]
       ]);
-      final result = arr.maxAxis(0);
+      final result = arr.max(axis: 0);
       expect(result.shape.toList(), [3]);
       expect(result.getValue([0]), 4);
       expect(result.getValue([1]), 5);
@@ -529,7 +529,7 @@ void main() {
         [1, 5, 3],
         [4, 2, 6]
       ]);
-      final result = arr.minAxis(0);
+      final result = arr.min(axis: 0);
       expect(result.shape.toList(), [3]);
       expect(result.getValue([0]), 1);
       expect(result.getValue([1]), 2);
@@ -547,7 +547,7 @@ void main() {
           [7, 8]
         ]
       ]);
-      final result = arr.sumAxis(0);
+      final result = arr.sum(axis: 0);
       expect(result.shape.toList(), [2, 2]);
       expect(result.getValue([0, 0]), 6);
       expect(result.getValue([1, 1]), 12);
@@ -609,7 +609,7 @@ void main() {
         [1, 2, 3],
         [4, 5, 6]
       ]);
-      final rowSums = arr.sumAxis(1);
+      final rowSums = arr.sum(axis: 1);
       expect(rowSums.sum(), 21);
     });
 

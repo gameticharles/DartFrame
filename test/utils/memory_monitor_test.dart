@@ -6,7 +6,7 @@ class MockBackend extends StorageBackend {
   @override
   final Shape shape;
 
-  int _memoryUsage;
+  final int _memoryUsage;
   bool _isLoaded = true;
 
   MockBackend(this.shape, this._memoryUsage);

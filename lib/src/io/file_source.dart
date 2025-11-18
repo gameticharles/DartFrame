@@ -1,11 +1,6 @@
 import 'dart:async';
 import 'package:dartframe/dartframe.dart';
 
-import '../data_frame/data_frame.dart';
-import 'data_source.dart';
-import 'readers.dart';
-import 'writers.dart';
-
 /// File system data source for loading data from local files.
 ///
 /// Handles file:// URIs and plain file paths, automatically detecting

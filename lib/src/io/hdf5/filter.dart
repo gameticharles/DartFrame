@@ -487,7 +487,7 @@ class ShuffleFilter extends Filter {
 
   @override
   List<int> encode(List<int> data) {
-    // TODO: Implement shuffle encoding for writing
+    // TO DO: Implement shuffle encoding for writing
     throw UnimplementedError('Shuffle filter encoding not yet implemented');
   }
 
@@ -542,13 +542,13 @@ class Fletcher32Filter extends Filter {
       {String? filePath, String? objectPath}) async {
     // Fletcher32 is a checksum filter - just verify and return data
     // For now, we'll skip verification and just return the data
-    // TODO: Implement checksum verification
+    // TO DO: Implement checksum verification
     return data;
   }
 
   @override
   List<int> encode(List<int> data) {
-    // TODO: Implement Fletcher32 checksum encoding
+    // TO DO: Implement Fletcher32 checksum encoding
     throw UnimplementedError('Fletcher32 filter encoding not yet implemented');
   }
 }

@@ -4,7 +4,7 @@
 library;
 
 import '../../ndarray/ndarray.dart';
-import '../../datacube/datacube.dart';
+import '../../data_cube/datacube.dart';
 import '../../core/slice_spec.dart';
 import 'hdf5_file.dart';
 import 'dataset.dart';

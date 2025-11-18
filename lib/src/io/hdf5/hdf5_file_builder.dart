@@ -11,6 +11,8 @@ import 'hdf5_error.dart';
 import 'write_options.dart';
 import 'heap_manager.dart';
 import 'group_writer.dart';
+import 'chunked_layout_writer.dart';
+import 'filter.dart';
 import '../../ndarray/ndarray.dart';
 
 /// Coordinator class for building complete HDF5 files
@@ -335,6 +337,208 @@ class HDF5FileBuilder {
   /// Returns the address where the data was written
   Future<int> _writeDataValues(NDArray array) async {
     return await _dataWriter.writeData(_writer, array);
+  }
+
+  /// Write a dataset with full WriteOptions support (chunking, compression, etc.)
+  ///
+  /// This method handles both contiguous and chunked storage layouts,
+  /// with optional compression for chunked datasets.
+  ///
+  /// Returns the address of the dataset object header
+  Future<int> _writeDatasetWithOptions(
+    NDArray array,
+    String datasetPath,
+    WriteOptions options,
+  ) async {
+    // Infer datatype
+    final datatype = _inferDatatype(array);
+    final datatypeMessage = datatype.write();
+
+    // Create dataspace
+    final dataspace = Hdf5Dataspace.simple(array.shape.toList());
+    final dataspaceMessage = dataspace.write();
+
+    // Build attribute messages
+    final attributeMessages = <HeaderMessage>[];
+    if (options.attributes != null && options.attributes!.isNotEmpty) {
+      for (final entry in options.attributes!.entries) {
+        final attribute = Hdf5Attribute.scalar(entry.key, entry.value);
+        final attrData = attribute.write();
+        attributeMessages.add(HeaderMessage.forWriting(
+          type: MessageType.attribute,
+          data: attrData,
+        ));
+      }
+    }
+
+    // Determine storage layout and write data
+    List<int> dataLayoutMessage;
+    int dataOrBTreeAddress;
+
+    if (options.layout == StorageLayout.chunked ||
+        options.compression != CompressionType.none) {
+      // Use chunked storage
+      final chunkDims = options.chunkDimensions ??
+          _calculateOptimalChunkDimensions(array.shape.toList(), datatype.size);
+
+      // Create filter pipeline for compression
+      FilterPipeline? filterPipeline;
+      if (options.compression != CompressionType.none) {
+        final filters = <Filter>[];
+
+        if (options.compression == CompressionType.gzip) {
+          filters.add(GzipFilter(
+            compressionLevel: options.compressionLevel,
+          ));
+        } else if (options.compression == CompressionType.lzf) {
+          filters.add(LzfFilter());
+        }
+
+        filterPipeline = FilterPipeline(filters: filters);
+      }
+
+      // Create chunked layout writer
+      final chunkedWriter = ChunkedLayoutWriter(
+        chunkDimensions: chunkDims,
+        datasetDimensions: array.shape.toList(),
+        filterPipeline: filterPipeline,
+      );
+
+      // Write chunked data (returns B-tree address)
+      dataOrBTreeAddress = await chunkedWriter.writeData(_writer, array);
+
+      // Get layout message
+      dataLayoutMessage = chunkedWriter.writeLayoutMessage();
+
+      // Add filter pipeline message if compression is used
+      if (filterPipeline != null && filterPipeline.isNotEmpty) {
+        final filterMessage = filterPipeline.writeMessage();
+        attributeMessages.insert(
+            0,
+            HeaderMessage.forWriting(
+              type: MessageType.filterPipeline,
+              data: filterMessage,
+            ));
+      }
+    } else {
+      // Use contiguous storage
+      final dataSize = _calculateDataSize(array);
+
+      // Estimate header size to calculate data address
+      final tempMessages = [
+        HeaderMessage.forWriting(
+            type: MessageType.datatype, data: datatypeMessage),
+        HeaderMessage.forWriting(
+            type: MessageType.dataspace, data: dataspaceMessage),
+        HeaderMessage.forWriting(
+          type: MessageType.dataLayout,
+          data: List.filled(17, 0), // Placeholder
+        ),
+        ...attributeMessages,
+      ];
+
+      final tempHeader = ObjectHeader(version: 1, messages: tempMessages);
+      final estimatedHeaderSize = tempHeader.calculateSize();
+      dataOrBTreeAddress = (_writer.position + estimatedHeaderSize).toInt();
+
+      // Create contiguous layout message
+      dataLayoutMessage = _dataLayoutWriter.writeContiguous(
+        dataAddress: dataOrBTreeAddress,
+        dataSize: dataSize,
+      );
+    }
+
+    // Build final messages
+    final messages = [
+      HeaderMessage.forWriting(
+          type: MessageType.datatype, data: datatypeMessage),
+      HeaderMessage.forWriting(
+          type: MessageType.dataspace, data: dataspaceMessage),
+      HeaderMessage.forWriting(
+        type: MessageType.dataLayout,
+        data: dataLayoutMessage,
+      ),
+      ...attributeMessages,
+    ];
+
+    // Write the dataset object header
+    final datasetHeaderAddress = _writer.position;
+    final header = ObjectHeader(version: 1, messages: messages);
+    header.writeTo(_writer);
+
+    // Write data if contiguous (chunked data already written)
+    if (options.layout != StorageLayout.chunked &&
+        options.compression == CompressionType.none) {
+      await _dataWriter.writeData(_writer, array);
+    }
+
+    return datasetHeaderAddress;
+  }
+
+  /// Calculate optimal chunk dimensions for a dataset
+  ///
+  /// Aims for chunks around 1MB in size while maintaining reasonable
+  /// proportions relative to the dataset shape.
+  List<int> _calculateOptimalChunkDimensions(
+    List<int> datasetDimensions,
+    int elementSize,
+  ) {
+    const targetChunkBytes = 1024 * 1024; // 1MB target
+    final targetElements = targetChunkBytes ~/ elementSize;
+
+    // Start with dataset dimensions
+    final chunkDims = List<int>.from(datasetDimensions);
+    final ndim = datasetDimensions.length;
+
+    // Calculate current chunk size
+    int currentElements = chunkDims.reduce((a, b) => a * b);
+
+    // If already smaller than target, use dataset dimensions
+    if (currentElements <= targetElements) {
+      return chunkDims;
+    }
+
+    // Scale down proportionally
+    final scaleFactor = (targetElements / currentElements).clamp(0.0, 1.0);
+    final dimScaleFactor = _pow(scaleFactor, 1.0 / ndim);
+
+    for (int i = 0; i < ndim; i++) {
+      chunkDims[i] = (datasetDimensions[i] * dimScaleFactor)
+          .ceil()
+          .clamp(1, datasetDimensions[i]);
+    }
+
+    // Ensure at least 1 in each dimension
+    for (int i = 0; i < ndim; i++) {
+      if (chunkDims[i] < 1) {
+        chunkDims[i] = 1;
+      }
+    }
+
+    return chunkDims;
+  }
+
+  /// Helper function for power calculation
+  double _pow(double base, double exponent) {
+    if (exponent == 0) return 1.0;
+    if (exponent == 1) return base;
+
+    // Simple implementation for positive exponents
+    if (exponent > 0) {
+      double result = 1.0;
+      for (int i = 0; i < exponent.floor(); i++) {
+        result *= base;
+      }
+      // Handle fractional part with approximation
+      final fractional = exponent - exponent.floor();
+      if (fractional > 0) {
+        // Simple approximation for fractional exponents
+        result *= (1.0 + fractional * (base - 1.0));
+      }
+      return result;
+    }
+
+    return 1.0 / _pow(base, -exponent);
   }
 
   /// Calculate the total size of the data in bytes
@@ -968,15 +1172,12 @@ class HDF5FileBuilder {
 
   /// Write a dataset and its data
   Future<void> _writeDatasetWithData(_DatasetInfo datasetInfo) async {
-    // Write dataset object header
-    final datasetAddress = _writeDataset(
+    // Write dataset object header with data using WriteOptions
+    final datasetAddress = await _writeDatasetWithOptions(
       datasetInfo.array,
       datasetInfo.path,
-      datasetInfo.options.attributes,
+      datasetInfo.options,
     );
-
-    // Write dataset raw data
-    await _writeDataValues(datasetInfo.array);
 
     // Update parent group with actual dataset address
     datasetInfo.parentGroup.datasets[datasetInfo.name] = datasetAddress;

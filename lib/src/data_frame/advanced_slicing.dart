@@ -4,6 +4,9 @@ part of 'data_frame.dart';
 extension DataFrameAdvancedSlicing on DataFrame {
   /// Slice DataFrame with step parameter.
   ///
+  /// **Note:** This method has been renamed from `slice()` to `sliceRange()`.
+  /// The `slice()` method now implements the DartData interface for unified slicing.
+  ///
   /// Parameters:
   /// - `start`: Starting index (inclusive)
   /// - `end`: Ending index (exclusive)
@@ -21,18 +24,18 @@ extension DataFrameAdvancedSlicing on DataFrame {
   /// });
   ///
   /// // Every other row
-  /// var result = df.slice(start: 0, end: 10, step: 2);
+  /// var result = df.sliceRange(start: 0, end: 10, step: 2);
   /// // Returns rows 0, 2, 4, 6, 8
   ///
   /// // Every third row starting from 1
-  /// var result = df.slice(start: 1, end: 10, step: 3);
+  /// var result = df.sliceRange(start: 1, end: 10, step: 3);
   /// // Returns rows 1, 4, 7
   ///
   /// // Reverse order
-  /// var result = df.slice(start: 9, end: -1, step: -1);
+  /// var result = df.sliceRange(start: 9, end: -1, step: -1);
   /// // Returns rows in reverse
   /// ```
-  DataFrame slice({
+  DataFrame sliceRange({
     int? start,
     int? end,
     int step = 1,
@@ -223,7 +226,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
       final end = rowSlice.length > 1 ? rowSlice[1] : null;
       final step = rowSlice.length > 2 ? rowSlice[2] : 1;
 
-      result = result.slice(start: start, end: end, step: step, axis: 0);
+      result = result.sliceRange(start: start, end: end, step: step, axis: 0);
     }
 
     // Apply column slice
@@ -232,7 +235,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
       final end = colSlice.length > 1 ? colSlice[1] : null;
       final step = colSlice.length > 2 ? colSlice[2] : 1;
 
-      result = result.slice(start: start, end: end, step: step, axis: 1);
+      result = result.sliceRange(start: start, end: end, step: step, axis: 1);
     }
 
     return result;
@@ -285,7 +288,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
 
       // Apply step if not 1
       if (rowStep != 1) {
-        result = result.slice(
+        result = result.sliceRange(
             start: 0, end: result.rowCount, step: rowStep, axis: 0);
       }
     }
@@ -296,7 +299,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
 
       // Apply step if not 1
       if (colStep != 1) {
-        result = result.slice(
+        result = result.sliceRange(
             start: 0, end: result.columns.length, step: colStep, axis: 1);
       }
     }
@@ -334,7 +337,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
       throw ArgumentError('n must be positive');
     }
 
-    return slice(start: offset, end: rowCount, step: n, axis: 0);
+    return sliceRange(start: offset, end: rowCount, step: n, axis: 0);
   }
 
   /// Get every nth column.
@@ -363,7 +366,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
       throw ArgumentError('n must be positive');
     }
 
-    return slice(start: offset, end: columns.length, step: n, axis: 1);
+    return sliceRange(start: offset, end: columns.length, step: n, axis: 1);
   }
 
   /// Reverse the order of rows.
@@ -381,7 +384,7 @@ extension DataFrameAdvancedSlicing on DataFrame {
   /// // Returns rows in order: 5, 4, 3, 2, 1
   /// ```
   DataFrame reverseRows() {
-    return slice(start: rowCount - 1, end: -1, step: -1, axis: 0);
+    return sliceRange(start: rowCount - 1, end: -1, step: -1, axis: 0);
   }
 
   /// Reverse the order of columns.
@@ -399,6 +402,6 @@ extension DataFrameAdvancedSlicing on DataFrame {
   /// // Returns columns in order: C, B, A
   /// ```
   DataFrame reverseColumns() {
-    return slice(start: columns.length - 1, end: -1, step: -1, axis: 1);
+    return sliceRange(start: columns.length - 1, end: -1, step: -1, axis: 1);
   }
 }

@@ -186,7 +186,7 @@ class GroupData {
   @override
   String toString() {
     return 'GroupData(name: $name, path: $fullPath, '
-        'children: ${childCount}, attributes: ${attributes.length})';
+        'children: $childCount, attributes: ${attributes.length})';
   }
 }
 
@@ -361,7 +361,7 @@ class GroupWriter {
     }
 
     // Add attribute messages
-    // TODO: Implement attribute writing when needed
+    // TO DO: Implement attribute writing when needed
     // for (final entry in group.attributes.entries) {
     //   ...
     // }

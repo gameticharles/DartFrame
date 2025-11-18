@@ -1,5 +1,67 @@
-# 0.8.5
+# 0.8.6
 
+- **[MAJOR FEATURE]** DartData Interface Implementation for DataFrame and Series
+  - **NEW**: DataFrame now implements `DartData` interface for unified dimensional data handling
+    - Added `ndim` property (always 2 for DataFrame)
+    - Added `size` property (total elements = rows × columns)
+    - Added `attrs` property for HDF5-style metadata attributes
+    - Added `dtype` property (returns `dynamic` for heterogeneous data)
+    - Added `isHomogeneous` property (always `false` for DataFrame)
+    - Added `columnTypes` property returning `Map<String, Type>` with inferred types per column
+    - Added `getValue(List<int> indices)` method for multi-dimensional indexing
+    - Added `setValue(List<int> indices, dynamic value)` method for multi-dimensional assignment
+    - Added `slice(List<dynamic> sliceSpec)` method for unified slicing returning appropriate types (Scalar, Series, or DataFrame)
+  - **NEW**: Series now implements `DartData` interface for unified dimensional data handling
+    - Added `ndim` property (always 1 for Series)
+    - Added `size` property (total elements)
+    - Added `shape` property returning `Shape([length])`
+    - Added `attrs` property for HDF5-style metadata attributes
+    - Added `isHomogeneous` property (checks if all non-null elements have same type)
+    - Added `getValue(List<int> indices)` method for indexed access
+    - Added `setValue(List<int> indices, dynamic value)` method for indexed assignment
+    - Added `slice(List<dynamic> sliceSpec)` method for unified slicing returning Scalar or Series
+    - Added `isEmpty` and `isNotEmpty` properties
+  - **ENHANCEMENT**: Enhanced `DartData` interface to support heterogeneous data structures
+    - Added `isHomogeneous` property to distinguish homogeneous vs heterogeneous structures
+    - Added `columnTypes` property for detailed type information in heterogeneous structures
+    - Enhanced `dtype` documentation to clarify behavior for both homogeneous and heterogeneous types
+  - **BREAKING CHANGE**: DataFrame's existing `slice()` method renamed to `sliceRange()`
+    - Old: `df.slice(start: 0, end: 10, step: 2)`
+    - New: `df.sliceRange(start: 0, end: 10, step: 2)`
+    - The new `slice()` method implements the DartData interface for unified slicing
+    - Migration: Replace all `df.slice(...)` calls with `df.sliceRange(...)`
+  - **FEATURE**: Polymorphic data structure handling
+    - DataFrame, Series, NDArray, and DataCube can now be used interchangeably via DartData interface
+    - Generic algorithms can work with any DartData structure
+    - Type-aware operations via `isHomogeneous` and `columnTypes` properties
+  - **FEATURE**: Metadata attributes system
+    - HDF5-style attributes for all DartData structures
+    - JSON-serializable metadata storage
+    - Useful for data provenance, documentation, and scientific computing workflows
+  - **FEATURE**: Unified slicing across all dimensional types
+    - Consistent slicing API using `Slice` specifications
+    - Automatic type inference: single element → Scalar, single dimension → Series/NDArray, multiple dimensions → DataFrame/NDArray/DataCube
+    - Support for negative indices and step parameters
+  - **ARCHITECTURE**: Design decision to support heterogeneous types
+    - DataFrame remains heterogeneous (different column types) as core feature
+    - NDArray and DataCube remain homogeneous for numeric operations
+    - Mirrors successful libraries (pandas for heterogeneous, NumPy for homogeneous)
+    - Enables both tabular data (DataFrame) and tensor operations (NDArray/DataCube) in unified framework
+  - **TESTING**: Comprehensive test coverage
+    - 60+ tests covering all new functionality
+    - Integration tests for polymorphic usage
+    - Type inference and heterogeneity detection tests
+    - Slicing operations returning correct types
+    - Metadata attributes functionality
+  - **EXAMPLES**: New example demonstrating polymorphic capabilities
+    - `example/dart_data_polymorphism_example.dart` - Shows unified interface usage across all dimensional types
+  - **DOCUMENTATION**: Complete implementation documentation
+    - `DARTDATA_IMPLEMENTATION.md` - Detailed implementation guide with usage examples and migration path
+  - **COMPATIBILITY**: Backward compatible except for `slice()` method rename
+    - All existing DataFrame and Series functionality preserved
+    - Clear migration path for `slice()` → `sliceRange()`
+    - No changes to existing NDArray or DataCube implementations
+    
 - **[MAJOR FEATURE]** HDF5 File Support - Advanced Features and Web Compatibility
   - **NEW**: Full web browser support for reading HDF5 files via `Hdf5File.open()` which now accepts `Uint8List` and HTML `InputElement`s in addition to file paths.
   - **NEW**: Support for Header Continuation Blocks, allowing the reader to correctly parse object headers that span multiple locations in the file.

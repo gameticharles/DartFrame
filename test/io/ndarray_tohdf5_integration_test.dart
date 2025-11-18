@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
-import 'package:dartframe/src/io/hdf5/hdf5_reader_extensions.dart';
 
 /// Integration tests for enhanced NDArray.toHDF5() method
 ///

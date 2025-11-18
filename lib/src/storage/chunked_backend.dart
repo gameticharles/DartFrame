@@ -13,6 +13,21 @@ import '../utils/memory.dart';
 /// Divides data into chunks and caches them in memory using LRU eviction.
 /// Best for large datasets that don't fit entirely in RAM.
 ///
+/// ## Operating Modes
+///
+/// **Synchronous Mode (with initialData):**
+/// - Data is pre-loaded in memory via `initialData` parameter
+/// - All operations (getValue, setValue, etc.) work synchronously
+/// - Chunks are extracted from pre-loaded data on demand
+/// - Compatible with all NDArray operations
+/// - Recommended for most use cases
+///
+/// **Async Mode (with dataProvider):**
+/// - Data is loaded lazily via `dataProvider` function
+/// - Requires calling `await load()` before synchronous operations
+/// - Not fully supported in current StorageBackend interface
+/// - Future: Will be supported via AsyncStorageBackend interface
+///
 /// Features:
 /// - Automatic chunking
 /// - LRU cache with ChunkManager
@@ -20,16 +35,18 @@ import '../utils/memory.dart';
 /// - Access pattern detection
 /// - Automatic prefetching
 /// - Configurable cache size
-/// - Lazy loading of chunks
 /// - Statistics tracking
 ///
-/// Example:
+/// Example (Synchronous Mode):
 /// ```dart
+/// var data = List.generate(1000000, (i) => i.toDouble());
 /// var backend = ChunkedBackend(
 ///   shape: Shape([1000, 1000]),
 ///   chunkShape: [100, 100],
+///   initialData: data,
 ///   maxMemoryBytes: 100 * 1024 * 1024,
 /// );
+/// var value = backend.getValue([0, 0]); // Works synchronously
 /// ```
 class ChunkedBackend extends StorageBackend with BackendStatsMixin {
   @override
@@ -383,31 +400,50 @@ class ChunkedBackend extends StorageBackend with BackendStatsMixin {
   }
 
   @override
-  dynamic getValue(List<int> indices) async {
+  dynamic getValue(List<int> indices) {
     trackGet();
 
     var chunkIndex = _getChunkIndex(indices);
     var localIndices = _getLocalIndices(indices, chunkIndex);
 
-    var chunk = await _loadChunk(chunkIndex);
+    // Synchronous path when data is pre-loaded
+    if (_allData != null) {
+      // Try cache first
+      var cached = chunkManager.getChunk(chunkIndex);
+      List<double> chunkData;
 
-    // Track access for prefetching
-    _trackAccess(chunkIndex);
+      if (cached != null) {
+        trackCacheHit();
+        chunkData = cached.data;
+      } else {
+        trackCacheMiss();
+        // Extract from _allData synchronously
+        chunkData = _extractChunkFromAllData(chunkIndex);
+        final chunk = Chunk(
+          data: chunkData,
+          shape: chunkShape,
+          index: chunkIndex,
+          sizeBytes: chunkData.length * 8,
+        );
+        chunkManager.putChunk(chunk);
+      }
 
-    // Trigger prefetching if enabled
-    if (enablePrefetching) {
-      _prefetchNextChunks(chunkIndex);
+      // Calculate flat index within chunk
+      int localFlatIndex = 0;
+      int stride = 1;
+      for (int i = localIndices.length - 1; i >= 0; i--) {
+        localFlatIndex += localIndices[i] * stride;
+        stride *= chunkShape[i];
+      }
+
+      return chunkData[localFlatIndex.clamp(0, chunkData.length - 1)];
     }
 
-    // Calculate flat index within chunk
-    int localFlatIndex = 0;
-    int stride = 1;
-    for (int i = localIndices.length - 1; i >= 0; i--) {
-      localFlatIndex += localIndices[i] * stride;
-      stride *= chunkShape[i];
-    }
-
-    return chunk.data[localFlatIndex.clamp(0, chunk.data.length - 1)];
+    // Async path for lazy loading - not supported in synchronous interface
+    throw StateError(
+        'ChunkedBackend with lazy loading (dataProvider) requires async operations. '
+        'Use ChunkedBackend with initialData for synchronous access, or implement '
+        'AsyncStorageBackend for lazy loading support.');
   }
 
   @override

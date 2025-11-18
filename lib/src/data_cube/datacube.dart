@@ -605,7 +605,7 @@ class DataCube extends DartData {
     if (axis == null) {
       return _data.sum();
     }
-    return _data.sumAxis(axis);
+    return _data.sum(axis: axis);
   }
 
   /// Calculates the mean of all elements or along an axis.
@@ -613,7 +613,7 @@ class DataCube extends DartData {
     if (axis == null) {
       return _data.mean();
     }
-    return _data.meanAxis(axis);
+    return _data.mean(axis: axis);
   }
 
   /// Finds the minimum value.
@@ -621,7 +621,7 @@ class DataCube extends DartData {
     if (axis == null) {
       return _data.min();
     }
-    return _data.minAxis(axis);
+    return _data.min(axis: axis);
   }
 
   /// Finds the maximum value.
@@ -629,7 +629,7 @@ class DataCube extends DartData {
     if (axis == null) {
       return _data.max();
     }
-    return _data.maxAxis(axis);
+    return _data.max(axis: axis);
   }
 
   /// Calculates the standard deviation.
@@ -638,9 +638,9 @@ class DataCube extends DartData {
       return _data.std();
     }
     // stdAxis not implemented in NDArray, so calculate manually
-    final meanResult = _data.meanAxis(axis);
+    final meanResult = _data.mean(axis: axis);
     // For now, return the mean as a placeholder
-    // TODO: Implement proper stdAxis calculation
+    // TO DO: Implement proper stdAxis calculation
     return meanResult;
   }
 }

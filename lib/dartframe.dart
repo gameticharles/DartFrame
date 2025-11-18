@@ -112,12 +112,12 @@ export 'src/ndarray/lazy_operations.dart';
 export 'src/ndarray/filtering.dart';
 
 // DataCube (Phase 3 - Week 7-9)
-export 'src/datacube/datacube.dart';
-export 'src/datacube/dataframe_integration.dart';
-export 'src/datacube/aggregations.dart';
-export 'src/datacube/transformations.dart';
-export 'src/datacube/io.dart';
-export 'src/datacube/selection.dart';
+export 'src/data_cube/datacube.dart';
+export 'src/data_cube/dataframe_integration.dart';
+export 'src/data_cube/aggregations.dart';
+export 'src/data_cube/transformations.dart';
+export 'src/data_cube/io.dart';
+export 'src/data_cube/selection.dart';
 
 // Integration layer (Week 18)
 export 'src/integration/dart_data_integration.dart';

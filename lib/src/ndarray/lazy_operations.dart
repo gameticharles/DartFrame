@@ -165,6 +165,7 @@ class LazyNDArray {
     return LazyNDArray(LazyMapOperation(materialized, fn));
   }
 
+  @override
   String toString() {
     if (_isMaterialized) {
       return 'LazyNDArray(materialized, shape: $shape)';

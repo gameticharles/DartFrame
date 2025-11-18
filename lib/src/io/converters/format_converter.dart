@@ -13,7 +13,7 @@ library;
 
 import 'dart:convert';
 import '../../ndarray/ndarray.dart';
-import '../../datacube/datacube.dart';
+import '../../data_cube/datacube.dart';
 import '../../file_helper/file_io.dart';
 import '../dcf/dcf_writer.dart';
 import '../dcf/dcf_reader.dart';

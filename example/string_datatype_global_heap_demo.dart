@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dartframe/src/io/hdf5/datatype_writer.dart';
 import 'package:dartframe/src/io/hdf5/global_heap.dart';
 

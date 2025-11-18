@@ -15,62 +15,62 @@ void main() {
 
     group('slice() with step', () {
       test('Every other row', () {
-        final result = df.slice(start: 0, end: 10, step: 2);
+        final result = df.sliceRange(start: 0, end: 10, step: 2);
 
         expect(result.rowCount, equals(5));
         expect(result['A'].data, equals([1, 3, 5, 7, 9]));
       });
 
       test('Every third row', () {
-        final result = df.slice(start: 0, end: 10, step: 3);
+        final result = df.sliceRange(start: 0, end: 10, step: 3);
 
         expect(result.rowCount, equals(4));
         expect(result['A'].data, equals([1, 4, 7, 10]));
       });
 
       test('Every other row starting from 1', () {
-        final result = df.slice(start: 1, end: 10, step: 2);
+        final result = df.sliceRange(start: 1, end: 10, step: 2);
 
         expect(result.rowCount, equals(5));
         expect(result['A'].data, equals([2, 4, 6, 8, 10]));
       });
 
       test('Reverse order with negative step', () {
-        final result = df.slice(start: 9, end: -1, step: -1);
+        final result = df.sliceRange(start: 9, end: -1, step: -1);
 
         expect(result.rowCount, equals(10));
         expect(result['A'].data, equals([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]));
       });
 
       test('Every other row in reverse', () {
-        final result = df.slice(start: 9, end: -1, step: -2);
+        final result = df.sliceRange(start: 9, end: -1, step: -2);
 
         expect(result.rowCount, equals(5));
         expect(result['A'].data, equals([10, 8, 6, 4, 2]));
       });
 
       test('Slice columns with step', () {
-        final result = df.slice(start: 0, end: 3, step: 2, axis: 1);
+        final result = df.sliceRange(start: 0, end: 3, step: 2, axis: 1);
 
         expect(result.columns.length, equals(2));
         expect(result.columns, equals(['A', 'C']));
       });
 
       test('Default start and end', () {
-        final result = df.slice(step: 2);
+        final result = df.sliceRange(step: 2);
 
         expect(result.rowCount, equals(5));
         expect(result['A'].data, equals([1, 3, 5, 7, 9]));
       });
 
       test('Step of 1 returns all rows', () {
-        final result = df.slice(start: 0, end: 10, step: 1);
+        final result = df.sliceRange(start: 0, end: 10, step: 1);
 
         expect(result.rowCount, equals(10));
       });
 
       test('Zero step throws error', () {
-        expect(() => df.slice(step: 0), throwsArgumentError);
+        expect(() => df.sliceRange(step: 0), throwsArgumentError);
       });
     });
 
@@ -381,7 +381,7 @@ void main() {
       test('Slice empty DataFrame', () {
         final empty = DataFrame.fromMap({'A': []});
 
-        final result = empty.slice(step: 2);
+        final result = empty.sliceRange(step: 2);
 
         expect(result.rowCount, equals(0));
       });
@@ -409,7 +409,7 @@ void main() {
       });
 
       test('Slice with start equals end', () {
-        final result = df.slice(start: 5, end: 5);
+        final result = df.sliceRange(start: 5, end: 5);
 
         expect(result.rowCount, equals(0));
       });
