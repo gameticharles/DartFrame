@@ -12,7 +12,7 @@ import '../ndarray/operations.dart';
 
 /// A 3D data structure representing stacked DataFrames.
 ///
-/// DataCube is always 3-dimensional with shape [depth, rows, columns].
+/// DataCube is always 3-dimensional with shape `[depth, rows, columns]`.
 /// It can be thought of as a stack of DataFrames, where each "sheet"
 /// at a given depth is a 2D DataFrame.
 ///
@@ -355,7 +355,7 @@ class DataCube extends DartData {
 
   /// Gets all values for a specific column across all frames.
   ///
-  /// Returns a 2D NDArray with shape [depth, rows].
+  /// Returns a 2D NDArray with shape `[depth, rows]`.
   ///
   /// Example:
   /// ```dart

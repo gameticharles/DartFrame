@@ -53,8 +53,8 @@ import 'readers.dart';
 /// - `columns` (`List<String>?`): Column names for 'values' orientation
 ///
 /// See also:
-/// - [JsonWriter] for writing JSON files
-/// - [FileReader.read] for auto-detecting file format
+/// - `[JsonWriter]` for writing JSON files
+/// - `[FileReader.read]` for auto-detecting file format
 class JsonReader implements DataReader {
   @override
   Future<DataFrame> read(String path, {Map<String, dynamic>? options}) async {
@@ -73,7 +73,7 @@ class JsonReader implements DataReader {
   /// This method handles the conversion of JSON data to DataFrame
   /// based on the specified orientation.
   ///
-  /// Throws [JsonReadError] if parsing fails.
+  /// Throws `[JsonReadError]` if parsing fails.
   DataFrame parseJsonContent(String content, Map<String, dynamic>? options) {
     try {
       final orient = options?['orient'] as String? ?? 'records';
@@ -100,7 +100,7 @@ class JsonReader implements DataReader {
 
   /// Converts records format to DataFrame.
   ///
-  /// Expected format: [{"col1": val1, "col2": val2}, ...]
+  /// Expected format: `[{"col1": val1, "col2": val2}, ...]`
   DataFrame _fromRecordsFormat(dynamic jsonData) {
     if (jsonData is! List) {
       throw JsonReadError(
@@ -140,7 +140,7 @@ class JsonReader implements DataReader {
 
   /// Converts index format to DataFrame.
   ///
-  /// Expected format: {"0": {"col1": val1, "col2": val2}, "1": {...}}
+  /// Expected format: `{"0": {"col1": val1, "col2": val2}, "1": {...}}`
   DataFrame _fromIndexFormat(dynamic jsonData) {
     if (jsonData is! Map) {
       throw JsonReadError(
@@ -172,7 +172,7 @@ class JsonReader implements DataReader {
 
   /// Converts columns format to DataFrame.
   ///
-  /// Expected format: {"col1": [val1, val2, ...], "col2": [...]}
+  /// Expected format: `{"col1": [val1, val2, ...], "col2": [...]}`
   DataFrame _fromColumnsFormat(dynamic jsonData) {
     if (jsonData is! Map) {
       throw JsonReadError(
@@ -202,7 +202,7 @@ class JsonReader implements DataReader {
 
   /// Converts values format to DataFrame.
   ///
-  /// Expected format: [[val1, val2], [val3, val4], ...]
+  /// Expected format: `[[val1, val2], [val3, val4], ...]`
   /// Requires column names to be provided in options.
   DataFrame _fromValuesFormat(dynamic jsonData, List<String>? columnNames) {
     if (jsonData is! List) {

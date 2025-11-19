@@ -438,7 +438,7 @@ class DataFrame implements DartData {
 
   /// Constructs a DataFrame from a CSV (Comma Separated Values) file or string.
   ///
-  /// This method uses the new [FileReader] infrastructure for robust CSV parsing.
+  /// This method uses the new `[FileReader]` infrastructure for robust CSV parsing.
   /// Supports both file paths and direct CSV string content.
   ///
   /// Parameters:
@@ -2436,7 +2436,7 @@ class DataFrame implements DartData {
     return types;
   }
 
-  /// Get value at multi-dimensional indices [row, column]
+  /// Get value at multi-dimensional indices `[row, column]`
   @override
   dynamic getValue(List<int> indices) {
     if (indices.length != 2) {

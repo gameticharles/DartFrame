@@ -34,13 +34,13 @@ class DataFrameCompoundWriter {
   /// compound datatype, and converts rows to compound records.
   ///
   /// Parameters:
-  /// - [df]: The DataFrame to convert
+  /// - `[df]`: The DataFrame to convert
   ///
   /// Returns a map containing:
   /// - 'datatypeWriter': The CompoundDatatypeWriter for the DataFrame structure
   /// - 'recordBytes': List of byte lists, one per row
   /// - 'columnNames': List of column names
-  /// - 'shape': Dataset shape [numRows]
+  /// - 'shape': Dataset shape `[numRows]`
   ///
   /// The method performs these steps:
   /// 1. Analyze DataFrame columns to determine HDF5 datatypes
@@ -49,8 +49,8 @@ class DataFrameCompoundWriter {
   /// 4. Return all necessary information for writing
   ///
   /// Throws:
-  /// - [ArgumentError] if DataFrame is empty
-  /// - [UnsupportedError] if a column datatype cannot be mapped to HDF5
+  /// - `[ArgumentError]` if DataFrame is empty
+  /// - `[UnsupportedError]` if a column datatype cannot be mapped to HDF5
   ///
   /// Example:
   /// ```dart
@@ -136,7 +136,7 @@ class DataFrameCompoundWriter {
   /// are mapped to compound datatype fields, including offsets and sizes.
   ///
   /// Parameters:
-  /// - [df]: The DataFrame to analyze
+  /// - `[df]`: The DataFrame to analyze
   ///
   /// Returns a map with field information:
   /// - 'fields': List of field info maps, each containing:
@@ -194,8 +194,8 @@ class DataFrameCompoundWriter {
   /// - If mixed types including strings, use variable-length string
   ///
   /// Parameters:
-  /// - [column]: The Series representing the column
-  /// - [columnName]: The column name (for error messages)
+  /// - `[column]`: The Series representing the column
+  /// - `[columnName]`: The column name (for error messages)
   ///
   /// Returns a DatatypeWriter appropriate for the column data.
   DatatypeWriter _inferColumnDatatype(Series column, String columnName) {
@@ -272,8 +272,8 @@ class DataFrameCompoundWriter {
   /// - Converts non-string values to strings when needed
   ///
   /// Parameters:
-  /// - [df]: The DataFrame to convert
-  /// - [compoundWriter]: The compound datatype writer defining the structure
+  /// - `[df]`: The DataFrame to convert
+  /// - `[compoundWriter]`: The compound datatype writer defining the structure
   ///
   /// Returns a list of byte lists, where each inner list is one compound record.
   List<List<int>> _convertRowsToRecords(
@@ -323,7 +323,7 @@ class DataFrameCompoundWriter {
   /// complexity to the compound record structure.
   ///
   /// Parameters:
-  /// - [column]: The Series containing string or mixed data
+  /// - `[column]`: The Series containing string or mixed data
   ///
   /// Returns a StringDatatypeWriter with fixed length.
   DatatypeWriter _determineFixedStringLength(Series column) {
@@ -354,8 +354,8 @@ class DataFrameCompoundWriter {
   /// ensuring values can be properly encoded in the compound record.
   ///
   /// Parameters:
-  /// - [value]: The value to convert
-  /// - [fieldWriter]: The target field's datatype writer
+  /// - `[value]`: The value to convert
+  /// - `[fieldWriter]`: The target field's datatype writer
   ///
   /// Returns the converted value suitable for the field datatype.
   dynamic _convertValueForField(dynamic value, DatatypeWriter fieldWriter) {

@@ -43,8 +43,8 @@ import 'readers.dart';
 /// - `columnNames` (`List<String>?`): Custom column names when no header
 ///
 /// See also:
-/// - [CsvFileWriter] for writing CSV files
-/// - [FileReader.readCsv] for a convenient wrapper method
+/// - `[CsvFileWriter]` for writing CSV files
+/// - `[FileReader.readCsv]` for a convenient wrapper method
 class CsvReader implements DataReader {
   @override
   Future<DataFrame> read(String path, {Map<String, dynamic>? options}) async {

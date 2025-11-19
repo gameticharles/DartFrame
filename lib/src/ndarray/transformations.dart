@@ -8,8 +8,8 @@ import '../core/dtype.dart';
 extension NDArrayTransformations on NDArray {
   /// Transposes the array by reversing or permuting axes.
   ///
-  /// If [axes] is null, reverses all axes (e.g., [2,3,4] → [4,3,2]).
-  /// If [axes] is provided, permutes axes according to the specified order.
+  /// If `[axes]` is null, reverses all axes (e.g., `[2,3,4] → [4,3,2]`).
+  /// If `[axes]` is provided, permutes axes according to the specified order.
   ///
   /// Example:
   /// ```dart

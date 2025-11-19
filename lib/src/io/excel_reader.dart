@@ -81,7 +81,7 @@ class ExcelFileReader implements DataReader {
   /// the appropriate sheet, extracts headers, processes cell values, and builds
   /// the DataFrame structure.
   ///
-  /// Throws [ExcelReadError] if parsing fails or sheet is not found.
+  /// Throws `[ExcelReadError]` if parsing fails or sheet is not found.
   DataFrame _parseExcelContent(
       excel_pkg.Excel excel, Map<String, dynamic>? options) {
     try {
@@ -236,7 +236,7 @@ class ExcelFileReader implements DataReader {
   ///
   /// ## Error Handling
   /// If a sheet cannot be read, it will be skipped with a warning printed to
-  /// console. The method only throws [ExcelReadError] if no sheets can be read.
+  /// console. The method only throws `[ExcelReadError]` if no sheets can be read.
   ///
   /// ## Example
   /// ```dart
@@ -259,8 +259,8 @@ class ExcelFileReader implements DataReader {
   /// ```
   ///
   /// See also:
-  /// - [read] for reading a single sheet
-  /// - [listSheets] for listing sheet names without reading data
+  /// - `[read]` for reading a single sheet
+  /// - `[listSheets]` for listing sheet names without reading data
   static Future<Map<String, DataFrame>> readAllSheets(
     String path, {
     bool hasHeader = true,
@@ -341,7 +341,7 @@ class ExcelFileReader implements DataReader {
   /// }
   /// ```
   ///
-  /// Throws [ExcelReadError] if the file cannot be read.
+  /// Throws `[ExcelReadError]` if the file cannot be read.
   static Future<List<String>> listSheets(String path) async {
     try {
       final fileIO = FileIO();

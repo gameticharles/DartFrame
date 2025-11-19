@@ -227,10 +227,10 @@ class SliceSpec {
 /// var s5 = Slice.single(5);
 /// ```
 class Slice {
-  /// Select all elements [:]
+  /// Select all elements `[:]`
   static SliceSpec all() => SliceSpec.all();
 
-  /// Select a range [start:stop:step]
+  /// Select a range `[start:stop:step]`
   ///
   /// Example:
   /// ```dart
@@ -239,7 +239,7 @@ class Slice {
   static SliceSpec range(int start, int stop, {int step = 1}) =>
       SliceSpec(start, stop, step: step);
 
-  /// Select from start to end [start:]
+  /// Select from start to end `[start:]`
   ///
   /// Example:
   /// ```dart
@@ -247,7 +247,7 @@ class Slice {
   /// ```
   static SliceSpec from(int start) => SliceSpec(start, null);
 
-  /// Select from beginning to stop [:stop]
+  /// Select from beginning to stop `[:stop]`
   ///
   /// Example:
   /// ```dart
@@ -271,7 +271,7 @@ class Slice {
   /// ```
   static SliceSpec every(int step) => SliceSpec(null, null, step: step);
 
-  /// Select last n elements [-n:]
+  /// Select last n elements `[-n:]`
   ///
   /// Example:
   /// ```dart
@@ -279,7 +279,7 @@ class Slice {
   /// ```
   static SliceSpec last(int n) => SliceSpec(-n, null);
 
-  /// Select first n elements [:n]
+  /// Select first n elements `[:n]`
   ///
   /// Example:
   /// ```dart
@@ -287,7 +287,7 @@ class Slice {
   /// ```
   static SliceSpec first(int n) => SliceSpec(null, n);
 
-  /// Reverse order [::-1]
+  /// Reverse order `[::-1]`
   ///
   /// Example:
   /// ```dart

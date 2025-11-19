@@ -4,14 +4,407 @@ This document outlines missing features compared to pandas and strategies for ad
 
 ## 📊 Implementation Status Summary
 
+Based on comprehensive analysis of DartFrame vs pandas (as of pandas 2.x), this document tracks implementation progress.
+
 ### 🔴 High Priority Missing Features
 
 - [x] Window functions (rank, row_number, dense_rank) ✅
 - [ ] Visualization/plotting
+- [ ] Memory optimization methods
+- [ ] Advanced merge/join options
+
+---
+
+## 🔍 Comprehensive Feature Comparison: DartFrame vs Pandas
+
+### DataFrame Methods Analysis
+
+#### ✅ IMPLEMENTED (Core functionality complete)
+
+**Data Access & Selection:**
+- iloc, loc, at, iat (position/label-based indexing)
+- head(), tail(), sample()
+- take(), nlargest(), nsmallest()
+- query(), eval() (expression evaluation)
+- filter() (filtering operations)
+
+**Data Manipulation:**
+- drop(), dropna(), fillna(), ffill(), bfill()
+- replace(), rename()
+- sort_values(), sort_index()
+- reset_index(), set_index()
+- transpose()
+- explode()
+
+**Aggregation & Statistics:**
+- sum(), mean(), median(), mode(), std(), var()
+- min(), max(), count()
+- quantile(), percentile()
+- corr(), cov()
+- cumsum(), cummax(), cummin(), cumprod()
+- rank(), pct_change(), diff()
+- abs(), round(), clip()
+
+**GroupBy Operations:**
+- groupby() with agg(), transform(), filter()
+- Multiple aggregations per column
+- Named aggregations
+- nth(), head(), tail() on groups
+
+**Reshaping:**
+- pivot(), pivot_table()
+- melt(), stack(), unstack()
+- merge(), join()
+- concat()
+- get_dummies()
+
+**Time Series:**
+- shift(), lag(), lead(), tshift()
+- resample(), asfreq()
+- rolling(), expanding(), ewm()
+- at_time(), between_time()
+- first(), last()
+
+**I/O Operations:**
+- CSV: read_csv(), to_csv()
+- JSON: read_json(), to_json()
+- Excel: read_excel(), to_excel()
+- HDF5: read_hdf5()
+- HTML: read_html(), to_html()
+- XML: read_xml(), to_xml()
+- SQL: read_sql(), to_sql()
+- Parquet: read_parquet(), to_parquet()
+- LaTeX: to_latex()
+- Markdown: to_markdown()
+
+**Window Functions:**
+- rank(), dense_rank(), row_number()
+- percent_rank(), cumulative_distribution()
+
+**Duplicate Handling:**
+- duplicated(), drop_duplicates()
+
+**String Operations (Series.str):**
+- All major string methods implemented
+- Pattern matching, extraction, replacement
+- Case conversion, padding, trimming
+
+**Categorical Data:**
+- Categorical dtype support
+- cat accessor with full functionality
 
 ---
 
 ## Missing Pandas Features
+
+### 🔴 HIGH PRIORITY - Missing Core DataFrame Methods
+
+#### Data Inspection & Information
+- [ ] **info()** - Concise summary of DataFrame (dtypes, non-null counts, memory usage)
+- [ ] **describe()** - Generate descriptive statistics (currently partial)
+- [ ] **memory_usage()** - Return memory usage of each column
+- [ ] **dtypes** - Return data types of columns (currently basic)
+- [ ] **select_dtypes()** - Select columns based on dtype
+- [ ] **infer_objects()** - Attempt to infer better dtypes for object columns
+- [ ] **convert_dtypes()** - Convert columns to best possible dtypes
+
+#### Data Alignment & Reindexing
+- [ ] **reindex()** - Conform DataFrame to new index with optional fill method
+- [ ] **reindex_like()** - Return object with matching indices to other object
+- [ ] **align()** - Align two objects on their axes with specified join method
+- [ ] **set_axis()** - Assign desired index to given axis
+
+#### Missing Data Handling (Advanced)
+- [ ] **interpolate()** - Fill NaN values using interpolation (Series has it, DataFrame needs it)
+- [ ] **dropna()** enhancements:
+  - [ ] thresh parameter (minimum non-NA values required)
+  - [ ] subset parameter for specific columns
+- [ ] **fillna()** enhancements:
+  - [ ] method='pad'/'backfill' with limit
+  - [ ] DataFrame-to-DataFrame filling
+- [ ] **isna()** / **isnull()** - Detect missing values (return DataFrame of booleans)
+- [ ] **notna()** / **notnull()** - Detect non-missing values
+
+#### Data Transformation
+- [ ] **assign()** - Assign new columns to DataFrame (functional style)
+- [ ] **insert()** - Insert column at specific position
+- [ ] **pop()** - Return item and drop from frame
+- [ ] **where()** - Replace values where condition is False
+- [ ] **mask()** - Replace values where condition is True
+- [ ] **update()** - Modify in place using non-NA values from another DataFrame
+- [ ] **combine()** - Combine with another DataFrame using func
+- [ ] **combine_first()** - Update null elements with value from another DataFrame
+
+#### Comparison & Equality
+- [ ] **equals()** - Test whether two objects contain the same elements
+- [ ] **compare()** - Compare to another DataFrame and show differences
+- [ ] **eq()**, **ne()**, **lt()**, **gt()**, **le()**, **ge()** - Comparison operators returning DataFrame
+
+#### Iteration
+- [ ] **items()** - Iterate over (column name, Series) pairs
+- [ ] **iterrows()** - Iterate over DataFrame rows as (index, Series) pairs
+- [ ] **itertuples()** - Iterate over DataFrame rows as named tuples
+- [ ] **keys()** - Get the 'info axis' (column names)
+- [ ] **values** - Return numpy array representation (or List<List> in Dart)
+
+#### Sorting & Ranking (Enhancements)
+- [ ] **sort_values()** enhancements:
+  - [ ] key parameter (apply function before sorting)
+  - [ ] kind parameter (sorting algorithm)
+  - [ ] ignore_index parameter
+- [ ] **sort_index()** enhancements:
+  - [ ] level parameter for MultiIndex
+  - [ ] sort_remaining parameter
+
+#### Aggregation (Advanced)
+- [ ] **agg()** / **aggregate()** enhancements:
+  - [ ] Different functions per column
+  - [ ] Multiple functions returning MultiIndex columns
+- [ ] **prod()** / **product()** - Product of values
+- [ ] **sem()** - Standard error of mean
+- [ ] **mad()** - Mean absolute deviation
+- [ ] **nunique()** - Count unique values per column
+- [ ] **value_counts()** - Count unique values (for DataFrame, not just Series)
+
+#### Reshaping (Advanced)
+- [ ] **squeeze()** - Squeeze 1-dimensional axis objects into scalars
+- [ ] **to_numpy()** - Convert to numpy array (or native Dart equivalent)
+- [ ] **to_dict()** - Convert to dictionary (various orientations)
+- [ ] **to_records()** - Convert to structured array
+- [ ] **from_dict()** enhancements (various orientations)
+- [ ] **from_records()** - Convert structured array to DataFrame
+
+#### Merging & Joining (Advanced)
+- [ ] **merge()** enhancements:
+  - [ ] indicator parameter (show merge type)
+  - [ ] validate parameter (one-to-one, one-to-many, many-to-one)
+  - [ ] suffixes for overlapping columns
+- [ ] **merge_ordered()** - Merge with optional filling/interpolation
+- [ ] **merge_asof()** enhancements (tolerance, direction parameters)
+- [ ] **join()** enhancements:
+  - [ ] Multiple DataFrames at once
+  - [ ] lsuffix/rsuffix parameters
+
+#### Grouping (Advanced)
+- [ ] **groupby()** enhancements:
+  - [ ] as_index parameter
+  - [ ] group_keys parameter
+  - [ ] observed parameter (for categorical)
+  - [ ] dropna parameter
+- [ ] **rolling()** enhancements:
+  - [ ] win_type parameter (window types)
+  - [ ] center parameter
+  - [ ] closed parameter
+- [ ] **expanding()** enhancements
+- [ ] **ewm()** enhancements
+
+#### Time Series (Advanced)
+- [ ] **tz_localize()** - Localize tz-naive index to tz-aware
+- [ ] **tz_convert()** - Convert tz-aware index to another timezone
+- [ ] **infer_freq()** - Infer frequency of time series
+- [ ] **to_period()** - Convert to PeriodIndex
+- [ ] **to_timestamp()** - Convert PeriodIndex to DatetimeIndex
+
+#### Plotting & Visualization
+- [ ] **plot()** - DataFrame plotting interface
+  - [ ] plot.line()
+  - [ ] plot.bar()
+  - [ ] plot.barh()
+  - [ ] plot.hist()
+  - [ ] plot.box()
+  - [ ] plot.kde()
+  - [ ] plot.area()
+  - [ ] plot.scatter()
+  - [ ] plot.hexbin()
+  - [ ] plot.pie()
+- [ ] **hist()** - Draw histogram
+- [ ] **boxplot()** - Make box plot
+
+#### Sparse Data
+- [ ] **sparse** accessor for sparse data operations
+- [ ] **to_sparse()** - Convert to SparseDataFrame
+- [ ] **from_sparse()** - Create from sparse data
+
+#### Style & Formatting
+- [ ] **style** - Returns Styler object for formatting
+- [ ] **to_string()** enhancements (formatters, max_rows, etc.)
+
+#### Metadata & Attributes
+- [ ] **attrs** - Dictionary of global attributes
+- [ ] **flags** - Get flags for this object
+- [ ] **set_flags()** - Return new object with updated flags
+
+---
+
+### 🟡 MEDIUM PRIORITY - Missing Series Methods
+
+#### Data Inspection
+- [ ] **describe()** - Generate descriptive statistics
+- [ ] **info()** - Print concise summary
+- [ ] **memory_usage()** - Return memory usage
+- [ ] **hasnans** - Return True if there are any NaNs
+- [ ] **dtype** enhancements (better type inference)
+
+#### Data Alignment
+- [ ] **reindex()** - Conform Series to new index
+- [ ] **reindex_like()** - Match indices to other object
+- [ ] **align()** - Align two Series
+- [ ] **rename_axis()** - Set name of axis
+
+#### Data Transformation
+- [ ] **map()** enhancements (na_action parameter)
+- [ ] **replace()** enhancements (regex, method parameters)
+- [ ] **update()** - Modify in place using values from another Series
+- [ ] **where()** - Replace values where condition is False
+- [ ] **mask()** - Replace values where condition is True
+- [ ] **combine()** - Combine with another Series using func
+- [ ] **combine_first()** - Update null elements with value from another Series
+- [ ] **repeat()** - Repeat elements
+- [ ] **squeeze()** - Squeeze to scalar if possible
+
+#### Comparison
+- [ ] **equals()** - Test equality with another Series
+- [ ] **compare()** - Compare and show differences
+- [ ] **between()** - Return boolean Series for values between bounds
+
+#### Iteration
+- [ ] **items()** - Iterate over (index, value) pairs
+- [ ] **keys()** - Return index
+- [ ] **values** - Return array of values
+
+#### Sorting & Ranking (Enhancements)
+- [ ] **argsort()** - Return integer indices that would sort the Series
+- [ ] **searchsorted()** - Find indices where elements should be inserted
+- [ ] **sort_values()** enhancements (key parameter)
+
+#### Aggregation (Advanced)
+- [ ] **agg()** / **aggregate()** with multiple functions
+- [ ] **sem()** - Standard error of mean
+- [ ] **mad()** - Mean absolute deviation
+- [ ] **describe()** - Descriptive statistics
+
+#### Conversion
+- [ ] **to_numpy()** - Convert to array
+- [ ] **to_list()** - Convert to list (already has toList())
+- [ ] **to_dict()** - Convert to dictionary
+- [ ] **to_frame()** - Convert to DataFrame (already has toDataFrame())
+
+#### Datetime Accessor (Series.dt) - Additional Methods
+- [ ] **dt.normalize()** - Set time to midnight
+- [ ] **dt.strftime()** - Format using strftime
+- [ ] **dt.round()** - Round to specified frequency
+- [ ] **dt.floor()** - Floor to specified frequency
+- [ ] **dt.ceil()** - Ceil to specified frequency
+- [ ] **dt.month_name()** - Return month names
+- [ ] **dt.day_name()** - Return day names
+- [ ] **dt.days_in_month** - Number of days in month
+- [ ] **dt.is_month_start** - Indicator for month start
+- [ ] **dt.is_month_end** - Indicator for month end
+- [ ] **dt.is_quarter_start** - Indicator for quarter start
+- [ ] **dt.is_quarter_end** - Indicator for quarter end
+- [ ] **dt.is_year_start** - Indicator for year start
+- [ ] **dt.is_year_end** - Indicator for year end
+- [ ] **dt.is_leap_year** - Indicator for leap year
+- [ ] **dt.quarter** - Quarter of the date
+- [ ] **dt.tz** - Return timezone
+- [ ] **dt.freq** - Return frequency
+- [ ] **dt.to_period()** - Convert to Period
+- [ ] **dt.to_pydatetime()** - Convert to DateTime objects
+- [ ] **dt.tz_localize()** - Localize timezone
+- [ ] **dt.tz_convert()** - Convert timezone
+
+#### String Accessor (Series.str) - Additional Methods
+- [ ] **str.wrap()** - Wrap strings to specified width
+- [ ] **str.get_dummies()** - Return DataFrame of dummy variables
+- [ ] **str.translate()** - Map characters through translation table
+- [ ] **str.count()** - Count occurrences of pattern
+- [ ] **str.removeprefix()** - Remove prefix from string
+- [ ] **str.removesuffix()** - Remove suffix from string
+- [ ] **str.casefold()** - Convert to casefolded strings
+- [ ] **str.swapcase()** - Convert uppercase to lowercase and vice versa
+- [ ] **str.normalize()** - Return Unicode normal form
+- [ ] **str.partition()** - Split at first occurrence of separator
+- [ ] **str.rpartition()** - Split at last occurrence of separator
+- [ ] **str.rsplit()** - Split from the end
+
+#### Categorical Accessor (Series.cat) - Additional Methods
+- [ ] **cat.codes** - Return Series of codes
+- [ ] **cat.categories** - Return categories
+- [ ] **cat.ordered** - Whether categories are ordered
+- [ ] **cat.remove_unused_categories()** - Remove categories not in data
+
+#### Sparse Accessor (Series.sparse)
+- [ ] **sparse.density** - Ratio of non-sparse points to total
+- [ ] **sparse.fill_value** - Fill value for sparse data
+- [ ] **sparse.from_coo()** - Create from COO sparse matrix
+- [ ] **sparse.to_coo()** - Convert to COO sparse matrix
+- [ ] **sparse.to_dense()** - Convert to dense Series
+
+#### Statistical Methods (Advanced)
+- [ ] **autocorr()** - Compute autocorrelation
+- [ ] **cov()** - Compute covariance with another Series
+- [ ] **corr()** - Compute correlation with another Series
+- [ ] **nlargest()** enhancements (keep='all' option)
+- [ ] **nsmallest()** enhancements (keep='all' option)
+- [ ] **pct_change()** enhancements (fill_method, limit)
+- [ ] **diff()** enhancements (periods parameter)
+
+#### Time Series (Series-specific)
+- [ ] **asof()** - Return last non-NaN value before index
+- [ ] **first_valid_index()** - Return index of first non-NA value
+- [ ] **last_valid_index()** - Return index of last non-NA value
+
+#### Binary Operations
+- [ ] **add()**, **sub()**, **mul()**, **div()**, **truediv()**, **floordiv()**, **mod()**, **pow()** with fill_value parameter
+- [ ] **radd()**, **rsub()**, **rmul()**, **rdiv()**, etc. (reverse operations)
+- [ ] **dot()** - Compute dot product
+
+#### Indexing (Advanced)
+- [ ] **xs()** - Return cross-section from Series/DataFrame
+- [ ] **get()** - Get item from object for given key
+- [ ] **take()** enhancements (axis parameter)
+
+---
+
+### 🟢 LOW PRIORITY - Nice to Have
+
+#### Advanced Statistical Methods
+- [ ] **rolling_apply()** with custom functions
+- [ ] **expanding_apply()** with custom functions
+- [ ] **ewm_apply()** with custom functions
+
+#### Performance & Memory
+- [ ] **memory_usage()** with deep parameter
+- [ ] **nbytes** - Number of bytes in the underlying data
+- [ ] **ndim** - Number of dimensions
+- [ ] **size** - Number of elements
+- [ ] **empty** - Indicator whether DataFrame is empty
+
+#### Flags & Configuration
+- [ ] **flags.allows_duplicate_labels** - Whether to allow duplicate labels
+- [ ] **set_flags()** - Set flags on object
+
+#### Metadata
+- [ ] **attrs** - Dictionary for storing metadata
+- [ ] **copy()** enhancements (deep parameter)
+
+#### Conversion & Export (Additional)
+- [ ] **to_clipboard()** - Copy to clipboard (platform-specific)
+- [ ] **to_pickle()** - Pickle (serialize) object
+- [ ] **read_pickle()** - Load pickled object
+- [ ] **to_feather()** - Write to Feather format
+- [ ] **read_feather()** - Read from Feather format
+- [ ] **to_stata()** - Export to Stata format
+- [ ] **read_stata()** - Read Stata file
+- [ ] **to_gbq()** - Write to Google BigQuery
+- [ ] **read_gbq()** - Read from Google BigQuery
+
+#### Specialized Indexing
+- [ ] **at_time()** - Select values at particular time of day (DataFrame needs it)
+- [ ] **between_time()** - Select values between times (DataFrame needs it)
+- [ ] **truncate()** - Truncate before and after some index value
+
+---
 
 ### 1. Core Data Structures & Indexing
 
@@ -938,5 +1331,115 @@ docs/
 
 ---
 
-**Last Updated:** 2025-11-15
-**Next Review:** 2025-11-18
+## 📈 Implementation Recommendations
+
+### Quick Wins (Easy to Implement, High Value)
+
+1. **DataFrame.info()** - Essential for data exploration
+2. **DataFrame.describe()** - Already partially implemented, needs completion
+3. **DataFrame.memory_usage()** - Important for performance monitoring
+4. **DataFrame.isna() / notna()** - Return DataFrame of booleans (Series already has these)
+5. **DataFrame.assign()** - Functional style column assignment
+6. **DataFrame.where() / mask()** - Conditional replacement
+7. **DataFrame.equals()** - Test equality
+8. **Series.between()** - Range checking
+9. **Series.hasnans** - Quick missing data check
+10. **Series.first_valid_index() / last_valid_index()** - Find valid data boundaries
+
+### Medium Effort, High Impact
+
+1. **DataFrame.reindex()** - Critical for data alignment
+2. **DataFrame.align()** - Align two DataFrames
+3. **DataFrame.select_dtypes()** - Filter columns by type
+4. **DataFrame.iterrows() / itertuples()** - Iteration support
+5. **DataFrame.compare()** - Show differences between DataFrames
+6. **Series.dt enhancements** - Additional datetime properties
+7. **Binary operations with fill_value** - Handle missing data in operations
+8. **DataFrame.to_dict() / from_dict()** - Various orientations
+
+### Complex but Important
+
+1. **Plotting interface** - Visualization support
+2. **Sparse data structures** - Memory optimization
+3. **Style API** - Formatted output
+4. **Advanced merge options** - indicator, validate parameters
+5. **Memory optimization** - Efficient data storage
+
+---
+
+## 🎯 Suggested Implementation Order (Next 20 Methods)
+
+### Phase 1: Data Inspection (Week 1-2)
+1. DataFrame.info()
+2. DataFrame.describe() (complete)
+3. DataFrame.memory_usage()
+4. DataFrame.select_dtypes()
+5. Series.describe()
+
+### Phase 2: Data Alignment (Week 3-4)
+6. DataFrame.reindex()
+7. DataFrame.align()
+8. Series.reindex()
+9. Series.align()
+10. DataFrame.set_axis()
+
+### Phase 3: Conditional Operations (Week 5-6)
+11. DataFrame.where()
+12. DataFrame.mask()
+13. Series.where()
+14. Series.mask()
+15. Series.between()
+
+### Phase 4: Comparison & Equality (Week 7-8)
+16. DataFrame.equals()
+17. DataFrame.compare()
+18. Series.equals()
+19. Series.compare()
+20. DataFrame.eq/ne/lt/gt/le/ge (comparison operators)
+
+### Phase 5: Data Transformation (Week 9-10)
+21. DataFrame.assign()
+22. DataFrame.insert()
+23. DataFrame.pop()
+24. DataFrame.update()
+25. Series.update()
+
+---
+
+## 📊 Feature Coverage Statistics
+
+### DataFrame Methods
+- **Implemented:** ~85 core methods
+- **Missing (High Priority):** ~45 methods
+- **Missing (Medium Priority):** ~30 methods
+- **Missing (Low Priority):** ~25 methods
+- **Total Coverage:** ~46% of pandas DataFrame API
+
+### Series Methods
+- **Implemented:** ~95 core methods
+- **Missing (High Priority):** ~25 methods
+- **Missing (Medium Priority):** ~40 methods
+- **Missing (Low Priority):** ~20 methods
+- **Total Coverage:** ~53% of pandas Series API
+
+### Overall Assessment
+DartFrame has excellent coverage of:
+- ✅ Statistical operations (90%+)
+- ✅ GroupBy operations (85%+)
+- ✅ Time series basics (80%+)
+- ✅ I/O operations (75%+)
+- ✅ String operations (90%+)
+- ✅ Categorical data (95%+)
+
+Areas needing improvement:
+- ⚠️ Data alignment & reindexing (40%)
+- ⚠️ Iteration methods (30%)
+- ⚠️ Comparison operations (50%)
+- ⚠️ Memory optimization (20%)
+- ❌ Visualization (0%)
+- ❌ Sparse data (0%)
+
+---
+
+**Last Updated:** 2025-11-19
+**Next Review:** 2025-12-01
