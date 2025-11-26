@@ -80,9 +80,17 @@ extension SeriesFunctions on Series {
   /// Apply a function to each element of the series for substituting values.
   ///
   /// Returns a new series with the function applied to each element, replacing values.
-  Series map(Function(dynamic) func) {
-    List<dynamic> mappedData = data.map(func).toList();
-    return Series(mappedData, name: "$name (Mapped)");
+  Series map(Function(dynamic) func, {String? naAction}) {
+    if (naAction == 'ignore') {
+      final mappedData = data.map((value) {
+        if (value == null) return null;
+        return func(value);
+      }).toList();
+      return Series(mappedData, name: "$name (Mapped)", index: index);
+    } else {
+      final mappedData = data.map(func).toList();
+      return Series(mappedData, name: "$name (Mapped)", index: index);
+    }
   }
 
   /// Sort the Series elements.
@@ -553,6 +561,191 @@ extension SeriesFunctions on Series {
       }
     }
     return Series(newData, name: name, index: index);
+  }
+
+
+  /// Trim values at input thresholds.
+  ///
+  /// Assigns values outside boundary to boundary values. This is useful for
+  /// limiting extreme values in your data.
+  ///
+  /// Parameters:
+  /// - `lower`: Minimum threshold value. Values below this will be set to this value.
+  /// - `upper`: Maximum threshold value. Values above this will be set to this value.
+  ///
+  /// At least one of `lower` or `upper` must be specified.
+  ///
+  /// Returns:
+  /// A new Series with clipped values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([1, 2, 3, 4, 5], name: 'values');
+  ///
+  /// // Clip values between 2 and 4
+  /// var clipped = s.clip(lower: 2, upper: 4);
+  /// print(clipped.data); // Output: [2, 2, 3, 4, 4]
+  ///
+  /// // Clip only lower bound
+  /// var clippedLower = s.clip(lower: 3);
+  /// print(clippedLower.data); // Output: [3, 3, 3, 4, 5]
+  ///
+  /// // Clip only upper bound
+  /// var clippedUpper = s.clip(upper: 3);
+  /// print(clippedUpper.data); // Output: [1, 2, 3, 3, 3]
+  /// ```
+  Series clip({num? lower, num? upper}) {
+    if (lower == null && upper == null) {
+      throw ArgumentError('Must specify at least one of lower or upper');
+    }
+
+    if (lower != null && upper != null && lower > upper) {
+      throw ArgumentError('lower must be less than or equal to upper');
+    }
+
+    final clippedData = data.map((value) {
+      if (_isMissing(value)) {
+        return value;
+      }
+
+      if (value is num) {
+        if (lower != null && value < lower) {
+          return lower;
+        } else if (upper != null && value > upper) {
+          return upper;
+        } else {
+          return value;
+        }
+      }
+
+      return value; // Non-numeric values remain unchanged
+    }).toList();
+
+    return Series(clippedData, name: '${name}_clipped', index: index.toList());
+  }
+
+  /// Returns the n largest values from the Series.
+  ///
+  /// Parameters:
+  /// - `n`: Number of values to return.
+  /// - `keep`: When there are duplicate values:
+  ///   - 'first' (default): Prioritize the first occurrence.
+  ///   - 'last': Prioritize the last occurrence.
+  ///   - 'all': Keep all ties (may return more than n values).
+  ///
+  /// Returns:
+  /// A new Series with the n largest values, maintaining original indices.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([5, 2, 8, 1, 9, 3], name: 'values');
+  /// var top3 = s.nlargest(3);
+  /// print(top3.data); // Output: [9, 8, 5]
+  /// print(top3.index); // Output: [4, 2, 0] (original indices)
+  /// ```
+  Series nlargest(int n, {String keep = 'first'}) {
+    if (n <= 0) {
+      return Series([], name: name, index: []);
+    }
+
+    // Create list of (index, value) pairs for numeric values only
+    final indexedValues = <Map<String, dynamic>>[];
+    for (int i = 0; i < data.length; i++) {
+      final val = data[i];
+      if (!_isMissing(val) && val is num) {
+        indexedValues.add({'idx': i, 'val': val, 'origIdx': index[i]});
+      }
+    }
+
+    // Sort in descending order
+    indexedValues.sort((a, b) {
+      final cmp = (b['val'] as num).compareTo(a['val'] as num);
+      if (cmp != 0) return cmp;
+
+      // Handle ties based on keep parameter
+      if (keep == 'first') {
+        return (a['idx'] as int).compareTo(b['idx'] as int);
+      } else if (keep == 'last') {
+        return (b['idx'] as int).compareTo(a['idx'] as int);
+      }
+      return 0;
+    });
+
+    // Take top n
+    final resultCount =
+        keep == 'all' ? indexedValues.length : min(n, indexedValues.length);
+    final resultData = <dynamic>[];
+    final resultIndex = <dynamic>[];
+
+    for (int i = 0; i < resultCount; i++) {
+      if (keep != 'all' && i >= n) break;
+      resultData.add(indexedValues[i]['val']);
+      resultIndex.add(indexedValues[i]['origIdx']);
+    }
+
+    return Series(resultData, name: name, index: resultIndex);
+  }
+
+  /// Returns the n smallest values from the Series.
+  ///
+  /// Parameters:
+  /// - `n`: Number of values to return.
+  /// - `keep`: When there are duplicate values:
+  ///   - 'first' (default): Prioritize the first occurrence.
+  ///   - 'last': Prioritize the last occurrence.
+  ///   - 'all': Keep all ties (may return more than n values).
+  ///
+  /// Returns:
+  /// A new Series with the n smallest values, maintaining original indices.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([5, 2, 8, 1, 9, 3], name: 'values');
+  /// var bottom3 = s.nsmallest(3);
+  /// print(bottom3.data); // Output: [1, 2, 3]
+  /// print(bottom3.index); // Output: [3, 1, 5] (original indices)
+  /// ```
+  Series nsmallest(int n, {String keep = 'first'}) {
+    if (n <= 0) {
+      return Series([], name: name, index: []);
+    }
+
+    // Create list of (index, value) pairs for numeric values only
+    final indexedValues = <Map<String, dynamic>>[];
+    for (int i = 0; i < data.length; i++) {
+      final val = data[i];
+      if (!_isMissing(val) && val is num) {
+        indexedValues.add({'idx': i, 'val': val, 'origIdx': index[i]});
+      }
+    }
+
+    // Sort in ascending order
+    indexedValues.sort((a, b) {
+      final cmp = (a['val'] as num).compareTo(b['val'] as num);
+      if (cmp != 0) return cmp;
+
+      // Handle ties based on keep parameter
+      if (keep == 'first') {
+        return (a['idx'] as int).compareTo(b['idx'] as int);
+      } else if (keep == 'last') {
+        return (b['idx'] as int).compareTo(a['idx'] as int);
+      }
+      return 0;
+    });
+
+    // Take top n
+    final resultCount =
+        keep == 'all' ? indexedValues.length : min(n, indexedValues.length);
+    final resultData = <dynamic>[];
+    final resultIndex = <dynamic>[];
+
+    for (int i = 0; i < resultCount; i++) {
+      if (keep != 'all' && i >= n) break;
+      resultData.add(indexedValues[i]['val']);
+      resultIndex.add(indexedValues[i]['origIdx']);
+    }
+
+    return Series(resultData, name: name, index: resultIndex);
   }
 }
 

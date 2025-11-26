@@ -94,7 +94,7 @@ void main() {
   print('Original Series:');
   print(s);
 
-  var mapped = s.mapEnhanced(
+  var mapped = s.map(
     (x) => x * 2,
     naAction: 'ignore',
   );

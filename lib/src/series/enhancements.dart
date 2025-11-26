@@ -2,23 +2,6 @@ part of 'series.dart';
 
 /// Extension for Series enhancements
 extension SeriesEnhancements on Series {
-  /// Enhanced map with na_action parameter.
-  Series mapEnhanced(
-    Function(dynamic) func, {
-    String? naAction,
-  }) {
-    if (naAction == 'ignore') {
-      final mappedData = data.map((value) {
-        if (value == null) return null;
-        return func(value);
-      }).toList();
-      return Series(mappedData, name: name, index: index);
-    } else {
-      final mappedData = data.map(func).toList();
-      return Series(mappedData, name: name, index: index);
-    }
-  }
-
   /// Enhanced replace with regex and method parameters.
   Series replaceEnhanced({
     dynamic toReplace,

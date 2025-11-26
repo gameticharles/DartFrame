@@ -17,7 +17,6 @@ part 'functions.dart';
 part 'statistics.dart';
 part 'interpolation.dart';
 part 'categorical.dart';
-part 'additional_functions.dart';
 part 'inspection.dart';
 part 'alignment.dart';
 part 'conditional.dart';

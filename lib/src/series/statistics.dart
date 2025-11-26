@@ -145,6 +145,99 @@ extension SeriesStatistics on Series {
     return numericValues.reduce((a, b) => a > b ? a : b);
   }
 
+  /// Calculate the cumulative sum of values in the series.
+  ///
+  /// Parameters:
+  /// - `skipna`: Whether to exclude NA/null values. If an entire row/column is NA, the result will be NA.
+  ///
+  /// Returns:
+
+  /// Find the index location of the maximum value in the series.
+  ///
+  /// Returns the index of the maximum value in the series.
+  /// Throws if the series is empty or contains only missing values.
+  int idxmax() {
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
+    num? maxValue;
+    int maxIndex = -1;
+
+    for (int i = 0; i < data.length; i++) {
+      final val = data[i];
+      if (val != missingRep && val is num) {
+        if (maxValue == null || val > maxValue) {
+          maxValue = val;
+          maxIndex = i;
+        }
+      }
+    }
+
+    if (maxIndex == -1) {
+      throw Exception(
+          "Cannot find idxmax of an empty series or series with all missing/non-numeric values.");
+    }
+    return maxIndex;
+  }
+
+  /// Find the index location of the minimum value in the series.
+  ///
+  /// Returns the index of the minimum value in the series.
+  /// Throws if the series is empty or contains only missing values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([5, 2, 8, 1, 9], name: 'values');
+  /// print(s.idxmin()); // Output: 3 (index of value 1)
+  /// ```
+  int idxmin() {
+    dynamic missingRep = _parentDataFrame?.replaceMissingValueWith;
+    num? minValue;
+    int minIndex = -1;
+
+    for (int i = 0; i < data.length; i++) {
+      final val = data[i];
+      if (val != missingRep && val is num) {
+        if (minValue == null || val < minValue) {
+          minValue = val;
+          minIndex = i;
+        }
+      }
+    }
+
+    if (minIndex == -1) {
+      throw Exception(
+          "Cannot find idxmin of an empty series or series with all missing/non-numeric values.");
+    }
+    return minIndex;
+  }
+
+  /// Returns the absolute value of each element in the series.
+  ///
+  /// For numeric values, returns the absolute value.
+  /// For non-numeric values or missing values, returns the original value.
+  ///
+  /// Returns:
+  /// A new Series with absolute values.
+  ///
+  /// Example:
+  /// ```dart
+  /// var s = Series([-5, 3, -2, 0, 7], name: 'values');
+  /// var abs_s = s.abs();
+  /// print(abs_s.data); // Output: [5, 3, 2, 0, 7]
+  /// ```
+  Series abs() {
+    final absData = data.map((value) {
+      if (_isMissing(value)) {
+        return value;
+      }
+      if (value is num) {
+        return value.abs();
+      }
+      return value; // Non-numeric values remain unchanged
+    }).toList();
+
+    return Series(absData, name: '${name}_abs', index: index.toList());
+  }
+
   /// Calculates the sum of values in the Series.
   ///
   /// Parameters:
@@ -1337,25 +1430,49 @@ extension SeriesStatistics on Series {
   /// Parameters:
   /// - `periods`: Number of periods to shift for calculating change (default 1).
   /// - `skipna`: If true (default), exclude missing values.
+  /// - `fillMethod`: How to handle NAs before computing percent change.
+  ///   - null (default): Don't fill NAs
+  ///   - 'ffill' or 'pad': Forward fill
+  ///   - 'bfill' or 'backfill': Backward fill
   ///
   /// Returns:
   /// A new Series with percentage changes.
   ///
+  /// Formula: (current - previous) / previous
+  ///
   /// Example:
   /// ```dart
-  /// var s = Series([100, 110, 121, 133.1], name: 'data');
-  /// print(s.pctChange()); // [NaN, 0.1, 0.1, 0.1] (10% increases)
+  /// var s = Series([100, 110, 121, 133.1], name: 'price');
+  /// var pct = s.pctChange();
+  /// print(pct.data); // Output: [null, 0.1, 0.1, 0.1] (10% increase each time)
+  ///
+  /// var s2 = Series([90, 100, 110, 121], name: 'values');
+  /// var pct2 = s2.pctChange(periods: 2);
+  /// // Compares each value with the value 2 positions before
   /// ```
-  Series pctChange({int periods = 1, bool skipna = true}) {
+  Series pctChange({int periods = 1, bool skipna = true, String? fillMethod}) {
     if (periods <= 0) {
       throw ArgumentError('Periods must be positive');
+    }
+
+    // Apply fill method if specified
+    Series workingSeries = this;
+    if (fillMethod != null) {
+      if (fillMethod == 'ffill' || fillMethod == 'pad') {
+        workingSeries = ffill();
+      } else if (fillMethod == 'bfill' || fillMethod == 'backfill') {
+        workingSeries = bfill();
+      } else {
+        throw ArgumentError(
+            'fillMethod must be null, "ffill", "pad", "bfill", or "backfill"');
+      }
     }
 
     List<dynamic> result = List.filled(length, _missingRepresentation);
 
     for (int i = periods; i < length; i++) {
-      dynamic currentValue = data[i];
-      dynamic previousValue = data[i - periods];
+      dynamic currentValue = workingSeries.data[i];
+      dynamic previousValue = workingSeries.data[i - periods];
 
       if (skipna && (_isMissing(currentValue) || _isMissing(previousValue))) {
         result[i] = _missingRepresentation;
@@ -1364,7 +1481,7 @@ extension SeriesStatistics on Series {
 
       if (currentValue is num && previousValue is num) {
         if (previousValue == 0) {
-          result[i] = double.infinity;
+          result[i] = _missingRepresentation; // Changed from infinity to null
         } else {
           result[i] = (currentValue - previousValue) / previousValue;
         }
@@ -1373,7 +1490,7 @@ extension SeriesStatistics on Series {
       }
     }
 
-    return Series(result, name: "$name (Pct Change)");
+    return Series(result, name: "$name (Pct Change)", index: index.toList());
   }
 
   /// Calculate difference between consecutive values.
@@ -1388,7 +1505,10 @@ extension SeriesStatistics on Series {
   /// Example:
   /// ```dart
   /// var s = Series([1, 3, 6, 10, 15], name: 'data');
-  /// print(s.diff()); // [NaN, 2, 3, 4, 5]
+  /// print(s.diff()); // [null, 2, 3, 4, 5]
+  ///
+  /// var diff2 = s.diff(periods: 2);
+  /// print(diff2); // [null, null, 5, 7, 9]
   /// ```
   Series diff({int periods = 1, bool skipna = true}) {
     if (periods <= 0) {
@@ -1413,7 +1533,7 @@ extension SeriesStatistics on Series {
       }
     }
 
-    return Series(result, name: "$name (Diff)");
+    return Series(result, name: "$name (Diff)", index: index.toList());
   }
 
   /// Calculate trimmed mean (mean after removing outliers).
