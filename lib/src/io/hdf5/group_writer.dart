@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'byte_writer.dart';
 import 'object_header.dart';
 import 'symbol_table_writer.dart';
