@@ -28,7 +28,7 @@ void main() {
 
       // Test that describe works
       final stats = df.describe();
-      expect(stats, isA<Map>());
+      expect(stats, isA<DataFrame>());
 
       // Test row access
       expect(df.loc(0), isA<Series>());
@@ -338,7 +338,7 @@ void main() {
       expect(resampled.rowCount, lessThanOrEqualTo(df.rowCount));
 
       // Test that basic operations still work
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
       final valueSeries = df['value'] as Series;
       expect(valueSeries.sum(), equals(55.0));
     });

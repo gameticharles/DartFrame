@@ -29,8 +29,8 @@ class PerformanceTestRunner {
         _results.add(result);
         print('✓ ${test.name} completed in ${result.executionTime}ms');
 
-        if (result.memoryUsage != null) {
-          print('  Memory usage: ${_formatBytes(result.memoryUsage!)}');
+        if (result.totalMemoryUsage != null) {
+          print('  Memory usage: ${_formatBytes(result.totalMemoryUsage!)}');
         }
 
         if (result.additionalMetrics.isNotEmpty) {
@@ -94,8 +94,8 @@ class PerformanceTestRunner {
       print('${result.testName}:');
       print('  Execution time: ${result.executionTime}ms');
 
-      if (result.memoryUsage != null) {
-        print('  Memory usage: ${_formatBytes(result.memoryUsage!)}');
+      if (result.totalMemoryUsage != null) {
+        print('  Memory usage: ${_formatBytes(result.totalMemoryUsage!)}');
       }
 
       if (result.throughput != null) {
@@ -145,8 +145,8 @@ class PerformanceTestRunner {
 
     // Memory usage analysis
     List<int> memoryUsages = results
-        .where((r) => r.memoryUsage != null)
-        .map((r) => r.memoryUsage!)
+        .where((r) => r.totalMemoryUsage != null)
+        .map((r) => r.totalMemoryUsage!)
         .toList();
 
     if (memoryUsages.isNotEmpty) {
@@ -208,9 +208,9 @@ class PerformanceTestRunner {
         buffer.writeln('  Success: ${result.success}');
         buffer.writeln('  Execution time: ${result.executionTime}ms');
 
-        if (result.memoryUsage != null) {
-          buffer
-              .writeln('  Memory usage: ${_formatBytes(result.memoryUsage!)}');
+        if (result.totalMemoryUsage != null) {
+          buffer.writeln(
+              '  Memory usage: ${_formatBytes(result.totalMemoryUsage!)}');
         }
 
         if (result.throughput != null) {
@@ -262,7 +262,7 @@ class PerformanceResult {
   final String testName;
   final int executionTime; // in milliseconds
   final bool success;
-  final int? memoryUsage; // in bytes
+  final int? totalMemoryUsage; // in bytes
   final double? throughput; // operations per second
   final String? errorMessage;
   final Map<String, dynamic> additionalMetrics;
@@ -271,7 +271,7 @@ class PerformanceResult {
     required this.testName,
     required this.executionTime,
     this.success = true,
-    this.memoryUsage,
+    this.totalMemoryUsage,
     this.throughput,
     this.errorMessage,
     this.additionalMetrics = const {},
@@ -298,7 +298,7 @@ class VectorizedOperationsTest extends PerformanceTest {
       name: 'test_series',
     );
 
-    int memoryBefore = series.memoryUsage;
+    int memoryBefore = series.totalMemoryUsage;
 
     // Test vectorized operations
     final doubled = await series.vectorizedApply((x) => x * 2);
@@ -307,14 +307,14 @@ class VectorizedOperationsTest extends PerformanceTest {
 
     stopwatch.stop();
 
-    int memoryAfter = doubled.memoryUsage + compared.memoryUsage;
+    int memoryAfter = doubled.totalMemoryUsage + compared.totalMemoryUsage;
     double throughput = (dataSize * 3) /
         (stopwatch.elapsedMicroseconds / 1000000); // 3 operations
 
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: memoryAfter,
+      totalMemoryUsage: memoryAfter,
       throughput: throughput,
       additionalMetrics: {
         'data_size': dataSize,
@@ -354,11 +354,11 @@ class MemoryOptimizationTest extends PerformanceTest {
     };
 
     final originalDf = DataFrame.fromMap(data);
-    int memoryBefore = originalDf.memoryUsage;
+    int memoryBefore = originalDf.totalMemoryUsage;
 
     // Optimize memory
     final optimizedDf = originalDf.optimizeMemory();
-    int memoryAfter = optimizedDf.memoryUsage;
+    int memoryAfter = optimizedDf.totalMemoryUsage;
 
     stopwatch.stop();
 
@@ -368,7 +368,7 @@ class MemoryOptimizationTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: memoryAfter,
+      totalMemoryUsage: memoryAfter,
       additionalMetrics: {
         'data_size': dataSize,
         'memory_before': memoryBefore,
@@ -485,7 +485,7 @@ class ParallelProcessingTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: result.memoryUsage,
+      totalMemoryUsage: result.totalMemoryUsage,
       throughput: throughput,
       additionalMetrics: {
         'data_size': dataSize,

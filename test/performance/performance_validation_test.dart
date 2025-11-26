@@ -33,8 +33,8 @@ void main() {
       }
 
       // Memory usage estimation should work
-      final originalMemory = originalDf.memoryUsage;
-      final optimizedMemory = optimizedDf.memoryUsage;
+      final originalMemory = originalDf.totalMemoryUsage;
+      final optimizedMemory = optimizedDf.totalMemoryUsage;
 
       expect(originalMemory, greaterThan(0));
       expect(optimizedMemory, greaterThan(0));
@@ -63,8 +63,8 @@ void main() {
       }
 
       // Memory usage should be calculable
-      expect(originalSeries.memoryUsage, greaterThan(0));
-      expect(optimizedSeries.memoryUsage, greaterThan(0));
+      expect(originalSeries.totalMemoryUsage, greaterThan(0));
+      expect(optimizedSeries.totalMemoryUsage, greaterThan(0));
     });
 
     test('Memory optimization recommendations are accurate', () {

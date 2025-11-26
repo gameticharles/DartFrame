@@ -306,14 +306,14 @@ void main() {
       ], formatData: true);
 
       var desc = df.describe();
-      expect(desc['N1']!['count'], equals(3));
-      expect(desc['N1']!['mean'], closeTo((1 + 2 + 4) / 3, 0.001));
+      expect(desc['N1']!.at('count'), equals(3));
+      expect(desc['N1']!.at('mean'), closeTo((1 + 2 + 4) / 3, 0.001));
 
-      expect(desc['N2']!['count'], equals(3));
-      expect(desc['N2']!['mean'], closeTo((20 + 30 + 40) / 3, 0.001));
+      expect(desc['N2']!.at('count'), equals(3));
+      expect(desc['N2']!.at('mean'), closeTo((20 + 30 + 40) / 3, 0.001));
 
-      expect(desc['N3']!['count'], equals(3));
-      expect(desc['N3']!['mean'], closeTo((10 + 30 + 40) / 3, 0.001));
+      expect(desc['N3']!.at('count'), equals(3));
+      expect(desc['N3']!.at('mean'), closeTo((10 + 30 + 40) / 3, 0.001));
     });
   });
 }

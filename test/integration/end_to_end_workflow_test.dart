@@ -37,7 +37,7 @@ void main() {
 
       // Step 4: Statistical analysis
       final stats = df.describe();
-      expect(stats, isA<Map>());
+      expect(stats, isA<DataFrame>());
 
       // Correlation analysis
       final corrMatrix = df.corr();
@@ -113,7 +113,7 @@ void main() {
       final corr = df.select(['value1', 'value2']).corr();
       statsStopwatch.stop();
 
-      expect(stats, isA<Map>());
+      expect(stats, isA<DataFrame>());
       expect(corr, isA<DataFrame>());
       expect(statsStopwatch.elapsedMilliseconds, lessThan(3000));
 
@@ -134,7 +134,7 @@ void main() {
       // Robust statistical analysis
       try {
         final stats = df.describe();
-        expect(stats, isA<Map>());
+        expect(stats, isA<DataFrame>());
       } catch (e) {
         // Should handle mixed types gracefully
         expect(e, isA<Exception>());
@@ -142,7 +142,7 @@ void main() {
 
       // Safe operations on clean columns
       final cleanStats = df.select(['good_column']).describe();
-      expect(cleanStats, isA<Map>());
+      expect(cleanStats, isA<DataFrame>());
 
       // Fill missing values safely
       final filled = df.fillna({

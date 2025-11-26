@@ -45,8 +45,8 @@ class MemoryOptimizationEffectivenessBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Measure memory usage of both DataFrames
-    int originalMemory = originalDataFrame.memoryUsage;
-    int optimizedMemory = optimizedDataFrame.memoryUsage;
+    int originalMemory = originalDataFrame.totalMemoryUsage;
+    int optimizedMemory = optimizedDataFrame.totalMemoryUsage;
 
     // Calculate optimization ratio
     double optimizationRatio = optimizedMemory / originalMemory;
@@ -131,8 +131,8 @@ class SeriesMemoryOptimizationBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Measure memory usage and verify data integrity
-    originalSeries.memoryUsage;
-    optimizedSeries.memoryUsage;
+    originalSeries.totalMemoryUsage;
+    optimizedSeries.totalMemoryUsage;
 
     // Verify data integrity
     assert(originalSeries.length == optimizedSeries.length);
@@ -170,11 +170,11 @@ class MemoryEstimationAccuracyBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Test DataFrame memory estimation
-    int dfMemoryEstimate = testDataFrame.memoryUsage;
+    int dfMemoryEstimate = testDataFrame.totalMemoryUsage;
     assert(dfMemoryEstimate > 0);
 
     // Test Series memory estimation
-    int seriesMemoryEstimate = testSeries.memoryUsage;
+    int seriesMemoryEstimate = testSeries.totalMemoryUsage;
     assert(seriesMemoryEstimate > 0);
 
     // Test memory report generation
@@ -344,9 +344,9 @@ class ComprehensiveMemoryBenchmark extends BenchmarkBase {
 
     // Test DataFrame optimizations
     for (DataFrame df in testDataFrames) {
-      int originalMemory = df.memoryUsage;
+      int originalMemory = df.totalMemoryUsage;
       DataFrame optimized = df.optimizeMemory();
-      int optimizedMemory = optimized.memoryUsage;
+      int optimizedMemory = optimized.totalMemoryUsage;
 
       totalOriginalMemory += originalMemory;
       totalOptimizedMemory += optimizedMemory;
@@ -358,9 +358,9 @@ class ComprehensiveMemoryBenchmark extends BenchmarkBase {
 
     // Test Series optimizations
     for (Series series in testSeries) {
-      int originalMemory = series.memoryUsage;
+      int originalMemory = series.totalMemoryUsage;
       Series optimized = series.optimizeMemory();
-      int optimizedMemory = optimized.memoryUsage;
+      int optimizedMemory = optimized.totalMemoryUsage;
 
       totalOriginalMemory += originalMemory;
       totalOptimizedMemory += optimizedMemory;

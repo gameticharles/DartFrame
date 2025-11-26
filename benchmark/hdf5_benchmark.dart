@@ -68,7 +68,7 @@ class Hdf5ContiguousReadTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: dataSize,
+      totalMemoryUsage: dataSize,
       additionalMetrics: {
         'elements_read': data.length,
         'data_size_bytes': dataSize,
@@ -121,7 +121,7 @@ class Hdf5ChunkedReadTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: dataSize,
+      totalMemoryUsage: dataSize,
       additionalMetrics: {
         'elements_read': data.length,
         'data_size_bytes': dataSize,
@@ -174,7 +174,7 @@ class Hdf5CompressedReadTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: dataSize,
+      totalMemoryUsage: dataSize,
       additionalMetrics: {
         'elements_read': data.length,
         'data_size_bytes': dataSize,
@@ -226,7 +226,7 @@ class Hdf5StringReadTest extends PerformanceTest {
     return PerformanceResult(
       testName: name,
       executionTime: stopwatch.elapsedMilliseconds,
-      memoryUsage: dataSize,
+      totalMemoryUsage: dataSize,
       additionalMetrics: {
         'strings_read': data.length,
         'total_characters': totalChars,

@@ -6,6 +6,84 @@ part of 'data_frame.dart';
 /// statistics, correlation analysis, and rolling window operations to the
 /// DataFrame class, enhancing its analytical capabilities.
 extension DataFrameStatistics on DataFrame {
+  /// Generates descriptive statistics.
+  ///
+  /// Descriptive statistics include those that summarize the central tendency,
+  /// dispersion and shape of a dataset's distribution, excluding NaN values.
+  ///
+  /// Analyzes numeric columns only by default.
+  ///
+  /// Parameters:
+  /// - `percentiles`: The percentiles to include in the output. All should fall between 0 and 1.
+  ///   The default is [.25, .5, .75], which returns the 25th, 50th, and 75th percentiles.
+  ///
+  /// Returns:
+  /// A DataFrame containing the summary statistics.
+  ///
+  /// Example:
+  /// ```dart
+  /// var df = DataFrame([
+  ///   [1, 2, 3],
+  ///   [4, 5, 6],
+  ///   [7, 8, 9]
+  /// ], columns: ['A', 'B', 'C']);
+  /// print(df.describe());
+  /// ```
+  DataFrame describe({List<double>? percentiles}) {
+    List<String> numericColumns = [];
+    Map<String, Map<String, dynamic>> columnStats = {};
+
+    // Identify numeric columns and collect stats
+    for (var colName in columns) {
+      Series series = this[colName];
+
+      // Check if column has any numeric values
+      bool hasNumeric = series.data.any((e) => e != null && e is num);
+
+      if (hasNumeric) {
+        numericColumns.add(colName.toString());
+        columnStats[colName.toString()] = series.describe();
+      }
+    }
+
+    if (numericColumns.isEmpty) {
+      // Return empty DataFrame if no numeric columns
+      return DataFrame.fromRows([]);
+    }
+
+    // Prepare the result DataFrame
+    // The index will be the keys from the stats map (count, mean, std, min, 25%, 50%, 75%, max)
+    // We assume all numeric series return the same keys from describe()
+    List<String> statKeys = [
+      'count',
+      'mean',
+      'std',
+      'min',
+      '25%',
+      '50%',
+      '75%',
+      'max'
+    ];
+
+    // If custom percentiles were supported in Series.describe, we would handle them here.
+    // For now, Series.describe is fixed.
+
+    List<List<dynamic>> data = [];
+    for (var key in statKeys) {
+      List<dynamic> row = [];
+      for (var colName in numericColumns) {
+        row.add(columnStats[colName]?[key]);
+      }
+      data.add(row);
+    }
+
+    return DataFrame(
+      data,
+      index: statKeys,
+      columns: numericColumns,
+    );
+  }
+
   /// Calculates the median value for each numeric column.
   ///
   /// The median is the middle value in a sorted list of numbers. For columns

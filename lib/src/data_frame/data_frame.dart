@@ -24,6 +24,7 @@ part 'window_functions.dart';
 part 'export_formats.dart';
 part 'web_api.dart';
 part 'smart_loader.dart';
+part 'inspection.dart';
 
 // Helper function to check for default integer index (e.g., [0, 1, 2, ...])
 bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {

@@ -24,7 +24,7 @@ void main() {
 
       // Test describe works
       final stats = df.describe();
-      expect(stats, isA<Map>());
+      expect(stats, isA<DataFrame>());
     });
 
     test('Enhanced statistical operations', () {
@@ -315,7 +315,7 @@ void main() {
       expect(resampled.rowCount, lessThanOrEqualTo(df.rowCount));
 
       // Test that basic operations still work
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
       final valueSeries = df['value'] as Series;
       expect(valueSeries.sum(), equals(55));
     });

@@ -490,7 +490,7 @@ extension DataFrameMemoryOptimization on DataFrame {
   }
 
   /// Gets the estimated memory usage of this DataFrame in bytes.
-  int get memoryUsage => MemoryOptimizer.estimateMemoryUsage(this);
+  int get totalMemoryUsage => MemoryOptimizer.estimateMemoryUsage(this);
 
   /// Gets memory optimization recommendations for this DataFrame.
   Map<String, String> get memoryRecommendations =>
@@ -508,7 +508,7 @@ extension SeriesMemoryOptimization on Series {
   Series optimizeMemory() => MemoryOptimizer.optimizeSeries(this);
 
   /// Gets the estimated memory usage of this Series in bytes.
-  int get memoryUsage => MemoryOptimizer.estimateSeriesMemoryUsage(this);
+  int get totalMemoryUsage => MemoryOptimizer.estimateSeriesMemoryUsage(this);
 
   /// Downcasts this Series to integer types where possible.
   Series downcastToInteger() => MemoryOptimizer.downcastToInteger(this);

@@ -28,7 +28,7 @@ void main() {
       expect(corrMatrix.rowCount, equals(3));
 
       // Test that existing operations still work
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
 
       // Test column access still works
       expect(df['A'], isA<Series>());
@@ -108,7 +108,7 @@ void main() {
       expect(pivoted, isA<DataFrame>());
 
       // Test that existing DataFrame operations work on pivoted data
-      expect(pivoted.describe(), isA<Map>());
+      expect(pivoted.describe(), isA<DataFrame>());
     });
 
     test('Enhanced merge operations maintain backward compatibility', () {
@@ -135,7 +135,7 @@ void main() {
       // Test that existing operations work on merged data
       expect(innerJoin['value1'], isA<Series>());
       expect(innerJoin['value2'], isA<Series>());
-      expect(innerJoin.describe(), isA<Map>());
+      expect(innerJoin.describe(), isA<DataFrame>());
     });
 
     test('Categorical data integrates with existing Series operations', () {
@@ -196,7 +196,7 @@ void main() {
         // Test that chunks can be combined and used with existing operations
         final combinedDf = chunks.first.concatenate(chunks.skip(1).toList());
         expect(combinedDf.rowCount, equals(originalDf.rowCount));
-        expect(combinedDf.describe(), isA<Map>());
+        expect(combinedDf.describe(), isA<DataFrame>());
       } catch (e) {
         print('Skipping chunked reading test: $e');
       }
@@ -216,7 +216,7 @@ void main() {
       });
 
       // Test that database-read DataFrames work with existing operations
-      expect(testData.describe(), isA<Map>());
+      expect(testData.describe(), isA<DataFrame>());
       expect(testData['name'], isA<Series>());
       expect(testData.rowCount, equals(3));
 
@@ -240,7 +240,7 @@ void main() {
       expect(optimized, isA<DataFrame>());
 
       // Test that all existing operations work on optimized DataFrame
-      expect(optimized.describe(), isA<Map>());
+      expect(optimized.describe(), isA<DataFrame>());
       expect(optimized['integers_as_doubles'], isA<Series>());
 
       // Test that new operations work on optimized DataFrame
@@ -280,7 +280,7 @@ void main() {
       });
 
       expect(df.corr(), isA<DataFrame>());
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
     });
 
     test('Caching integrates with all operations', () {
@@ -322,7 +322,7 @@ void main() {
       });
 
       // Test that existing operations work
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
       final valueSeries = df['value'] as Series;
       expect(valueSeries.sum(), equals(55.0));
 
@@ -331,7 +331,7 @@ void main() {
       expect(resampled, isA<DataFrame>());
 
       // Test that existing operations work on resampled data
-      expect(resampled.describe(), isA<Map>());
+      expect(resampled.describe(), isA<DataFrame>());
       expect(resampled.rowCount, lessThanOrEqualTo(df.rowCount));
     });
   });
@@ -363,7 +363,7 @@ void main() {
       final df = DataFrame.fromMap(data);
 
       // Test that existing operations handle missing data
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
 
       // Test that new operations handle missing data
       expect(df.std(), isA<Series>());
@@ -371,7 +371,7 @@ void main() {
 
       // Test interpolation with existing operations
       final interpolated = df.interpolate();
-      expect(interpolated.describe(), isA<Map>());
+      expect(interpolated.describe(), isA<DataFrame>());
       expect(interpolated.std(), isA<Series>());
     });
   });
@@ -419,7 +419,7 @@ void main() {
       });
 
       // Test that existing methods return expected types
-      expect(df.describe(), isA<Map>());
+      expect(df.describe(), isA<DataFrame>());
 
       // Test Series operations
       final series = df['A'] as Series;
