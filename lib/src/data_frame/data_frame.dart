@@ -34,7 +34,6 @@ part 'missing_data_advanced.dart';
 part 'sorting_enhanced.dart';
 part 'aggregation_advanced.dart';
 part 'merging_advanced.dart';
-part 'groupby_advanced.dart';
 part 'timeseries_advanced.dart';
 part 'metadata_formatting.dart';
 

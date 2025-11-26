@@ -74,7 +74,7 @@ void main() {
 
   // 3. groupByEnhanced - Enhanced groupby
   print('3. groupByEnhanced:');
-  var grouped = dfGroup.groupByEnhanced('category', dropna: true);
+  var grouped = dfGroup.groupBy('category', dropna: true);
   print('Groups: ${grouped.keys.toList()}');
   for (var key in grouped.keys) {
     print('\nGroup $key:');
@@ -92,7 +92,7 @@ void main() {
   print('Original data:');
   print(dfRoll);
 
-  var rolling = dfRoll.rollingEnhanced(3, center: true);
+  var rolling = dfRoll.rollingWindow(3, center: true);
   var rollingMean = rolling.mean();
   print('\nRolling mean (centered, window=3):');
   print(rollingMean);
@@ -100,7 +100,7 @@ void main() {
 
   // 5. expandingEnhanced - Enhanced expanding window
   print('5. expandingEnhanced:');
-  var expanding = dfRoll.expandingEnhanced(minPeriods: 2);
+  var expanding = dfRoll.expanding(minPeriods: 2);
   var expandingSum = expanding.sum();
   print('Expanding sum (minPeriods=2):');
   print(expandingSum);
@@ -108,7 +108,7 @@ void main() {
 
   // 6. ewmEnhanced - Enhanced exponentially weighted functions
   print('6. ewmEnhanced:');
-  var ewm = dfRoll.ewmEnhanced(span: 3, adjust: true);
+  var ewm = dfRoll.ewm(span: 3, adjustWeights: true);
   var ewmMean = ewm.mean();
   print('Exponentially weighted mean (span=3):');
   print(ewmMean);
@@ -240,12 +240,12 @@ void main() {
 
   print('\nInferred frequency: ${tempData.inferFreq()}');
 
-  var rollingTemp = tempData.rollingEnhanced(3, center: true);
+  var rollingTemp = tempData.rollingWindow(3, center: true);
   var smoothed = rollingTemp.mean();
   print('\nSmoothed (3-day centered average):');
   print(smoothed);
 
-  var ewmTemp = tempData.ewmEnhanced(span: 3);
+  var ewmTemp = tempData.ewm(span: 3);
   var ewmSmoothed = ewmTemp.mean();
   print('\nExponentially weighted mean (span=3):');
   print(ewmSmoothed);

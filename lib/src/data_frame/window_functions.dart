@@ -19,7 +19,7 @@ class ExponentialWeightedWindow {
   final DataFrame _df;
   final double? _alpha;
   final int? _span;
-  final int? _halflife;
+  final double? _halflife;
   final double? _com;
   final bool _adjustWeights;
   final bool _ignoreNA;
@@ -37,7 +37,7 @@ class ExponentialWeightedWindow {
     this._df, {
     double? alpha,
     int? span,
-    int? halflife,
+    double? halflife,
     double? com,
     bool adjustWeights = true,
     bool ignoreNA = false,
@@ -1482,18 +1482,27 @@ extension DataFrameWindowFunctions on DataFrame {
   /// - `span`: Specify decay in terms of span (span >= 1)
   /// - `halflife`: Specify decay in terms of half-life
   /// - `com`: Specify decay in terms of center of mass (com >= 0)
-  /// - `adjustWeights`: Divide by decaying adjustment factor
-  /// - `ignoreNA`: Ignore missing values when calculating weights
+  /// - `adjustWeights`: Divide by decaying adjustment factor (default: true)
+  /// - `ignoreNA`: Ignore missing values when calculating weights (default: false)
   ///
   /// Example:
   /// ```dart
-  /// var ewm = df.ewm(span: 3);
-  /// var ewmMean = ewm.mean();
+  /// var df = DataFrame.fromMap({
+  ///   'A': [1, 2, 3, 4, 5],
+  ///   'B': [10, 20, 30, 40, 50],
+  /// });
+  ///
+  /// var ewm = df.ewm(
+  ///   span: 3,
+  ///   adjustWeights: true,
+  ///   ignoreNA: true,
+  /// );
+  /// var mean = ewm.mean();
   /// ```
   ExponentialWeightedWindow ewm({
     double? alpha,
     int? span,
-    int? halflife,
+    double? halflife,
     double? com,
     bool adjustWeights = true,
     bool ignoreNA = false,
