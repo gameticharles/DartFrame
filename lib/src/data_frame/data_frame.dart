@@ -25,6 +25,18 @@ part 'export_formats.dart';
 part 'web_api.dart';
 part 'smart_loader.dart';
 part 'inspection.dart';
+part 'alignment.dart';
+part 'conditional.dart';
+part 'comparison.dart';
+part 'iteration.dart';
+part 'missing_data.dart';
+part 'missing_data_advanced.dart';
+part 'sorting_enhanced.dart';
+part 'aggregation_advanced.dart';
+part 'merging_advanced.dart';
+part 'groupby_advanced.dart';
+part 'timeseries_advanced.dart';
+part 'metadata_formatting.dart';
 
 // Helper function to check for default integer index (e.g., [0, 1, 2, ...])
 bool _isDefaultIntegerIndex(List<dynamic> idxList, int expectedLength) {

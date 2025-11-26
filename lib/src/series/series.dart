@@ -19,6 +19,11 @@ part 'interpolation.dart';
 part 'categorical.dart';
 part 'additional_functions.dart';
 part 'inspection.dart';
+part 'alignment.dart';
+part 'conditional.dart';
+part 'comparison.dart';
+part 'iteration.dart';
+part 'enhancements.dart';
 
 /// A `Series` class represents a one-dimensional array with a label.
 ///
