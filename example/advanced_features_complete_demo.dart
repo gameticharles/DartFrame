@@ -73,7 +73,7 @@ void main() {
   print('\n');
 
   // 3. groupByEnhanced - Enhanced groupby
-  print('3. groupByEnhanced:');
+  print('3. groupBy:');
   var grouped = dfGroup.groupBy('category', dropna: true);
   print('Groups: ${grouped.keys.toList()}');
   for (var key in grouped.keys) {
@@ -83,7 +83,7 @@ void main() {
   print('\n');
 
   // 4. rollingEnhanced - Enhanced rolling with center parameter
-  print('4. rollingEnhanced with center:');
+  print('4. rolling with center:');
   var dfRoll = DataFrame.fromMap({
     'A': [1, 2, 3, 4, 5, 6, 7],
     'B': [10, 20, 30, 40, 50, 60, 70],

@@ -1118,6 +1118,16 @@ extension DataFrameFunctions on DataFrame {
   /// Parameters:
   /// - `by`: A `String` (single column name) or a `List<String>` (multiple column names)
   ///   to group by.
+  /// - `asIndex`: Whether to use group keys as index (default: true). When false,
+  ///   the original index is preserved in the grouped DataFrames.
+  /// - `groupKeys`: Whether to add group keys to index (default: true). When true,
+  ///   group key values are included in the resulting DataFrames.
+  /// - `observed`: Only show observed values for categorical groupers (default: false).
+  ///   This parameter is reserved for future categorical dtype support.
+  /// - `dropna`: Whether to drop NA/null values from groups (default: true). When true,
+  ///   rows where any grouping column has a null/missing value are excluded.
+  /// - `sort`: Whether to sort group keys (default: true). When true, the resulting
+  ///   map entries are ordered by their keys.
   ///
   /// Returns:
   /// A `Map<dynamic, DataFrame>` where keys represent the unique group(s) and
@@ -1133,9 +1143,11 @@ extension DataFrameFunctions on DataFrame {
   ///   {'Category': 'A', 'Value': 10},
   ///   {'Category': 'B', 'Value': 20},
   ///   {'Category': 'A', 'Value': 15},
+  ///   {'Category': null, 'Value': 30},
   ///   {'Category': 'B', 'Value': 25},
   /// ]);
   ///
+  /// // Basic grouping (dropna=true by default, excludes null Category)
   /// var grouped = df.groupBy('Category');
   /// grouped.forEach((key, groupDf) {
   ///   print('Category: $key');
@@ -1149,20 +1161,30 @@ extension DataFrameFunctions on DataFrame {
   /// // Category: B
   /// //   Category  Value
   /// // 1        B     20
-  /// // 3        B     25
+  /// // 4        B     25
   ///
-  /// // Group by multiple columns (conceptual)
-  /// // var dfMulti = DataFrame.fromRows([
-  /// //   {'Key1': 'X', 'Key2': 'M', 'Value': 1},
-  /// //   {'Key1': 'Y', 'Key2': 'N', 'Value': 2},
-  /// //   {'Key1': 'X', 'Key2': 'M', 'Value': 3},
-  /// // ]);
-  /// // var groupedMulti = dfMulti.groupBy(['Key1', 'Key2']);
-  /// // groupedMulti.forEach((key, groupDf) { // key is a List, e.g., ['X', 'M']
-  /// //   print('Group: $key, DataFrame: $groupDf');
-  /// // });
+  /// // Include null values in grouping
+  /// var groupedWithNA = df.groupBy('Category', dropna: false);
+  ///
+  /// // Group without sorting
+  /// var groupedUnsorted = df.groupBy('Category', sort: false);
+  ///
+  /// // Group by multiple columns
+  /// var dfMulti = DataFrame.fromRows([
+  ///   {'Key1': 'X', 'Key2': 'M', 'Value': 1},
+  ///   {'Key1': 'Y', 'Key2': 'N', 'Value': 2},
+  ///   {'Key1': 'X', 'Key2': 'M', 'Value': 3},
+  /// ]);
+  /// var groupedMulti = dfMulti.groupBy(['Key1', 'Key2']);
   /// ```
-  Map<dynamic, DataFrame> groupBy(dynamic by) {
+  Map<dynamic, DataFrame> groupBy(
+    dynamic by, {
+    bool asIndex = true,
+    bool groupKeys = true,
+    bool observed = false,
+    bool dropna = true,
+    bool sort = true,
+  }) {
     List<String> groupColumnNames;
     if (by is String) {
       groupColumnNames = [by];
@@ -1186,6 +1208,24 @@ extension DataFrameFunctions on DataFrame {
 
     for (int i = 0; i < _data.length; i++) {
       final row = _data[i];
+
+      // Check if any grouping column has a null/missing value
+      if (dropna) {
+        bool hasNA = false;
+        for (int colIdx in groupColumnIndices) {
+          final value = row[colIdx];
+          if (value == null ||
+              (replaceMissingValueWith != null &&
+                  value == replaceMissingValueWith) ||
+              _missingDataIndicator.contains(value)) {
+            hasNA = true;
+            break;
+          }
+        }
+        // Skip this row if it has NA in any grouping column
+        if (hasNA) continue;
+      }
+
       dynamic groupKey;
       if (groupColumnIndices.length == 1) {
         groupKey = row[groupColumnIndices.first];
@@ -1202,16 +1242,48 @@ extension DataFrameFunctions on DataFrame {
       groupsIndex[groupKey]!.add(index[i]);
     }
 
+    // Sort group keys if requested
+    List<dynamic> keys = groupsData.keys.toList();
+    if (sort) {
+      try {
+        keys.sort((a, b) {
+          // Handle null comparisons
+          if (a == null && b == null) return 0;
+          if (a == null) return -1;
+          if (b == null) return 1;
+
+          // Try comparable comparison
+          if (a is Comparable && b is Comparable) {
+            try {
+              return a.compareTo(b);
+            } catch (e) {
+              // If types are incompatible for comparison, fall back to string comparison
+              return a.toString().compareTo(b.toString());
+            }
+          }
+
+          // Fall back to string comparison
+          return a.toString().compareTo(b.toString());
+        });
+      } catch (e) {
+        // If sorting fails for any reason, keep original order
+        // This handles cases with completely incompatible types
+      }
+    }
+
     final Map<dynamic, DataFrame> result = {};
-    groupsData.forEach((key, dataList) {
+    for (var key in keys) {
+      final dataList = groupsData[key]!;
+      final indexList = groupsIndex[key]!;
+
       result[key] = DataFrame._(
           List<dynamic>.from(_columns), // Preserve original column order
           dataList,
-          index: groupsIndex[key]!,
+          index: asIndex ? indexList : List.generate(dataList.length, (i) => i),
           allowFlexibleColumns: allowFlexibleColumns,
           replaceMissingValueWith: replaceMissingValueWith,
           missingDataIndicator: _missingDataIndicator);
-    });
+    }
 
     return result;
   }
