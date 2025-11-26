@@ -20,7 +20,6 @@
 
 Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be found in the package called [geoengine](https://pub.dev/packages/geoengine) which utilizes this package and adds more spatial analysis capabilities.
 
-
 ## Key Features
 
 ### 🚀 **Enhanced Statistical Operations**
@@ -53,7 +52,7 @@ Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be
 ### 📈 **Enhanced I/O Capabilities**
 
 - **Multiple Formats**: Support for CSV, JSON, Parquet, Excel, and HDF5 file formats
-- **HDF5 Support**: Pure Dart HDF5 reader with no FFI dependencies
+- **HDF5 Support**: Pure Dart HDF5 reader and writer with no FFI dependencies
   - Read datasets from HDF5 files (including MATLAB v7.3 MAT-files)
   - Support for compressed (gzip, lzf) and chunked datasets
   - Navigate group hierarchies and read attributes
@@ -62,7 +61,7 @@ Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be
   - **Variable-length data**: Full support for vlen strings and vlen arrays
   - **Boolean arrays**: Dedicated support for boolean data
   - **Opaque data**: Enhanced handling of binary blobs with tags
-  - Note: Read-only access (see [full capabilities](./example/README_hdf5.md))
+  - Note: Read/Write access (see [full capabilities](./example/README_hdf5.md))
 - **Database Connectivity**: Connect to SQL databases for data import and export
 - **Chunked Reading**: Handle large files with memory-efficient chunked reading
 - **Streaming Processing**: Process data streams for real-time analysis
@@ -98,10 +97,12 @@ Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be
 For comprehensive documentation on specific classes and their functionalities, please refer to the following:
 
 ### Core Documentation
+
 - **[DataFrame](./doc/dataframe.md)**: Comprehensive guide covering all DataFrame operations, from basic data manipulation to advanced statistical analysis
 - **[Series](./doc/series.md)**: Complete Series documentation including statistical methods, string operations, and datetime functionality
 
 ### I/O Documentation
+
 - **[CSV & Excel I/O Guide](./doc/csv_excel_io.md)**: Complete guide to reading and writing CSV and Excel files with examples
 - **[HDF5 Reading Guide](./example/hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
 
@@ -124,17 +125,18 @@ Then, run:
 dart pub get
 ```
 
-
 ## Quick Start
 
 ### Basic Usage
 
 Import the library:
+
 ```dart
 import 'package:dartframe/dartframe.dart';
 ```
 
 Create and manipulate DataFrames:
+
 ```dart
 // Create a DataFrame from a map
 final df = DataFrame.fromMap({
