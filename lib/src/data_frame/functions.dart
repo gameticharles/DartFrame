@@ -331,7 +331,7 @@ extension DataFrameFunctions on DataFrame {
   /// // 3  4
   /// // 4  5
   /// ```
-  DataFrame tail(int n) {
+  DataFrame tail([int n = 5]) {
     if (n < 0) {
       throw ArgumentError('Number of rows for tail must be non-negative.');
     }

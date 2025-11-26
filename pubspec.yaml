@@ -28,4 +28,7 @@ dev_dependencies:
 
 topics:
   - dataframe
+  - datacube
   - series
+  - ndrrray
+  - scaler  
