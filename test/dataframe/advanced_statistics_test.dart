@@ -196,7 +196,7 @@ void main() {
           for (int i = 0; i < stdResult.length; i++) {
             if (stdResult.data[i] is num && varResult.data[i] is num) {
               expect(
-                  varResult.data[i], closeTo(pow(stdResult.data[i], 2), 0.01));
+                  varResult.data[i], closeTo(pow_(stdResult.data[i], 2), 0.01));
             }
           }
         });
@@ -369,7 +369,7 @@ void main() {
           var std = numericSeries.std();
           var variance = numericSeries.variance();
 
-          expect(variance, closeTo(pow(std, 2), 0.01));
+          expect(variance, closeTo(pow_(std, 2), 0.01));
         });
       });
 

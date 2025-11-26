@@ -979,7 +979,7 @@ class RollingDataFrame {
       if (stdDev == 0) return _df.replaceMissingValueWith;
 
       double sumCubedDiffs = windowData
-          .map((value) => pow((value - mean) / stdDev, 3).toDouble())
+          .map((value) => pow_((value - mean) / stdDev, 3).toDouble())
           .reduce((a, b) => a + b);
 
       int n = windowData.length;
@@ -1010,7 +1010,7 @@ class RollingDataFrame {
       if (stdDev == 0) return _df.replaceMissingValueWith;
 
       double sumFourthPowers = windowData
-          .map((value) => pow((value - mean) / stdDev, 4).toDouble())
+          .map((value) => pow_((value - mean) / stdDev, 4).toDouble())
           .reduce((a, b) => a + b);
 
       int n = windowData.length;

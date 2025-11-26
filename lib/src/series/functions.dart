@@ -563,7 +563,6 @@ extension SeriesFunctions on Series {
     return Series(newData, name: name, index: index);
   }
 
-
   /// Trim values at input thresholds.
   ///
   /// Assigns values outside boundary to boundary values. This is useful for

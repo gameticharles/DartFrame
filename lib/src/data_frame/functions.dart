@@ -832,7 +832,7 @@ extension DataFrameFunctions on DataFrame {
         if (colIdx < newData[i].length) {
           final value = newData[i][colIdx];
           if (value is double) {
-            final factor = pow(10, decimals0.toDouble());
+            final factor = pow_(10, decimals0.toDouble());
             newData[i][colIdx] = (value * factor).round() / factor;
           } else if (value is int) {
             // No rounding needed for int, but ensure it's copied correctly
@@ -999,7 +999,7 @@ extension DataFrameFunctions on DataFrame {
           final mean = windowData.reduce((a, b) => a + b) / windowData.length;
           // Sample standard deviation (N-1 denominator) is more common
           final variance =
-              windowData.map((x) => pow(x - mean, 2)).reduce((a, b) => a + b) /
+              windowData.map((x) => pow_(x - mean, 2)).reduce((a, b) => a + b) /
                   (windowData.length - 1);
           result[i] = sqrt(variance);
           break;
@@ -1523,7 +1523,7 @@ extension DataFrameFunctions on DataFrame {
                 final mean =
                     numValues.reduce((a, b) => a + b) / numValues.length;
                 final variance = numValues
-                        .map((x) => pow(x - mean, 2))
+                        .map((x) => pow_(x - mean, 2))
                         .reduce((a, b) => a + b) /
                     (numValues.length - 1); // Sample std dev
                 newRow.add(sqrt(variance));

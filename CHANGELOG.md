@@ -1,8 +1,14 @@
+# 0.8.8
+
+- **[FIX]** Fixed error with `pow` function being exported
+- **[ENHANCEMENT]** updated the package description
+
 # 0.8.7
 
 - **[MAJOR FEATURE]** High-Priority DataFrame and Series Methods Implementation (64 new methods total)
-  
+
   **Data Inspection Methods:**
+
   - **NEW**: `DataFrame.info()` - Print concise summary with dtypes, non-null counts, and memory usage
   - **NEW**: `DataFrame.describeDataFrame()` - Generate descriptive statistics (pandas-style DataFrame output)
   - **NEW**: `DataFrame.memoryUsageDetailed()` - Return memory usage of each column in bytes
@@ -15,6 +21,7 @@
   - **NEW**: `Series.lastValidIndex()` - Return index of last non-NA value
 
   **Data Alignment Methods:**
+
   - **NEW**: `DataFrame.reindex()` - Conform DataFrame to new index with optional filling logic
   - **NEW**: `DataFrame.align()` - Align two DataFrames on their axes with specified join method
   - **NEW**: `DataFrame.setAxis()` - Set the name of the axis for the index or columns
@@ -23,6 +30,7 @@
   - **NEW**: `Series.renameAxis()` - Rename the index of the Series
 
   **Conditional Operations:**
+
   - **NEW**: `DataFrame.where()` - Replace values where condition is False
   - **NEW**: `DataFrame.mask()` - Replace values where condition is True (inverse of where)
   - **NEW**: `DataFrame.assign()` - Assign new columns to DataFrame (functional style)
@@ -36,6 +44,7 @@
   - **NEW**: `Series.combineFirst()` - Update null elements with value from another Series
 
   **Comparison Operations:**
+
   - **NEW**: `DataFrame.equals()` - Test whether two DataFrames contain the same elements
   - **NEW**: `DataFrame.compare()` - Compare to another DataFrame and show differences
   - **NEW**: `DataFrame.eq()` - Element-wise equality comparison
@@ -48,6 +57,7 @@
   - **NEW**: `Series.compare()` - Compare to another Series and show differences
 
   **Iteration Methods:**
+
   - **NEW**: `DataFrame.iterrows()` - Iterate over DataFrame rows as (index, Series) pairs
   - **NEW**: `DataFrame.itertuples()` - Iterate over DataFrame rows as named tuples
   - **NEW**: `DataFrame.items()` - Iterate over (column name, Series) pairs
@@ -60,34 +70,41 @@
   - **NEW**: `Series.iterIndex()` - Iterate over indices
 
   **Missing Data Analysis:**
+
   - **NEW**: `DataFrame.isnaCounts()` - Count missing values in each column
   - **NEW**: `DataFrame.isnaPercentage()` - Get percentage of missing values per column
   - **NEW**: `DataFrame.hasna()` - Check if any value is missing in each column
 
   **Architecture:**
+
   - Created 9 new extension files for organized functionality
   - All methods follow pandas conventions and naming
   - Comprehensive documentation with examples for each method
   - Two demo files showcasing all 41 new methods
 
   **Data Inspection Enhancements (NEW):**
+
   - **NEW**: `DataFrame.dtypesSeries` - Return data types as Series
   - **NEW**: `DataFrame.inferObjects()` - Infer better dtypes for object columns
   - **NEW**: `DataFrame.convertDtypes()` - Convert columns to best possible dtypes
 
   **Data Alignment Enhancements (NEW):**
+
   - **NEW**: `DataFrame.reindexLike()` - Match indices to another DataFrame
   - **NEW**: `Series.reindexLike()` - Match indices to another Series
 
   **Missing Data Handling Enhancements (NEW):**
+
   - **NEW**: `DataFrame.dropnaEnhanced()` - Enhanced dropna with thresh and subset parameters
   - **NEW**: `DataFrame.fillnaEnhanced()` - Enhanced fillna with DataFrame-to-DataFrame filling
 
   **Sorting Enhancements (NEW):**
+
   - **NEW**: `DataFrame.sortValuesEnhanced()` - Enhanced sort with key, kind, ignoreIndex parameters
   - **NEW**: `DataFrame.sortIndexEnhanced()` - Enhanced index sort with key, level, sortRemaining parameters
 
   **Aggregation Enhancements (NEW):**
+
   - **NEW**: `DataFrame.aggEnhanced()` - Different functions per column, multiple functions
   - **NEW**: `DataFrame.prod()` - Product of values
   - **NEW**: `DataFrame.sem()` - Standard error of mean
@@ -96,12 +113,14 @@
   - **NEW**: `DataFrame.valueCountsDataFrame()` - Count unique rows
 
   **Architecture:**
+
   - Created 13 new extension files for organized functionality
   - All methods follow pandas conventions and naming
   - Comprehensive documentation with examples for each method
   - Four demo files showcasing all 64 new methods
 
   **Coverage Improvement:**
+
   - DataFrame: ~46% → ~65% pandas compatibility (+19%)
   - Series: ~53% → ~67% pandas compatibility (+14%)
 
@@ -168,8 +187,8 @@
     - All existing DataFrame and Series functionality preserved
     - Clear migration path for `slice()` → `sliceRange()`
     - No changes to existing NDArray or DataCube implementations
-    
 - **[MAJOR FEATURE]** HDF5 File Support - Advanced Features and Web Compatibility
+
   - **NEW**: Full web browser support for reading HDF5 files via `Hdf5File.open()` which now accepts `Uint8List` and HTML `InputElement`s in addition to file paths.
   - **NEW**: Support for Header Continuation Blocks, allowing the reader to correctly parse object headers that span multiple locations in the file.
   - **NEW**: Link Resolution - `Hdf5File` can now navigate and resolve:
@@ -183,6 +202,7 @@
   - **ENHANCEMENT**: Added `MetadataCache` to `Hdf5File` to cache superblocks, groups, and other metadata, improving performance when accessing the same objects multiple times.
 
 - **[FEATURE]** HDF5 Datatype and Attribute Enhancements
+
   - **NEW**: Support for additional HDF5 datatypes:
     - **Enum Types:** Reads enumerated types, including member names and values.
     - **Array Types:** Parses array datatypes and their dimensions.
@@ -193,6 +213,7 @@
   - **ARCHITECTURE**: `Hdf5Datatype.read()` refactored to recursively parse complex and nested types like compounds, arrays, and enums.
 
 - **[FEATURE]** HDF5 Data Layout and Storage Support
+
   - **ENHANCEMENT**: `ObjectHeader` message parsing is more robust, correctly handling different message versions and alignments.
   - **ENHANCEMENT**: `DataLayout` parsing now supports more versions and variations, including:
     - Version 3, 2, and 1 layouts for `Contiguous`, `Chunked`, and `Compact` storage.
@@ -201,6 +222,7 @@
   - **FIX**: Correctly calculates chunk dimensions by removing the element size from the dimension list in version 1 and 3 chunked layouts.
 
 - **[FEATURE]** HDF5 Writer-Side Implementation
+
   - **NEW**: `LocalHeapWriter` for creating and managing local heaps used for object names in groups.
   - **NEW**: `GlobalHeapWriter` for creating global heap collections to store variable-length data.
   - **NEW**: `Hdf5Attribute.write()` and `Hdf5Attribute.scalar()` for creating and writing attribute messages.
@@ -209,6 +231,7 @@
   - **ARCHITECTURE**: Foundational writer components (`ByteWriter`, `Hdf5Datatype.write()`, etc.) have been added, paving the way for full HDF5 file writing capabilities.
 
 - **[FEATURE]** DataFrame I/O Enhancements
+
   - **NEW**: `DataFrame.read()` static method, a pandas-like universal reader that uses `SmartLoader` to automatically detect and load data from various URI schemes (file, http, etc.).
   - **NEW**: `DataFrame.inspect()` static method to get metadata from a data source without loading the entire file.
   - **ENHANCEMENT**: `DataFrame.fromCSV()` and `DataFrame.fromJson()` now use the new `FileIO` and `FileReader` backend, supporting both file paths and string content seamlessly and enabling web compatibility.
@@ -223,10 +246,10 @@
 
 - **[FIX]** Removed MySQL since it caused plaform issues
 
-
 # 0.8.4
 
 - **[MAJOR FEATURE]** Window Functions - Exponentially Weighted Moving (EWM) Operations
+
   - **NEW**: `DataFrame.ewm()` - Create exponentially weighted window with span, alpha, halflife, or com parameters
   - **NEW**: `ewm().mean()` - Exponentially weighted moving average for smoothing time series data
   - **NEW**: `ewm().std()` - Exponentially weighted moving standard deviation for volatility analysis
@@ -237,6 +260,7 @@
   - **COMPATIBILITY**: Pandas-like API for familiar exponential smoothing workflows
 
 - **[MAJOR FEATURE]** Window Functions - Expanding Window Operations
+
   - **NEW**: `DataFrame.expanding()` - Create expanding window with minPeriods parameter
   - **NEW**: `expanding().mean()` - Expanding mean (cumulative average) for running statistics
   - **NEW**: `expanding().sum()` - Expanding sum (cumulative sum) for accumulation analysis
@@ -246,6 +270,7 @@
   - **ENHANCEMENT**: All expanding operations support minPeriods parameter for minimum observation requirements
 
 - **[FEATURE]** DataFrame Statistical Methods - Data Manipulation Operations
+
   - **NEW**: `DataFrame.clip()` - Trim values at input thresholds with lower/upper bounds for outlier control
   - **NEW**: `DataFrame.abs()` - Compute absolute values for all numeric columns
   - **NEW**: `DataFrame.pctChange()` - Calculate percentage change between consecutive rows for growth analysis
@@ -256,11 +281,13 @@
   - **ENHANCEMENT**: Enhanced `DataFrame.round()` with parameter validation and error handling
 
 - **[FEATURE]** Series Statistical Methods
+
   - **NEW**: `Series.clip()` - Trim values at input thresholds with lower/upper bounds
   - **FIX**: Resolved duplicate `abs()` method causing ambiguity errors in Series extensions
   - **FIX**: Fixed Series extension methods not working on `Series<dynamic>` by proper type handling
 
 - **[MAJOR FEATURE]** GroupBy Enhancements - Advanced Aggregation and Operations
+
   - **NEW**: `DataFrame.groupBy2()` - Create GroupBy object for advanced operations with chainable API
   - **NEW**: `GroupBy.transform()` - Transform values within groups while maintaining original DataFrame shape
   - **NEW**: `GroupBy.filter()` - Filter entire groups based on conditions for group-level selection
@@ -284,6 +311,7 @@
   - **ARCHITECTURE**: Lazy evaluation in GroupBy operations for memory efficiency
 
 - **[FEATURE]** Advanced Slicing Methods (Previously Implemented)
+
   - **NEW**: `DataFrame.slice()` - Slice with step parameter (forward and reverse slicing)
   - **NEW**: `DataFrame.sliceByLabel()` - Label-based range slicing (inclusive endpoints)
   - **NEW**: `DataFrame.sliceByPosition()` - Combined position slicing with step parameter
@@ -292,27 +320,32 @@
   - **NEW**: `DataFrame.reverseRows()` / `DataFrame.reverseColumns()` - Simple reversal operations
 
 - **[ENHANCEMENT]** Method Chaining Support
+
   - All new operations return DataFrames/Series for seamless method chaining
   - Example: `df.clip(lower: 0, upper: 100).abs().round(2)` for fluent API usage
   - Consistent API design across all statistical and manipulation methods
 
 - **[ENHANCEMENT]** Null Value Handling
+
   - Consistent null value handling across all new operations
   - Null values are preserved appropriately in all transformations
   - Graceful handling of edge cases (empty DataFrames, single rows, mixed types)
 
 - **[ENHANCEMENT]** Performance Optimizations
-  - Efficient O(n) and O(n*m) implementations for all new methods
+
+  - Efficient O(n) and O(n\*m) implementations for all new methods
   - Lazy evaluation in GroupBy operations for reduced memory footprint
   - Memory-efficient implementations suitable for large datasets (1000+ rows tested)
   - Performance targets: < 1 second for typical operations
 
 - **[ENHANCEMENT]** Error Handling
+
   - Comprehensive parameter validation with descriptive error messages
   - Proper type checking and conversion for mixed data types
   - Clear error messages for invalid operations and edge cases
 
 - **[MAJOR FEATURE]** Data Type System - Nullable Types and Type Management
+
   - **NEW**: Comprehensive DType system with nullable integer, boolean, and string types
     - `Int8DType`, `Int16DType`, `Int32DType`, `Int64DType` - Nullable integer types with range validation (-128 to 127, -32768 to 32767, etc.)
     - `BooleanDType` - Nullable boolean with flexible string parsing ('true', 'yes', '1', 'false', 'no', '0')
@@ -399,6 +432,7 @@
     - Memory usage calculation verification
 
 - **[MAJOR FEATURE]** Database Support - SQL Database Integration
+
   - **NEW**: `DatabaseConnection` abstract interface for database operations
     - `query()` - Execute SQL queries and return DataFrame
     - `execute()` - Execute SQL commands (INSERT, UPDATE, DELETE) and return affected rows
@@ -468,6 +502,7 @@
   - **COMPATIBILITY**: Pandas-like API for familiar usage patterns
 
 - **[FEATURE]** Export Formats - Multiple Output Formats
+
   - **NEW**: `toLatex()` - Export DataFrame to LaTeX table format
     - Support for captions, labels, and position specifiers
     - Automatic escaping of special LaTeX characters
@@ -524,6 +559,7 @@
 # 0.8.3
 
 - **[MAJOR FEATURE]** Comprehensive String Operations Extension
+
   - **NEW**: Pattern extraction methods - `str.extract()`, `str.extractall()`, `str.findall()` for regex-based text processing
   - **NEW**: String padding and justification - `str.pad()`, `str.center()`, `str.ljust()`, `str.rjust()`, `str.zfill()` for text alignment
   - **NEW**: String slicing and manipulation - `str.slice()`, `str.get()` for advanced substring operations
@@ -532,6 +568,7 @@
   - **COMPATIBILITY**: Pandas-like string accessor API for familiar text operations
 
 - **[MAJOR FEATURE]** Enhanced Categorical Data Operations
+
   - **NEW**: `cat.reorderCategories()` - Reorder category levels with ordering control
   - **NEW**: `cat.addCategories()` - Add new categories to existing categorical data
   - **NEW**: `cat.removeCategories()` - Remove unused categories with validation
@@ -543,12 +580,14 @@
   - **ENHANCEMENT**: All categorical operations integrated with CategoricalAccessor interface
 
 - **[FEATURE]** DataFrame Duplicate Handling and Selection Methods
+
   - **NEW**: `duplicated()` - Identify duplicate rows with configurable subset and keep options
   - **NEW**: `dropDuplicates()` - Remove duplicate rows from DataFrame
   - **NEW**: `nlargest()` - Select N rows with largest values in specified column
   - **NEW**: `nsmallest()` - Select N rows with smallest values in specified column
 
 - **[FEATURE]** Functional Programming Extensions
+
   - **NEW**: `apply()` - Apply function along axis (rows or columns) with flexible operation support
   - **NEW**: `applymap()` - Element-wise function application across entire DataFrame
   - **NEW**: `agg()` - Aggregate with multiple functions simultaneously for complex aggregations
@@ -556,6 +595,7 @@
   - **NEW**: `pipe()` - Apply chainable functions for method composition
 
 - **[MAJOR FEATURE]** GroupBy Enhancements with Advanced Operations
+
   - **NEW**: `GroupBy` class providing chainable API for grouped operations
   - **NEW**: `groupBy2()` - Returns GroupBy object for method chaining and advanced groupby workflows
   - **NEW**: Transform operations - `transform()`, `transformMean()`, `transformSum()` for group-wise transformations
@@ -567,6 +607,7 @@
   - **ARCHITECTURE**: Seamless integration with existing groupBy functionality
 
 - **[MAJOR FEATURE]** Advanced Time Series Operations (12 new methods)
+
   - **NEW**: Shift operations - `shift()`, `lag()`, `lead()` for time series data alignment
   - **NEW**: Time index operations - `tshift()` for shifting by time period, `asfreq()` for frequency conversion
   - **NEW**: Time-based filtering - `atTime()`, `betweenTime()` for time window selection, `first()`, `last()` for period endpoints
@@ -574,12 +615,14 @@
   - **COMPATIBILITY**: Pandas-like API for seamless time series workflows
 
 - **[FEATURE]** Enhanced Resampling Operations
+
   - **NEW**: `resampleOHLC()` - Open, High, Low, Close resampling for OHLC data aggregation
   - **NEW**: `resampleNunique()` - Count unique values per resampling period
   - **NEW**: `resampleWithOffset()` - Resampling with custom time offset support
   - **ENHANCEMENT**: Advanced time series data transformations with period-based aggregation
 
 - **[FEATURE]** Advanced Data Slicing Methods (6 new methods)
+
   - **NEW**: `slice()` - Flexible slicing with step parameter support
   - **NEW**: `sliceByLabel()` - Label-based range slicing for index-based selection
   - **NEW**: `sliceByPosition()` - Combined position and range slicing operations
@@ -588,6 +631,7 @@
   - **NEW**: `reverseRows()` / `reverseColumns()` - Row and column reversal operations
 
 - **[FEATURE]** Expression Evaluation and Querying
+
   - **NEW**: `eval()` - Evaluate string expressions for computed columns and values
   - **NEW**: `query()` - Query DataFrame using intuitive string expressions with variable binding
   - **ENHANCEMENT**: Chainable expression evaluation for complex data transformations
@@ -612,6 +656,7 @@
 # 0.8.0
 
 - **[MAJOR FEATURE]** Enhanced File I/O Support with Web Compatibility
+
   - **NEW**: Full CSV support using `csv` package - read/write with custom delimiters, headers, encoding
   - **NEW**: Full Excel support using `excel` package- read/write .xlsx/.xls files with multi-sheet operations
   - **NEW**: Multi-sheet Excel operations - `readAllExcelSheets()` and `writeExcelSheets()` for working with entire workbooks

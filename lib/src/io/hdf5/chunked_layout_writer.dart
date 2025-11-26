@@ -405,7 +405,7 @@ class ChunkedLayoutWriter extends StorageLayoutWriter {
 
     // Scale down proportionally
     final scaleFactor = (targetElements / currentElements).clamp(0.0, 1.0);
-    final dimScaleFactor = pow(scaleFactor, 1.0 / ndim).toDouble();
+    final dimScaleFactor = pow_(scaleFactor, 1.0 / ndim).toDouble();
 
     for (int i = 0; i < ndim; i++) {
       chunkDims[i] = (datasetDimensions[i] * dimScaleFactor)
@@ -425,7 +425,7 @@ class ChunkedLayoutWriter extends StorageLayoutWriter {
 }
 
 /// Helper function for power calculation
-double pow(double base, double exponent) {
+double pow_(double base, double exponent) {
   if (exponent == 0) return 1.0;
   if (exponent == 1) return base;
 
@@ -446,5 +446,5 @@ double pow(double base, double exponent) {
     return result;
   }
 
-  return 1.0 / pow(base, -exponent);
+  return 1.0 / pow_(base, -exponent);
 }

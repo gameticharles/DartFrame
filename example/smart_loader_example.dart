@@ -172,8 +172,7 @@ Future<void> example4Databases() async {
 
   try {
     // SQLite - load entire table
-    final df1 =
-        await DataFrame.read('sqlite://path/to/db.sqlite?table=users');
+    final df1 = await DataFrame.read('sqlite://path/to/db.sqlite?table=users');
     print('Loaded from SQLite table: ${df1.shape}');
 
     // SQLite - custom query
