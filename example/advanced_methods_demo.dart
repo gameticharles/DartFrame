@@ -8,7 +8,7 @@ void main() {
 
   var df = DataFrame.fromMap({
     'A': ['1', '2', '3'],
-    'B': [1.0, 2.0, 3.0],
+    'B': [1, 2.0, 3.0],
     'C': ['true', 'false', 'true'],
   });
 

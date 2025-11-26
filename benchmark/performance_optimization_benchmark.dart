@@ -315,7 +315,7 @@ class MemoryOptimizationBenchmark extends BenchmarkBase {
     originalSeries.optimizeMemory();
 
     // Test memory usage estimation
-    originalDataFrame.totalMemoryUsage;
+    originalDataFrame.memoryUsage;
     originalSeries.totalMemoryUsage;
   }
 }

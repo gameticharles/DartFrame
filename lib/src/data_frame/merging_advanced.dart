@@ -112,7 +112,7 @@ extension DataFrameMergingAdvanced on DataFrame {
     for (int i = 0; i < others.length; i++) {
       final suffix = suffixes != null && i < suffixes.length
           ? ['', suffixes[i]]
-          : ['_${i}', '_${i + 1}'];
+          : ['_$i', '_${i + 1}'];
 
       result = result.merge(
         others[i],

@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_getters_setters
+
 library;
 
 import 'dart:typed_data';
@@ -490,7 +492,7 @@ extension DataFrameMemoryOptimization on DataFrame {
   }
 
   /// Gets the estimated memory usage of this DataFrame in bytes.
-  int get totalMemoryUsage => MemoryOptimizer.estimateMemoryUsage(this);
+  int get memoryUsage => MemoryOptimizer.estimateMemoryUsage(this);
 
   /// Gets memory optimization recommendations for this DataFrame.
   Map<String, String> get memoryRecommendations =>

@@ -179,7 +179,7 @@ extension SeriesEnhancements on Series {
           .clamp(0, maxWidth);
     }
 
-    var valueWidth = sName.toString().length ?? 5;
+    var valueWidth = sName.toString().length;
     for (final rowIdx in displayRows) {
       if (rowIdx == -1) continue;
       final value = sData[rowIdx];

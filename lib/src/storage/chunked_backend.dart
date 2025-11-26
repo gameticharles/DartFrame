@@ -1,4 +1,6 @@
 /// Chunked storage backend with advanced memory management
+// ignore_for_file: unused_element
+
 library;
 
 import '../core/shape.dart';

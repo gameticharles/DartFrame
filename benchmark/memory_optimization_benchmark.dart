@@ -45,8 +45,8 @@ class MemoryOptimizationEffectivenessBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Measure memory usage of both DataFrames
-    int originalMemory = originalDataFrame.totalMemoryUsage;
-    int optimizedMemory = optimizedDataFrame.totalMemoryUsage;
+    int originalMemory = originalDataFrame.memoryUsage;
+    int optimizedMemory = optimizedDataFrame.memoryUsage;
 
     // Calculate optimization ratio
     double optimizationRatio = optimizedMemory / originalMemory;
@@ -170,7 +170,7 @@ class MemoryEstimationAccuracyBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Test DataFrame memory estimation
-    int dfMemoryEstimate = testDataFrame.totalMemoryUsage;
+    int dfMemoryEstimate = testDataFrame.memoryUsage;
     assert(dfMemoryEstimate > 0);
 
     // Test Series memory estimation
@@ -344,9 +344,9 @@ class ComprehensiveMemoryBenchmark extends BenchmarkBase {
 
     // Test DataFrame optimizations
     for (DataFrame df in testDataFrames) {
-      int originalMemory = df.totalMemoryUsage;
+      int originalMemory = df.memoryUsage;
       DataFrame optimized = df.optimizeMemory();
-      int optimizedMemory = optimized.totalMemoryUsage;
+      int optimizedMemory = optimized.memoryUsage;
 
       totalOriginalMemory += originalMemory;
       totalOptimizedMemory += optimizedMemory;

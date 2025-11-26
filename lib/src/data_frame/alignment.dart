@@ -264,7 +264,7 @@ extension DataFrameAlignment on DataFrame {
       // Set index
       if (mapper.length != rowCount) {
         throw ArgumentError(
-            'Length mismatch: Expected axis has ${rowCount} elements, '
+            'Length mismatch: Expected axis has $rowCount elements, '
             'new values have ${mapper.length} elements');
       }
 
@@ -280,7 +280,7 @@ extension DataFrameAlignment on DataFrame {
       // Set columns
       if (mapper.length != columnCount) {
         throw ArgumentError(
-            'Length mismatch: Expected axis has ${columnCount} elements, '
+            'Length mismatch: Expected axis has $columnCount elements, '
             'new values have ${mapper.length} elements');
       }
 

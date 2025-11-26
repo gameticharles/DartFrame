@@ -93,7 +93,7 @@ extension DataFrameInspection on DataFrame {
 
     // Memory usage
     if (memoryUsage) {
-      final memBytes = this.memoryUsageDetailed(deep: false).sum();
+      final memBytes = memoryUsageDetailed(deep: false).sum();
       buffer.writeln('memory usage: ${_formatBytes(memBytes)}');
     }
 
@@ -344,8 +344,9 @@ extension DataFrameInspection on DataFrame {
   String _formatBytes(num bytes) {
     if (bytes < 1024) return '$bytes bytes';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 

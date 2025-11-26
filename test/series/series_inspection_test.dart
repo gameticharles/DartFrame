@@ -11,8 +11,9 @@ void main() {
       final spec = ZoneSpecification(
         print: (self, parent, zone, line) {
           // Verify expected output parts
-          if (line.contains('<Series: test_series>'))
+          if (line.contains('<Series: test_series>')) {
             expect(line, contains('test_series'));
+          }
           if (line.contains('Length:')) expect(line, contains('5'));
           // if (line.contains('Dtype:')) expect(line, contains('int')); // Dtype might vary based on inference
           if (line.contains('Non-Null Count:')) expect(line, contains('4'));

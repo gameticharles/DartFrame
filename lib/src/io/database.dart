@@ -248,7 +248,7 @@ class SQLiteConnection implements DatabaseConnection {
 
     for (final row in result) {
       for (int i = 0; i < columns.length; i++) {
-        data[columns[i]]!.add(row[i]);
+        data[columns[i]]!.add(row.columnAt(i));
       }
     }
 

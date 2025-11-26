@@ -354,11 +354,11 @@ class MemoryOptimizationTest extends PerformanceTest {
     };
 
     final originalDf = DataFrame.fromMap(data);
-    int memoryBefore = originalDf.totalMemoryUsage;
+    int memoryBefore = originalDf.memoryUsage;
 
     // Optimize memory
     final optimizedDf = originalDf.optimizeMemory();
-    int memoryAfter = optimizedDf.totalMemoryUsage;
+    int memoryAfter = optimizedDf.memoryUsage;
 
     stopwatch.stop();
 

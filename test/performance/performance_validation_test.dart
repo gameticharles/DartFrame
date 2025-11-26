@@ -33,8 +33,8 @@ void main() {
       }
 
       // Memory usage estimation should work
-      final originalMemory = originalDf.totalMemoryUsage;
-      final optimizedMemory = optimizedDf.totalMemoryUsage;
+      final originalMemory = originalDf.memoryUsage;
+      final optimizedMemory = optimizedDf.memoryUsage;
 
       expect(originalMemory, greaterThan(0));
       expect(optimizedMemory, greaterThan(0));
