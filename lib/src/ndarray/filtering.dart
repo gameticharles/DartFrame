@@ -5,7 +5,26 @@ import 'ndarray.dart';
 
 /// Extension for filtering NDArray
 extension NDArrayFiltering on NDArray {
-  /// Filter elements where condition is true
+  /// Filter elements where condition is true.
+  ///
+  /// Returns a 1D array containing only elements that satisfy the condition.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 5, 3], [7, 2, 9]]);
+  ///
+  /// // Filter values > 4
+  /// var filtered = arr.where((x) => x > 4);
+  /// print(filtered.toFlatList()); // [5, 7, 9]
+  ///
+  /// // Filter even numbers
+  /// var evens = arr.where((x) => x % 2 == 0);
+  /// print(evens.toFlatList()); // [2]
+  ///
+  /// // Complex filter
+  /// var result = arr.where((x) => x >= 3 && x <= 7);
+  /// print(result.toFlatList()); // [5, 3, 7]
+  /// ```
   NDArray where(bool Function(dynamic) condition) {
     final matching = <dynamic>[];
     for (int i = 0; i < shape.size; i++) {
@@ -18,7 +37,23 @@ extension NDArrayFiltering on NDArray {
     return NDArray(matching);
   }
 
-  /// Get indices where condition is true
+  /// Get indices where condition is true.
+  ///
+  /// Returns a list of multi-dimensional indices for all matching elements.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 5, 3], [7, 2, 9]]);
+  ///
+  /// // Find indices of values  > 5
+  /// var indices = arr.whereIndices((x) => x > 5);
+  /// // [[0, 2], [1, 0], [1,2]] for values  7 and 9
+  ///
+  /// // Use indices to access elements
+  /// for (var idx in indices) {
+  ///   print('Value at $idx: ${arr.getValue(idx)}');
+  /// }
+  /// ```
   List<List<int>> whereIndices(bool Function(dynamic) condition) {
     final indices = <List<int>>[];
     for (int i = 0; i < shape.size; i++) {
@@ -31,7 +66,23 @@ extension NDArrayFiltering on NDArray {
     return indices;
   }
 
-  /// Select elements at specific indices
+  /// Select elements at specific indices.
+  ///
+  /// Returns a 1D array with elements at the given multi-dimensional indices.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+  ///
+  /// // Select specific elements
+  /// var selected = arr.select([[0, 0], [1, 1], [0, 2]]);
+  /// print(selected.toFlatList()); // [1, 5, 3]
+  ///
+  /// // Combine with whereIndices
+  /// var highIndices = arr.whereIndices((x) => x > 3);
+  /// var highValues = arr.select(highIndices);
+  /// // [4, 5, 6]
+  /// ```
   NDArray select(List<List<int>> indices) {
     final selected = <dynamic>[];
     for (final idx in indices) {
@@ -124,7 +175,26 @@ extension NDArrayFiltering on NDArray {
 
 /// Advanced indexing operations
 extension AdvancedIndexing on NDArray {
-  /// Index with array of indices along an axis
+  /// Index with array of indices along an axis.
+  ///
+  /// Select specific positions along an axis using an index array.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+  ///
+  /// // Select rows 0 and 2
+  /// var rows = arr.indexWith([0, 2], axis: 0);
+  /// print(rows.toNestedList()); // [[1, 2, 3], [7, 8, 9]]
+  ///
+  /// // Select columns 1 and 2
+  /// var cols = arr.indexWith([1, 2], axis: 1);
+  /// print(cols.toNestedList()); // [[2, 3], [5, 6], [8, 9]]
+  ///
+  /// // Reorder and duplicate
+  /// var reordered = arr.indexWith([2, 1, 0, 0], axis: 0);
+  /// // Rows in order: 2, 1, 0, 0 (last row duplicated)
+  /// ```
   NDArray indexWith(List<int> indices, {int axis = 0}) {
     if (axis < 0 || axis >= ndim) {
       throw ArgumentError('Axis $axis out of range for $ndim dimensions');
@@ -170,7 +240,27 @@ extension AdvancedIndexing on NDArray {
   NDArray take(List<int> indices, {int axis = 0}) =>
       indexWith(indices, axis: axis);
 
-  /// Apply boolean mask to select elements
+  /// Apply boolean mask to select elements.
+  ///
+  /// Returns a 1D array with elements where mask is true.
+  /// Mask must have the same shape as the array.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 5, 3], [7, 2, 9]]);
+  ///
+  /// // Create boolean mask
+  /// var mask = arr.createMask((x) => x > 4);
+  /// var result = arr.mask(mask);
+  /// print(result.toFlatList()); // [5, 7, 9]
+  ///
+  /// // Manual mask
+  /// var customMask = NDArray.fromFlat(
+  ///   [1, 0, 1, 0, 1, 0].map((x) => x == 1).toList(),
+  ///   [2, 3]
+  /// );
+  /// var filtered = arr.mask(customMask);
+  /// ```
   NDArray mask(NDArray boolMask) {
     if (shape.toList().toString() != boolMask.shape.toList().toString()) {
       throw ArgumentError('Mask shape must match array shape');
@@ -195,7 +285,23 @@ extension AdvancedIndexing on NDArray {
     return NDArray.fromFlat(maskData, shape.toList());
   }
 
-  /// Put values at specific flat indices
+  /// Put values at specific flat indices.
+  ///
+  /// Sets the same value at multiple flat (1D) indices.
+  /// Modifies the array in-place.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray.zeros([2, 3]); // [[0, 0, 0], [0, 0, 0]]
+  ///
+  /// // Set values at flat indices 0, 2, 4
+  /// arr.put([0, 2, 4], 99);
+  /// print(arr.toNestedList()); // [[99, 0, 99], [0, 99, 0]]
+  ///
+  /// // Flat index ordering is row-major
+  /// // Index 0 = [0,0], Index 1 = [0,1], Index 2 = [0,2]
+  /// // Index 3 = [1,0], Index 4 = [1,1], Index 5 = [1,2]
+  /// ```
   void put(List<int> flatIndices, dynamic value) {
     for (final flatIdx in flatIndices) {
       if (flatIdx < 0 || flatIdx >= shape.size) {

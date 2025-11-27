@@ -176,62 +176,89 @@ class Series<T> implements DartData {
   /// This method overrides the `toString` method to provide a meaningful
   /// string representation of the series in a tabular format.
   @override
-  String toString({int columnSpacing = 2}) {
+  String toString({
+    int maxRows = 60,
+    int maxWidth = 20,
+    int columnSpacing = 2,
+    bool showIndex = true,
+    bool showDtype = true,
+    String Function(dynamic)? formatter,
+  }) {
     if (data.isEmpty) {
       return 'Empty Series: $name';
     }
 
-    // Calculate column width for values
-    int maxValueWidth = 0;
-    for (var value in data) {
-      int valueWidth = value.toString().length;
-      if (valueWidth > maxValueWidth) {
-        maxValueWidth = valueWidth;
-      }
+    final buffer = StringBuffer();
+    final sLength = length;
+    final sIndex = index;
+    final sData = data;
+    final sName = name;
+
+    final displayRows = sLength > maxRows
+        ? [
+            ...List.generate(maxRows ~/ 2, (i) => i),
+            -1,
+            ...List.generate(maxRows ~/ 2, (i) => sLength - (maxRows ~/ 2) + i),
+          ]
+        : List.generate(sLength, (i) => i);
+
+    var indexWidth = 0;
+    if (showIndex) {
+      indexWidth = sIndex
+          .map((idx) => idx.toString().length)
+          .fold(0, (max, len) => len > max ? len : max)
+          .clamp(0, maxWidth);
+      // Ensure index width is at least as wide as the word "index" if we were to print a header,
+      // but Series usually doesn't print "index" header, just the values.
+      // However, let's keep it reasonable.
+      indexWidth = max(indexWidth, 5);
     }
 
-    // Calculate name width
-    int nameWidth = name.length;
-
-    // Calculate the maximum width needed for row headers/index
-    int indexWidth = 0;
-    List<dynamic> indexList = index;
-
-    for (var idx in indexList) {
-      int headerWidth = idx.toString().length;
-      if (headerWidth > indexWidth) {
-        indexWidth = headerWidth;
-      }
+    var valueWidth = sName.toString().length;
+    for (final rowIdx in displayRows) {
+      if (rowIdx == -1) continue;
+      final value = sData[rowIdx];
+      final formatted = formatter != null ? formatter(value) : value.toString();
+      valueWidth =
+          valueWidth > formatted.length ? valueWidth : formatted.length;
     }
-
-    // Ensure index width is at least as wide as the word "index"
-    indexWidth = max(indexWidth, 5);
-
-    // Use the maximum of value width and name width for column width
-    int columnWidth = max(maxValueWidth, nameWidth);
+    valueWidth = valueWidth.clamp(0, maxWidth);
 
     // Add spacing
-    columnWidth += columnSpacing;
+    valueWidth += columnSpacing;
     indexWidth += columnSpacing;
 
-    // Construct the table string
-    StringBuffer buffer = StringBuffer();
-
-    // Add header
-    buffer.write(' '.padRight(indexWidth));
-    buffer.writeln(name.padRight(columnWidth));
-
-    // Add data rows
-    for (int i = 0; i < data.length; i++) {
-      buffer.write(indexList[i].toString().padRight(indexWidth));
-      buffer.writeln(data[i].toString().padRight(columnWidth));
+    // Header (Name)
+    if (sName.toString().isNotEmpty) {
+      if (showIndex) {
+        buffer.write(''.padRight(indexWidth));
+      }
+      buffer.writeln(sName.toString().padRight(valueWidth));
     }
 
-    // Add series information
-    buffer.writeln();
-    buffer.writeln('Length: ${data.length}');
-    buffer
-        .writeln('Type: ${data.isEmpty ? 'unknown' : data.first.runtimeType}');
+    for (final rowIdx in displayRows) {
+      if (rowIdx == -1) {
+        if (showIndex) {
+          buffer.write('...'.padRight(indexWidth));
+        }
+        buffer.writeln('...');
+        continue;
+      }
+
+      if (showIndex) {
+        buffer.write(sIndex[rowIdx].toString().padRight(indexWidth));
+      }
+
+      final value = sData[rowIdx];
+      final formatted = formatter != null ? formatter(value) : value.toString();
+      buffer.writeln(formatted.padRight(valueWidth));
+    }
+
+    if (showDtype) {
+      buffer.writeln();
+      buffer.writeln('Length: $sLength');
+      buffer.writeln('dtype: $dtypeEnhanced'); // Use dtypeEnhanced property
+    }
 
     return buffer.toString();
   }

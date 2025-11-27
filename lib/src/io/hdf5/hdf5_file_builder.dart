@@ -662,17 +662,8 @@ class HDF5FileBuilder {
       );
     }
 
-    // For now, only support simple paths (no nested groups)
-    final parts = path.split('/').where((p) => p.isNotEmpty).toList();
-    if (parts.length > 1) {
-      throw InvalidDatasetNameError(
-        datasetName: path,
-        reason:
-            'Nested groups not yet supported. Use simple paths like "/data"',
-      );
-    }
-
     // Check for reserved names
+    final parts = path.split('/').where((p) => p.isNotEmpty).toList();
     final reservedNames = ['', '.', '..'];
     if (parts.any((part) => reservedNames.contains(part))) {
       throw InvalidDatasetNameError(
@@ -938,6 +929,18 @@ class HDF5FileBuilder {
     }
 
     return _writer.bytes;
+  }
+
+  /// Build a complete HDF5 file with multiple datasets and groups
+  ///
+  /// This is a convenience method that calls [finalize].
+  /// Use [addDataset] and [createGroup] to add data before calling this method.
+  ///
+  /// Returns the complete HDF5 file as a byte list.
+  ///
+  /// Throws the same exceptions as [finalize].
+  Future<List<int>> buildMultiple({WriteOptions? options}) async {
+    return await finalize(options: options);
   }
 
   // ========== Path Parsing and Group Management ==========

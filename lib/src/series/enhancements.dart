@@ -93,7 +93,8 @@ extension SeriesEnhancements on Series {
   String get dtypeEnhanced {
     if (isEmpty) return 'empty';
 
-    final firstNonNull = data.firstWhere((v) => v != null, orElse: () => null);
+    final firstNonNull =
+        data.cast<dynamic>().firstWhere((v) => v != null, orElse: () => null);
     if (firstNonNull == null) return 'null';
 
     final nonNullData = data.where((v) => v != null).toList();
@@ -133,81 +134,6 @@ extension SeriesEnhancements on Series {
   }
 
   /// Enhanced string representation with formatting options.
-  String toStringEnhanced({
-    int? maxRows,
-    int maxWidth = 20,
-    String Function(dynamic)? formatter,
-    bool showIndex = true,
-    bool showDtype = false,
-  }) {
-    final buffer = StringBuffer();
-    final sLength = length;
-    final sIndex = index;
-    final sData = data;
-    final sName = name;
-
-    final displayRows = maxRows != null && sLength > maxRows
-        ? [
-            ...List.generate(maxRows ~/ 2, (i) => i),
-            -1,
-            ...List.generate(maxRows ~/ 2, (i) => sLength - (maxRows ~/ 2) + i),
-          ]
-        : List.generate(sLength, (i) => i);
-
-    var indexWidth = 0;
-    if (showIndex) {
-      indexWidth = sIndex
-          .map((idx) => idx.toString().length)
-          .fold(0, (max, len) => len > max ? len : max)
-          .clamp(0, maxWidth);
-    }
-
-    var valueWidth = sName.toString().length;
-    for (final rowIdx in displayRows) {
-      if (rowIdx == -1) continue;
-      final value = sData[rowIdx];
-      final formatted = formatter != null ? formatter(value) : value.toString();
-      valueWidth =
-          valueWidth > formatted.length ? valueWidth : formatted.length;
-    }
-    valueWidth = valueWidth.clamp(0, maxWidth);
-
-    if (sName.toString().isNotEmpty) {
-      if (showIndex) {
-        buffer.write(''.padRight(indexWidth));
-        buffer.write('  ');
-      }
-      buffer.writeln(sName.toString().padRight(valueWidth));
-    }
-
-    for (final rowIdx in displayRows) {
-      if (rowIdx == -1) {
-        if (showIndex) {
-          buffer.write('...'.padRight(indexWidth));
-          buffer.write('  ');
-        }
-        buffer.writeln('...');
-        continue;
-      }
-
-      if (showIndex) {
-        buffer.write(sIndex[rowIdx].toString().padRight(indexWidth));
-        buffer.write('  ');
-      }
-
-      final value = sData[rowIdx];
-      final formatted = formatter != null ? formatter(value) : value.toString();
-      buffer.writeln(formatted.padRight(valueWidth));
-    }
-
-    if (showDtype) {
-      buffer.writeln();
-      buffer.writeln('dtype: $dtypeEnhanced');
-      buffer.writeln('length: $sLength');
-    }
-
-    return buffer.toString();
-  }
 }
 
 class _SeriesAttrs {

@@ -2234,106 +2234,163 @@ class DataFrame implements DartData {
   /// // Columns: []
   /// ```
   @override
-  String toString({int columnSpacing = 2}) {
-    if (_data.isEmpty && _columns.isEmpty) {
-      return "Empty DataFrame\nDimensions: [0, 0]\nIndex: []\nColumns: []";
-    }
-    if (_data.isEmpty && _columns.isNotEmpty) {
-      StringBuffer buffer = StringBuffer();
-      // Determine a nominal width for the index column header for alignment
-      int rowIndexHeaderWidth = index.fold(
-          0,
-          (max, val) =>
-              val.toString().length > max ? val.toString().length : max);
-      rowIndexHeaderWidth = max(rowIndexHeaderWidth,
-          " ".length); // Minimum width for the index column header itself
+  String toString({
+    int maxRows = 60,
+    int maxCols = 20,
+    int maxColWidth = 20,
+    int columnSpacing = 2,
+    bool showIndex = true,
+    bool showDtype = false,
+    Map<String, String Function(dynamic)>? formatters,
+  }) {
+    final buffer = StringBuffer();
+    final dfLength = rowCount;
+    final dfColumns = columns;
+    final dfIndex = index;
 
-      buffer.write(' '.padRight(rowIndexHeaderWidth +
-          columnSpacing)); // Space for index column name (blank for empty data)
-
-      for (var colName in _columns) {
-        buffer.write(colName
-            .toString()
-            .padRight(colName.toString().length + columnSpacing));
-      }
-      buffer.writeln();
-      buffer.writeln("... (0 rows) ...");
+    if (rowCount == 0 && dfColumns.isEmpty) {
+      buffer.writeln('Empty DataFrame');
+      buffer.writeln('Dimensions: [0, 0]');
+      buffer.writeln('Index: []');
+      buffer.writeln('Columns: []');
       return buffer.toString();
     }
 
-    // Calculate column widths based on data and column headers
-    List<int> columnWidths = [];
-    for (var i = 0; i < _columns.length; i++) {
-      int maxColumnWidth = _columns[i].toString().length;
-      for (var row in _data) {
-        if (i < row.length) {
-          // Ensure row has this column
-          int cellWidth = (row[i]?.toString() ?? 'null').length;
-          if (cellWidth > maxColumnWidth) {
-            maxColumnWidth = cellWidth;
-          }
-        } else {
-          // Row is shorter than columns list (can happen with flexible columns)
-          int nullWidth = 'null'.length;
-          if (nullWidth > maxColumnWidth) maxColumnWidth = nullWidth;
-        }
-      }
-      columnWidths.add(maxColumnWidth);
+    // Determine which rows and columns to display
+    final displayRows = dfLength > maxRows
+        ? [
+            ...List.generate(maxRows ~/ 2, (i) => i),
+            -1,
+            ...List.generate(
+                maxRows ~/ 2, (i) => dfLength - (maxRows ~/ 2) + i),
+          ]
+        : List.generate(dfLength, (i) => i);
+
+    final displayCols = dfColumns.length > maxCols
+        ? [
+            ...List.generate(maxCols ~/ 2, (i) => i),
+            -1,
+            ...List.generate(
+                maxCols ~/ 2, (i) => dfColumns.length - (maxCols ~/ 2) + i),
+          ]
+        : List.generate(dfColumns.length, (i) => i);
+
+    // Calculate column widths
+    final colWidths = <int>[];
+    if (showIndex) {
+      final indexWidth = dfIndex
+          .map((idx) => idx.toString().length)
+          .fold(0, (max, len) => len > max ? len : max)
+          .clamp(0, maxColWidth);
+      colWidths.add(indexWidth + columnSpacing);
     }
 
-    // Calculate the maximum width needed for row index labels
-    int rowIndexLabelWidth = 0;
-    if (index.isNotEmpty) {
-      for (var label in index) {
-        int labelWidth = (label?.toString() ?? 'null').length;
-        if (labelWidth > rowIndexLabelWidth) {
-          rowIndexLabelWidth = labelWidth;
-        }
+    for (final colIdx in displayCols) {
+      if (colIdx == -1) {
+        colWidths.add(3 + columnSpacing);
+        continue;
       }
-    } else if (_data.isNotEmpty) {
-      // Default integer index "0", "1", ...
-      rowIndexLabelWidth = (_data.length - 1).toString().length;
+      final col = dfColumns[colIdx];
+      final colName = col.toString();
+      var width = colName.length;
+
+      for (final rowIdx in displayRows) {
+        if (rowIdx == -1) continue;
+        final value = this[col][rowIdx];
+        final formatted = formatters?.containsKey(colName) == true
+            ? formatters![colName]!(value)
+            : value.toString();
+        width = width > formatted.length ? width : formatted.length;
+      }
+
+      colWidths.add(width.clamp(0, maxColWidth) + columnSpacing);
     }
-    rowIndexLabelWidth =
-        max(rowIndexLabelWidth, " ".length); // Min width for index col header
 
-    StringBuffer buffer = StringBuffer();
+    // Header row
+    if (showIndex) {
+      buffer.write(''.padRight(colWidths[0]));
+    }
 
-    // Add column headers: Index column header (blank) + data column headers
-    buffer.write(' '.padRight(rowIndexLabelWidth + columnSpacing));
-    for (var i = 0; i < _columns.length; i++) {
-      buffer.write(
-          _columns[i].toString().padRight(columnWidths[i] + columnSpacing));
+    var colWidthIdx = showIndex ? 1 : 0;
+    for (final colIdx in displayCols) {
+      if (colIdx == -1) {
+        buffer.write('...'.padRight(colWidths[colWidthIdx]));
+      } else {
+        final colName = dfColumns[colIdx].toString();
+        buffer.write(colName.padRight(colWidths[colWidthIdx]));
+      }
+      colWidthIdx++;
     }
     buffer.writeln();
 
-    // Add data rows
-    for (int r = 0; r < _data.length; r++) {
-      var row = _data[r];
-
-      // Add row index label
-      var indexLabelStr = (r < index.length)
-          ? (index[r]?.toString() ?? 'null')
-          : r.toString(); // Fallback if index list is somehow shorter
-      buffer.write(indexLabelStr.padRight(rowIndexLabelWidth + columnSpacing));
-
-      // Add cell data for the row
-      for (var c = 0; c < _columns.length; c++) {
-        String cellValueStr;
-        if (c < row.length && row[c] != null) {
-          cellValueStr = row[c].toString();
-        } else if (c < row.length && row[c] == null) {
-          cellValueStr = 'null';
-        } else {
-          // Cell doesn't exist (row shorter than _columns list)
-          cellValueStr = 'null';
+    // Data rows
+    for (final rowIdx in displayRows) {
+      if (rowIdx == -1) {
+        if (showIndex) {
+          buffer.write('...'.padRight(colWidths[0]));
         }
-        buffer.write(cellValueStr.padRight(columnWidths[c] + columnSpacing));
+        colWidthIdx = showIndex ? 1 : 0;
+        for (final _ in displayCols) {
+          buffer.write('...'.padRight(colWidths[colWidthIdx]));
+          colWidthIdx++;
+        }
+        buffer.writeln();
+        continue;
+      }
+
+      if (showIndex) {
+        buffer.write(dfIndex[rowIdx].toString().padRight(colWidths[0]));
+      }
+
+      colWidthIdx = showIndex ? 1 : 0;
+      for (final colIdx in displayCols) {
+        if (colIdx == -1) {
+          buffer.write('...'.padRight(colWidths[colWidthIdx]));
+        } else {
+          final col = dfColumns[colIdx];
+          final value = this[col][rowIdx];
+          final colName = col.toString();
+          final formatted = formatters?.containsKey(colName) == true
+              ? formatters![colName]!(value)
+              : value.toString();
+          buffer.write(formatted.padRight(colWidths[colWidthIdx]));
+        }
+        colWidthIdx++;
       }
       buffer.writeln();
     }
 
+    // Let's show it if truncated OR showDtype is true.
+    if (showDtype || dfLength > maxRows || dfColumns.length > maxCols) {
+      buffer.writeln('\n[$rowCount rows x ${columns.length} columns]');
+    }
+
+    // Data types footer
+    if (showDtype) {
+      buffer.writeln('dtypes:');
+      for (final col in dfColumns) {
+        final dtype = _inferColumnType(col);
+        buffer.writeln('  $col: $dtype');
+      }
+    }
+
     return buffer.toString();
+  }
+
+  String _inferColumnType(dynamic col) {
+    final series = column(col);
+    if (series.isEmpty) return 'empty';
+
+    final firstNonNull =
+        series.data.firstWhere((v) => v != null, orElse: () => null);
+    if (firstNonNull == null) return 'null';
+    if (firstNonNull is int) return 'int';
+    if (firstNonNull is double) return 'double';
+    if (firstNonNull is num) return 'num';
+    if (firstNonNull is String) return 'string';
+    if (firstNonNull is bool) return 'bool';
+    if (firstNonNull is DateTime) return 'datetime';
+    return 'object';
   }
 
   /// Provides access to DataFrame selection by integer position (like `iloc` in pandas).

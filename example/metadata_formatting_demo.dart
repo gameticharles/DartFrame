@@ -34,15 +34,16 @@ void main() {
   print('\n');
 
   // 3. toStringEnhanced - Enhanced formatting
-  print('3. toStringEnhanced - Enhanced formatting:');
+  print(
+      '3. toStringEnhanced - Enhanced formatting (Now merged into default toString):');
   var largeDf = DataFrame.fromMap({
     'name': ['Alice', 'Bob', 'Charlie', 'David', 'Eve', 'Frank', 'Grace'],
     'value': [1.23456, 2.34567, 3.45678, 4.56789, 5.67890, 6.78901, 7.89012],
     'count': [100, 200, 300, 400, 500, 600, 700],
   });
 
-  print('With max rows and formatters:');
-  print(largeDf.toStringEnhanced(
+  print('With toString (custom maxRows and formatters):');
+  print(largeDf.toString(
     maxRows: 4,
     formatters: {
       'value': (v) => v is num ? v.toStringAsFixed(2) : v.toString(),
@@ -174,7 +175,7 @@ void main() {
     name: 'measurements',
   );
 
-  print(s6.toStringEnhanced(
+  print(s6.toString(
     maxRows: 4,
     formatter: (v) => v is num ? v.toStringAsFixed(2) : v.toString(),
     showDtype: true,
@@ -201,7 +202,7 @@ void main() {
   sensorData.attrs['calibration_date'] = DateTime(2023, 1, 1);
 
   print('Sensor Data:');
-  print(sensorData.toStringEnhanced(
+  print(sensorData.toString(
     formatters: {
       'temperature': (v) =>
           v is num ? '${v.toStringAsFixed(1)}°C' : v.toString(),

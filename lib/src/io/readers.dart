@@ -5,6 +5,7 @@ import 'csv_reader.dart';
 import 'excel_reader.dart';
 import 'parquet_reader.dart';
 import 'json_reader.dart';
+import 'mat_reader.dart';
 
 /// Abstract base class for data readers.
 ///
@@ -16,6 +17,7 @@ import 'json_reader.dart';
 /// - [CsvReader] for CSV files
 /// - [ExcelFileReader] for Excel files
 /// - [HDF5Reader] for HDF5 files
+/// - [MATReader] for MATLAB .mat files (v7.3 only)
 /// - [ParquetReader] for Parquet files (basic implementation)
 abstract class DataReader {
   /// Reads data from the specified path and returns a DataFrame.
@@ -49,6 +51,7 @@ abstract class DataReader {
 /// - **Excel** (.xlsx, .xls): Excel workbooks using [ExcelFileReader]
 /// - **JSON** (.json): JSON files with multiple orientations using [JsonReader]
 /// - **HDF5** (.h5, .hdf5): HDF5 scientific data format using [HDF5Reader]
+/// - **MATLAB** (.mat): MATLAB v7.3 MAT-files using [MATReader]
 /// - **Parquet** (.parquet, .pq): Parquet columnar format (basic implementation)
 ///
 /// ## Features
@@ -102,6 +105,7 @@ class FileReader {
     '.json': JsonReader(),
     '.h5': HDF5Reader(),
     '.hdf5': HDF5Reader(),
+    '.mat': MATReader(),
   };
 
   /// Reads a file and returns a DataFrame, automatically detecting format by extension.
@@ -488,6 +492,64 @@ class FileReader {
   /// ```
   static Future<List<String>> listHDF5Datasets(String path) async {
     return HDF5Reader.listDatasets(path);
+  }
+
+  /// Reads a MATLAB .mat file variable into a DataFrame.
+  ///
+  /// MATLAB v7.3 (HDF5-based) files only. Earlier versions are not supported.
+  ///
+  /// ## Parameters
+  /// - `path`: Path to the .mat file
+  /// - `variable`: Variable name to read
+  /// - `options`: Additional options
+  ///
+  /// ## Example
+  /// ```dart
+  /// // Read specific variable
+  /// final df = await FileReader.readMAT('data.mat', variable: 'myarray');
+  ///
+  /// // List all variables first
+  /// final vars = await FileReader.listMATVariables('data.mat');
+  /// print('Variables: $vars');
+  /// ```
+  ///
+  /// See also:
+  /// - [listMATVariables] for listing variables
+  /// - [inspectMAT] for file inspection
+  static Future<DataFrame> readMAT(String path,
+      {String? variable, Map<String, dynamic>? options}) async {
+    final mergedOptions = <String, dynamic>{
+      if (variable != null) 'variable': variable,
+      ...?options,
+    };
+
+    return MATReader().read(path, options: mergedOptions);
+  }
+
+  /// Lists all MATLAB variables in a .mat file.
+  ///
+  /// Returns variable names without reading data (fast operation).
+  ///
+  /// ## Example
+  /// ```dart
+  /// final vars = await FileReader.listMATVariables('data.mat');
+  /// print('Found ${vars.length} variables: $vars');
+  /// ```
+  static Future<List<String>> listMATVariables(String path) async {
+    return MATReader.listVariables(path);
+  }
+
+  /// Inspects a MATLAB .mat file structure and returns metadata.
+  ///
+  /// Returns information about all variables without reading the data.
+  ///
+  /// ## Example
+  /// ```dart
+  /// final info = await FileReader.inspectMAT('data.mat');
+  /// print('Variables: ${info['variables']}');
+  /// ```
+  static Future<Map<String, dynamic>> inspectMAT(String path) async {
+    return MATReader.inspect(path);
   }
 
   static String _getFileExtension(String path) {

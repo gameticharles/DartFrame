@@ -26,13 +26,14 @@ import 'package:dartframe/dartframe.dart';
 ///
 /// This is a production-ready example showing best practices for HDF5 reading.
 Future<void> main(List<String> args) async {
-  //'test/fixtures/compound_test.h5'
   //'example/data/test_chunked.h5'
   //'test/fixtures/chunked_string_compound_test.h5'
   // 'example/data/hdf5_test.h5'
   // 'example/data/test_compressed.h5'
   // 'example/data/processdata.h5'
-  final filePath = args.isNotEmpty ? args[0] : 'example/data/processdata.h5';
+  // 'test/fixtures/multi_debug.h5'
+  // 'example/data/test1.h5'
+  final filePath = args.isNotEmpty ? args[0] : 'example/data/test1.h5';
 
   print('╔═══════════════════════════════════════════════════════════╗');
   print('║        Universal HDF5 File Reader & Analyzer              ║');

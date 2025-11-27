@@ -1,3 +1,148 @@
+# 0.8.9
+
+- **[MAJOR FEATURE]** MATLAB File Format Support - Pure Dart Implementation
+
+  - **NEW**: `MatReader` class for reading MATLAB (.mat) files (v5 and v7.3 formats)
+    - Support for MAT v5 format (uncompressed and compressed)
+    - Support for MAT v7.3 format (HDF5-based) with full group hierarchy
+    - Automatic format detection and version handling
+    - Cross-platform compatibility (Windows, macOS, Linux, Web, iOS, Android)
+  - **NEW**: `MatWriter` class for writing MATLAB (.mat) files (v7.3 format)
+    - Full HDF5-based MAT v7.3 writer implementation
+    - Support for nested group structures
+    - MATLAB attribute conventions (`MATLAB_class`, `H5PATH`)
+    - Automatic type conversion to MATLAB-compatible formats
+  - **NEW**: Comprehensive MAT file data type support
+    - Numeric arrays (double, single, int8, uint8, int16, uint16, int32, uint32, int64, uint64)
+    - Character arrays and strings
+    - Cell arrays and structures
+    - Sparse matrices (COO format)
+    - Complex numbers
+    - Logical/boolean arrays
+    - Nested structures and cell arrays
+  - **NEW**: MATLAB interoperability features
+    - `MatlabObject` class for representing MATLAB structs
+    - `SparseMatrix` class for sparse matrix representation
+    - `MatlabConventions` for MATLAB attribute handling
+    - `ReferenceResolver` for object reference resolution in MAT files
+  - **NEW**: Example files demonstrating MAT file operations
+    - `example/mat_reader_example.dart` - Reading MAT files
+    - `example/nested_groups_demo.dart` - Working with nested structures
+    - `example/test_mat_roundtrip.dart` - Round-trip read/write testing
+  - **ARCHITECTURE**: Modular implementation with separate readers/writers
+    - `MatV5Reader` for legacy MAT v5 format
+    - `MatV73Reader` for HDF5-based v7.3 format
+    - `MatV73Writer` for writing v7.3 files
+    - Integration with existing HDF5 infrastructure
+  - **COMPATIBILITY**: Full Python/MATLAB/R interoperability for MAT files
+
+- **[MAJOR FEATURE]** NDArray Enhancements - Advanced Array Operations
+
+  - **NEW**: Comprehensive NDArray documentation with examples
+    - Added detailed docstrings to all NDArray methods
+    - Included practical examples for every operation
+    - Covered all use cases for array manipulation
+  - **NEW**: Enhanced lazy operations (`lazy_operations.dart`)
+    - Advanced lazy evaluation and computation graph
+    - Memory-efficient operations for large arrays
+    - Deferred computation with optimization
+    - Operation fusion for better performance
+  - **NEW**: Enhanced filtering operations (`filtering.dart`)
+    - Advanced filtering and selection methods
+    - Conditional filtering with predicates
+    - Index-based and value-based filtering
+    - Multi-dimensional filtering support
+  - **NEW**: Enhanced array operations (`operations.dart`)
+    - Extended mathematical and statistical operations
+    - Broadcasting support for operations
+    - Element-wise operations
+    - Reduction operations along axes
+  - **ENHANCEMENT**: Core NDArray improvements (`ndarray.dart`)
+    - Better memory management
+    - Optimized indexing and slicing
+    - Enhanced shape manipulation
+    - Improved type handling
+
+- **[FEATURE]** DataFrame Enhancements
+
+  - **ENHANCEMENT**: Improved metadata formatting
+    - Streamlined metadata handling
+    - Better integration with HDF5 attributes
+    - Removed redundant formatting code (152 lines removed)
+  - **ENHANCEMENT**: Enhanced DataFrame core operations
+    - Optimized data manipulation (219 lines changed)
+    - Better null handling
+    - Improved performance for large datasets
+    - Enhanced type inference
+
+- **[FEATURE]** Series Enhancements
+
+  - **ENHANCEMENT**: Streamlined Series operations (`enhancements.dart`)
+    - Removed duplicate functionality (78 lines removed)
+    - Consolidated operations into core Series class
+    - Better code organization
+  - **ENHANCEMENT**: Enhanced Series core (`series.dart`)
+    - Improved data handling (109 lines changed)
+    - Better null value processing
+    - Enhanced type conversion
+    - Optimized memory usage
+
+- **[FEATURE]** HDF5 and File I/O Improvements
+
+  - **ENHANCEMENT**: Enhanced `Hdf5FileBuilder` for MAT file support
+    - Better group hierarchy handling
+    - Improved attribute writing
+    - Enhanced datatype conversion
+    - Optimized for MATLAB conventions
+  - **ENHANCEMENT**: Improved HDF5 universal reader example
+    - Better error handling
+    - Enhanced output formatting
+    - Demonstration of nested structures
+  - **NEW**: Enhanced `FileReader` class (`readers.dart`)
+    - Added MAT file reading capabilities
+    - Unified interface for multiple file formats
+    - Better format detection
+    - Improved error messages
+
+- **[FEATURE]** Package Configuration
+
+  - **NEW**: Exported MAT file classes in main library export
+    - `MatReader` and `MatWriter` now publicly accessible
+    - Streamlined import for MAT file operations
+    - Single import for all file format operations
+  - **ENHANCEMENT**: Improved package organization
+    - Better separation of concerns
+    - Modular architecture for file format support
+    - Clean public API
+
+- **[TESTING]** Comprehensive Test Coverage
+
+  - **NEW**: MAT file reader tests (`test/mat_reader_test.dart`)
+    - Round-trip testing (read/write/read)
+    - Format compatibility tests
+    - Data integrity validation
+  - **NEW**: Compile-time tests (`test/compile_test.dart`)
+    - Type safety validation
+    - API consistency checks
+  - **NEW**: Test data generation (`test/generate_test_files.m`)
+    - MATLAB script for generating test files
+    - Various data types and structures
+    - Edge case coverage
+
+- **[ENHANCEMENT]** Code Quality and Maintenance
+  - **REFACTOR**: Removed redundant code across multiple files
+    - 397 lines removed
+    - 1312 lines added
+    - Net improvement in functionality with better organization
+  - **REFACTOR**: Improved code organization
+    - Better separation of file format handlers
+    - Cleaner extension organization
+    - More maintainable codebase
+  - **ENHANCEMENT**: Better documentation
+    - Comprehensive examples for all NDArray operations
+    - Improved docstrings across the board
+    - Better inline comments
+
 # 0.8.8
 
 - **[FIX]** Fixed error with `pow` function being exported

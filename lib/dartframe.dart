@@ -12,6 +12,13 @@ export 'src/io/hdf5_writer.dart';
 export 'src/io/json_reader.dart';
 export 'src/io/csv_reader.dart';
 export 'src/io/excel_reader.dart';
+export 'src/io/mat_reader.dart';
+export 'src/io/mat_writer.dart';
+
+// MATLAB types
+export 'src/io/mat/matlab_types.dart';
+export 'src/io/mat/sparse_matrix.dart';
+export 'src/io/mat/matlab_object.dart';
 
 // Smart Loader and Data Sources
 export 'src/io/smart_loader.dart';

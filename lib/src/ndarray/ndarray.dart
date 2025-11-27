@@ -11,11 +11,56 @@ import '../core/ndarray_config.dart';
 import '../data_cube/datacube.dart';
 
 /// N-dimensional array with flexible storage backends.
+///
+/// NDArray provides a comprehensive multi-dimensional array implementation
+/// supporting various data types, storage backends, and operations.
+///
+/// Key Features:
+/// - Multiple constructors for different creation patterns
+/// - Flexible slicing and indexing
+/// - Element-wise operations
+/// - Broadcasting support
+/// - Multiple storage backends (in-memory, memory-mapped, etc.)
+///
+/// Example:
+/// ```dart
+/// // Create from nested lists
+/// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+/// print(arr.shape); // Shape: [2, 3]
+///
+/// // Create with specific shape
+/// var zeros = NDArray.zeros([3, 4]);
+/// var ones = NDArray.ones([2, 2, 2]);
+///
+/// // Generate with function
+/// var arr2 = NDArray.generate([3, 3], (indices) => indices[0] * 10 + indices[1]);
+/// ```
 class NDArray extends DartData {
   final StorageBackend _backend;
   final Attributes _attrs;
 
   /// Creates an NDArray from nested lists.
+  ///
+  /// The shape is automatically inferred from the nesting structure.
+  /// All rows at each level must have the same length.
+  ///
+  /// Example:
+  /// ```dart
+  /// // 1D array
+  /// var arr1d = NDArray([1, 2, 3, 4]);
+  /// print(arr1d.shape); // Shape: [4]
+  ///
+  /// // 2D array
+  /// var arr2d = NDArray([[1, 2], [3, 4], [5, 6]]);
+  /// print(arr2d.shape); // Shape: [3, 2]
+  ///
+  /// // 3D array
+  /// var arr3d = NDArray([
+  ///   [[1, 2], [3, 4]],
+  ///   [[5, 6], [7, 8]]
+  /// ]);
+  /// print(arr3d.shape); // Shape: [2, 2, 2]
+  /// ```
   factory NDArray(List<dynamic> data) {
     final shape = _inferShape(data);
     final flatData = _flatten(data);
@@ -23,7 +68,27 @@ class NDArray extends DartData {
     return NDArray._internal(backend, Attributes());
   }
 
-  /// Creates an NDArray with explicit shape and data.
+  /// Creates an NDArray with explicit shape and flat data.
+  ///
+  /// The data is provided as a flat 1D list which is reshaped according
+  /// to the specified shape. The data length must match the product of
+  /// shape dimensions.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Create 2x3 array from flat data
+  /// var arr = NDArray.fromFlat([1, 2, 3, 4, 5, 6], [2, 3]);
+  /// print(arr.toNestedList()); // [[1, 2, 3], [4, 5, 6]]
+  ///
+  /// // Create 3D array
+  /// var arr3d = NDArray.fromFlat(
+  ///   [1, 2, 3, 4, 5, 6, 7, 8],
+  ///   [2, 2, 2]
+  /// );
+  /// print(arr3d.shape); // Shape: [2, 2, 2]
+  /// ```
+  ///
+  /// Throws [ArgumentError] if data length doesn't match shape.
   factory NDArray.fromFlat(List<dynamic> data, List<int> shape) {
     final expectedSize = shape.reduce((a, b) => a * b);
     if (data.length != expectedSize) {
@@ -36,6 +101,23 @@ class NDArray extends DartData {
   }
 
   /// Creates an NDArray filled with zeros.
+  ///
+  /// All elements are initialized to 0.
+  ///
+  /// Example:
+  /// ```dart
+  /// // 1D array of zeros
+  /// var arr1d = NDArray.zeros([5]);
+  /// print(arr1d.toFlatList()); // [0, 0, 0, 0, 0]
+  ///
+  /// // 2D array of zeros
+  /// var arr2d = NDArray.zeros([2, 3]);
+  /// print(arr2d.toNestedList()); // [[0, 0, 0], [0, 0, 0]]
+  ///
+  /// // 3D array of zeros
+  /// var arr3d = NDArray.zeros([2, 2, 2]);
+  /// print(arr3d.shape); // Shape: [2, 2, 2]
+  /// ```
   factory NDArray.zeros(List<int> shape) {
     final shapeObj = Shape(shape);
     // Generate data first, then select backend
@@ -45,6 +127,23 @@ class NDArray extends DartData {
   }
 
   /// Creates an NDArray filled with ones.
+  ///
+  /// All elements are initialized to 1.
+  ///
+  /// Example:
+  /// ```dart
+  /// // 1D array of ones
+  /// var arr1d = NDArray.ones([5]);
+  /// print(arr1d.toFlatList()); // [1, 1, 1, 1, 1]
+  ///
+  /// // 2D array of ones
+  /// var arr2d = NDArray.ones([2, 3]);
+  /// print(arr2d.toNestedList()); // [[1, 1, 1], [1, 1, 1]]
+  ///
+  /// // Use in calculations
+  /// var base = NDArray.ones([3, 3]);
+  /// var scaled = base * 5; // All elements become 5
+  /// ```
   factory NDArray.ones(List<int> shape) {
     final shapeObj = Shape(shape);
     // Generate data first, then select backend
@@ -54,6 +153,22 @@ class NDArray extends DartData {
   }
 
   /// Creates an NDArray filled with a specific value.
+  ///
+  /// All elements are initialized to the provided [fillValue].
+  ///
+  /// Example:
+  /// ```dart
+  /// // Fill with number
+  /// var arr = NDArray.filled([2, 3], 42);
+  /// print(arr.toNestedList()); // [[42, 42, 42], [42, 42, 42]]
+  ///
+  /// // Fill with string
+  /// var strArr = NDArray.filled([3], 'hello');
+  /// print(strArr.toFlatList()); // ['hello', 'hello', 'hello']
+  ///
+  /// // Fill with floating point
+  /// var floatArr = NDArray.filled([2, 2], 3.14);
+  /// ```
   factory NDArray.filled(List<int> shape, dynamic fillValue) {
     final shapeObj = Shape(shape);
     // Generate data first, then select backend
@@ -63,6 +178,27 @@ class NDArray extends DartData {
   }
 
   /// Creates an NDArray with values generated by a function.
+  ///
+  /// The [generator] function receives indices as a list and returns the
+  /// value for that position. This enables creating arrays with patterns,
+  /// coordinates, or computed values.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Create identity-like pattern
+  /// var arr = NDArray.generate([3, 3], (indices) {
+  ///   return indices[0] == indices[1] ? 1 : 0;
+  /// });
+  /// // [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+  ///
+  /// // Generate with coordinates
+  /// var coords = NDArray.generate([2, 3], (i) => i[0] * 10 + i[1]);
+  /// // [[0, 1, 2], [10, 11, 12]]
+  ///
+  /// // Create distance matrix
+  /// var dist = NDArray.generate([5], (i) => i[0] * 0.5);
+  /// // [0.0, 0.5, 1.0, 1.5, 2.0]
+  /// ```
   factory NDArray.generate(
       List<int> shape, dynamic Function(List<int>) generator) {
     final shapeObj = Shape(shape);
@@ -76,6 +212,16 @@ class NDArray extends DartData {
   }
 
   /// Creates an NDArray with a custom storage backend.
+  ///
+  /// Allows specifying a custom storage backend for advanced use cases
+  /// such as memory-mapped storage or distributed arrays.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Use with custom backend (advanced)
+  /// var backend = CustomStorageBackend(shape: Shape([100, 100]));
+  /// var arr = NDArray.withBackend([100, 100], backend);
+  /// ```
   factory NDArray.withBackend(List<int> shape, StorageBackend backend) {
     return NDArray._internal(backend, Attributes());
   }
@@ -99,18 +245,78 @@ class NDArray extends DartData {
   StorageBackend get backend => _backend;
 
   /// Gets a value at the specified indices.
+  ///
+  /// The indices must match the number of dimensions and be within bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+  /// print(arr.getValue([0, 0])); // 1
+  /// print(arr.getValue([1, 2])); // 6
+  ///
+  /// // 3D array
+  /// var arr3d = NDArray([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
+  /// print(arr3d.getValue([1, 0, 1])); // 6
+  /// ```
   @override
   dynamic getValue(List<int> indices) {
     return _backend.getValue(indices);
   }
 
   /// Sets a value at the specified indices.
+  ///
+  /// The indices must match the number of dimensions and be within bounds.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray.zeros([2, 3]);
+  /// arr.setValue([0, 0], 10);
+  /// arr.setValue([1, 2], 20);
+  /// print(arr.toNestedList()); // [[10, 0, 0], [0, 0, 20]]
+  ///
+  /// // Modify 3D array
+  /// var arr3d = NDArray.zeros([2, 2, 2]);
+  /// arr3d.setValue([0, 1, 1], 99);
+  /// ```
   @override
   void setValue(List<int> indices, dynamic value) {
     _backend.setValue(indices, value);
   }
 
   /// Gets a slice of the array.
+  ///
+  /// Supports various slicing formats:
+  /// - Single index: reduces dimensionality
+  /// - Slice.range(start, end): gets a range
+  /// - Slice.all(): gets entire dimension
+  /// - Slice with step: Slice.step(start, end, step)
+  ///
+  /// Returns different types based on result dimensionality:
+  /// - 0D: Scalar
+  /// - 1D: Series (currently NDArray)
+  /// - 2D: DataFrame (currently NDArray)
+  /// - 3D: DataCube
+  /// - N-D: NDArray
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+  ///
+  /// // Single index - reduces dimension
+  /// var row = arr.slice([0]); // [1, 2, 3]
+  ///
+  /// // Range slice
+  /// var subArr = arr.slice([Slice.range(0, 2), Slice.all()]);
+  /// // [[1, 2, 3], [4, 5, 6]]
+  ///
+  /// // Multiple slices
+  /// var corner = arr.slice([Slice.range(0, 2), Slice.range(0, 2)]);
+  /// // [[1, 2], [4, 5]]
+  ///
+  /// // With step
+  /// var stepped = arr.slice([Slice.all(), Slice.step(0, 3, 2)]);
+  /// // [[1, 3], [4, 6], [7, 9]]
+  /// ```
   @override
   DartData slice(List<dynamic> sliceSpec) {
     // Normalize slices to SliceSpec
@@ -256,6 +462,27 @@ class NDArray extends DartData {
   }
 
   /// Reshapes the array to a new shape.
+  ///
+  /// The total number of elements must remain the same.
+  /// Elements are arranged in row-major (C-style) order.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Reshape 1D to 2D
+  /// var arr = NDArray([1, 2, 3, 4, 5, 6]);
+  /// var reshaped = arr.reshape([2, 3]);
+  /// print(reshaped.toNestedList()); // [[1, 2, 3], [4, 5, 6]]
+  ///
+  /// // Reshape 2D to 3D
+  /// var arr2d = NDArray.generate([4, 3], (i) => i[0] * 10 + i[1]);
+  /// var arr3d = arr2d.reshape([2, 2, 3]);
+  /// print(arr3d.shape); // Shape: [2, 2, 3]
+  ///
+  /// // Flatten to 1D
+  /// var flat = arr2d.reshape([12]);
+  /// ```
+  ///
+  /// Throws [ArgumentError] if the new shape has different total size.
   NDArray reshape(List<int> newShape) {
     final newShapeObj = Shape(newShape);
     if (newShapeObj.size != size) {
@@ -277,6 +504,25 @@ class NDArray extends DartData {
   }
 
   /// Maps a function over all elements.
+  ///
+  /// Applies the function to each element and returns a new NDArray
+  /// with the results. The shape is preserved.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+  ///
+  /// // Square all elements
+  /// var squared = arr.map((x) => x * x);
+  /// print(squared.toNestedList()); // [[1, 4, 9], [16, 25, 36]]
+  ///
+  /// // Convert to strings
+  /// var strings = arr.map((x) => 'value_$x');
+  ///
+  /// // Apply mathematical function
+  /// var transformed = arr.map((x) => x * 2 + 1);
+  /// // [[3, 5, 7], [9, 11, 13]]
+  /// ```
   NDArray map(dynamic Function(dynamic) fn) {
     // Generate mapped data first, then select backend
     final data = List.generate(size, (i) {
@@ -294,6 +540,26 @@ class NDArray extends DartData {
   }
 
   /// Filters elements based on a predicate.
+  ///
+  /// Returns a 1D array containing only elements that satisfy the predicate.
+  /// The original shape is not preserved.
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+  ///
+  /// // Filter values greater than 3
+  /// var filtered = arr.where((x) => x > 3);
+  /// print(filtered.toFlatList()); // [4, 5, 6]
+  ///
+  /// // Filter even numbers
+  /// var evens = arr.where((x) => x % 2 == 0);
+  /// print(evens.toFlatList()); // [2, 4, 6]
+  ///
+  /// // Filter with complex condition
+  /// var result = arr.where((x) => x > 2 && x < 5);
+  /// print(result.toFlatList()); // [3, 4]
+  /// ```
   NDArray where(bool Function(dynamic) predicate) {
     final results = <dynamic>[];
 
@@ -316,6 +582,21 @@ class NDArray extends DartData {
   }
 
   /// Creates a deep copy of this array.
+  ///
+  /// Creates an independent copy with its own data and attributes.
+  /// Modifications to the copy do not affect the original.
+  ///
+  /// Example:
+  /// ```dart
+  /// var original = NDArray([[1, 2], [3, 4]]);
+  /// var copied = original.copy();
+  ///
+  /// // Modify copy
+  /// copied.setValue([0, 0], 99);
+  ///
+  /// print(original.getValue([0, 0])); // 1 (unchanged)
+  /// print(copied.getValue([0, 0]));   // 99
+  /// ```
   NDArray copy() {
     final newBackend = _backend.clone();
     final newAttrs = Attributes.fromJson(attrs.toJson());
@@ -323,6 +604,25 @@ class NDArray extends DartData {
   }
 
   /// Converts the array to nested lists.
+  ///
+  /// Returns the array data as nested Dart lists matching the original shape.
+  /// Useful for serialization or display.
+  ///
+  /// Example:
+  /// ```dart
+  /// // 2D array
+  /// var arr = NDArray.generate([2, 3], (i) => i[0] * 10 + i[1]);
+  /// print(arr.toNestedList()); // [[0, 1, 2], [10, 11, 12]]
+  ///
+  /// // 3D array
+  /// var arr3d = NDArray.zeros([2, 2, 2]);
+  /// var nested = arr3d.toNestedList();
+  /// // [[[0, 0], [0, 0]], [[0, 0], [0, 0]]]
+  ///
+  /// // 1D array
+  /// var arr1d = NDArray([1, 2, 3]);
+  /// print(arr1d.toNestedList()); // [1, 2, 3]
+  /// ```
   List<dynamic> toNestedList() {
     if (ndim == 0) {
       return getValue([]);
@@ -346,6 +646,24 @@ class NDArray extends DartData {
   }
 
   /// Gets the flat data as a list.
+  ///
+  /// Returns a 1D list containing all elements in row-major order.
+  ///
+  /// If [copy] is true (default), returns a new list. If false, may return
+  /// a reference to internal data (modify with caution).
+  ///
+  /// Example:
+  /// ```dart
+  /// var arr = NDArray([[1, 2, 3], [4, 5, 6]]);
+  /// print(arr.toFlatList()); // [1, 2, 3, 4, 5, 6]
+  ///
+  /// // Get reference (no copy)
+  /// var ref = arr.toFlatList(copy: false);
+  ///
+  /// // 3D array flattened
+  /// var arr3d = NDArray([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
+  /// print(arr3d.toFlatList()); // [1, 2, 3, 4, 5, 6, 7, 8]
+  /// ```
   List<dynamic> toFlatList({bool copy = true}) {
     return _backend.getFlatData(copy: copy);
   }
