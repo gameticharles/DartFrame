@@ -1,12 +1,12 @@
+import 'dart:io';
+import 'package:dartframe/dartframe.dart';
+
 /// Nested Group HDF5 Write/Read Test
 ///
 /// This demo creates an HDF5 file with nested groups, writes it,
 /// then reads it back using the universal reader to verify.
 ///
 /// Run with: dart run example/nested_groups_demo.dart
-
-import 'dart:io';
-import 'package:dartframe/dartframe.dart';
 
 void main() async {
   print('╔════════════════════════════════════════════════════╗');
