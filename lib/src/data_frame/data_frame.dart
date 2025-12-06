@@ -2379,7 +2379,7 @@ class DataFrame implements DartData {
 
   String _inferColumnType(dynamic col) {
     final series = column(col);
-    if (series.isEmpty) return 'empty';
+    if (series.data.isEmpty) return 'empty';
 
     final firstNonNull =
         series.data.firstWhere((v) => v != null, orElse: () => null);

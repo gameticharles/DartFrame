@@ -61,7 +61,20 @@ Note: For GeoData functionalities (GeoSeries and GeoDataFrames), they can now be
   - **Variable-length data**: Full support for vlen strings and vlen arrays
   - **Boolean arrays**: Dedicated support for boolean data
   - **Opaque data**: Enhanced handling of binary blobs with tags
-  - Note: Read/Write access (see [full capabilities](./example/README_hdf5.md))
+  - Note:
+    - Read/Write access (see [full capabilities](./example/README_hdf5.md))
+    - Limitation on writing nested groups
+- **MATLAB Support**: Pure Dart MATLAB reader and writer with no FFI dependencies
+  - Read datasets from MATLAB v7.3 MAT-files
+  - Support for compressed (gzip, lzf) and chunked datasets
+  - Navigate group hierarchies and read attributes
+  - Cross-platform compatible (Windows, macOS, Linux, Web, Mobile)
+  - **Full datatype support**: integers, floats, strings, compounds, arrays, enums, references
+  - **Variable-length data**: Full support for vlen strings and vlen arrays
+  - **Boolean arrays**: Dedicated support for boolean data
+  - **Opaque data**: Enhanced handling of binary blobs with tags
+  - Note:
+    - Partial read/write access
 - **Database Connectivity**: Connect to SQL databases for data import and export
 - **Chunked Reading**: Handle large files with memory-efficient chunked reading
 - **Streaming Processing**: Process data streams for real-time analysis
@@ -104,7 +117,7 @@ For comprehensive documentation on specific classes and their functionalities, p
 ### I/O Documentation
 
 - **[CSV & Excel I/O Guide](./doc/csv_excel_io.md)**: Complete guide to reading and writing CSV and Excel files with examples
-- **[HDF5 Reading Guide](./example/hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
+- **[HDF5 Reading/Writing Guide](./example/hdf5.md)**: Complete guide to reading HDF5 files, including examples for basic reading, group navigation, attributes, and advanced features
 
 You can also find additional runnable examples in the `example` directory of the repository.
 

@@ -91,7 +91,7 @@ extension SeriesEnhancements on Series {
 
   /// Enhanced dtype inference with better type detection.
   String get dtypeEnhanced {
-    if (isEmpty) return 'empty';
+    if (data.isEmpty) return 'empty';
 
     final firstNonNull =
         data.cast<dynamic>().firstWhere((v) => v != null, orElse: () => null);

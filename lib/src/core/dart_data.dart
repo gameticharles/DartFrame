@@ -153,10 +153,10 @@ abstract class DartData {
   DartData slice(List<dynamic> sliceSpec);
 
   /// Check if this data structure is empty
-  bool get isEmpty => size == 0;
+  dynamic get isEmpty => size == 0;
 
   /// Check if this data structure is not empty
-  bool get isNotEmpty => size > 0;
+  dynamic get isNotEmpty => size > 0;
 
   /// Convert to string representation
   @override
@@ -182,10 +182,10 @@ mixin DartDataMixin implements DartData {
   int get size => shape.size;
 
   @override
-  bool get isEmpty => size == 0;
+  dynamic get isEmpty => size == 0;
 
   @override
-  bool get isNotEmpty => size > 0;
+  dynamic get isNotEmpty => size > 0;
 
   @override
   Type get dtype => dynamic;

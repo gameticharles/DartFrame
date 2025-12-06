@@ -1,5 +1,17 @@
 # 0.8.9
 
+- **[BREAKING CHANGE]** Series Emptiness Check
+
+  - `Series.isEmpty` and `Series.isNotEmpty` now return a boolean `Series` (element-wise check) instead of a `bool`.
+  - This aligns with `isna()` and `notna()` behavior for consistent element-wise operations.
+  - **Migration**: To check if the Series has no elements (0 length), use `series.length == 0` or `series.data.isEmpty`.
+
+- **[FEATURE]** Database Support
+
+  - **NEW**: Added MySQL support via `mysql_client_plus`.
+  - `MySQLConnection` implementation for connecting to MySQL databases.
+  - Support for `query`, `execute`, and `executeBatch`.
+
 - **[MAJOR FEATURE]** MATLAB File Format Support - Pure Dart Implementation
 
   - **NEW**: `MatReader` class for reading MATLAB (.mat) files (v5 and v7.3 formats)

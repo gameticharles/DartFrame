@@ -1,6 +1,6 @@
 name: dartframe
 description: DartFrame is a Dart library inspired by Pandas and NumPy, simplifying structured data handling (tables, CSVs, JSON) with function tools for filtering, transforming, and analysis.
-version: 0.8.8
+version: 0.8.9
 repository: https://github.com/gameticharles/DartFrame
 
 environment:
@@ -20,6 +20,7 @@ dependencies:
   # Database packages
   postgres: ^3.5.9
   sqlite3: ^3.0.1
+  mysql_client_plus: ^0.1.2
 
 dev_dependencies:
   benchmark_harness: ^2.3.1

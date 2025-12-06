@@ -1863,11 +1863,15 @@ class Series<T> implements DartData {
     return indices;
   }
 
-  /// Check if this Series is empty
+  /// Check if this Series is empty (element-wise)
+  ///
+  /// Returns a boolean Series indicating if each value is missing/empty.
   @override
-  bool get isEmpty => data.isEmpty;
+  Series get isEmpty => isna();
 
-  /// Check if this Series is not empty
+  /// Check if this Series is not empty (element-wise)
+  ///
+  /// Returns a boolean Series indicating if each value is not missing/empty.
   @override
-  bool get isNotEmpty => data.isNotEmpty;
+  Series get isNotEmpty => notna();
 }
