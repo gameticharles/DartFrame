@@ -26,7 +26,6 @@ import 'sparse_matrix.dart';
 /// ```
 class MatV73Writer {
   // Reference counter for cell arrays and complex structures
-  int _refCounter = 0;
   final Map<String, dynamic> _pendingReferences = {};
 
   MatV73Writer._();
@@ -80,7 +79,6 @@ class MatV73Writer {
     }
 
     // Reset reference counter for new file
-    _refCounter = 0;
     _pendingReferences.clear();
 
     // Use HDF5FileBuilder directly for group support

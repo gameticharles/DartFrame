@@ -190,8 +190,6 @@ class MatV73Reader {
 
       return strings;
     }
-
-    return data.toString();
   }
 
   Future<List<bool>> _readLogicalVariable(
