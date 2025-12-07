@@ -293,10 +293,10 @@ packages:
     dependency: transitive
     description:
       name: native_toolchain_c
-      sha256: "932ba84084915969879a044ab24342dde5f687a5c24208590c487f1af2317d21"
+      sha256: "89e83885ba09da5fdf2cdacc8002a712ca238c28b7f717910b34bcd27b0d03ac"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.3"
+    version: "0.17.4"
   node_preamble:
     dependency: transitive
     description:
@@ -429,10 +429,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: "4fd811bd46d2191ff06fed74d7f1ab8be94944ff75dcb5486c052d1769118476"
+      sha256: "0374add4094d34fcf9d22068b6ddb4056782353ad4a5449bc5b71c5f2175f0ec"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.1"
+    version: "3.1.1"
   stack_trace:
     dependency: transitive
     description:

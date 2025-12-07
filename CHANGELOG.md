@@ -1,3 +1,10 @@
+# 0.8.10
+
+- **[FIX]** Series Accessors
+
+  - Fixed `Series.first` and `Series.last` behavior for empty Series.
+  - Now throws `StateError` instead of returning null.
+
 # 0.8.9
 
 - **[BREAKING CHANGE]** Series Emptiness Check

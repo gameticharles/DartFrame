@@ -266,6 +266,16 @@ class Series<T> implements DartData {
   /// Length of the data in the series
   int get length => data.length;
 
+  /// Returns the first element.
+  ///
+  /// Throws a [StateError] if this is empty.
+  T? get first => data.first;
+
+  /// Returns the last element.
+  ///
+  /// Throws a [StateError] if this is empty.
+  T? get last => data.last;
+
   /// Returns the predominant data type of the Series.
   ///
   /// This getter determines the most common type among non-missing values in the Series.

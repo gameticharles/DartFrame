@@ -1,3 +1,5 @@
+import 'package:dartframe/dartframe.dart';
+
 /// Example demonstrating smart slicing in NDArray.
 ///
 /// Smart slicing automatically returns the appropriate type based on
@@ -7,10 +9,6 @@
 /// - 2D -> NDArray with shape [rows, cols] (will be DataFrame when task 32 is complete)
 /// - 3D -> DataCube
 /// - 4D+ -> NDArray
-library;
-
-import 'package:dartframe/dartframe.dart';
-
 void main() {
   print('=== Smart Slicing Examples ===\n');
 
