@@ -234,7 +234,6 @@ class FileReader {
   /// - `path`: Path to the CSV file
   /// - `fieldDelimiter`: Field separator character (default: ',')
   /// - `textDelimiter`: Text quote character (default: '"')
-  /// - `textEndDelimiter`: Ending text delimiter (default: same as textDelimiter)
   /// - `eol`: Line ending character (default: '\n')
   /// - `hasHeader`: Whether first row is header (default: true)
   /// - `skipRows`: Number of rows to skip (default: 0)
@@ -270,7 +269,6 @@ class FileReader {
   static Future<DataFrame> readCsv(String path,
       {String fieldDelimiter = ',',
       String textDelimiter = '"',
-      String? textEndDelimiter,
       String? eol,
       bool hasHeader = true,
       int? skipRows,
@@ -280,7 +278,6 @@ class FileReader {
     final mergedOptions = <String, dynamic>{
       'fieldDelimiter': fieldDelimiter,
       'textDelimiter': textDelimiter,
-      if (textEndDelimiter != null) 'textEndDelimiter': textEndDelimiter,
       if (eol != null) 'eol': eol,
       'hasHeader': hasHeader,
       if (skipRows != null) 'skipRows': skipRows,

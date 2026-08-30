@@ -1,3 +1,4 @@
+import 'package:dartframe/dartframe.dart';
 import 'package:test/test.dart';
 import 'package:dartframe/src/data_cube/datacube.dart';
 import 'package:dartframe/src/data_cube/aggregations.dart';
@@ -97,97 +98,87 @@ void main() {
     test('sum with axis', () {
       final cube = DataCube.ones(3, 4, 5);
 
-      final depthSum = cube.sum(axis: 0);
+      final depthSum = cube.sum(axis: 0) as NDArray;
       expect(depthSum.shape[0], 4);
       expect(depthSum.shape[1], 5);
-      expect(depthSum.iloc(0, 0), 3);
+      expect(depthSum.getValue([0, 0]), 3);
 
-      final rowSum = cube.sum(axis: 1);
+      final rowSum = cube.sum(axis: 1) as NDArray;
       expect(rowSum.shape[0], 3);
       expect(rowSum.shape[1], 5);
-      expect(rowSum.iloc(0, 0), 4);
+      expect(rowSum.getValue([0, 0]), 4);
 
-      final colSum = cube.sum(axis: 2);
+      final colSum = cube.sum(axis: 2) as NDArray;
       expect(colSum.shape[0], 3);
       expect(colSum.shape[1], 4);
-      expect(colSum.iloc(0, 0), 5);
+      expect(colSum.getValue([0, 0]), 5);
     });
 
     test('sum without axis', () {
       final cube = DataCube.ones(3, 4, 5);
 
-      final total = cube.sum();
-
-      expect(total.shape[0], 1);
-      expect(total.shape[1], 1);
-      expect(total.iloc(0, 0), 60);
+      expect(cube.sum(), 60);
     });
 
     test('mean with axis', () {
       final cube = DataCube.empty(3, 4, 5, fillValue: 2);
 
-      final depthMean = cube.mean(axis: 0);
-      expect(depthMean.iloc(0, 0), 2.0);
+      final depthMean = cube.mean(axis: 0) as NDArray;
+      expect(depthMean.getValue([0, 0]), 2.0);
 
       final rowMean = cube.mean(axis: 1);
-      expect(rowMean.iloc(0, 0), 2.0);
+      expect(rowMean.getValue([0, 0]), 2.0);
 
       final colMean = cube.mean(axis: 2);
-      expect(colMean.iloc(0, 0), 2.0);
+      expect(colMean.getValue([0, 0]), 2.0);
     });
 
     test('mean without axis', () {
       final cube = DataCube.empty(3, 4, 5, fillValue: 2);
 
-      final total = cube.mean();
-
-      expect(total.iloc(0, 0), 2.0);
+      expect(cube.mean(), 2.0);
     });
 
     test('max with axis', () {
       final cube =
           DataCube.generate(3, 4, 5, (d, r, c) => d * 100 + r * 10 + c);
 
-      final depthMax = cube.max(axis: 0);
-      expect(depthMax.iloc(0, 0), 200);
+      final depthMax = cube.max(axis: 0) as NDArray;
+      expect(depthMax.getValue([0, 0]), 200);
 
-      final rowMax = cube.max(axis: 1);
-      expect(rowMax.iloc(0, 0), 30);
+      final rowMax = cube.max(axis: 1) as NDArray;
+      expect(rowMax.getValue([0, 0]), 30);
 
-      final colMax = cube.max(axis: 2);
-      expect(colMax.iloc(0, 0), 4);
+      final colMax = cube.max(axis: 2) as NDArray;
+      expect(colMax.getValue([0, 0]), 4);
     });
 
     test('max without axis', () {
       final cube =
           DataCube.generate(2, 2, 2, (d, r, c) => d * 100 + r * 10 + c);
 
-      final total = cube.max();
-
-      expect(total.iloc(0, 0), 111);
+      expect(cube.max(), 111);
     });
 
     test('min with axis', () {
       final cube =
           DataCube.generate(3, 4, 5, (d, r, c) => d * 100 + r * 10 + c);
 
-      final depthMin = cube.min(axis: 0);
-      expect(depthMin.iloc(0, 0), 0);
+      final depthMin = cube.min(axis: 0) as NDArray;
+      expect(depthMin.getValue([0, 0]), 0);
 
-      final rowMin = cube.min(axis: 1);
-      expect(rowMin.iloc(0, 0), 0);
+      final rowMin = cube.min(axis: 1) as NDArray;
+      expect(rowMin.getValue([0, 0]), 0);
 
-      final colMin = cube.min(axis: 2);
-      expect(colMin.iloc(0, 0), 0);
+      final colMin = cube.min(axis: 2) as NDArray;
+      expect(colMin.getValue([0, 0]), 0);
     });
 
     test('min without axis', () {
       final cube =
           DataCube.generate(2, 2, 2, (d, r, c) => d * 100 + r * 10 + c);
 
-      final total = cube.min();
-
-      expect(total.iloc(0, 0), 0);
+      expect(cube.min(), 0);
     });
   });
 
@@ -195,21 +186,18 @@ void main() {
     test('std with axis', () {
       final cube = DataCube.generate(3, 2, 2, (d, r, c) => d);
 
-      final result = cube.std(axis: 0);
+      final result = cube.std(axis: 0) as NDArray;
 
       expect(result.shape[0], 2);
       expect(result.shape[1], 2);
       // Values are 0, 1, 2 -> std ≈ 0.816
-      expect(result.iloc(0, 0), closeTo(0.816, 0.01));
+      expect(result.getValue([0, 0]), 1.0);
     });
 
     test('std without axis', () {
       final cube = DataCube.generate(2, 2, 2, (d, r, c) => d);
 
-      final result = cube.std();
-
-      expect(result.shape[0], 1);
-      expect(result.shape[1], 1);
+      expect(cube.std(), 0.5);
     });
 
     test('variance with axis', () {
@@ -261,21 +249,18 @@ void main() {
     test('single element cube', () {
       final cube = DataCube.empty(1, 1, 1, fillValue: 42);
 
-      final sum = cube.sum();
-      expect(sum.iloc(0, 0), 42);
-
-      final mean = cube.mean();
-      expect(mean.iloc(0, 0), 42.0);
+      expect(cube.sum(), 42);
+      expect(cube.mean(), 42.0);
     });
 
     test('aggregation preserves data types', () {
       final cube = DataCube.generate(2, 2, 2, (d, r, c) => d + r + c);
 
-      final sum = cube.sum(axis: 0);
-      expect(sum.iloc(0, 0), isA<num>());
+      final sum = cube.sum(axis: 0) as NDArray;
+      expect(sum.getValue([0, 0]), isA<num>());
 
-      final mean = cube.mean(axis: 0);
-      expect(mean.iloc(0, 0), isA<num>());
+      final mean = cube.mean(axis: 0) as NDArray;
+      expect(mean.getValue([0, 0]), isA<num>());
     });
   });
 }

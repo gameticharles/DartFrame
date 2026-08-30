@@ -266,7 +266,6 @@ class FileWriter {
   /// - `path`: Path where the CSV file will be saved
   /// - `fieldDelimiter`: Field separator character (default: ',')
   /// - `textDelimiter`: Text quote character (default: '"')
-  /// - `textEndDelimiter`: Ending text delimiter (default: same as textDelimiter)
   /// - `eol`: Line ending character (default: '\n')
   /// - `includeHeader`: Include header row (default: true)
   /// - `includeIndex`: Include row index column (default: false)
@@ -303,7 +302,6 @@ class FileWriter {
   static Future<void> writeCsv(DataFrame df, String path,
       {String fieldDelimiter = ',',
       String textDelimiter = '"',
-      String? textEndDelimiter,
       String? eol,
       bool includeHeader = true,
       bool includeIndex = false,
@@ -311,7 +309,6 @@ class FileWriter {
     final mergedOptions = <String, dynamic>{
       'fieldDelimiter': fieldDelimiter,
       'textDelimiter': textDelimiter,
-      if (textEndDelimiter != null) 'textEndDelimiter': textEndDelimiter,
       if (eol != null) 'eol': eol,
       'includeHeader': includeHeader,
       'includeIndex': includeIndex,

@@ -128,7 +128,7 @@ void main() {
       expect(str, contains('1      2'));
       expect(str, contains('2      3'));
       expect(str, contains('Length: 3'));
-      expect(str, contains('Type: int'));
+      expect(str, contains('dtype: int'));
     });
 
     test('toString string series with custom index', () {
@@ -138,7 +138,7 @@ void main() {
       expect(str, contains('x      a'));
       expect(str, contains('y      b'));
       expect(str, contains('Length: 2'));
-      expect(str, contains('Type: String'));
+      expect(str, contains('dtype: string'));
     });
 
     test('toString empty series', () {
