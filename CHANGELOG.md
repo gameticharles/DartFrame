@@ -1,3 +1,32 @@
+# 0.9.0
+
+- **[BREAKING CHANGE]** Dependency Migration & Upgrades
+
+  - **`archive` 4.x**: Upgraded `archive` dependency to `^4.0.0`.
+  - **`csv_plus` Migration**: Migrated from `csv` package to `csv_plus` (`^1.4.0`), utilizing `CsvCodec` and `CsvConfig`.
+  - **Delimiter Support**: Removed `textEndDelimiter` option from `CsvReader`, `CsvFileWriter`, `FileReader.readCsv()`, and `FileWriter.writeCsv()`. Asymmetrical quote delimiters are no longer supported because `csv_plus` uses symmetric `quoteCharacter`.
+  - **`excel_plus` Migration**: Migrated from `excel` package to `excel_plus` (`^2.16.0`) for Excel spreadsheet reading and writing.
+  - **`lints`**: Upgraded `lints` dev dependency to `^6.0.0`.
+
+- **[FEATURE]** Type-Safe DataFrame Piping
+
+  - Enhanced `DataFrame.pipe` extension method with generic return type `R pipe<R>(R Function(DataFrame) func)` instead of dynamic return type.
+  - Allows chaining method calls (e.g., calling `GroupBy` methods after `pipe`) with full compile-time type safety.
+
+- **[ENHANCEMENT]** DataCube & Core Enhancements
+
+  - **`Shape` Validation**: Added validation to reject empty dimension lists (`dimensions.isEmpty`) in `Shape(List<int> dimensions)`. All shapes must now have one or more non-negative dimensions.
+  - **`DataCube.slice`**: Fixed 3D slice return handling to preserve attributes and properly copy the underlying `NDArray` data when a 3D slice is returned.
+  - **`DataCube.toDataFrame`**: Generated DataFrames from cube depth slices now assign explicit column names (`col_1`, `col_2`, ...) matching the column dimension.
+
+- **[TESTING]** Test Suite Fixes and Maintenance
+
+  - Updated DataCube aggregation unit tests to use `.getValue()` on returned `NDArray` instances instead of deprecated `.iloc()`.
+  - Updated unit tests for `DataFrame.fromExcel` to explicitly specify the `'TestData'` sheet.
+  - Adjusted HDF5 symbol table writer unit tests to account for padding byte offsets in heap data calculations.
+  - Updated Series `toString()` tests to verify `'dtype:'` output format.
+  - Resolved dynamic type invocations in categorical Series, functional programming, and GroupBy tests.
+
 # 0.8.10
 
 - **[FIX]** Series Accessors
