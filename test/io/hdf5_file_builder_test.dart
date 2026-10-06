@@ -264,13 +264,12 @@ void main() {
         );
       });
 
-      test('rejects nested group paths', () async {
+      test('accepts nested group paths', () async {
         final array = NDArray.fromFlat([1.0, 2.0, 3.0, 4.0], [2, 2]);
 
-        expect(
-          () => builder.build(array: array, datasetPath: '/group/data'),
-          throwsA(isA<InvalidDatasetNameError>()),
-        );
+        final bytes =
+            await builder.build(array: array, datasetPath: '/group/data');
+        expect(bytes, isNotEmpty);
       });
 
       test('accepts valid simple paths', () async {

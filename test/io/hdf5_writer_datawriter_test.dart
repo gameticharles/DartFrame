@@ -195,7 +195,7 @@ void main() {
       );
     });
 
-    test('writeMultiple throws for multiple datasets', () async {
+    test('writeMultiple works for multiple datasets', () async {
       final df1 = DataFrame.fromMap({
         'a': [1, 2, 3]
       });
@@ -203,13 +203,12 @@ void main() {
         'b': [4, 5, 6]
       });
 
-      await expectLater(
-        HDF5WriterUtils.writeMultiple(testFilePath, {
-          '/dataset1': df1,
-          '/dataset2': df2,
-        }),
-        throwsA(isA<ArgumentError>()),
-      );
+      await HDF5WriterUtils.writeMultiple(testFilePath, {
+        '/dataset1': df1,
+        '/dataset2': df2,
+      });
+
+      expect(await File(testFilePath).exists(), isTrue);
     });
 
     test('writeMultiple works with single dataset', () async {

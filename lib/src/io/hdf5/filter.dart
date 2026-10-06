@@ -641,36 +641,37 @@ class FilterPipeline {
       int flags = 0;
       int numClientDataValues = 0;
 
+      String? filterName;
       if (version == 1) {
         nameLength = await reader.readUint16();
         flags = await reader.readUint16();
         numClientDataValues = await reader.readUint16();
+        if (nameLength > 0) {
+          final nameBytes = await reader.readBytes(nameLength);
+          filterName = String.fromCharCodes(nameBytes.where((b) => b != 0));
+          final padding = (8 - (nameLength % 8)) % 8;
+          if (padding > 0) {
+            await reader.readBytes(padding);
+          }
+        }
       } else {
         // Version 2
         final nameLengthOrFlags = await reader.readUint16();
         if (filterId < 256) {
           // Predefined filter
           flags = nameLengthOrFlags;
-          nameLength = 0;
         } else {
-          // Custom filter
+          // Custom filter: name length, flags, then name bytes padded to 8 bytes
           nameLength = nameLengthOrFlags;
           flags = await reader.readUint16();
+          final nameBytes = await reader.readBytes(nameLength);
+          filterName = String.fromCharCodes(nameBytes.where((b) => b != 0));
+          final padding = (8 - (nameLength % 8)) % 8;
+          if (padding > 0) {
+            await reader.readBytes(padding);
+          }
         }
         numClientDataValues = await reader.readUint16();
-      }
-
-      // Read filter name if present
-      String? filterName;
-      if (nameLength > 0) {
-        final nameBytes = await reader.readBytes(nameLength);
-        filterName = String.fromCharCodes(nameBytes.where((b) => b != 0));
-
-        // Align to 8-byte boundary after name
-        final padding = (8 - (nameLength % 8)) % 8;
-        if (padding > 0) {
-          await reader.readBytes(padding);
-        }
       }
 
       // Read client data values

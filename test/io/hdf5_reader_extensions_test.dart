@@ -289,13 +289,12 @@ void main() {
       await cleanup(testFile);
     });
 
-    test('read empty array', () async {
+    test('empty array write throws DataValidationError', () async {
       final original = NDArray.zeros([0]);
-      await original.toHDF5(testFile);
-
-      final loaded = await readNDArray(testFile);
-
-      expect(loaded.size, 0);
+      expect(
+        () => original.toHDF5(testFile),
+        throwsA(isA<DataValidationError>()),
+      );
     });
 
     test('read single element', () async {

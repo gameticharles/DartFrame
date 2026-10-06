@@ -47,7 +47,7 @@ class DataCube extends DartData {
     if (array.ndim != 3) {
       throw ArgumentError('NDArray must be 3-dimensional for DataCube');
     }
-    return DataCube._(array, Attributes());
+    return DataCube._(array, Attributes.fromJson(array.attrs.toJson()));
   }
 
   /// Creates a DataCube from a list of DataFrames.

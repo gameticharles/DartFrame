@@ -84,18 +84,12 @@ void main() {
         );
       });
 
-      test('should reject nested groups (not yet supported)', () {
+      test('should accept nested groups', () async {
         final builder = HDF5FileBuilder();
         final array = NDArray.fromFlat([1.0, 2.0, 3.0], [3]);
 
-        expect(
-          () => builder.build(array: array, datasetPath: '/group/data'),
-          throwsA(isA<InvalidDatasetNameError>().having(
-            (e) => e.details,
-            'details',
-            contains('Nested groups not yet supported'),
-          )),
-        );
+        final bytes = await builder.build(array: array, datasetPath: '/group/data');
+        expect(bytes, isNotEmpty);
       });
 
       test('should accept valid dataset names', () async {

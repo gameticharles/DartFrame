@@ -98,7 +98,7 @@ void main() async {
     final original1 = [1.0, 2.0, 3.0, 4.0];
     bool match1 = true;
     for (int i = 0; i < 4; i++) {
-      if (data1[i] != original1[i]) {
+      if (data1.getValue([i ~/ 2, i % 2]) != original1[i]) {
         match1 = false;
         break;
       }
@@ -113,7 +113,7 @@ void main() async {
     final original2 = [5.0, 6.0, 7.0, 8.0];
     bool match2 = true;
     for (int i = 0; i < 4; i++) {
-      if (data2[i] != original2[i]) {
+      if (data2.getValue([i ~/ 2, i % 2]) != original2[i]) {
         match2 = false;
         break;
       }
@@ -128,7 +128,7 @@ void main() async {
     final original3 = [9.0, 10.0, 11.0, 12.0];
     bool match3 = true;
     for (int i = 0; i < 4; i++) {
-      if (data3[i] != original3[i]) {
+      if (data3.getValue([i ~/ 2, i % 2]) != original3[i]) {
         match3 = false;
         break;
       }

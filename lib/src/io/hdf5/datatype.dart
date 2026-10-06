@@ -359,7 +359,7 @@ class Hdf5Datatype<T> {
     // Version 2: dimensionality (1 byte), reserved (3 bytes), dimension sizes (4 bytes each), base type
     // Version 3: dimensionality (1 byte), reserved (3 bytes), dimension sizes (4 bytes each), base type
 
-    if (version == 1) {
+    if (version == 1 || version == 2) {
       final dimensionality = await reader.readUint8();
       await reader.readBytes(3); // reserved
 
@@ -369,7 +369,7 @@ class Hdf5Datatype<T> {
         dimensions.add(await reader.readUint32());
       }
 
-      // Skip permutation indices (4 bytes per dimension)
+      // Skip permutation indices (4 bytes per dimension for versions 1 and 2)
       await reader.readBytes(dimensionality * 4);
 
       // Read base datatype
@@ -383,7 +383,7 @@ class Hdf5Datatype<T> {
         baseType: baseType,
         arrayInfo: ArrayInfo(dimensions: dimensions),
       );
-    } else if (version == 2 || version == 3) {
+    } else if (version == 3) {
       final dimensionality = await reader.readUint8();
       await reader.readBytes(3); // reserved
 
@@ -421,7 +421,8 @@ class Hdf5Datatype<T> {
     // Enum datatype structure:
     // - Number of members (2 bytes)
     // - Base datatype (integer type)
-    // - Member names and values
+    // - Member names (null-terminated strings, padded to 8 bytes for version < 3)
+    // - Member values (array of base type values)
 
     int numMembers;
     if (version < 3) {
@@ -433,10 +434,9 @@ class Hdf5Datatype<T> {
     // Read base datatype (must be integer)
     final baseType = await read(reader);
 
-    // Read member names and values
-    final members = <EnumMember>[];
+    // Read all member names first
+    final names = <String>[];
     for (int i = 0; i < numMembers; i++) {
-      // Read member name (null-terminated)
       final nameBytes = <int>[];
       int byte;
       do {
@@ -444,22 +444,20 @@ class Hdf5Datatype<T> {
         if (byte != 0) nameBytes.add(byte);
       } while (byte != 0);
 
-      final name = String.fromCharCodes(nameBytes);
-      print(
-          'Enum member $i: name="$name" (${nameBytes.length} bytes), version=$version, baseType.size=${baseType.size}');
+      names.add(String.fromCharCodes(nameBytes));
 
-      // Align to multiple of base type size
       if (version < 3) {
         final nameLength = nameBytes.length + 1; // +1 for null terminator
-        final padding =
-            (baseType.size - (nameLength % baseType.size)) % baseType.size;
-        print('  Padding: $padding bytes');
+        final padding = (8 - (nameLength % 8)) % 8;
         if (padding > 0) {
           await reader.readBytes(padding);
         }
       }
+    }
 
-      // Read value based on base type size
+    // Read all member values next
+    final members = <EnumMember>[];
+    for (int i = 0; i < numMembers; i++) {
       int value;
       switch (baseType.size) {
         case 1:
@@ -477,9 +475,8 @@ class Hdf5Datatype<T> {
         default:
           throw Exception('Unsupported enum base type size: ${baseType.size}');
       }
-      print('  Value: $value');
 
-      members.add(EnumMember(name: name, value: value));
+      members.add(EnumMember(name: names[i], value: value));
     }
 
     return Hdf5Datatype(

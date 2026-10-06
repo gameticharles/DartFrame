@@ -17,14 +17,16 @@ void hdf5DebugLog(String message) {
 }
 
 /// Base class for all HDF5 errors with comprehensive diagnostics
-class Hdf5Error implements Exception {
+class Hdf5Error implements Exception, ArgumentError {
   final String operation;
   final String? filePath;
   final String? objectPath;
+  @override
   final String message;
   final String? details;
   final List<String> recoverySuggestions;
   final Object? originalError;
+  @override
   final StackTrace? stackTrace;
 
   Hdf5Error({
@@ -37,6 +39,12 @@ class Hdf5Error implements Exception {
     this.originalError,
     this.stackTrace,
   });
+
+  @override
+  dynamic get invalidValue => null;
+
+  @override
+  String? get name => null;
 
   @override
   String toString() {
@@ -510,14 +518,18 @@ class WriteInterruptedError extends HDF5WriteError {
 
 /// Error thrown when data validation fails before writing
 class DataValidationError extends HDF5WriteError {
+  final String reason;
+
   DataValidationError({
     super.filePath,
     super.objectPath,
-    required String reason,
+    required this.reason,
     super.details,
   }) : super(
-          operation: 'Validate data',
-          message: 'Data validation failed',
+          operation: 'Data validation',
+          message: details != null
+              ? 'Data validation failed: $reason ($details)'
+              : 'Data validation failed: $reason',
           recoverySuggestions: [
             'Check that the data array is not empty',
             'Verify all dimensions are positive',
@@ -560,7 +572,9 @@ class InvalidChunkDimensionsError extends HDF5WriteError {
     String? additionalDetails,
   }) : super(
           operation: 'Validate chunk dimensions',
-          message: 'Invalid chunk dimensions',
+          message: additionalDetails != null
+              ? '$additionalDetails. Chunk dimensions: $chunkDimensions, Dataset dimensions: $datasetDimensions'
+              : 'Invalid chunk dimensions: Chunk dimensions $chunkDimensions are incompatible with dataset dimensions $datasetDimensions',
           details: additionalDetails ??
               'Chunk dimensions $chunkDimensions are incompatible with dataset dimensions $datasetDimensions',
           recoverySuggestions: [

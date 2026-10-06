@@ -73,7 +73,8 @@ class WriteOptions {
       // Automatically enable chunked storage when compression is requested
       // This is handled by the caller, but we document it here
       throw DataValidationError(
-        reason: 'Compression requires chunked storage layout',
+        reason:
+            'Compression requires chunked storage layout. Set layout to StorageLayout.chunked.',
         details:
             'When compression is enabled, the storage layout must be set to StorageLayout.chunked. '
             'Current layout: $layout, Compression: $compression',
@@ -84,7 +85,8 @@ class WriteOptions {
     if (compression == CompressionType.gzip) {
       if (compressionLevel < 1 || compressionLevel > 9) {
         throw DataValidationError(
-          reason: 'Invalid compression level for gzip',
+          reason:
+              'Compression level must be between 1 and 9. Got: $compressionLevel',
           details:
               'Compression level must be between 1 and 9 for gzip. Got: $compressionLevel. '
               'Use 1 for fastest compression, 9 for best compression, or 6 for balanced performance.',

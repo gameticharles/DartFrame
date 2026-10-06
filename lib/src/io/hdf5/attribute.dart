@@ -500,9 +500,11 @@ class Hdf5Attribute {
 
     // Write datatype message
     writer.writeBytes(datatypeMessage);
+    writer.alignTo(8);
 
     // Write dataspace message
     writer.writeBytes(dataspaceMessage);
+    writer.alignTo(8);
 
     // Write data
     writer.writeBytes(data);

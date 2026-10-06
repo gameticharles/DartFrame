@@ -905,11 +905,25 @@ class HDF5FileBuilder {
     );
     superblock.writeTo(_writer);
 
-    // Step 2: Write root group and all subgroups
-    await _writeGroupHierarchy();
+    // Step 2: Write root group header placeholder at offset 96
+    if (_rootGroup == null) {
+      _rootGroup = GroupData(name: '', fullPath: '/');
+      _groups['/'] = _rootGroup!;
+    }
+    final rootGroupAddress = _writeRootGroupHeader();
+    _rootGroup!.objectHeaderAddress = rootGroupAddress;
+    _addresses['rootGroup'] = rootGroupAddress;
 
-    // Step 3: Write all datasets
+    // Step 3: Write all datasets (their addresses are recorded in parentGroup.datasets)
     await _writeAllDatasets();
+
+    // Step 4: Write all subgroups (depth-first: deepest subgroups first)
+    for (final subgroup in _rootGroup!.subgroups.values) {
+      await _writeSubgroupRecursive(subgroup);
+    }
+
+    // Step 5: Update root group symbol table
+    _updateRootGroupSymbolTableMulti();
 
     // Step 4: Write heaps
     final heapAddresses = _heapManager.writeAll(_writer);
@@ -1103,43 +1117,22 @@ class HDF5FileBuilder {
 
   // ========== Writing Methods ==========
 
-  /// Write the group hierarchy (root and all subgroups)
-  Future<void> _writeGroupHierarchy() async {
-    // Ensure root group exists
-    if (_rootGroup == null) {
-      _rootGroup = GroupData(name: '', fullPath: '/');
-      _groups['/'] = _rootGroup!;
-    }
-
-    // Write groups in depth-first order (children before parents)
-    await _writeGroupRecursive(_rootGroup!);
-  }
-
-  /// Recursively write a group and its children
-  Future<void> _writeGroupRecursive(GroupData group) async {
-    // Write all subgroups first (depth-first)
+  /// Recursively write a subgroup and its children in depth-first order
+  Future<void> _writeSubgroupRecursive(GroupData group) async {
+    // Write all child subgroups first (depth-first: deepest subgroups first)
     for (final subgroup in group.subgroups.values) {
-      await _writeGroupRecursive(subgroup);
+      await _writeSubgroupRecursive(subgroup);
     }
 
-    // Now write this group
-    // For root group, we need to handle it specially
-    if (group.fullPath == '/') {
-      // Write root group object header with placeholder symbol table
-      final rootGroupAddress = _writeRootGroupHeader();
-      group.objectHeaderAddress = rootGroupAddress;
-      _addresses['rootGroup'] = rootGroupAddress;
-    } else {
-      // Write non-root group
-      // Only skip if truly empty (no datasets and no subgroups)
-      if (group.datasets.isEmpty && group.subgroups.isEmpty) {
-        return;
-      }
-
-      final groupAddress = await _groupWriter.writeGroup(_writer, group);
-      group.objectHeaderAddress = groupAddress;
-      _addresses['group_${group.fullPath}'] = groupAddress;
+    // Write non-root group
+    // Only skip if truly empty (no datasets and no subgroups)
+    if (group.datasets.isEmpty && group.subgroups.isEmpty) {
+      return;
     }
+
+    final groupAddress = await _groupWriter.writeGroup(_writer, group);
+    group.objectHeaderAddress = groupAddress;
+    _addresses['group_${group.fullPath}'] = groupAddress;
   }
 
   /// Write root group object header with placeholder symbol table
@@ -1168,9 +1161,6 @@ class HDF5FileBuilder {
     for (final datasetInfo in _datasets.values) {
       await _writeDatasetWithData(datasetInfo);
     }
-
-    // Update root group symbol table with all children
-    _updateRootGroupSymbolTableMulti();
   }
 
   /// Write a dataset and its data
