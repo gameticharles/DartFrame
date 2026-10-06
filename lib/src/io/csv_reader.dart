@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:csv/csv.dart';
+import 'package:csv_plus/csv_plus.dart';
 import '../data_frame/data_frame.dart';
 import '../file_helper/file_io.dart';
 import 'readers.dart';
@@ -35,7 +35,6 @@ import 'readers.dart';
 /// ## Options
 /// - `fieldDelimiter` (String): Field separator character (default: ',')
 /// - `textDelimiter` (String): Text quote character (default: '"')
-/// - `textEndDelimiter` (String?): Ending text delimiter (default: same as textDelimiter)
 /// - `eol` (String?): Line ending character (default: '\n')
 /// - `hasHeader` (bool): Whether first row is header (default: true)
 /// - `skipRows` (int): Number of rows to skip (default: 0)
@@ -70,7 +69,6 @@ class CsvReader implements DataReader {
       // Parse options
       final fieldDelimiter = options?['fieldDelimiter'] as String? ?? ',';
       final textDelimiter = options?['textDelimiter'] as String? ?? '"';
-      final textEndDelimiter = options?['textEndDelimiter'] as String?;
       final eol = options?['eol'] as String?;
       final hasHeader = options?['hasHeader'] as bool? ?? true;
       final skipRows = options?['skipRows'] as int? ?? 0;
@@ -79,15 +77,16 @@ class CsvReader implements DataReader {
 
       // Configure CSV converter
       // Note: eol must be explicitly set for proper parsing
-      final converter = CsvToListConverter(
-        fieldDelimiter: fieldDelimiter,
-        textDelimiter: textDelimiter,
-        textEndDelimiter: textEndDelimiter,
-        eol: eol ?? '\n',
+      final codec = CsvCodec(
+          CsvConfig(
+              fieldDelimiter: fieldDelimiter,
+              quoteCharacter: textDelimiter,
+              lineDelimiter: eol ?? '\n'
+          )
       );
 
       // Parse CSV
-      final rows = converter.convert(content);
+      final rows = codec.decode(content);
 
       if (rows.isEmpty) {
         throw CsvReadError('Empty CSV file');

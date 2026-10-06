@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:excel/excel.dart' as excel_pkg;
+import 'package:excel_plus/excel_plus.dart' as excel_pkg;
 import '../data_frame/data_frame.dart';
 import '../file_helper/file_io.dart';
 import 'readers.dart';

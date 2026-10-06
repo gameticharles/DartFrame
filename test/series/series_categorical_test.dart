@@ -321,14 +321,14 @@ void main() {
     });
 
     test('Convert back from categorical to object', () {
-      final testSeries =
+      final categoryTestSeries =
           Series(['A', 'B', 'A', 'C', 'B', 'A'], name: 'categories');
-      testSeries.astype('category');
-      expect(testSeries.isCategorical, isTrue);
+      categoryTestSeries.astype('category');
+      expect(categoryTestSeries.isCategorical, isTrue);
 
-      testSeries.astype('object');
-      expect(testSeries.isCategorical, isFalse);
-      expect(testSeries.seriesDtype, equals('object'));
+      final objectTestSeries = categoryTestSeries.astype('object');
+      expect(objectTestSeries.isCategorical, isFalse);
+      expect(objectTestSeries.seriesDtype, equals('object'));
     });
   });
 

@@ -12,7 +12,7 @@ void main() {
       'value'
     ]);
 
-    var series = df['value'];
+    var series = df['value'] as Series;
     print('Series type: ${series.runtimeType}');
     print('Series has sum: ${series.sum()}');
 
@@ -29,7 +29,7 @@ void main() {
       'value'
     ]);
 
-    var series = df['group'];
+    var series = df['group'] as Series;
     var mask = series.isEqual('A');
     print('Mask: ${mask.toList()}');
 

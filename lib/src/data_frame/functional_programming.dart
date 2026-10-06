@@ -317,7 +317,7 @@ extension DataFrameFunctionalProgramming on DataFrame {
   ///
   /// var result2 = df.pipe((df) => addColumn(df, 'C', [7, 8, 9]));
   /// ```
-  dynamic pipe(dynamic Function(DataFrame) func) {
+  R pipe<R>(R Function(DataFrame) func) {
     return func(this);
   }
 }

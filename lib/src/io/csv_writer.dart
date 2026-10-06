@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:csv/csv.dart';
+import 'package:csv_plus/csv_plus.dart';
 import '../data_frame/data_frame.dart';
 import '../file_helper/file_io.dart';
 import 'writers.dart';
@@ -35,7 +35,6 @@ import 'writers.dart';
 /// ## Options
 /// - `fieldDelimiter` (String): Field separator character (default: ',')
 /// - `textDelimiter` (String): Text quote character (default: '"')
-/// - `textEndDelimiter` (String?): Ending text delimiter (default: same as textDelimiter)
 /// - `eol` (String?): Line ending character (default: '\n')
 /// - `includeHeader` (bool): Include header row (default: true)
 /// - `includeIndex` (bool): Include row index column (default: false)
@@ -68,17 +67,17 @@ class CsvFileWriter implements DataWriter {
       // Parse options
       final fieldDelimiter = options?['fieldDelimiter'] as String? ?? ',';
       final textDelimiter = options?['textDelimiter'] as String? ?? '"';
-      final textEndDelimiter = options?['textEndDelimiter'] as String?;
       final eol = options?['eol'] as String?;
       final includeHeader = options?['includeHeader'] as bool? ?? true;
       final includeIndex = options?['includeIndex'] as bool? ?? false;
 
       // Configure CSV converter
-      final converter = ListToCsvConverter(
-        fieldDelimiter: fieldDelimiter,
-        textDelimiter: textDelimiter,
-        textEndDelimiter: textEndDelimiter ?? textDelimiter,
-        eol: eol ?? '\n',
+      final codec = CsvCodec(
+          CsvConfig(
+            fieldDelimiter: fieldDelimiter,
+            quoteCharacter: textDelimiter,
+            lineDelimiter: eol ?? '\n'
+          )
       );
 
       final rows = <List<dynamic>>[];
@@ -106,7 +105,7 @@ class CsvFileWriter implements DataWriter {
         rows.add(row);
       }
 
-      return converter.convert(rows);
+      return codec.encode(rows);
     } catch (e) {
       throw CsvWriteError('Failed to convert DataFrame to CSV: $e');
     }

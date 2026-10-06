@@ -173,8 +173,8 @@ void main() {
 
         final bytes = result['bytes'] as List<int>;
 
-        // Data segment starts after B-tree (48) + symbol table node (48) + heap header (32)
-        final dataOffset = 48 + 48 + 32;
+        // Data segment starts after B-tree (48) + symbol table node (48) + heap header (32) + one byte offset (8)
+        final dataOffset = 48 + 48 + 32 + 8;
 
         // Check dataset name '/data'
         expect(bytes[dataOffset], equals(0x2F)); // '/'
@@ -199,8 +199,8 @@ void main() {
         final heapOffset = 48 + 48;
 
         // Data segment size is at offset 8 in heap header (8 bytes, little-endian)
-        // '/data' = 5 bytes + 1 null terminator = 6 bytes
-        expect(bytes[heapOffset + 8], equals(6));
+        // 8 bytes of padding + '/data' = 5 bytes + 1 null terminator = 14 bytes
+        expect(bytes[heapOffset + 8], equals(14));
         for (int i = 1; i < 8; i++) {
           expect(bytes[heapOffset + 8 + i], equals(0));
         }
@@ -219,7 +219,7 @@ void main() {
         );
 
         final bytes = result['bytes'] as List<int>;
-        final dataOffset = 48 + 48 + 32;
+        final dataOffset = 48 + 48 + 32 + 8;
 
         // Verify '/data' encoding
         final expectedBytes = [0x2F, 0x64, 0x61, 0x74, 0x61, 0x00];
@@ -239,7 +239,7 @@ void main() {
         );
 
         final bytes = result['bytes'] as List<int>;
-        final dataOffset = 48 + 48 + 32;
+        final dataOffset = 48 + 48 + 32 + 8;
 
         // Verify '/group/dataset' encoding
         final name = '/group/dataset';
@@ -260,7 +260,7 @@ void main() {
         );
 
         final bytes = result['bytes'] as List<int>;
-        final dataOffset = 48 + 48 + 32;
+        final dataOffset = 48 + 48 + 32 + 8;
 
         // Verify UTF-8 encoding (é is encoded as 0xC3 0xA9)
         expect(bytes[dataOffset], equals(0x2F)); // '/'

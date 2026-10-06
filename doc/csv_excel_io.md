@@ -110,7 +110,6 @@ await FileWriter.writeCsv(
 #### Read Options
 - `fieldDelimiter`: Field separator (default: `,`)
 - `textDelimiter`: Text quote character (default: `"`)
-- `textEndDelimiter`: Ending text delimiter (default: same as textDelimiter)
 - `eol`: Line ending character (default: auto-detect)
 - `hasHeader`: Whether first row is header (default: `true`)
 - `skipRows`: Number of rows to skip (default: `0`)
@@ -120,7 +119,6 @@ await FileWriter.writeCsv(
 #### Write Options
 - `fieldDelimiter`: Field separator (default: `,`)
 - `textDelimiter`: Text quote character (default: `"`)
-- `textEndDelimiter`: Ending text delimiter (default: same as textDelimiter)
 - `eol`: Line ending character (default: `\n`)
 - `includeHeader`: Include header row (default: `true`)
 - `includeIndex`: Include row index column (default: `false`)

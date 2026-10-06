@@ -51,7 +51,7 @@ void main() {
       expect(File(path).existsSync(), isTrue);
 
       // Read
-      final df = await DataFrame.fromExcel(path: path);
+      final df = await DataFrame.fromExcel(path: path, sheetName: 'TestData');
       expect(df.shape.rows, equals(3));
       expect(df.shape.columns, equals(4));
       expect(df.columns, containsAll(['id', 'name', 'score', 'active']));
