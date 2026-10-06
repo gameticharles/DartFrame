@@ -13,18 +13,32 @@
   - Enhanced `DataFrame.pipe` extension method with generic return type `R pipe<R>(R Function(DataFrame) func)` instead of dynamic return type.
   - Allows chaining method calls (e.g., calling `GroupBy` methods after `pipe`) with full compile-time type safety.
 
-- **[ENHANCEMENT]** DataCube & Core Enhancements
+- **[FIX]** HDF5 Engine & Architecture
 
-  - **`NDArray` slicing**: `Parallel` and `Streaming` chunking along an axis now handle 3D slices that are returned as `DataCube`.
+  - **Group Hierarchy Writing**: Fixed group creation order in `HDF5FileBuilder` so datasets are written before groups, recording accurate object header addresses in parent group symbol tables. Corrected root group header placement to offset 96 (`Superblock.superblockSize`).
+  - **Object Header v1 Message Padding**: Fixed v1 object header message writing to align and pad message sizes to 8 bytes, preventing offset parsing corruptions.
+  - **Chunked Layout v3 Header**: Fixed chunked layout message byte order to place the dimensionality byte before the B-tree address.
+  - **Array Datatype (Class 10)**: Correctly skipped permutation indices (`dimensionality * 4` bytes) for version 1 and 2 array datatypes, fixing compound datasets containing multidimensional array fields.
+  - **Enum Datatype (Class 8)**: Fixed enum member parsing to decode all null-terminated member names (padded to 8 bytes) before reading the member values array with base type endianness.
+  - **Filter Pipeline (Class 11)**: Fixed version 2 filter pipeline parsing for custom filters (such as LZF) to read name length, flags, and padded name bytes prior to client data values.
+  - **Attribute Alignment**: Added 8-byte alignment after datatype and dataspace messages in attribute writing.
+  - **HDF5 Error Hierarchy**: `Hdf5Error` now implements `ArgumentError` with formatted diagnostic messages for seamless compatibility with standard error matchers.
+
+- **[ENHANCEMENT]** DataCube, NDArray & Core
+
+  - **0D Scalar Shape Support**: Re-enabled `Shape([])` support for zero-dimensional scalar representations across `Scalar`, `NDArray.slice`, and aggregations.
+  - **`NDArray` Slicing**: Slicing 3D chunks in parallel execution and streaming pipelines now unwraps underlying `NDArray` data from `DataCube` to prevent runtime cast errors.
+  - **`DataCube.fromNDArray`**: Preserved attributes when constructing a `DataCube` from an `NDArray`.
   - **`DataCube.slice`**: Fixed 3D slice return handling to preserve attributes and properly copy the underlying `NDArray` data when a 3D slice is returned.
   - **`DataCube.toDataFrame`**: Generated DataFrames from cube depth slices now assign explicit column names (`col_1`, `col_2`, ...) matching the column dimension.
 
 - **[TESTING]** Test Suite Fixes and Maintenance
 
+  - Restored binary HDF5 test fixtures in `test/fixtures/` (`array_test.h5`, `chunked_string_compound_test.h5`, `compound_test.h5`, `enum_test.h5`, `string_test.h5`).
+  - Updated unit tests in `hdf5_file_builder_test.dart`, `hdf5_error_handling_test.dart`, and `hdf5_writer_datawriter_test.dart` to validate nested groups and multi-dataset writes.
   - Updated DataCube aggregation unit tests to use `.getValue()` on returned `NDArray` instances instead of deprecated `.iloc()`.
   - Updated unit tests for `DataFrame.fromExcel` to explicitly specify the `'TestData'` sheet.
-  - Adjusted HDF5 symbol table writer unit tests to account for padding byte offsets in heap data calculations.
-  - Updated Series `toString()` tests to verify `'dtype:'` output format.
+  - Fixed 2D element indexing in `example/nested_groups_demo.dart`.
   - Resolved dynamic type invocations in categorical Series, functional programming, and GroupBy tests.
 
 # 0.8.10
