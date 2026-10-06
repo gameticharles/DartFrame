@@ -127,8 +127,9 @@ void main() {
     });
 
     group('Error handling', () {
-      test('throws error for empty dimensions', () {
-        expect(() => Shape([]), throwsArgumentError);
+      test('allows empty dimensions for scalar (0D)', () {
+        expect(Shape([]).ndim, equals(0));
+        expect(Shape([]).size, equals(1));
       });
 
       test('throws error for negative dimensions', () {

@@ -26,8 +26,8 @@ class Shape {
   /// print(scalar.size);  // 1
   /// ```
   Shape(List<int> dimensions) : _dimensions = List.unmodifiable(dimensions) {
-    if (dimensions.isEmpty || dimensions.any((dim) => dim < 0)) {
-      throw ArgumentError('One or more dimensions expected; all dimensions must be non-negative');
+    if (dimensions.any((dim) => dim < 0)) {
+      throw ArgumentError('All dimensions must be non-negative');
     }
   }
 

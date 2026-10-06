@@ -116,11 +116,11 @@ class ChunkedLayoutWriter extends StorageLayoutWriter {
     // Layout class: 2 = chunked
     writer.writeUint8(2);
 
+    // Dimensionality (rank + 1 for the trailing element size dimension)
+    writer.writeUint8(dimensionality + 1);
+
     // Data address (B-tree address for chunk index)
     writer.writeUint64(_btreeAddress!);
-
-    // Dimensionality
-    writer.writeUint8(dimensionality);
 
     // Chunk dimensions (each dimension size)
     for (final dim in chunkDimensions) {

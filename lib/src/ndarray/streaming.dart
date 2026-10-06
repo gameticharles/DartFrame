@@ -3,6 +3,7 @@ library;
 
 import 'dart:async';
 import 'ndarray.dart';
+import '../data_cube/datacube.dart';
 import '../core/slice_spec.dart';
 
 /// Extension providing streaming and chunked processing capabilities.
@@ -49,7 +50,8 @@ extension Streaming on NDArray {
         }
       }
 
-      yield slice(slices) as NDArray;
+      final sliced = slice(slices);
+      yield sliced is DataCube ? sliced.data : sliced as NDArray;
     }
   }
 
@@ -275,7 +277,8 @@ extension Streaming on NDArray {
         }
       }
 
-      yield slice(slices) as NDArray;
+      final sliced = slice(slices);
+      yield sliced is DataCube ? sliced.data : sliced as NDArray;
     }
   }
 

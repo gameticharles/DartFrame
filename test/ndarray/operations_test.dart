@@ -609,8 +609,9 @@ void main() {
         [1, 2, 3],
         [4, 5, 6]
       ]);
-      final rowSums = arr.sum(axis: 1);
-      expect(rowSums.sum(), 21);
+      final rowSums = arr.sum(axis: 1) as NDArray;
+      expect(rowSums.getValue([0]), 6);
+      expect(rowSums.getValue([1]), 15);
     });
 
     test('normalize array', () {

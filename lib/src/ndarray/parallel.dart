@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 import 'dart:isolate';
 import 'ndarray.dart';
+import '../data_cube/datacube.dart';
 import '../core/slice_spec.dart';
 
 /// Extension providing parallel processing capabilities using isolates.
@@ -180,7 +181,8 @@ extension Parallel on NDArray {
         }
       }
 
-      chunks.add(slice(slices) as NDArray);
+      final sliced = slice(slices);
+      chunks.add(sliced is DataCube ? sliced.data : sliced as NDArray);
     }
 
     return chunks;

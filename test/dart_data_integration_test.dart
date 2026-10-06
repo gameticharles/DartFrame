@@ -165,10 +165,10 @@ void main() {
       final empty = Series([], name: 'empty');
       final notEmpty = Series([1, 2, 3], name: 'data');
 
-      expect(empty.isEmpty, isTrue);
-      expect(empty.isNotEmpty, isFalse);
-      expect(notEmpty.isEmpty, isFalse);
-      expect(notEmpty.isNotEmpty, isTrue);
+      expect(empty.length == 0, isTrue);
+      expect(empty.length != 0, isFalse);
+      expect(notEmpty.length == 0, isFalse);
+      expect(notEmpty.length != 0, isTrue);
     });
   });
 

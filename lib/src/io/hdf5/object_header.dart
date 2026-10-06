@@ -444,9 +444,13 @@ class ObjectHeader {
 
   /// Write a single message with its header
   void _writeMessage(ByteWriter writer, ObjectHeaderMessage message) {
+    final dataLength = message.data.length as int;
+    final paddedLength = ((dataLength + 7) ~/ 8) * 8;
+
     // Write message header (8 bytes)
     writer.writeUint16(message.type.id); // Message type
-    writer.writeUint16(message.data.length); // Data size
+    // Version 1 message sizes include the padding up to the 8-byte boundary
+    writer.writeUint16(version == 1 ? paddedLength : dataLength); // Data size
     writer.writeUint8(message.flags); // Flags
     writer.writeUint8(0); // Reserved
     writer.writeUint8(0); // Reserved
@@ -455,8 +459,10 @@ class ObjectHeader {
     // Write message data
     writer.writeBytes(message.data);
 
-    // Align to 8-byte boundary
-    writer.alignTo(8);
+    // Pad to 8-byte boundary
+    if (paddedLength > dataLength) {
+      writer.writeBytes(List<int>.filled(paddedLength - dataLength, 0));
+    }
   }
 
   /// Calculate the total size of this object header when written

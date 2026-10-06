@@ -15,7 +15,7 @@
 
 - **[ENHANCEMENT]** DataCube & Core Enhancements
 
-  - **`Shape` Validation**: Added validation to reject empty dimension lists (`dimensions.isEmpty`) in `Shape(List<int> dimensions)`. All shapes must now have one or more non-negative dimensions.
+  - **`NDArray` slicing**: `Parallel` and `Streaming` chunking along an axis now handle 3D slices that are returned as `DataCube`.
   - **`DataCube.slice`**: Fixed 3D slice return handling to preserve attributes and properly copy the underlying `NDArray` data when a 3D slice is returned.
   - **`DataCube.toDataFrame`**: Generated DataFrames from cube depth slices now assign explicit column names (`col_1`, `col_2`, ...) matching the column dimension.
 
