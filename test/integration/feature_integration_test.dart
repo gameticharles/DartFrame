@@ -1,5 +1,6 @@
 import 'package:test/test.dart';
 import 'package:dartframe/dartframe.dart';
+import 'package:dartframe/database.dart';
 
 /// Integration tests for enhanced DartFrame features.
 ///

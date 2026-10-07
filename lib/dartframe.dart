@@ -5,7 +5,8 @@ export 'src/data_frame/data_frame.dart';
 export 'src/file_helper/file_io.dart';
 export 'src/io/readers.dart';
 export 'src/io/writers.dart';
-export 'src/io/database.dart';
+// Note: Database support (PostgreSQL, MySQL, SQLite) is available via:
+// import 'package:dartframe/database.dart';
 export 'src/io/chunked_reader.dart';
 export 'src/io/hdf5_reader.dart';
 export 'src/io/hdf5_writer.dart';

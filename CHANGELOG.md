@@ -1,3 +1,13 @@
+# 0.9.1
+
+- **[FEATURE]** Full Web & Wasm Platform Support
+
+  - Achieved full support for all 6 Dart/Flutter platforms (**Android**, **iOS**, **Web**, **Windows**, **macOS**, **Linux**) with official **Wasm-ready** compatibility.
+  - **Modular Database Entrypoint**: Separated direct database connectivity (PostgreSQL, MySQL, SQLite) into `package:dartframe/database.dart`. The primary entrypoint `package:dartframe/dartframe.dart` is now completely web-safe.
+  - **Conditional SmartLoader**: Extracted `DatabaseDataSource` in `SmartLoader` into conditional platform implementations (`database_source_io.dart` and `database_source_stub.dart`), gracefully returning descriptive errors when attempting direct SQL connections in web environments.
+  - **Pure-Dart Compression**: Migrated `GzipCodec`, `ZlibCodec`, HDF5 deflate filter, and DCF format (`DCFWriter`/`DCFReader`) to use `package:archive` (`GZipEncoder`, `GZipDecoder`, `ZLibEncoder`, `ZLibDecoder`) instead of `dart:io`.
+  - **Platform-Safe File Writing & Concurrency**: Conditionalized HDF5 `FileWriter` for Web using `FileIO`, and conditionalized `NDArray` parallel processing (`isolate_runner`) to fall back gracefully on environments without `dart:isolate`.
+
 # 0.9.0
 
 - **[BREAKING CHANGE]** Dependency Migration & Upgrades

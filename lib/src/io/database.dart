@@ -539,8 +539,8 @@ class DatabaseReader {
       case 'postgresql':
       case 'postgres':
         return PostgreSQLConnection(connectionString);
-      // case 'mysql':
-      //   return MySQLConnection(connectionString);
+      case 'mysql':
+        return MySQLConnection(connectionString);
       default:
         throw UnsupportedDatabaseError(
             'Unsupported database type: ${uri.scheme}');

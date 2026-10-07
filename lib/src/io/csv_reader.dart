@@ -77,13 +77,10 @@ class CsvReader implements DataReader {
 
       // Configure CSV converter
       // Note: eol must be explicitly set for proper parsing
-      final codec = CsvCodec(
-          CsvConfig(
-              fieldDelimiter: fieldDelimiter,
-              quoteCharacter: textDelimiter,
-              lineDelimiter: eol ?? '\n'
-          )
-      );
+      final codec = CsvCodec(CsvConfig(
+          fieldDelimiter: fieldDelimiter,
+          quoteCharacter: textDelimiter,
+          lineDelimiter: eol ?? '\n'));
 
       // Parse CSV
       final rows = codec.decode(content);

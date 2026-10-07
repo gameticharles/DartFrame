@@ -8,8 +8,8 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
+import 'package:archive/archive.dart';
 import '../../ndarray/ndarray.dart';
 import '../../data_cube/datacube.dart';
 import '../../file_helper/file_io.dart';
@@ -300,11 +300,11 @@ class DCFWriter {
       case CompressionCodec.none:
         return bytes;
       case CompressionCodec.gzip:
-        return gzip.encode(bytes);
+        return GZipEncoder().encode(bytes);
       case CompressionCodec.zlib:
-        return zlib.encode(bytes);
+        return ZLibEncoder().encode(bytes);
       case CompressionCodec.lz4:
-        // LZ4 not available in dart:io, return uncompressed
+        // LZ4 not available, return uncompressed
         return bytes;
     }
   }

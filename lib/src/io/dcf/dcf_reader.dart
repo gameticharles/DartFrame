@@ -8,8 +8,8 @@
 library;
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
+import 'package:archive/archive.dart';
 import '../../ndarray/ndarray.dart';
 import '../../data_cube/datacube.dart';
 import '../../file_helper/file_io.dart';
@@ -166,10 +166,10 @@ class DCFReader {
         decompressed = bytes;
         break;
       case 'gzip':
-        decompressed = gzip.decode(bytes);
+        decompressed = GZipDecoder().decodeBytes(bytes);
         break;
       case 'zlib':
-        decompressed = zlib.decode(bytes);
+        decompressed = ZLibDecoder().decodeBytes(bytes);
         break;
       case 'lz4':
         // LZ4 not available, assume uncompressed

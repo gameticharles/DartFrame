@@ -2,7 +2,7 @@
 library;
 
 import 'dart:async';
-import 'dart:isolate';
+import 'isolate_runner.dart';
 import 'ndarray.dart';
 import '../data_cube/datacube.dart';
 import '../core/slice_spec.dart';
@@ -212,46 +212,12 @@ extension Parallel on NDArray {
     return results;
   }
 
-  /// Processes a single chunk in an isolate.
+  /// Processes a single chunk in an isolate (or synchronously on Web).
   Future<dynamic> _processChunkInIsolate(
     NDArray chunk,
     dynamic Function(NDArray) processor,
   ) async {
-    final receivePort = ReceivePort();
-
-    try {
-      await Isolate.spawn(
-        _isolateWorker,
-        _IsolateMessage(
-          sendPort: receivePort.sendPort,
-          data: chunk.toFlatList(),
-          shape: chunk.shape.toList(),
-          processor: processor,
-        ),
-      );
-
-      final result = await receivePort.first;
-      return result;
-    } catch (e) {
-      // If isolate fails, fall back to synchronous processing
-      return processor(chunk);
-    }
-  }
-
-  /// Worker function that runs in an isolate.
-  static void _isolateWorker(_IsolateMessage message) {
-    try {
-      // Reconstruct NDArray from flat data
-      final chunk = NDArray.fromFlat(message.data, message.shape);
-
-      // Process the chunk
-      final result = message.processor(chunk);
-
-      // Send result back
-      message.sendPort.send(result);
-    } catch (e) {
-      message.sendPort.send(null);
-    }
+    return runChunkInIsolate(chunk, processor);
   }
 
   /// Concatenates chunks back into a single array.
@@ -303,21 +269,6 @@ extension Parallel on NDArray {
     // In production, this could be configurable
     return 4;
   }
-}
-
-/// Message passed to isolate workers.
-class _IsolateMessage {
-  final SendPort sendPort;
-  final List<dynamic> data;
-  final List<int> shape;
-  final dynamic Function(NDArray) processor;
-
-  _IsolateMessage({
-    required this.sendPort,
-    required this.data,
-    required this.shape,
-    required this.processor,
-  });
 }
 
 /// Utility class for parallel operations configuration.

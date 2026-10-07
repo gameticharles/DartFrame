@@ -204,7 +204,8 @@ class DataCube extends DartData {
       frameData.add(row);
     }
 
-    return DataFrame(frameData, columns: List.generate(columns, (index) => 'col_${index + 1}'));
+    return DataFrame(frameData,
+        columns: List.generate(columns, (index) => 'col_${index + 1}'));
   }
 
   /// Sets a DataFrame at the specified depth.
@@ -303,7 +304,8 @@ class DataCube extends DartData {
     if (slicedData.ndim == 3) {
       // ndim == 3 means slicedData is a DataCube with erased attributes. copy the data and attributes
       // into a new DataCube.
-      return DataCube._((slicedData as DataCube)._data.copy(), Attributes.fromJson(attrs.toJson()));
+      return DataCube._((slicedData as DataCube)._data.copy(),
+          Attributes.fromJson(attrs.toJson()));
     }
 
     // everything else is just returned as is.

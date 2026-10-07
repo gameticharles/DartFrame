@@ -184,8 +184,8 @@ void main() {
 
         // Each row should sum to 1 (normalized)
         for (int i = 0; i < result.rowCount; i++) {
-          final rowSum =
-              (result.rows[i] as Iterable).fold<num>(0, (sum, val) => sum + val);
+          final rowSum = (result.rows[i] as Iterable)
+              .fold<num>(0, (sum, val) => sum + val);
           expect(rowSum, closeTo(1.0, 0.0001));
         }
       });

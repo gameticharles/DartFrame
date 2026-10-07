@@ -1,11 +1,11 @@
 /// Gzip compression codec
 library;
 
-import 'dart:io';
+import 'package:archive/archive.dart';
 import 'codec.dart';
 
 /// Gzip compression codec
-/// Uses Dart's built-in gzip implementation
+/// Uses archive package's gzip implementation
 class GzipCodec implements Codec {
   const GzipCodec();
 
@@ -14,14 +14,12 @@ class GzipCodec implements Codec {
 
   @override
   List<int> compress(List<int> data, {int level = 6}) {
-    final codec = gzip.encoder;
-    return codec.convert(data);
+    return GZipEncoder().encode(data, level: level);
   }
 
   @override
   List<int> decompress(List<int> compressed) {
-    final codec = gzip.decoder;
-    return codec.convert(compressed);
+    return GZipDecoder().decodeBytes(compressed);
   }
 
   @override

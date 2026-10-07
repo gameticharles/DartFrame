@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:io' show GZipCodec;
 import 'package:archive/archive.dart';
 import 'byte_reader.dart';
 import 'byte_writer.dart';
@@ -167,9 +166,8 @@ class GzipFilter extends Filter {
   @override
   List<int> encode(List<int> data) {
     try {
-      // Use dart:io GZipCodec to compress
-      final codec = GZipCodec(level: compressionLevel);
-      final compressed = codec.encode(data);
+      // Use archive package GZipEncoder to compress
+      final compressed = GZipEncoder().encode(data, level: compressionLevel);
       return compressed;
     } catch (e) {
       // If compression fails, return original data

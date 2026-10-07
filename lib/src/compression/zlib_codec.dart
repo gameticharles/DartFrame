@@ -1,11 +1,11 @@
 /// Zlib compression codec
 library;
 
-import 'dart:io';
+import 'package:archive/archive.dart';
 import 'codec.dart';
 
 /// Zlib compression codec
-/// Uses Dart's built-in zlib implementation
+/// Uses archive package's zlib implementation
 /// Similar to Gzip but with different header
 class ZlibCodec implements Codec {
   const ZlibCodec();
@@ -15,14 +15,12 @@ class ZlibCodec implements Codec {
 
   @override
   List<int> compress(List<int> data, {int level = 6}) {
-    final codec = ZLibCodec(level: level);
-    return codec.encode(data);
+    return ZLibEncoder().encode(data, level: level);
   }
 
   @override
   List<int> decompress(List<int> compressed) {
-    final codec = ZLibCodec();
-    return codec.decode(compressed);
+    return ZLibDecoder().decodeBytes(compressed);
   }
 
   @override

@@ -72,13 +72,10 @@ class CsvFileWriter implements DataWriter {
       final includeIndex = options?['includeIndex'] as bool? ?? false;
 
       // Configure CSV converter
-      final codec = CsvCodec(
-          CsvConfig(
-            fieldDelimiter: fieldDelimiter,
-            quoteCharacter: textDelimiter,
-            lineDelimiter: eol ?? '\n'
-          )
-      );
+      final codec = CsvCodec(CsvConfig(
+          fieldDelimiter: fieldDelimiter,
+          quoteCharacter: textDelimiter,
+          lineDelimiter: eol ?? '\n'));
 
       final rows = <List<dynamic>>[];
       final columns = df.columns;

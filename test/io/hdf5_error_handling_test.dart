@@ -88,7 +88,8 @@ void main() {
         final builder = HDF5FileBuilder();
         final array = NDArray.fromFlat([1.0, 2.0, 3.0], [3]);
 
-        final bytes = await builder.build(array: array, datasetPath: '/group/data');
+        final bytes =
+            await builder.build(array: array, datasetPath: '/group/data');
         expect(bytes, isNotEmpty);
       });
 

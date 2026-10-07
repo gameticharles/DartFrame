@@ -1,4 +1,5 @@
 import 'package:dartframe/dartframe.dart';
+import 'package:dartframe/database.dart';
 
 void main() async {
   print('=== DartFrame Database Operations Examples ===\n');
